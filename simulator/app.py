@@ -5,6 +5,7 @@ import time
 import moderngl
 import pygame
 
+from .camera import FreeCamera
 from .clock import FixedStepClock
 from .config import SimulationConfig
 from .physics import FireworkWorld
@@ -33,10 +34,15 @@ class SimulatorApp:
             render.max_particles, self.config.random_seed
         )
         self.renderer = Renderer(self.ctx, render)
+        self.camera = FreeCamera(config=self.config.camera)
         self.physics_clock = FixedStepClock(render.physics_hz)
         self.frame_clock = pygame.time.Clock()
         self.running = True
+        self.mouse_captured = True
         self.title_timer_s = 0.0
+        pygame.event.set_grab(True)
+        pygame.mouse.set_visible(False)
+        pygame.mouse.get_rel()
         self.world.launch()
 
     def run(self, max_frames: int | None = None) -> None:
@@ -46,10 +52,11 @@ class SimulatorApp:
             now = time.perf_counter()
             dt_s, previous = now - previous, now
             self._events()
+            self._update_camera(min(dt_s, 0.1))
             steps, _alpha = self.physics_clock.consume(dt_s)
             for _ in range(steps):
                 self.world.update(self.physics_clock.step_s)
-            self.renderer.render(self.world, dt_s)
+            self.renderer.render(self.world, self.camera, dt_s)
             pygame.display.flip()
             # Swap interval is the primary limiter. Applying SDL's millisecond
             # timer after a blocking swap produces systematic sub-60 FPS pacing.
@@ -68,9 +75,35 @@ class SimulatorApp:
                 self.running = False
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    self.running = False
+                    if self.mouse_captured:
+                        self._set_mouse_capture(False)
+                    else:
+                        self.running = False
+                elif event.key == pygame.K_TAB:
+                    self._set_mouse_capture(not self.mouse_captured)
                 elif event.key == pygame.K_SPACE:
                     self.world.launch()
+            elif event.type == pygame.MOUSEBUTTONDOWN and not self.mouse_captured:
+                if event.button == 1:
+                    self._set_mouse_capture(True)
+            elif event.type == pygame.MOUSEMOTION and self.mouse_captured:
+                self.camera.look(*event.rel)
+
+    def _set_mouse_capture(self, captured: bool) -> None:
+        self.mouse_captured = captured
+        pygame.event.set_grab(captured)
+        pygame.mouse.set_visible(not captured)
+        pygame.mouse.get_rel()
+
+    def _update_camera(self, dt_s: float) -> None:
+        keys = pygame.key.get_pressed()
+        local_input = (
+            float(keys[pygame.K_d]) - float(keys[pygame.K_a]),
+            float(keys[pygame.K_e]) - float(keys[pygame.K_q]),
+            float(keys[pygame.K_w]) - float(keys[pygame.K_s]),
+        )
+        sprint = bool(keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT])
+        self.camera.update(dt_s, local_input, sprint)
 
     def _title(self, dt_s: float) -> None:
         self.title_timer_s += dt_s
@@ -78,6 +111,9 @@ class SimulatorApp:
             pygame.display.set_caption(
                 f"Yeouido Fireworks | {self.frame_clock.get_fps():.1f} FPS"
                 f" | {self.world.stars.count:,} stars"
+                f" | XYZ {self.camera.position_m[0]:.0f},"
+                f"{self.camera.position_m[1]:.0f},"
+                f"{self.camera.position_m[2]:.0f} m"
             )
             self.title_timer_s = 0.0
 

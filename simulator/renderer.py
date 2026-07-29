@@ -6,6 +6,7 @@ from pathlib import Path
 import moderngl
 import numpy as np
 
+from .camera import FreeCamera
 from .config import RenderConfig
 from .physics import FireworkWorld
 from .scene import load_scene
@@ -382,28 +383,26 @@ class Renderer:
         projection = _perspective(
             config.vertical_fov_deg, config.width / config.height, .1, 2500
         )
-        camera_position = np.array([0, 24, 235], dtype=np.float32)
-        view = _look_at(
-            camera_position,
-            np.array([0, 72, 0], dtype=np.float32),
-        )
-        view_projection = projection @ view
-        self.particle_program["view_projection"].write(
-            view_projection.T.astype(np.float32).tobytes()
-        )
-        self.water_program["view_projection"].write(
-            view_projection.T.astype(np.float32).tobytes()
-        )
-        self.land_program["view_projection"].write(
-            view_projection.T.astype(np.float32).tobytes()
-        )
-        self.scene_program["view_projection"].write(
-            view_projection.T.astype(np.float32).tobytes()
-        )
-        self.water_program["camera_position"].value = tuple(camera_position)
+        self.projection = projection
 
-    def render(self, world: FireworkWorld, frame_dt_s: float) -> None:
+    def _update_camera(self, camera: FreeCamera) -> None:
+        view = _look_at(camera.position_m, camera.position_m + camera.forward)
+        view_projection = self.projection @ view
+        matrix_bytes = view_projection.T.astype(np.float32).tobytes()
+        for program in (
+            self.particle_program,
+            self.water_program,
+            self.land_program,
+            self.scene_program,
+        ):
+            program["view_projection"].write(matrix_bytes)
+        self.water_program["camera_position"].value = tuple(camera.position_m)
+
+    def render(
+        self, world: FireworkWorld, camera: FreeCamera, frame_dt_s: float
+    ) -> None:
         self.time_s += frame_dt_s
+        self._update_camera(camera)
         self.hdr_fbo.use()
         self.ctx.disable(moderngl.BLEND)
         self.ctx.disable(moderngl.DEPTH_TEST)

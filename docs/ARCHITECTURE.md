@@ -121,6 +121,18 @@ development-machine run measures approximately 1.94 ms per frame (about
 515 FPS). Timing varies with driver scheduling, so the frame time—not the
 uncapped FPS headline—is retained for later regression comparisons.
 
+## Camera
+
+The runtime camera is a six-degree-position, yaw/pitch free camera. Horizontal
+movement follows camera heading while elevation remains independently
+controllable. Input velocity uses frame-rate-independent exponential
+acceleration and damping; diagonal input is normalized.
+
+The view-projection matrix and camera position are refreshed for every render
+pass each frame, keeping terrain, water Fresnel response, buildings, and
+fireworks in one coordinate frame. Adding the dynamic camera path measures
+about 1.69 ms per uncapped frame on the development machine.
+
 ## Required reference datasets
 
 - October 5, 2024 hourly and, where possible, sub-hourly weather observations

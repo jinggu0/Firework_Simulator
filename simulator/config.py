@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from .camera import CameraConfig
 
 @dataclass(frozen=True, slots=True)
 class AtmosphereConfig:
@@ -50,4 +51,5 @@ class SimulationConfig:
     atmosphere: AtmosphereConfig = field(default_factory=AtmosphereConfig)
     shell: ShellConfig = field(default_factory=ShellConfig)
     render: RenderConfig = field(default_factory=RenderConfig)
+    camera: CameraConfig = field(default_factory=CameraConfig)
     random_seed: int = 20241005
