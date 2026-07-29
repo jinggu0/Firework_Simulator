@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 import math
 from pathlib import Path
 
@@ -8,8 +9,20 @@ import numpy as np
 
 from .camera import FreeCamera
 from .astronomy import CelestialState
-from .config import AtmosphereConfig, RenderConfig, SmokeConfig
+from .camera_optics import analog_gain, photon_to_electron_scale, vertical_fov_deg
+from .config import (
+    AtmosphereConfig,
+    LightingConfig,
+    PhysicalCameraConfig,
+    RenderConfig,
+    SmokeConfig,
+)
 from .fluid import SmokeFluid2D
+from .lighting import (
+    cluster_radiant_lights,
+    led_energy_budget,
+    radiometric_irradiance_from_illuminance,
+)
 from .physics import FireworkWorld
 from .scene import load_scene
 from .volume import active_volume_bounds, box_vertices
@@ -18,6 +31,7 @@ from .water import (
     build_directional_spectrum,
     build_water_mesh,
     estimate_fetch_length_m,
+    relax_wave_spectrum,
 )
 
 
@@ -166,15 +180,51 @@ void main() {
 TONEMAP_FRAGMENT = """
 #version 330
 uniform sampler2D hdr_texture; uniform sampler2D bloom_texture;
-uniform float exposure_scale; uniform float bloom_strength;
+uniform float bloom_strength;
+uniform vec3 photon_to_electron;
+uniform float analog_gain;
+uniform float full_well_electrons;
+uniform float read_noise_electrons;
+uniform float tan_half_fov;
+uniform float aspect;
+uniform float frame_index;
+uniform int sensor_noise_enabled;
 in vec2 uv; out vec4 frag_color;
 vec3 aces(vec3 x) {
     return clamp((x*(2.51*x+.03))/(x*(2.43*x+.59)+.14), 0.0, 1.0);
 }
+float hash12(vec2 p) {
+    vec3 p3 = fract(vec3(p.xyx) * .1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
+}
+float gaussian(vec2 seed) {
+    float u1 = max(hash12(seed), 1e-6);
+    float u2 = hash12(seed + vec2(17.17, 91.73));
+    return sqrt(-2.0 * log(u1)) * cos(6.28318530718 * u2);
+}
 void main() {
     vec3 hdr = texture(hdr_texture, uv).rgb;
     vec3 bloom = texture(bloom_texture, uv).rgb * bloom_strength;
-    vec3 mapped = aces((hdr + bloom) * exposure_scale);
+    vec2 sensor_position = (uv * 2.0 - 1.0)
+                         * vec2(aspect * tan_half_fov, tan_half_fov);
+    float cos_theta = inversesqrt(1.0 + dot(sensor_position, sensor_position));
+    float lens_vignetting = pow(cos_theta, 4.0);
+    vec3 electrons = max(hdr + bloom, vec3(0.0))
+                   * photon_to_electron * lens_vignetting;
+    if (sensor_noise_enabled != 0) {
+        vec2 seed = gl_FragCoord.xy + vec2(frame_index * 13.37);
+        vec3 sigma = sqrt(electrons
+                         + vec3(read_noise_electrons * read_noise_electrons));
+        electrons += sigma * vec3(
+            gaussian(seed),
+            gaussian(seed + vec2(31.1, 7.9)),
+            gaussian(seed + vec2(83.7, 43.2))
+        );
+    }
+    electrons = clamp(electrons, vec3(0.0), vec3(full_well_electrons));
+    vec3 normalized_signal = electrons / full_well_electrons * analog_gain;
+    vec3 mapped = aces(normalized_signal);
     frag_color = vec4(pow(mapped, vec3(1.0/2.2)), 1);
 }
 """
@@ -256,7 +306,13 @@ uniform float sky_ambient_scale;
 uniform vec4 waves[32];
 uniform float phases[32];
 uniform float time_s;
+uniform float air_extinction_per_m;
+uniform int dynamic_light_count;
+uniform vec3 dynamic_light_position[8];
+uniform vec3 dynamic_light_color[8];
+uniform float dynamic_light_power_w[8];
 out vec4 frag_color;
+const float PI = 3.14159265359;
 void main() {
     vec2 mask_uv = (world_position.xz - water_mask_bounds.xy)
                  / (water_mask_bounds.zw - water_mask_bounds.xy);
@@ -298,6 +354,38 @@ void main() {
     float grazing_haze = pow(1.0 - n_dot_v, 3.0) * .0007;
     vec3 radiance = mix(water_body, reflected_radiance, fresnel)
                   + grazing_haze;
+    // Fixed-cost GGX reflection from energy-conserving firework clusters.
+    float roughness = 0.11;
+    float alpha = roughness * roughness;
+    float alpha_squared = alpha * alpha;
+    for (int i = 0; i < 8; ++i) {
+        if (i >= dynamic_light_count) break;
+        vec3 displacement = dynamic_light_position[i] - world_position;
+        float distance_squared = max(dot(displacement, displacement), 1.0);
+        float distance_m = sqrt(distance_squared);
+        vec3 light_direction = displacement / distance_m;
+        float n_dot_l = max(dot(n, light_direction), 0.0);
+        if (n_dot_l <= 0.0) continue;
+        vec3 half_vector = normalize(view_direction + light_direction);
+        float n_dot_h = max(dot(n, half_vector), 0.0);
+        float v_dot_h = max(dot(view_direction, half_vector), 0.0);
+        float denominator = n_dot_h * n_dot_h
+                          * (alpha_squared - 1.0) + 1.0;
+        float distribution = alpha_squared
+                           / max(PI * denominator * denominator, 1e-5);
+        float k = (roughness + 1.0) * (roughness + 1.0) / 8.0;
+        float geometry_v = n_dot_v / mix(n_dot_v, 1.0, k);
+        float geometry_l = n_dot_l / mix(n_dot_l, 1.0, k);
+        vec3 specular_fresnel = vec3(0.02037)
+            + (vec3(1.0) - vec3(0.02037)) * pow(1.0 - v_dot_h, 5.0);
+        vec3 brdf = specular_fresnel * distribution
+                  * geometry_v * geometry_l
+                  / max(4.0 * n_dot_v * n_dot_l, 1e-5);
+        float irradiance = dynamic_light_power_w[i]
+                         * exp(-air_extinction_per_m * distance_m)
+                         / (4.0 * PI * distance_squared);
+        radiance += dynamic_light_color[i] * irradiance * brdf * n_dot_l;
+    }
     frag_color = vec4(radiance, 1.0);
 }
 """
@@ -388,7 +476,15 @@ in float surface;
 in vec2 surface_uv;
 in float facade_style;
 uniform vec3 camera_position;
+uniform float ambient_irradiance_w_m2;
+uniform float window_radiance_w_m2_sr;
+uniform float air_extinction_per_m;
+uniform int dynamic_light_count;
+uniform vec3 dynamic_light_position[8];
+uniform vec3 dynamic_light_color[8];
+uniform float dynamic_light_power_w[8];
 out vec4 frag_color;
+const float PI = 3.14159265359;
 float hash21(vec2 p) {
     p = fract(p * vec2(123.34, 456.21));
     p += dot(p, p + 45.32);
@@ -398,80 +494,101 @@ float interval(float value, float lower, float upper, float antialias) {
     return smoothstep(lower - antialias, lower + antialias, value)
          * (1.0 - smoothstep(upper - antialias, upper + antialias, value));
 }
+vec3 reflected_radiance(vec3 n, vec3 albedo) {
+    vec3 result = albedo * ambient_irradiance_w_m2 / PI;
+    for (int i = 0; i < 8; ++i) {
+        if (i >= dynamic_light_count) break;
+        vec3 displacement = dynamic_light_position[i] - world_position;
+        float distance_squared = max(dot(displacement, displacement), 1.0);
+        float distance_m = sqrt(distance_squared);
+        vec3 light_direction = displacement / distance_m;
+        float irradiance = dynamic_light_power_w[i]
+                         * exp(-air_extinction_per_m * distance_m)
+                         / (4.0 * PI * distance_squared);
+        result += albedo * dynamic_light_color[i] * irradiance
+                * max(dot(n, light_direction), 0.0) / PI;
+    }
+    return result;
+}
 void main() {
     vec3 n = normalize(world_normal);
-    float sky_light = max(n.y * .5 + .5, .08);
     if (surface > 3.5) {
         float green_variation = hash21(floor(world_position.xz * .15));
-        vec3 green = mix(vec3(.00016, .00034, .00016),
-                         vec3(.00032, .00052, .00022), green_variation);
-        frag_color = vec4(green * sky_light, 1.0);
+        vec3 green = mix(vec3(.055, .16, .045),
+                         vec3(.12, .25, .075), green_variation);
+        frag_color = vec4(reflected_radiance(n, green), 1.0);
         return;
     }
     if (surface > 2.5) {
         float lane_hint = smoothstep(.46, .50,
             abs(fract(world_position.x * .12 + world_position.z * .08) - .5));
-        vec3 asphalt = vec3(.00030, .00032, .00035);
-        frag_color = vec4(asphalt + lane_hint * vec3(.00016), 1.0);
+        vec3 asphalt = mix(
+            vec3(.035, .038, .042), vec3(.32), lane_hint * .22
+        );
+        frag_color = vec4(reflected_radiance(n, asphalt), 1.0);
         return;
     }
     if (surface > 1.5) {
-        frag_color = vec4(vec3(.0024, .0026, .0027), 1.0);
+        frag_color = vec4(
+            reflected_radiance(n, vec3(.22, .24, .26)), 1.0
+        );
         return;
     }
     if (surface > .5) {
-        vec3 roof = vec3(.00072, .00078, .00084);
+        vec3 roof = vec3(.12, .13, .14);
         if (facade_style > 1.5 && facade_style < 2.5) {
-            roof = vec3(.0022, .00155, .00055);
+            roof = vec3(.30, .18, .055);
         } else if (facade_style > 4.5 && facade_style < 5.5) {
-            roof = vec3(.0018, .00024, .00018);
+            roof = vec3(.31, .035, .025);
         }
-        float roof_variation = hash21(floor(surface_uv * .08)) * .00014;
-        frag_color = vec4((roof + roof_variation) * sky_light, 1.0);
+        float roof_variation = hash21(floor(surface_uv * .08)) * .025;
+        frag_color = vec4(
+            reflected_radiance(n, roof + roof_variation), 1.0
+        );
         return;
     }
 
     float bay_width = 4.2;
     float floor_height = 3.25;
     vec4 pane_bounds = vec4(.13, .82, .18, .72);
-    vec3 wall = vec3(.0015, .0017, .0020);
-    vec3 glass = vec3(.0011, .00175, .00265);
+    vec3 wall = vec3(.18, .20, .23);
+    vec3 glass = vec3(.025, .042, .075);
     float glass_amount = .18;
     float occupancy_threshold = .68;
     if (facade_style > .5 && facade_style < 1.5) {
         bay_width = 3.6; floor_height = 4.57;
         pane_bounds = vec4(.05, .95, .08, .92);
-        wall = vec3(.00036, .00065, .00105);
-        glass = vec3(.0011, .0023, .0044);
+        wall = vec3(.055, .09, .14);
+        glass = vec3(.02, .055, .12);
         glass_amount = .88; occupancy_threshold = .72;
     } else if (facade_style > 1.5 && facade_style < 2.5) {
         bay_width = 3.25; floor_height = 4.0;
         pane_bounds = vec4(.04, .96, .06, .93);
-        wall = vec3(.0027, .00175, .00045);
-        glass = vec3(.0065, .0037, .00062);
+        wall = vec3(.32, .21, .06);
+        glass = vec3(.16, .085, .018);
         glass_amount = .93; occupancy_threshold = .75;
     } else if (facade_style > 2.5 && facade_style < 3.5) {
         bay_width = 3.4; floor_height = 3.05;
         pane_bounds = vec4(.18, .78, .24, .68);
-        wall = vec3(.0018, .00165, .00142);
-        glass = vec3(.0010, .00155, .0020);
+        wall = vec3(.25, .22, .18);
+        glass = vec3(.025, .04, .06);
         glass_amount = .28; occupancy_threshold = .55;
     } else if (facade_style > 3.5 && facade_style < 4.5) {
         bay_width = 5.4; floor_height = 3.8;
         pane_bounds = vec4(.22, .76, .28, .69);
-        wall = vec3(.0023, .00215, .00182);
+        wall = vec3(.34, .31, .25);
         glass_amount = .12; occupancy_threshold = .82;
     } else if (facade_style > 4.5 && facade_style < 5.5) {
         bay_width = 3.8; floor_height = 4.65;
         pane_bounds = vec4(.05, .95, .08, .92);
-        wall = vec3(.00030, .00046, .00064);
-        glass = vec3(.00072, .00130, .00225);
+        wall = vec3(.045, .07, .105);
+        glass = vec3(.018, .035, .075);
         glass_amount = .90; occupancy_threshold = .72;
     } else if (facade_style > 5.5) {
         bay_width = 3.2; floor_height = 3.55;
         pane_bounds = vec4(.12, .86, .16, .78);
-        wall = vec3(.00125, .00120, .00116);
-        glass = vec3(.0010, .00145, .00185);
+        wall = vec3(.19, .18, .17);
+        glass = vec3(.025, .038, .055);
         glass_amount = .55; occupancy_threshold = .38;
     }
 
@@ -494,14 +611,15 @@ void main() {
     vec3 view_direction = normalize(camera_position - world_position);
     float fresnel = pow(1.0 - max(dot(n, view_direction), 0.0), 4.0);
     vec3 facade = mix(wall, glass, pane * glass_amount);
-    facade += glass * fresnel * glass_amount * 1.8;
-    vec3 emission = window_color * pane * occupied * .035;
+    facade += glass * fresnel * glass_amount * .35;
+    vec3 emission = window_color * pane * occupied
+                  * window_radiance_w_m2_sr;
 
     if (facade_style > 2.5 && facade_style < 3.5) {
         float balcony = 1.0 - smoothstep(
             .035, .09, min(within.y, 1.0 - within.y)
         );
-        facade += balcony * vec3(.0010, .00095, .00086);
+        facade += balcony * vec3(.10, .095, .086);
     }
     if (facade_style > 4.5 && facade_style < 5.5) {
         float column_mod = mod(surface_uv.x, 18.0);
@@ -512,11 +630,11 @@ void main() {
         float red_beam = 1.0 - smoothstep(.30, .72, beam_distance);
         facade = mix(
             facade,
-            vec3(.055, .00065, .00032),
+            vec3(.38, .018, .009),
             max(red_column, red_beam) * .92
         );
     }
-    frag_color = vec4(facade * sky_light + emission, 1.0);
+    frag_color = vec4(reflected_radiance(n, facade) + emission, 1.0);
 }
 """
 
@@ -599,8 +717,15 @@ class Renderer:
         config: RenderConfig,
         atmosphere: AtmosphereConfig | None = None,
         smoke_config: SmokeConfig | None = None,
+        lighting_config: LightingConfig | None = None,
+        camera_config: PhysicalCameraConfig | None = None,
     ) -> None:
         self.ctx, self.config, self.time_s = ctx, config, 0.0
+        self.lighting_config = lighting_config or LightingConfig()
+        self.camera_config = camera_config or PhysicalCameraConfig()
+        self.frame_index = 0
+        physical_fov_deg = vertical_fov_deg(self.camera_config)
+        tan_half_fov = math.tan(math.radians(physical_fov_deg) * 0.5)
         ctx.enable(moderngl.PROGRAM_POINT_SIZE)
         quad = np.array([-1, -1, 1, -1, -1, 1, 1, 1], dtype=np.float32)
         self.quad_buffer = ctx.buffer(quad.tobytes())
@@ -610,9 +735,7 @@ class Renderer:
         self.background_vao = ctx.simple_vertex_array(
             self.background_program, self.quad_buffer, "in_position"
         )
-        self.background_program["tan_half_fov"] = math.tan(
-            math.radians(config.vertical_fov_deg) * 0.5
-        )
+        self.background_program["tan_half_fov"] = tan_half_fov
         self.background_program["aspect"] = config.width / config.height
         self.tonemap_program = ctx.program(
             vertex_shader=QUAD_VERTEX, fragment_shader=TONEMAP_FRAGMENT
@@ -623,6 +746,21 @@ class Renderer:
         self.tonemap_program["hdr_texture"] = 0
         self.tonemap_program["bloom_texture"] = 3
         self.tonemap_program["bloom_strength"] = config.bloom_strength
+        self.tonemap_program["photon_to_electron"].value = tuple(
+            photon_to_electron_scale(self.camera_config)
+        )
+        self.tonemap_program["analog_gain"] = analog_gain(self.camera_config)
+        self.tonemap_program["full_well_electrons"] = (
+            self.camera_config.full_well_electrons
+        )
+        self.tonemap_program["read_noise_electrons"] = (
+            self.camera_config.read_noise_electrons
+        )
+        self.tonemap_program["tan_half_fov"] = tan_half_fov
+        self.tonemap_program["aspect"] = config.width / config.height
+        self.tonemap_program["sensor_noise_enabled"] = int(
+            self.camera_config.enable_sensor_noise
+        )
         self.bloom_prefilter_program = ctx.program(
             vertex_shader=QUAD_VERTEX, fragment_shader=BLOOM_PREFILTER_FRAGMENT
         )
@@ -639,6 +777,13 @@ class Renderer:
         self.bloom_blur_program["source_texture"] = 3
         self.scene_program = ctx.program(
             vertex_shader=SCENE_VERTEX, fragment_shader=SCENE_FRAGMENT
+        )
+        led_budget = led_energy_budget(self.lighting_config)
+        self.scene_program["window_radiance_w_m2_sr"] = (
+            led_budget.window_radiance_w_m2_sr
+        )
+        self.scene_program["air_extinction_per_m"] = (
+            self.lighting_config.air_extinction_per_m
         )
         scene_path = Path(__file__).resolve().parent.parent / "assets" / "yeouido_scene.npz"
         self.scene_vaos: list[tuple[moderngl.VertexArray, int]] = []
@@ -694,6 +839,10 @@ class Renderer:
             fetch_length_m=fetch_length_m,
         )
         water_spectrum = build_directional_spectrum(self.water_config)
+        self.water_spectrum = water_spectrum
+        self.water_atmosphere_accumulator_s = 0.0
+        self.water_mask_cpu = water_mask
+        self.water_mask_bounds_cpu = water_mask_bounds
         near_vertices, near_indices = build_water_mesh(self.water_config)
         far_vertices, far_indices = build_water_mesh(
             self.water_config,
@@ -708,6 +857,9 @@ class Renderer:
         )
         self.water_program = ctx.program(
             vertex_shader=WATER_VERTEX, fragment_shader=WATER_FRAGMENT
+        )
+        self.water_program["air_extinction_per_m"] = (
+            self.lighting_config.air_extinction_per_m
         )
         self.water_vaos: list[moderngl.VertexArray] = []
         self.water_buffers: list[moderngl.Buffer] = []
@@ -896,7 +1048,7 @@ class Renderer:
             for texture in self.bloom_textures
         ]
         projection = _perspective(
-            config.vertical_fov_deg, config.width / config.height, .1, 2500
+            physical_fov_deg, config.width / config.height, .1, 2500
         )
         self.projection = projection
 
@@ -987,6 +1139,86 @@ class Renderer:
         ambient_scale = 0.8 + float(twilight_strength) * 1.2 + cloud * 0.25
         self.water_program["sky_ambient_scale"] = ambient_scale
         self.land_program["sky_ambient_scale"] = ambient_scale
+        ambient_illuminance_lux = (
+            celestial.twilight_illuminance_lux
+            + celestial.moon_illuminance_lux
+            + self.lighting_config.calibrated_urban_ambient_illuminance_lux
+        )
+        self.scene_program["ambient_irradiance_w_m2"] = (
+            radiometric_irradiance_from_illuminance(
+                ambient_illuminance_lux,
+                self.lighting_config.twilight_spectral_luminous_efficacy_lm_w,
+            )
+        )
+
+    def _update_dynamic_lights(self, world: FireworkWorld) -> np.ndarray:
+        count = world.stars.count
+        if count:
+            radiant_power_w = world.stars.intensity()
+            lights = cluster_radiant_lights(
+                world.stars.position_m[:count],
+                world.stars.color_linear[:count],
+                radiant_power_w,
+                min(self.lighting_config.dynamic_light_count, 8),
+            )
+        else:
+            radiant_power_w = np.empty(0, dtype=np.float32)
+            lights = cluster_radiant_lights(
+                np.empty((0, 3), dtype=np.float32),
+                np.empty((0, 3), dtype=np.float32),
+                radiant_power_w,
+                min(self.lighting_config.dynamic_light_count, 8),
+            )
+        for program in (self.scene_program, self.water_program):
+            program["dynamic_light_count"] = lights.count
+            program["dynamic_light_position"].write(
+                lights.positions_m.tobytes()
+            )
+            program["dynamic_light_color"].write(lights.colors.tobytes())
+            program["dynamic_light_power_w"].write(
+                lights.radiant_power_w.tobytes()
+            )
+        return radiant_power_w
+
+    def _update_water_forcing(
+        self, atmosphere: AtmosphereConfig, frame_dt_s: float
+    ) -> None:
+        self.water_atmosphere_accumulator_s += frame_dt_s
+        interval_s = self.water_config.atmosphere_update_interval_s
+        if self.water_atmosphere_accumulator_s < interval_s:
+            return
+        elapsed_s = self.water_atmosphere_accumulator_s
+        self.water_atmosphere_accumulator_s %= interval_s
+        wind = np.asarray(atmosphere.wind_velocity_mps, dtype=np.float32)
+        wind_xz = wind[[0, 2]]
+        wind_speed = float(np.linalg.norm(wind_xz))
+        wind_from = (
+            math.degrees(math.atan2(-float(wind_xz[0]), float(wind_xz[1])))
+            % 360.0
+        )
+        target_config = replace(
+            self.water_config,
+            wind_speed_mps=max(wind_speed, 0.1),
+            wind_direction_deg=wind_from,
+            fetch_length_m=estimate_fetch_length_m(
+                self.water_mask_cpu,
+                self.water_mask_bounds_cpu,
+                wind_xz,
+            ),
+        )
+        target = build_directional_spectrum(target_config)
+        self.water_spectrum = relax_wave_spectrum(
+            self.water_spectrum,
+            target,
+            elapsed_s,
+            self.water_config.wind_response_time_s,
+        )
+        self.water_program["waves"].write(
+            self.water_spectrum.components.tobytes()
+        )
+        self.significant_wave_height_m = (
+            self.water_spectrum.significant_wave_height_m
+        )
 
     def render(
         self,
@@ -998,6 +1230,8 @@ class Renderer:
     ) -> None:
         self.time_s += frame_dt_s
         self._update_celestial(celestial, world.atmosphere)
+        radiant_power_w = self._update_dynamic_lights(world)
+        self._update_water_forcing(world.atmosphere, frame_dt_s)
         self.reflection_accumulator_s += frame_dt_s
         self.reflection_sky_accumulator_s += frame_dt_s
         smoke_revision = smoke.revision if smoke is not None else -1
@@ -1054,10 +1288,11 @@ class Renderer:
             data[:, :3] = world.stars.position_m[:count]
             data[:, 3:6] = (
                 world.stars.position_m[:count]
-                - world.stars.velocity_mps[:count] * self.config.shutter_time_s
+                - world.stars.velocity_mps[:count]
+                * self.camera_config.shutter_time_s
             )
             data[:, 6:9] = world.stars.color_linear[:count]
-            data[:, 9] = world.stars.intensity()
+            data[:, 9] = radiant_power_w
             self.particle_buffer.write(data.tobytes())
             self.ctx.enable(moderngl.BLEND)
             self.ctx.disable(moderngl.DEPTH_TEST)
@@ -1131,7 +1366,6 @@ class Renderer:
         self.ctx.disable(moderngl.BLEND)
         self.hdr_texture.use(0)
         self.bloom_textures[0].use(3)
-        self.tonemap_program["exposure_scale"] = 2.0 ** (
-            10.0 - self.config.exposure_ev100
-        )
+        self.frame_index = (self.frame_index + 1) % 1_000_000
+        self.tonemap_program["frame_index"] = float(self.frame_index)
         self.tonemap_vao.render(moderngl.TRIANGLE_STRIP)

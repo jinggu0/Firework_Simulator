@@ -66,7 +66,12 @@ class SimulatorApp:
         self.celestial = self.astronomy.sample(self.event_timestamp)
         self.next_astronomy_update = self.event_timestamp + 1.0
         self.renderer = Renderer(
-            self.ctx, render, initial_atmosphere, self.config.smoke
+            self.ctx,
+            render,
+            initial_atmosphere,
+            self.config.smoke,
+            self.config.lighting,
+            self.config.physical_camera,
         )
         self.smoke = SmokeFluid2D(self.config.smoke, initial_atmosphere)
         self.smoke_accumulator_s = 0.0

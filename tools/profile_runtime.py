@@ -95,12 +95,74 @@ def _profile_case(
     return result
 
 
+def _profile_integrated(frames: int) -> dict[str, float | str]:
+    """Measure the coupled fixed-step simulation and blocking visual path."""
+
+    app = _prepare_populated_app()
+    frame_dt_s = 1.0 / 60.0
+    physics_dt_s = 1.0 / app.config.render.physics_hz
+    physics_ms: list[float] = []
+    visual_ms: list[float] = []
+    frame_ms: list[float] = []
+    for _ in range(frames):
+        frame_started = time.perf_counter()
+        app.camera.yaw_deg += 0.12
+        physics_started = time.perf_counter()
+        for _ in range(2):
+            if app.environment is not None:
+                app.world.atmosphere = app.environment.sample(
+                    app.event_timestamp
+                )
+                app.event_timestamp += physics_dt_s
+            app.world.update(physics_dt_s)
+            for burst in app.world.consume_burst_events():
+                app.smoke.inject_burst(
+                    burst.position_m,
+                    burst.smoke_mass_kg,
+                    burst.post_blast_thermal_energy_j,
+                )
+            app.smoke_accumulator_s += physics_dt_s
+            smoke_dt_s = 1.0 / app.config.smoke.update_hz
+            while app.smoke_accumulator_s >= smoke_dt_s:
+                for emission in app.world.consume_combustion_emissions():
+                    app.smoke.inject_particles(
+                        emission.position_m,
+                        emission.smoke_mass_kg,
+                        emission.thermal_energy_j,
+                    )
+                app.smoke.set_atmosphere(app.world.atmosphere)
+                app.smoke.step(smoke_dt_s)
+                app.smoke_accumulator_s -= smoke_dt_s
+        physics_finished = time.perf_counter()
+        app.renderer.render(
+            app.world, app.camera, app.celestial, frame_dt_s, app.smoke
+        )
+        app.ctx.finish()
+        frame_finished = time.perf_counter()
+        physics_ms.append((physics_finished - physics_started) * 1000.0)
+        visual_ms.append((frame_finished - physics_finished) * 1000.0)
+        frame_ms.append((frame_finished - frame_started) * 1000.0)
+    result: dict[str, float | str] = {"case": "integrated_blocking"}
+    for name, values in (
+        ("frame", frame_ms),
+        ("physics", physics_ms),
+        ("visual", visual_ms),
+    ):
+        samples = np.asarray(values, dtype=np.float64)
+        result[f"{name}_mean_ms"] = float(samples.mean())
+        result[f"{name}_p95_ms"] = float(np.percentile(samples, 95))
+        result[f"{name}_p99_ms"] = float(np.percentile(samples, 99))
+    _close(app)
+    return result
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Profile visual CPU submission and GPU latency."
     )
     parser.add_argument("--frames", type=int, default=120)
     args = parser.parse_args()
+    integrated = _profile_integrated(args.frames)
     cases = [
         _profile_case("full_moving", args.frames, True, True),
         _profile_case("no_smoke_moving", args.frames, False, True),
@@ -113,6 +175,7 @@ def main() -> None:
     report = {
         "frames_per_case": args.frames,
         "cases": cases,
+        "integrated": integrated,
         "derived_p95_ms": {
             "smoke_gpu": max(
                 float(full["gpu_p95_ms"]) - float(no_smoke["gpu_p95_ms"]),
@@ -127,6 +190,7 @@ def main() -> None:
             "GPU time uses GL timestamp queries around Renderer.render.",
             "Moving camera invalidates planar reflection at its configured rate.",
             "Static camera retains dynamic water normals without redrawing static city geometry.",
+            "Integrated timing blocks on GPU completion and advances 120 Hz ballistics plus configured smoke cadence.",
         ],
     }
     print(json.dumps(report, indent=2))

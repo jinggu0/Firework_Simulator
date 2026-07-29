@@ -40,6 +40,16 @@ class SmokeFluid2D:
             self.x_min + (np.arange(self.nx, dtype=np.float32) + 0.5) * self.dx,
             self.y_min + (np.arange(self.ny, dtype=np.float32) + 0.5) * self.dy,
         )
+        self._u_x, self._u_y = np.meshgrid(
+            self.x_min + np.arange(self.nx + 1, dtype=np.float32) * self.dx,
+            self.y_min
+            + (np.arange(self.ny, dtype=np.float32) + 0.5) * self.dy,
+        )
+        self._v_x, self._v_y = np.meshgrid(
+            self.x_min
+            + (np.arange(self.nx, dtype=np.float32) + 0.5) * self.dx,
+            self.y_min + np.arange(self.ny + 1, dtype=np.float32) * self.dy,
+        )
         self.revision = 0
 
     def set_atmosphere(self, atmosphere: AtmosphereConfig) -> None:
@@ -222,9 +232,14 @@ class SmokeFluid2D:
         )
 
     def _velocity_at(
-        self, x: np.ndarray, y: np.ndarray
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        centred_velocity: tuple[np.ndarray, np.ndarray] | None = None,
     ) -> tuple[np.ndarray, np.ndarray]:
-        uc, vc = self._centred_velocity()
+        if centred_velocity is None:
+            centred_velocity = self._centred_velocity()
+        uc, vc = centred_velocity
         origin_x = self.x_min + 0.5 * self.dx
         origin_y = self.y_min + 0.5 * self.dy
         return (
@@ -233,19 +248,28 @@ class SmokeFluid2D:
         )
 
     def _backtrace(
-        self, x: np.ndarray, y: np.ndarray, dt_s: float
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        dt_s: float,
+        centred_velocity: tuple[np.ndarray, np.ndarray] | None = None,
     ) -> tuple[np.ndarray, np.ndarray]:
-        u0, v0 = self._velocity_at(x, y)
+        if centred_velocity is None:
+            centred_velocity = self._centred_velocity()
+        u0, v0 = self._velocity_at(x, y, centred_velocity)
         mid_x, mid_y = x - 0.5 * dt_s * u0, y - 0.5 * dt_s * v0
-        um, vm = self._velocity_at(mid_x, mid_y)
+        um, vm = self._velocity_at(mid_x, mid_y, centred_velocity)
         return x - dt_s * um, y - dt_s * vm
 
     def _advect(self, dt_s: float) -> None:
         previous_density = self.density_kg_m3.copy()
         previous_temperature = self.temperature_excess_k.copy()
         previous_u, previous_v = self.u_mps.copy(), self.v_mps.copy()
+        centred_velocity = self._centred_velocity()
 
-        bx, by = self._backtrace(self._cell_x, self._cell_y, dt_s)
+        bx, by = self._backtrace(
+            self._cell_x, self._cell_y, dt_s, centred_velocity
+        )
         cell_origin_x = self.x_min + 0.5 * self.dx
         cell_origin_y = self.y_min + 0.5 * self.dy
         self.density_kg_m3[:] = self._sample(
@@ -256,19 +280,15 @@ class SmokeFluid2D:
             cell_origin_x, cell_origin_y, self.dx, self.dy
         )
 
-        ux, uy = np.meshgrid(
-            self.x_min + np.arange(self.nx + 1, dtype=np.float32) * self.dx,
-            self.y_min + (np.arange(self.ny, dtype=np.float32) + 0.5) * self.dy,
+        bx, by = self._backtrace(
+            self._u_x, self._u_y, dt_s, centred_velocity
         )
-        bx, by = self._backtrace(ux, uy, dt_s)
         self.u_mps[:] = self._sample(
             previous_u, bx, by, self.x_min, cell_origin_y, self.dx, self.dy
         )
-        vx, vy = np.meshgrid(
-            self.x_min + (np.arange(self.nx, dtype=np.float32) + 0.5) * self.dx,
-            self.y_min + np.arange(self.ny + 1, dtype=np.float32) * self.dy,
+        bx, by = self._backtrace(
+            self._v_x, self._v_y, dt_s, centred_velocity
         )
-        bx, by = self._backtrace(vx, vy, dt_s)
         self.v_mps[:] = self._sample(
             previous_v, bx, by, cell_origin_x, self.y_min, self.dx, self.dy
         )

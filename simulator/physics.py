@@ -6,6 +6,7 @@ import numpy as np
 
 from .color import blackbody_rgb
 from .config import AtmosphereConfig, ShellConfig
+from .lighting import burn_profile, combustion_peak_radiant_power_w
 
 GRAVITY_MPS2 = np.array([0.0, -9.80665, 0.0], dtype=np.float32)
 
@@ -90,10 +91,17 @@ class StarField:
             0.05,
         )
         self.drag_time_s[start:end] = config.star_drag_time_s
-        self.luminous_power_w[start:end] = config.luminous_power_w
         self.color_linear[start:end] = blackbody_rgb(config.color_temperature_k)
         self.fuel_mass_kg[start:end] = (
             config.star_composition_mass_kg / config.burst_star_count
+        )
+        chemical_energy_j = (
+            self.fuel_mass_kg[start:end] * config.star_specific_energy_j_kg
+        )
+        self.luminous_power_w[start:end] = combustion_peak_radiant_power_w(
+            chemical_energy_j,
+            self.lifetime_s[start:end],
+            config.star_radiative_energy_fraction,
         )
         self.emitted_burn_fraction[start:end] = 0.0
         self.last_emission_position_m[start:end] = origin_m
@@ -212,19 +220,12 @@ class StarField:
 
         n = self.count
         normalized_age = self.age_s[:n] / self.lifetime_s[:n]
-        ignition_x = np.clip(normalized_age / 0.018, 0.0, 1.0)
-        ignition = ignition_x * ignition_x * (3.0 - 2.0 * ignition_x)
-        extinction_x = np.clip((1.0 - normalized_age) / 0.12, 0.0, 1.0)
-        extinction = extinction_x * extinction_x * (3.0 - 2.0 * extinction_x)
-        shrinking_surface = np.clip(1.0 - 0.32 * normalized_age, 0.0, 1.0)
         stochastic_burn = 0.97 + 0.03 * np.sin(
             self.age_s[:n] * 53.0 + np.arange(n, dtype=np.float32) * 1.618
         )
         return (
             self.luminous_power_w[:n]
-            * ignition
-            * extinction
-            * shrinking_surface
+            * burn_profile(normalized_age)
             * stochastic_burn
         )
 

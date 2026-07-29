@@ -50,6 +50,15 @@ start, the imported 10 m wind is 0.471 m/s from 315 degrees. The river mask
 gives a 2,094.7 m effective fetch at the scene origin, and the resulting
 significant wave height is 0.0130 m.
 
+The spectrum is no longer frozen after startup. Every two seconds the current
+10 m wind vector and river-mask fetch generate a target spectrum. Component
+directions, wave numbers, and energy relax toward it with a 180 s wind-sea
+response time while phases remain continuous, preventing a non-physical pop
+when the weather timeline crosses a sample. Lunar position affects incident
+radiance and the reflected direction. It does not create local short waves:
+the lunar equilibrium tide is not an appropriate forcing term for the visible
+wind-wave band on this regulated freshwater reach.
+
 The surface is split into a 1,200 x 900 m near grid and a 5,000 x 4,000 m far
 grid. The far grid omits the near patch, preventing overlap and z-fighting.
 Wavelengths too short for the mesh sampling density are evaluated only in the
@@ -328,17 +337,69 @@ loops. Texture coordinates still reference the complete domain, so this is
 empty-space skipping rather than a change to density, temperature, or optical
 path length.
 
+## Radiometric light sources and physical camera
+
+All render-light inputs are classified as electric LED, combustion, or
+celestial sources. Electric windows begin with a 35 W input fixture and pass
+through driver, electrical injection, internal quantum, package extraction,
+phosphor, and luminaire optical efficiencies. Interior utilization, visible
+window transmittance, emitting area, and Lambertian exitance then produce
+window radiance in W/(m2 sr). The default chain produces 14.93 W of luminaire
+radiant power, 4,478 lm, and 0.1746 W/(m2 sr) at the window. These are
+calibratable fixture assumptions, not a claim that every 2024 window used that
+lamp or was occupied.
+
+A burning star no longer receives an arbitrary fixed brightness. Its assigned
+composition mass times 4.2 MJ/kg gives chemical energy; a provisional measured
+fireball radiative fraction of 0.15 partitions radiant energy. The normalized
+ignition, regressing-surface, and extinction curve is integrated, so peak
+radiant power is solved from the required time integral. The small
+deterministic burn fluctuation has a 0.97 mean and is included in that energy
+normalization.
+
+Each frame, 8,000 star sources are reduced to at most eight octant clusters.
+Power-weighted position and spectral RGB are computed with vectorized
+histograms, and total radiant power is conserved exactly to floating-point
+precision. The fixed light count bounds fragment cost. Building irradiance is
+`P exp(-sigma d)/(4 pi d^2)` and returns Lambertian reflected radiance
+`albedo E cos(theta)/pi`. Water applies the same irradiance to a GGX
+microfacet BRDF with the Fresnel reflectance of water. This makes a burst
+illuminate actual building normals and produce view-dependent highlights on
+the animated river rather than adding a screen-space glow.
+
+The free camera projection is derived from a 36 x 20.25 mm sensor and 24 mm
+focal length (45.75 degree vertical field of view). Linear scene radiance then
+passes through an f/2.8 aperture, 90% lens transmission, 1/60 s shutter, 5.9 um
+pixel area, wavelength-dependent RGB photon energy and quantum efficiency,
+45,000-electron full well, ISO 800 analogue gain, Poisson shot-noise
+approximation, read noise, and cos^4 lens falloff before ACES display mapping.
+Bloom is evaluated before the sensor stage as a compact optical point-spread
+approximation.
+
+This is a physically dimensioned real-time transport path, not a declaration
+of perceptual identity with unaided human vision. It does not yet include
+measured spectral power distributions, wavelength-resolved material BRDFs,
+dynamic shadow maps for the clustered lights, lens aberration/diffraction,
+sensor colour matrices, retinal adaptation, or smoke multiple scattering.
+Those require timestamped source/material/camera measurements and are explicit
+next calibration inputs.
+
 ## p95 bottleneck analysis
 
 `python -m tools.profile_runtime --frames 120` runs three repeatable GL
 timestamp-query cases with 8,000 held stars: full moving-camera rendering,
 moving-camera rendering without smoke, and full static-camera rendering.
-After active-volume contraction, the full moving case measures 4.925 ms GPU
-p95 and 6.267 ms CPU-submit p95. The no-smoke GPU p95 is 4.878 ms and the
-static-camera GPU p95 is 4.640 ms. The small residuals show that neither the
-contracted plume nor the camera-invalidated planar reflection is now the
-dominant visual p95 cost. Before contraction, the equivalent full visual GPU
-p95 was 7.544 ms.
+With physical sensor response and eight clustered radiometric lights enabled,
+a 240-frame run measures 5.113 ms GPU p95 and 6.099 ms CPU-submit p95 for the
+full moving-camera case. The no-smoke GPU p95 is 4.779 ms. The complete visual
+path therefore remains comfortably inside the 16.67 ms 60 Hz budget.
+
+The initial Python octant clustering implementation cost 6.58 ms per 8,000
+sources. Replacing repeated boolean masks and weighted averages with
+`bincount` power moments reduces it to 1.52 ms while preserving source power.
+The fluid advection path also caches face-coordinate grids and reuses one
+centred velocity reconstruction for all midpoint backtraces; it changes no
+grid, time step, coefficient, or solver iteration.
 
 The reflection texture is redrawn at up to 30 Hz while the camera moves, but a
 stationary camera reuses static city geometry and refreshes only for the
@@ -349,16 +410,19 @@ limiting shader aliasing and work without replacing geometry with billboards.
 
 A stricter 240-frame integrated run calls GPU finish every frame while moving
 the camera and updating 8,000 stars, 120 Hz ballistics, 30 Hz fluid, smoke
-uploads, water, reflection, bloom, and tone mapping. It measures 13.325 ms mean
-(75.0 FPS), 20.122 ms p95, and 21.936 ms p99. Physics averages 6.634 ms and the
-visual section 6.690 ms. The mean 60 FPS budget is met, but the integrated p95
-still exceeds 16.67 ms because the CPU fluid solve lands on alternating
-display frames.
+uploads, evolving water, reflections, physical sensor noise, bloom, and tone
+mapping. It measures 15.246 ms mean, 21.885 ms p95, and 23.309 ms p99.
+Physics averages 6.795 ms and the visual section 8.450 ms. Mean throughput
+meets the 60 FPS budget, but the integrated p95 still exceeds 16.67 ms because
+the CPU fluid solve lands on alternating display frames.
 
-The next latency work is therefore ordered as follows: migrate pressure
-projection and advection to a GPU MAC grid without reducing physical
-iterations; double-buffer volume reconstruction/uploads so they overlap the
-previous frame; then add depth-pyramid interior smoke occlusion. Dynamic
+Moving the same pressure-iteration budget to 60 Hz and a threaded
+double-buffer were both rejected by measurement: the former doubled volume
+reconstruction frequency, and the latter competed with rendering for memory
+bandwidth. The next latency work is therefore ordered as follows: migrate
+pressure projection and advection together to a GPU MAC grid without reducing
+physical iterations; double-buffer GPU volume resources and synchronization;
+then add depth-pyramid interior smoke occlusion. Dynamic
 resolution, if required, applies only to volumetric radiance and reflection,
 never to trajectory, terrain, building geometry, or the fixed physics clocks.
 
@@ -407,6 +471,18 @@ The prepared audio buffer adds no synchronous waveform synthesis to its
 arrival frame. End-to-end timing is recorded with the current smoke renderer
 above; the remaining frame-time tail is dominated by the CPU fluid quality
 tier and reinforces the planned migration to a 3D GPU solver.
+
+## Model references
+
+Model constants and equations are anchored to the following primary or
+technical references:
+
+- [NIST SI photometry and the 683 lm/W definition](https://www.nist.gov/pml/special-publication-330/sp-330-appendix-1)
+- [NIST candela realization and inverse-square photometry](https://www.nist.gov/pml/sensor-science/optical-radiation/realization-candela)
+- [US DOE LED energy and efficacy fundamentals](https://www.energy.gov/cmei/ssl/led-basics)
+- [Physically Based Rendering: film and imaging pipeline](https://www.pbr-book.org/3ed-2018/Sampling_and_Reconstruction/Film_and_the_Imaging_Pipeline)
+- [Fireball radiative-fraction measurements](https://publications.iafss.org/publications/fss/6/1125/view/fss_6-1125.pdf)
+- [Pyrotechnic-star burning-time measurements](https://www.jes.or.jp/mag/stem/Vol.67/No.1.09.html)
 
 ## Required reference datasets
 

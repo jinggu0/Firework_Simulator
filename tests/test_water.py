@@ -9,6 +9,7 @@ from simulator.water import (
     build_directional_spectrum,
     build_water_mesh,
     estimate_fetch_length_m,
+    relax_wave_spectrum,
 )
 
 
@@ -25,6 +26,23 @@ def test_stronger_wind_produces_more_wave_energy() -> None:
     calm = build_directional_spectrum(WaterConfig(wind_speed_mps=1.5))
     wind = build_directional_spectrum(WaterConfig(wind_speed_mps=5.0))
     assert wind.significant_wave_height_m > calm.significant_wave_height_m
+
+
+def test_wave_relaxation_preserves_phase_and_moves_toward_new_wind() -> None:
+    calm = build_directional_spectrum(WaterConfig(wind_speed_mps=1.5))
+    wind = build_directional_spectrum(WaterConfig(wind_speed_mps=5.0))
+    relaxed = relax_wave_spectrum(calm, wind, 30.0, 180.0)
+    np.testing.assert_array_equal(relaxed.phases, calm.phases)
+    assert (
+        calm.significant_wave_height_m
+        < relaxed.significant_wave_height_m
+        < wind.significant_wave_height_m
+    )
+    np.testing.assert_allclose(
+        np.linalg.norm(relaxed.components[:, :2], axis=1),
+        1.0,
+        atol=1e-6,
+    )
 
 
 def test_water_mesh_index_bounds() -> None:

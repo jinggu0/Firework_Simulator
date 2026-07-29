@@ -19,6 +19,8 @@ class WaterConfig:
     maximum_wavelength_m: float = 30.0
     directional_spread_power: float = 8.0
     choppiness: float = 0.72
+    wind_response_time_s: float = 180.0
+    atmosphere_update_interval_s: float = 2.0
     grid_size: tuple[int, int] = (181, 129)
     extent_m: tuple[float, float] = (1_200.0, 900.0)
     far_grid_size: tuple[int, int] = (121, 97)
@@ -32,6 +34,32 @@ class WaveSpectrum:
     components: np.ndarray
     phases: np.ndarray
     significant_wave_height_m: float
+
+
+def relax_wave_spectrum(
+    current: WaveSpectrum,
+    target: WaveSpectrum,
+    dt_s: float,
+    response_time_s: float,
+) -> WaveSpectrum:
+    """Relax a wind sea toward new forcing without popping wave phases."""
+
+    alpha = 1.0 - math.exp(-max(dt_s, 0.0) / max(response_time_s, 1e-6))
+    components = current.components + alpha * (
+        target.components - current.components
+    )
+    directions = components[:, :2]
+    direction_lengths = np.linalg.norm(directions, axis=1, keepdims=True)
+    components[:, :2] = directions / np.maximum(direction_lengths, 1e-7)
+    amplitudes = components[:, 3]
+    significant_height = 4.0 * math.sqrt(
+        max(0.5 * float(np.sum(amplitudes**2)), 0.0)
+    )
+    return WaveSpectrum(
+        components.astype(np.float32, copy=False),
+        current.phases,
+        significant_height,
+    )
 
 
 def build_directional_spectrum(

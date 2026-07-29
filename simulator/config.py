@@ -42,9 +42,9 @@ class ShellConfig:
     star_lifetime_mean_s: float = 2.25
     star_lifetime_std_s: float = 0.22
     star_drag_time_s: float = 1.35
-    luminous_power_w: float = 155.0
     color_temperature_k: float = 2_300.0
     star_composition_mass_kg: float = 0.78
+    star_radiative_energy_fraction: float = 0.15
     star_smoke_yield_fraction: float = 0.24
     star_specific_energy_j_kg: float = 4_200_000.0
     star_post_combustion_thermal_fraction: float = 0.06
@@ -93,15 +93,53 @@ class AcousticConfig:
 
 
 @dataclass(frozen=True, slots=True)
+class LightingConfig:
+    """Calibratable source-energy and light-transport parameters."""
+
+    led_input_power_w: float = 35.0
+    led_driver_efficiency: float = 0.92
+    led_internal_quantum_efficiency: float = 0.82
+    led_electrical_efficiency: float = 0.90
+    led_extraction_efficiency: float = 0.86
+    led_phosphor_efficiency: float = 0.83
+    luminaire_optical_efficiency: float = 0.88
+    led_spectral_luminous_efficacy_lm_w: float = 300.0
+    interior_utilization_factor: float = 0.42
+    window_visible_transmittance: float = 0.70
+    window_emitting_area_m2: float = 8.0
+    twilight_spectral_luminous_efficacy_lm_w: float = 100.0
+    calibrated_urban_ambient_illuminance_lux: float = 1.2
+    air_extinction_per_m: float = 0.00012
+    dynamic_light_count: int = 8
+
+
+@dataclass(frozen=True, slots=True)
+class PhysicalCameraConfig:
+    """Thin-lens and CMOS sensor parameters."""
+
+    sensor_width_mm: float = 36.0
+    sensor_height_mm: float = 20.25
+    focal_length_mm: float = 24.0
+    f_number: float = 2.8
+    lens_transmission: float = 0.90
+    shutter_time_s: float = 1.0 / 60.0
+    iso: float = 800.0
+    base_iso: float = 100.0
+    pixel_pitch_um: float = 5.9
+    quantum_efficiency_rgb: tuple[float, float, float] = (0.42, 0.52, 0.36)
+    wavelength_rgb_nm: tuple[float, float, float] = (610.0, 550.0, 460.0)
+    full_well_electrons: float = 45_000.0
+    read_noise_electrons: float = 2.2
+    enable_sensor_noise: bool = True
+
+
+@dataclass(frozen=True, slots=True)
 class RenderConfig:
     width: int = 1280
     height: int = 720
     target_fps: int = 60
     vsync: bool = True
     physics_hz: int = 120
-    vertical_fov_deg: float = 52.0
-    exposure_ev100: float = 7.0
-    shutter_time_s: float = 1.0 / 60.0
     bloom_strength: float = 0.72
     reflection_scale: float = 0.5
     reflection_hz: int = 30
@@ -116,4 +154,8 @@ class SimulationConfig:
     camera: CameraConfig = field(default_factory=CameraConfig)
     smoke: SmokeConfig = field(default_factory=SmokeConfig)
     acoustics: AcousticConfig = field(default_factory=AcousticConfig)
+    lighting: LightingConfig = field(default_factory=LightingConfig)
+    physical_camera: PhysicalCameraConfig = field(
+        default_factory=PhysicalCameraConfig
+    )
     random_seed: int = 20241005
