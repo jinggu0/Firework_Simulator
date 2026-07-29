@@ -59,7 +59,13 @@ class SmokeConfig:
     """Low-Mach post-blast plume solver settings in SI units."""
 
     prefer_gpu_solver: bool = True
+    prefer_3d_gpu_solver: bool = True
     gpu_update_hz: int = 60
+    gpu_3d_update_hz: int = 30
+    gpu_3d_grid_size: tuple[int, int, int] = (32, 24, 10)
+    gpu_3d_bounds_m: tuple[float, float, float, float, float, float] = (
+        -200.0, 200.0, 0.0, 300.0, -60.0, 60.0
+    )
     grid_size: tuple[int, int] = (64, 36)
     bounds_m: tuple[float, float, float, float] = (-320.0, 320.0, 0.0, 360.0)
     update_hz: int = 30

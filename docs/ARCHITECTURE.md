@@ -264,33 +264,38 @@ stars, fine sparks, and embers with measured counts and burn laws.
 
 ## Post-blast smoke fluid
 
-The plume solver is a 64 x 36 vertical East-Up slice covering 640 x 360 m.
-The GPU backend advances at 60 Hz; the compatibility CPU backend remains
-30 Hz. Both execute 720 pressure iterations per simulated second independently
-of the display rate. Smoke mass and temperature excess occupy cell centres;
-horizontal and vertical velocity occupy their respective faces on a
-Marker-and-Cell grid.
+The default plume solver is now a depth-resolved 32 x 24 x 10 East-Up-North
+grid covering 400 x 300 x 120 m around the launch site. Its approximately
+12 m cells are an intentionally bounded launch-domain brick: the scale resolves
+the event's large coherent plume motion while keeping the complete coupled
+simulation inside a laptop's 16.67 ms frame budget. Smoke mass and temperature
+excess occupy cell centres; all three velocity components occupy their
+respective faces on a three-dimensional Marker-and-Cell grid.
 
 Each step uses midpoint semi-Lagrangian backtracing, molecular diffusion,
 Boussinesq thermal buoyancy, particulate loading, vorticity confinement, and a
 Jacobi pressure projection. Automated checks require the projection to reduce
 velocity divergence, preserve the injected smoke mass to discretization
-tolerance, carry smoke downwind, and move a heated plume upward.
+tolerance, carry smoke through the measured crosswind direction, and move a
+heated plume upward.
 
-The default backend now executes these operations in OpenGL 3.3 floating-point
-framebuffers rather than requiring compute-shader support. Density and
-temperature remain cell-centred RG32F fields; horizontal velocity is an
-`(nx + 1) x ny` face texture, vertical velocity is `nx x (ny + 1)`, and
-pressure/divergence are cell-centred R32F textures. Midpoint advection,
-diffusion/decay, buoyancy, vorticity confinement, pressure projection, and the
-final face-velocity projection all preserve the CPU solver's MAC topology and
-SI coefficients. At 60 Hz, twelve Jacobi iterations are implemented as six
-ping-pong passes because each pressure fragment algebraically expands two
-iterations. This halves framebuffer transitions without changing the
-iteration result. GPU state stays resident between steps; the CPU uploads only
-new conservative mass/heat sources, and diagnostic readback occurs only when
-explicitly requested. Unsupported drivers automatically retain the NumPy
-backend.
+OpenGL 4.3 compute shaders advance the 3D grid at 30 Hz while rendering and
+camera response remain 60 Hz. Density/temperature use RG32F 3D textures;
+the staggered U, V, and W fields, pressure, and divergence use R32F 3D
+textures. A 3D curl field supplies vorticity confinement. Twenty-four Jacobi
+iterations per step are evaluated as twelve ping-pong dispatches by
+algebraically expanding two iterations in each compute invocation. This keeps
+the same 720 pressure iterations per simulated second as the fallbacks.
+Pressure is warm-started and its arbitrary gauge is pinned to prevent
+constant-mode drift. GPU state stays resident; the CPU uploads only a compact
+conservative source field, and readback is reserved for diagnostics.
+
+The application requests OpenGL 4.3 first. If compute shaders are unavailable,
+it automatically selects the existing OpenGL 3.3 64 x 36 two-dimensional MAC
+solver at 60 Hz and twelve pressure iterations per step. If GPU fluid creation
+also fails, the 30 Hz NumPy solver with twenty-four iterations remains the
+last compatibility path. All three therefore retain the same pressure-work
+rate and physical coefficients rather than changing the model to recover FPS.
 
 The shell's provisional 85 g burst charge emits 12% particulate mass. Of the
 charge's provisional 3 MJ/kg chemical energy, 18% enters the slow plume as
@@ -308,23 +313,26 @@ fuel mass. The default smoke yield is 24%; 6% of a provisional 4.2 MJ/kg
 reaction energy enters the resolved plume as sensible heat.
 
 Star products are accumulated over four 120 Hz ballistic steps and deposited
-into the containing finite-volume smoke cell at 30 Hz. This nearest-cell source
-is conservative and avoids fabricating sub-grid detail at the current 10 m
-cell size. The GPU's linear field sampling and the following fluid advection
-provide visual continuity. Stars that extinguish between fluid steps settle
-their final partial burn before particle compaction, preventing lost mass or
-energy.
+into the containing 3D finite-volume cell at 30 Hz. `bincount` reductions
+conserve all accepted particulate mass and sensible heat without an
+8,000-particle GPU dispatch. The spherical burst source is a volume-normalized
+3D Gaussian rather than the former depth profile. The temperature field is
+bounded at the configured 850 K excess, matching the CPU solver's unresolved
+sub-grid energy policy. GPU trilinear sampling and subsequent advection provide
+visual continuity without fabricating smaller simulated eddies. Stars that
+extinguish between fluid steps settle their final partial burn before particle
+compaction, preventing lost mass or energy.
 
 The incompressible solver deliberately begins after the rapid compressible
 shock phase. Applying incompressibility to the detonation itself would be
 physically wrong; the separate blast-acoustics module supplies the short
 pressure and acoustic transient.
 
-The renderer directly samples the GPU's 64 x 36 two-channel field. It
-reconstructs the 120 m depth continuously inside the ray marcher with a
-truncated Gaussian profile normalized so integrating a column returns the
-original 2D smoke mass and sensible heat. This removes both the former flat
-plane and the per-update CPU construction/upload of a 64 x 36 x 24 texture.
+The renderer directly samples the resident two-channel 3D state texture. Every
+ray-march sample therefore sees the independently advected crosswind density
+and temperature instead of reconstructing depth from a symmetric Gaussian.
+The OpenGL 3.3 and CPU fallbacks retain the normalized analytic-depth path so
+older laptops still render a volumetric plume.
 
 For every visible pixel, the GPU intersects the camera ray with the volume and
 integrates up to 40 jittered samples. Each segment applies Beer-Lambert
@@ -340,20 +348,15 @@ volume after its front boundary cannot yet terminate an individual ray; exact
 interior occlusion requires sampling a copied depth texture or ray tracing the
 scene geometry.
 
-This is a view-dependent 3D participating medium but not yet a 3D fluid solve.
-The Gaussian depth assumption is symmetric and cannot produce independent
-crosswind vortices. Production quality still requires a sparse 3D GPU MAC
-grid, combustion-species calibration, multiple scattering, and direct light
-injection from individual burning stars.
-
-The field texture retains its physical domain, but its rendered proxy is
-contracted after every fluid update to the conservative XY bounds of optically
-active cells plus one-cell interpolation margin. The normalized analytic depth
-remains intact. Empty portions of the
-640 x 360 x 120 m domain therefore create neither fragments nor 40-sample ray
-loops. Texture coordinates still reference the complete XY domain, so this is
+The 3D field retains its complete physical domain, but its rendered proxy is
+restricted to conservative source bounds and then expanded each step by the
+maximum modeled wind and buoyant-growth envelope. Empty portions of the
+400 x 300 x 120 m domain therefore create neither fragments nor 40-sample ray
+loops. Texture coordinates still reference the complete 3D domain, so this is
 empty-space skipping rather than a change to density, temperature, or optical
-path length.
+path length. Future production calibration still requires adaptive sparse
+bricks outside the launch domain, combustion-species measurements, multiple
+scattering, and direct shadowing from individual burning stars.
 
 ## Radiometric light sources and physical camera
 
@@ -426,32 +429,34 @@ distort the cached radiance every 60 Hz frame. Far facades also replace
 per-window occupancy hashes with filtered average emission beyond 1,600 m,
 limiting shader aliasing and work without replacing geometry with billboards.
 
-A stricter A/B run uses separate processes to avoid cross-context driver
+A stricter comparison uses separate processes to avoid cross-context driver
 contamination:
-`python -m tools.profile_runtime --frames 240 --fluid-backend gpu
---integrated-only` and the equivalent `--fluid-backend cpu` command. Both call
-GPU finish every frame while moving the camera and updating 8,000 stars,
-120 Hz ballistics, fluid evolution, evolving water, reflections, physical
-sensor noise, bloom, and tone mapping.
+`python -m tools.profile_runtime --frames 240 --fluid-backend 3d
+--integrated-only`, followed by the equivalent `2d` and `cpu` commands. Each
+case blocks on GPU completion while moving the camera and updating 8,000
+stars, 120 Hz ballistics, fluid evolution, evolving water, reflections,
+physical sensor noise, bloom, and tone mapping.
 
-The final GPU MAC path measures 11.469 ms mean, 14.199 ms p95, and 18.495 ms
-p99. Physics p95 is 6.462 ms and visual p95 is 8.724 ms. The isolated NumPy
-baseline measures 14.612 ms mean, 21.801 ms p95, and 25.641 ms p99, with
-13.956 ms physics p95. GPU migration therefore reduces integrated p95 by
-7.602 ms (34.9%) and leaves 2.47 ms of p95 margin inside the 16.67 ms 60 Hz
-budget on the development laptop.
+The final 240-frame 3D run measures 10.816 ms mean, 13.431 ms p95, and
+14.700 ms p99. Physics p95 is 5.805 ms and visual p95 is 8.223 ms, leaving
+3.24 ms of p95 margin inside the 16.67 ms 60 Hz budget. A longer 720-frame
+run improves to 12.873 ms p95 and 13.734 ms p99. In the same isolated
+240-frame procedure, the OpenGL 3.3 2D fallback measures 13.028 ms p95. The
+NumPy fallback is machine-load sensitive and measures 29.592 ms p95 in the
+recorded run, which confirms that it is a correctness compatibility path
+rather than the target quality tier.
 
-The GPU uses 60 Hz x 12 pressure iterations while the fallback uses
-30 Hz x 24, preserving 720 iterations/s and every physical coefficient while
-doubling GPU temporal resolution. A threaded NumPy double-buffer remains
-rejected because it competes with rendering for memory bandwidth. The
-normalized Gaussian render proxy is bounded at four standard deviations on
-each side, retaining more than 99.993% of its mass while excluding optically
-empty fragments. The next latency work is therefore ordered as follows:
-expand the 2D slice to a sparse 3D GPU MAC grid, add GPU source-reduction
-diagnostics, then add depth-pyramid interior smoke occlusion. Dynamic
-resolution, if required, applies only to volumetric radiance and reflection,
-never to trajectory, terrain, building geometry, or the fixed physics clocks.
+The key latency decision is to advance the inertial plume at 30 Hz while
+volumetric ray marching, water, camera, particles, and exposure stay at 60 Hz.
+Doubling pressure iterations per fluid step preserves 720
+iterations/s, and the real 3D field removes the former Gaussian-depth visual
+assumption. A threaded NumPy double-buffer remains rejected because it
+competes with rendering for memory bandwidth. The next latency work is ordered
+as follows: add active sparse-brick dispatch beyond the current launch domain,
+add GPU source-reduction diagnostics, then add depth-pyramid interior smoke
+occlusion. Dynamic resolution, if required, applies only to volumetric
+radiance and reflection, never to trajectory, terrain, building geometry, or
+the fixed physics clocks.
 
 ## Delayed blast acoustics
 

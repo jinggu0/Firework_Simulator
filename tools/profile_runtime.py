@@ -12,13 +12,15 @@ from simulator.app import SimulatorApp
 from simulator.config import SimulationConfig
 
 
-def _prepare_populated_app(prefer_gpu_fluid: bool = True) -> SimulatorApp:
+def _prepare_populated_app(fluid_backend: str = "3d") -> SimulatorApp:
     base = SimulationConfig()
     config = replace(
         base,
         render=replace(base.render, vsync=False, target_fps=0),
         smoke=replace(
-            base.smoke, prefer_gpu_solver=prefer_gpu_fluid
+            base.smoke,
+            prefer_3d_gpu_solver=fluid_backend == "3d",
+            prefer_gpu_solver=fluid_backend in ("3d", "2d"),
         ),
     )
     app = SimulatorApp(config)
@@ -54,9 +56,9 @@ def _profile_case(
     frames: int,
     include_smoke: bool,
     moving_camera: bool,
-    prefer_gpu_fluid: bool = True,
+    fluid_backend: str = "3d",
 ) -> dict[str, float | str]:
-    app = _prepare_populated_app(prefer_gpu_fluid)
+    app = _prepare_populated_app(fluid_backend)
     frame_dt = 1.0 / 60.0
     smoke = app.smoke if include_smoke else None
     for _ in range(12):
@@ -102,11 +104,11 @@ def _profile_case(
 
 
 def _profile_integrated(
-    frames: int, prefer_gpu_fluid: bool = True
+    frames: int, fluid_backend: str = "3d"
 ) -> dict[str, float | str]:
     """Measure the coupled fixed-step simulation and blocking visual path."""
 
-    app = _prepare_populated_app(prefer_gpu_fluid)
+    app = _prepare_populated_app(fluid_backend)
     frame_dt_s = 1.0 / 60.0
     physics_dt_s = 1.0 / app.config.render.physics_hz
     physics_ms: list[float] = []
@@ -174,8 +176,8 @@ def main() -> None:
     parser.add_argument("--frames", type=int, default=120)
     parser.add_argument(
         "--fluid-backend",
-        choices=("gpu", "cpu"),
-        default="gpu",
+        choices=("3d", "2d", "cpu"),
+        default="3d",
         help="Select the fluid backend for this isolated process.",
     )
     parser.add_argument(
@@ -184,8 +186,7 @@ def main() -> None:
         help="Run only the coupled blocking case for clean A/B comparison.",
     )
     args = parser.parse_args()
-    prefer_gpu_fluid = args.fluid_backend == "gpu"
-    integrated = _profile_integrated(args.frames, prefer_gpu_fluid)
+    integrated = _profile_integrated(args.frames, args.fluid_backend)
     if args.integrated_only:
         print(json.dumps({
             "frames": args.frames,
@@ -198,13 +199,13 @@ def main() -> None:
         return
     cases = [
         _profile_case(
-            "full_moving", args.frames, True, True, prefer_gpu_fluid
+            "full_moving", args.frames, True, True, args.fluid_backend
         ),
         _profile_case(
-            "no_smoke_moving", args.frames, False, True, prefer_gpu_fluid
+            "no_smoke_moving", args.frames, False, True, args.fluid_backend
         ),
         _profile_case(
-            "full_static", args.frames, True, False, prefer_gpu_fluid
+            "full_static", args.frames, True, False, args.fluid_backend
         ),
     ]
     by_name = {str(case["case"]): case for case in cases}

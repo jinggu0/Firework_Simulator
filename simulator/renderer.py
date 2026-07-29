@@ -653,10 +653,14 @@ SMOKE_FRAGMENT = """
 #version 330
 in vec3 surface_position; out vec4 frag_color;
 uniform sampler2D smoke_state;
+uniform sampler3D smoke_state_3d;
+uniform int smoke_is_3d;
 uniform vec3 camera_position;
 uniform vec3 volume_min;
 uniform vec3 volume_max;
 uniform vec4 smoke_xy_bounds;
+uniform vec3 smoke_field_min;
+uniform vec3 smoke_field_max;
 uniform float depth_profile_sigma_m;
 uniform float depth_profile_scale;
 uniform int camera_inside;
@@ -689,15 +693,23 @@ void main() {
         if (i >= ray_steps) break;
         float distance_m = t_near + (float(i) + jitter) * step_m;
         vec3 world = camera_position + ray * distance_m;
-        vec2 field_uv = (world.xy - smoke_xy_bounds.xy)
-                      / (smoke_xy_bounds.zw - smoke_xy_bounds.xy);
-        vec2 state = texture(smoke_state, field_uv).rg;
-        float depth_profile = depth_profile_scale * exp(
-            -0.5 * world.z * world.z
-            / (depth_profile_sigma_m * depth_profile_sigma_m)
-        );
-        float density = max(state.r * depth_profile, 0.0);
-        float temperature = max(state.g * depth_profile, 0.0);
+        vec2 state;
+        if (smoke_is_3d != 0) {
+            vec3 field_uvw = (world - smoke_field_min)
+                           / (smoke_field_max - smoke_field_min);
+            state = texture(smoke_state_3d, field_uvw).rg;
+        } else {
+            vec2 field_uv = (world.xy - smoke_xy_bounds.xy)
+                          / (smoke_xy_bounds.zw - smoke_xy_bounds.xy);
+            state = texture(smoke_state, field_uv).rg;
+            float depth_profile = depth_profile_scale * exp(
+                -0.5 * world.z * world.z
+                / (depth_profile_sigma_m * depth_profile_sigma_m)
+            );
+            state *= depth_profile;
+        }
+        float density = max(state.r, 0.0);
+        float temperature = max(state.g, 0.0);
         float step_alpha = 1.0 - exp(-density * 4500.0 * step_m);
         float warm = clamp(temperature / 850.0, 0.0, 1.0);
         vec3 scattered = mix(vec3(.0010, .00115, .00135),
@@ -991,9 +1003,13 @@ class Renderer:
         self.smoke_state_texture.repeat_x = False
         self.smoke_state_texture.repeat_y = False
         self.smoke_program["smoke_state"] = 4
+        self.smoke_program["smoke_state_3d"] = 5
+        self.smoke_program["smoke_is_3d"] = 0
         self.smoke_program["volume_min"].value = (sx0, sy0, sz0)
         self.smoke_program["volume_max"].value = (sx1, sy1, sz1)
         self.smoke_program["smoke_xy_bounds"].value = (sx0, sy0, sx1, sy1)
+        self.smoke_program["smoke_field_min"].value = (sx0, sy0, sz0)
+        self.smoke_program["smoke_field_max"].value = (sx1, sy1, sz1)
         dz = smoke_config.volume_depth_m / smoke_config.volume_slices
         depth_sigma_m = max(smoke_config.plume_depth_m * 0.5, dz)
         depth_integral = (
@@ -1375,7 +1391,16 @@ class Renderer:
             render_state_texture = getattr(
                 smoke, "render_state_texture", self.smoke_state_texture
             )
-            render_state_texture.use(4)
+            smoke_is_3d = int(getattr(smoke, "is_3d", False))
+            self.smoke_program["smoke_is_3d"] = smoke_is_3d
+            if smoke_is_3d:
+                self.smoke_program["smoke_field_min"].value = (
+                    smoke.x_min, smoke.y_min, smoke.z_min
+                )
+                self.smoke_program["smoke_field_max"].value = (
+                    smoke.x_max, smoke.y_max, smoke.z_max
+                )
+            render_state_texture.use(5 if smoke_is_3d else 4)
             self.ctx.enable(moderngl.BLEND)
             self.ctx.enable(moderngl.DEPTH_TEST)
             self.ctx.depth_mask = False

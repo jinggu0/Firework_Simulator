@@ -29,16 +29,7 @@ class SimulatorApp:
             self.config.acoustics.sample_rate_hz, -16, 2, 512
         )
         pygame.init()
-        pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MAJOR_VERSION, 3)
-        pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MINOR_VERSION, 3)
-        pygame.display.gl_set_attribute(
-            pygame.GL_CONTEXT_PROFILE_MASK, pygame.GL_CONTEXT_PROFILE_CORE
-        )
-        pygame.display.set_mode(
-            (render.width, render.height),
-            pygame.OPENGL | pygame.DOUBLEBUF,
-            vsync=1 if render.vsync else 0,
-        )
+        self.requested_gl_version = self._create_display(render)
         pygame.display.set_caption("Yeouido Fireworks Simulator")
         self.ctx = moderngl.create_context()
         environment_path = (
@@ -100,6 +91,35 @@ class SimulatorApp:
         pygame.mouse.set_visible(False)
         pygame.mouse.get_rel()
         self.world.launch()
+
+    @staticmethod
+    def _create_display(render) -> tuple[int, int]:
+        last_error: pygame.error | None = None
+        for major, minor in ((4, 3), (3, 3)):
+            try:
+                pygame.display.gl_set_attribute(
+                    pygame.GL_CONTEXT_MAJOR_VERSION, major
+                )
+                pygame.display.gl_set_attribute(
+                    pygame.GL_CONTEXT_MINOR_VERSION, minor
+                )
+                pygame.display.gl_set_attribute(
+                    pygame.GL_CONTEXT_PROFILE_MASK,
+                    pygame.GL_CONTEXT_PROFILE_CORE,
+                )
+                pygame.display.set_mode(
+                    (render.width, render.height),
+                    pygame.OPENGL | pygame.DOUBLEBUF,
+                    vsync=1 if render.vsync else 0,
+                )
+                return major, minor
+            except pygame.error as error:
+                last_error = error
+                pygame.display.quit()
+                pygame.display.init()
+        raise pygame.error(
+            f"OpenGL 3.3 core context unavailable: {last_error}"
+        )
 
     def run(self, max_frames: int | None = None) -> None:
         previous = time.perf_counter()

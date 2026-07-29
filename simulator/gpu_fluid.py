@@ -859,6 +859,13 @@ def create_smoke_solver(
     config: SmokeConfig,
     atmosphere: AtmosphereConfig,
 ) -> SmokeFluid2D:
+    if config.prefer_3d_gpu_solver and ctx.version_code >= 430:
+        try:
+            from .gpu_fluid_3d import GpuSmokeFluid3D
+
+            return GpuSmokeFluid3D(ctx, config, atmosphere)
+        except (moderngl.Error, KeyError, ValueError):
+            pass
     if config.prefer_gpu_solver:
         try:
             return GpuSmokeFluid2D(ctx, config, atmosphere)
