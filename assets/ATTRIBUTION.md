@@ -32,3 +32,23 @@ the AWS Registry of Open Data.
 The AWS registry describes this as a global bare-earth elevation dataset.
 Higher zoom tiles can be resampled from coarser sources, so zoom level must not
 be interpreted as source survey resolution.
+
+## Historical weather
+
+The event environment snapshot is derived from hourly Seoul station records
+distributed by Meteostat.
+
+- Station: Seoul `47108`
+- Event observations: October 5, 2024, 18:00–22:00 KST
+- Endpoint: `https://data.meteostat.net/hourly/2024/47108.csv.gz`
+- Documentation: https://dev.meteostat.net/data/timeseries/hourly
+- Parameter units: https://dev.meteostat.net/parameters
+- Snapshot accessed: 2026-07-29
+
+Temperature, humidity, pressure, wind, and cloud-cover values used here report
+`isd_lite` as their field source. Meteostat wind speed is distributed in km/h
+and is converted to m/s by the importer.
+
+The 19:20–20:30 show interval is taken from the Seoul Metropolitan Government
+culture listing:
+https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=149765.&menuNo=200010

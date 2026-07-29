@@ -11,6 +11,7 @@ GRAVITY_MPS2 = 9.80665
 @dataclass(frozen=True, slots=True)
 class WaterConfig:
     wind_speed_mps: float = 2.5
+    # Meteorological bearing: direction the wind comes from.
     wind_direction_deg: float = 255.0
     fetch_length_m: float = 1_200.0
     wave_count: int = 32
@@ -60,8 +61,9 @@ def build_directional_spectrum(
     delta_k = wave_numbers * log_step
 
     wind_angle = math.radians(config.wind_direction_deg)
+    travel_angle = wind_angle + math.pi
     wind_direction = np.array(
-        [math.sin(wind_angle), -math.cos(wind_angle)], dtype=np.float64
+        [math.sin(travel_angle), -math.cos(travel_angle)], dtype=np.float64
     )
     peak_length = min(
         config.maximum_wavelength_m,
@@ -82,7 +84,7 @@ def build_directional_spectrum(
         math.radians(32.0) / math.sqrt(config.directional_spread_power),
         config.wave_count,
     )
-    angles = wind_angle + angular_offsets
+    angles = travel_angle + angular_offsets
     directions = np.column_stack((np.sin(angles), -np.cos(angles)))
     alignment = np.maximum(directions @ wind_direction, 0.0)
     directional = alignment**config.directional_spread_power
@@ -126,4 +128,3 @@ def build_water_mesh(config: WaterConfig) -> tuple[np.ndarray, np.ndarray]:
             b = a + columns
             index_rows.extend((a, b, a + 1, a + 1, b, b + 1))
     return vertices, np.asarray(index_rows, dtype=np.uint32)
-

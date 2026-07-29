@@ -25,3 +25,11 @@ def test_water_mesh_index_bounds() -> None:
     assert int(indices.max()) < len(vertices)
     assert len(indices) == (17 - 1) * (9 - 1) * 6
 
+
+def test_north_wind_waves_travel_south() -> None:
+    spectrum = build_directional_spectrum(
+        WaterConfig(wind_speed_mps=4.0, wind_direction_deg=360.0)
+    )
+    weights = spectrum.components[:, 3]
+    mean_south = np.average(spectrum.components[:, 1], weights=weights)
+    assert mean_south > 0.8

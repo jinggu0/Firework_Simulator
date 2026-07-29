@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import math
 
 from .camera import CameraConfig
 
@@ -12,7 +13,18 @@ class AtmosphereConfig:
     pressure_pa: float = 101_325.0
     relative_humidity: float = 0.60
     wind_velocity_mps: tuple[float, float, float] = (1.4, 0.0, 0.2)
+    wind_velocity_100m_mps: tuple[float, float, float] = (1.8, 0.0, 0.4)
     air_density_kg_m3: float = 1.225
+    cloud_cover_fraction: float = 0.0
+
+    def wind_at_height_m(self, height_m: float) -> tuple[float, float, float]:
+        alpha = min(max(math.log(max(height_m, 10.0) / 10.0) / math.log(10.0), 0.0), 1.0)
+        return tuple(
+            low * (1.0 - alpha) + high * alpha
+            for low, high in zip(
+                self.wind_velocity_mps, self.wind_velocity_100m_mps
+            )
+        )
 
 
 @dataclass(frozen=True, slots=True)

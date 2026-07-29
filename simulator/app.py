@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
 import time
 
 import moderngl
@@ -8,6 +10,7 @@ import pygame
 from .camera import FreeCamera
 from .clock import FixedStepClock
 from .config import SimulationConfig
+from .environment import EnvironmentTimeline
 from .physics import FireworkWorld
 from .renderer import Renderer
 
@@ -29,11 +32,29 @@ class SimulatorApp:
         )
         pygame.display.set_caption("Yeouido Fireworks Simulator")
         self.ctx = moderngl.create_context()
+        environment_path = (
+            Path(__file__).resolve().parent.parent
+            / "assets"
+            / "yeouido_2024-10-05_environment.json"
+        )
+        self.environment = (
+            EnvironmentTimeline.load(environment_path)
+            if environment_path.exists()
+            else None
+        )
+        self.event_timestamp = (
+            self.environment.show_start_timestamp if self.environment else 0.0
+        )
+        initial_atmosphere = (
+            self.environment.sample(self.event_timestamp)
+            if self.environment
+            else self.config.atmosphere
+        )
         self.world = FireworkWorld(
-            self.config.atmosphere, self.config.shell,
+            initial_atmosphere, self.config.shell,
             render.max_particles, self.config.random_seed
         )
-        self.renderer = Renderer(self.ctx, render)
+        self.renderer = Renderer(self.ctx, render, initial_atmosphere)
         self.camera = FreeCamera(config=self.config.camera)
         self.physics_clock = FixedStepClock(render.physics_hz)
         self.frame_clock = pygame.time.Clock()
@@ -55,6 +76,11 @@ class SimulatorApp:
             self._update_camera(min(dt_s, 0.1))
             steps, _alpha = self.physics_clock.consume(dt_s)
             for _ in range(steps):
+                if self.environment:
+                    self.world.atmosphere = self.environment.sample(
+                        self.event_timestamp
+                    )
+                    self.event_timestamp += self.physics_clock.step_s
                 self.world.update(self.physics_clock.step_s)
             self.renderer.render(self.world, self.camera, dt_s)
             pygame.display.flip()
@@ -108,9 +134,23 @@ class SimulatorApp:
     def _title(self, dt_s: float) -> None:
         self.title_timer_s += dt_s
         if self.title_timer_s >= .5:
+            event_time = ""
+            weather = ""
+            if self.environment:
+                kst = timezone(timedelta(hours=9))
+                event_time = datetime.fromtimestamp(
+                    self.event_timestamp, kst
+                ).strftime(" | %H:%M:%S KST")
+                wind = self.world.atmosphere.wind_velocity_mps
+                weather = (
+                    f" | {self.world.atmosphere.temperature_k - 273.15:.1f} C"
+                    f" | wind {(wind[0] ** 2 + wind[2] ** 2) ** 0.5:.1f} m/s"
+                )
             pygame.display.set_caption(
                 f"Yeouido Fireworks | {self.frame_clock.get_fps():.1f} FPS"
                 f" | {self.world.stars.count:,} stars"
+                f"{event_time}"
+                f"{weather}"
                 f" | XYZ {self.camera.position_m[0]:.0f},"
                 f"{self.camera.position_m[1]:.0f},"
                 f"{self.camera.position_m[2]:.0f} m"

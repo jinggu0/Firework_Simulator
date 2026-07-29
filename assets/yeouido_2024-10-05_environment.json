@@ -1,0 +1,101 @@
+{
+  "event": {
+    "name": "2024 Seoul International Fireworks Festival",
+    "location": "Yeouido Hangang Park",
+    "show_start": "2024-10-05T19:20:00+09:00",
+    "show_end": "2024-10-05T20:30:00+09:00"
+  },
+  "provenance": {
+    "weather_source": "Meteostat station 47108 (Seoul), ISD Lite observations",
+    "station_id": "47108",
+    "retrieved": "2026-07-29",
+    "time_basis": "Source UTC converted to Asia/Seoul (UTC+09:00)"
+  },
+  "records": [
+    {
+      "time": "2024-10-05T18:00+09:00",
+      "temperature_c": 20.8,
+      "relative_humidity_percent": 49.0,
+      "pressure_hpa": 1021.2,
+      "wind_speed_mps": 2.111111111111111,
+      "wind_from_direction_deg": 290.0,
+      "cloud_cover_oktas": 1.0,
+      "field_sources": {
+        "temp": "isd_lite",
+        "rhum": "isd_lite",
+        "pres": "isd_lite",
+        "wspd": "isd_lite",
+        "wdir": "isd_lite",
+        "cldc": "isd_lite"
+      }
+    },
+    {
+      "time": "2024-10-05T19:00+09:00",
+      "temperature_c": 19.3,
+      "relative_humidity_percent": 53.0,
+      "pressure_hpa": 1020.9,
+      "wind_speed_mps": 0.5,
+      "wind_from_direction_deg": 360.0,
+      "cloud_cover_oktas": 2.0,
+      "field_sources": {
+        "temp": "isd_lite",
+        "rhum": "isd_lite",
+        "pres": "isd_lite",
+        "wspd": "isd_lite",
+        "wdir": "isd_lite",
+        "cldc": "isd_lite"
+      }
+    },
+    {
+      "time": "2024-10-05T20:00+09:00",
+      "temperature_c": 17.9,
+      "relative_humidity_percent": 59.0,
+      "pressure_hpa": 1021.6,
+      "wind_speed_mps": 1.0,
+      "wind_from_direction_deg": 270.0,
+      "cloud_cover_oktas": 2.0,
+      "field_sources": {
+        "temp": "isd_lite",
+        "rhum": "isd_lite",
+        "pres": "isd_lite",
+        "wspd": "isd_lite",
+        "wdir": "isd_lite",
+        "cldc": "isd_lite"
+      }
+    },
+    {
+      "time": "2024-10-05T21:00+09:00",
+      "temperature_c": 17.1,
+      "relative_humidity_percent": 63.0,
+      "pressure_hpa": 1021.8,
+      "wind_speed_mps": 1.0,
+      "wind_from_direction_deg": 320.0,
+      "cloud_cover_oktas": 3.0,
+      "field_sources": {
+        "temp": "isd_lite",
+        "rhum": "isd_lite",
+        "pres": "isd_lite",
+        "wspd": "isd_lite",
+        "wdir": "isd_lite",
+        "cldc": "isd_lite"
+      }
+    },
+    {
+      "time": "2024-10-05T22:00+09:00",
+      "temperature_c": 16.4,
+      "relative_humidity_percent": 64.0,
+      "pressure_hpa": 1022.0,
+      "wind_speed_mps": 0.5,
+      "wind_from_direction_deg": 360.0,
+      "cloud_cover_oktas": 6.0,
+      "field_sources": {
+        "temp": "isd_lite",
+        "rhum": "isd_lite",
+        "pres": "isd_lite",
+        "wspd": "isd_lite",
+        "wdir": "isd_lite",
+        "cldc": "isd_lite"
+      }
+    }
+  ]
+}

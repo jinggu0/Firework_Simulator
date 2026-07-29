@@ -7,7 +7,7 @@ import moderngl
 import numpy as np
 
 from .camera import FreeCamera
-from .config import RenderConfig
+from .config import AtmosphereConfig, RenderConfig
 from .physics import FireworkWorld
 from .scene import load_scene
 from .water import WaterConfig, build_directional_spectrum, build_water_mesh
@@ -266,7 +266,12 @@ void main() {
 class Renderer:
     """Linear-HDR renderer. Terrain, water, and atmosphere are separate passes."""
 
-    def __init__(self, ctx: moderngl.Context, config: RenderConfig) -> None:
+    def __init__(
+        self,
+        ctx: moderngl.Context,
+        config: RenderConfig,
+        atmosphere: AtmosphereConfig | None = None,
+    ) -> None:
         self.ctx, self.config, self.time_s = ctx, config, 0.0
         ctx.enable(moderngl.PROGRAM_POINT_SIZE)
         quad = np.array([-1, -1, 1, -1, -1, 1, 1, 1], dtype=np.float32)
@@ -311,7 +316,14 @@ class Renderer:
                       "in_position", "in_normal", "in_material")],
                 )
                 self.scene_vaos.append((vao, len(vertices)))
-        self.water_config = WaterConfig()
+        atmosphere = atmosphere or AtmosphereConfig()
+        wind = np.asarray(atmosphere.wind_velocity_mps, dtype=np.float32)
+        wind_speed = float(np.linalg.norm(wind[[0, 2]]))
+        wind_from = math.degrees(math.atan2(-float(wind[0]), float(wind[2]))) % 360.0
+        self.water_config = WaterConfig(
+            wind_speed_mps=max(wind_speed, 0.1),
+            wind_direction_deg=wind_from,
+        )
         water_spectrum = build_directional_spectrum(self.water_config)
         water_vertices, water_indices = build_water_mesh(self.water_config)
         self.water_program = ctx.program(

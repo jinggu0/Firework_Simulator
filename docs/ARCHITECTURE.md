@@ -133,6 +133,29 @@ pass each frame, keeping terrain, water Fresnel response, buildings, and
 fireworks in one coordinate frame. Adding the dynamic camera path measures
 about 1.69 ms per uncapped frame on the development machine.
 
+## Event environment timeline
+
+The official show interval is October 5, 2024, 19:20–20:30 KST. The runtime
+clock starts at 19:20 and samples hourly Seoul station 47108 observations using
+linear interpolation. The initial show sample is approximately 18.83 °C,
+55% relative humidity, 1021.13 hPa, and 0.47 m/s horizontal wind after vector
+interpolation.
+
+Meteorological wind bearings describe the direction wind comes from. They are
+converted to East-Up-South velocity vectors before interpolation, avoiding the
+360°/0° discontinuity. Moist-air density is recalculated from temperature,
+pressure, and humidity for ballistic drag.
+
+The station wind is treated as the 10 m reference. A provisional neutral
+vertical profile scales it to 1.4× at 100 m, with logarithmic interpolation by
+shell or star altitude. This is more defensible than applying one velocity at
+all heights, but it is not a measured event-night sounding and must be replaced
+if local lidar or radiosonde data becomes available.
+
+The environment timeline and altitude-dependent wind path bring the current
+uncapped full-frame measurement to approximately 2.36 ms (about 424 FPS) on
+the development machine.
+
 ## Required reference datasets
 
 - October 5, 2024 hourly and, where possible, sub-hourly weather observations

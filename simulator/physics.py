@@ -80,7 +80,13 @@ class StarField:
             return
 
         self.previous_position_m[:n] = self.position_m[:n]
-        wind = np.asarray(atmosphere.wind_velocity_mps, dtype=np.float32)
+        wind_10m = np.asarray(atmosphere.wind_velocity_mps, dtype=np.float32)
+        wind_100m = np.asarray(
+            atmosphere.wind_velocity_100m_mps, dtype=np.float32
+        )
+        heights = np.maximum(self.position_m[:n, 1], 10.0)
+        wind_alpha = np.clip(np.log(heights / 10.0) / np.log(10.0), 0.0, 1.0)
+        wind = wind_10m + (wind_100m - wind_10m) * wind_alpha[:, None]
         relative_velocity = self.velocity_mps[:n] - wind
         # Exponential relaxation is stable for large dt and approximates the
         # strongly size-dependent drag of burning pyrotechnic stars.
@@ -147,7 +153,6 @@ class FireworkWorld:
         )
 
     def update(self, dt_s: float) -> None:
-        wind = np.asarray(self.atmosphere.wind_velocity_mps, dtype=np.float32)
         config = self.shell_config
         cross_section_m2 = np.pi * (config.diameter_m * 0.5) ** 2
         drag_factor = (
@@ -160,6 +165,10 @@ class FireworkWorld:
 
         surviving_shells: list[Shell] = []
         for shell in self.shells:
+            wind = np.asarray(
+                self.atmosphere.wind_at_height_m(float(shell.position_m[1])),
+                dtype=np.float32,
+            )
             relative_velocity = shell.velocity_mps - wind
             speed = float(np.linalg.norm(relative_velocity))
             acceleration = GRAVITY_MPS2 - drag_factor * speed * relative_velocity
@@ -175,4 +184,3 @@ class FireworkWorld:
 
         self.shells = surviving_shells
         self.stars.update(dt_s, self.atmosphere)
-
