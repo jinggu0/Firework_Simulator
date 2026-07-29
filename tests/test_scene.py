@@ -223,7 +223,7 @@ def test_shipped_scene_is_the_event_time_snapshot() -> None:
     assert len(scene.vegetation_vertices) > 5_000
     assert len(scene.detail_vertices) > 100_000
     assert {
-        7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0
+        7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 16.0
     }.issubset(set(np.unique(scene.detail_vertices[:, 6])))
     assert {1.0, 2.0, 3.0, 4.0, 5.0, 6.0}.issubset(
         set(np.unique(scene.building_vertices[:, 9]))

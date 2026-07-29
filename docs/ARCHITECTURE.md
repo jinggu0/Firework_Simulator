@@ -451,6 +451,44 @@ sensor colour matrices, retinal adaptation, or smoke multiple scattering.
 Those require timestamped source/material/camera measurements and are explicit
 next calibration inputs.
 
+## Night atmosphere, vegetation, water, and site luminaires
+
+The background pass now carries a deterministic celestial catalogue even when
+no stars reach the sensor. Each star's finite-raster flux is reduced by
+Kasten-Young relative air mass, atmospheric extinction, and Beer-Lambert cloud
+optical depth. It is then compared against the local clear-sky, twilight, moon,
+and urban-cloud background radiance. The contrast gate suppresses the source
+before the existing physical camera response, so the 2024 Seoul urban sky can
+contain stars physically while displaying none. The catalogue is provisional
+and does not yet claim measured astrometric positions.
+
+Cloud density is a periodic three-octave field advected by the observed
+horizontal wind. Coverage shifts its density threshold, optical depth controls
+direct transmission, and moon/twilight/urban radiance supplies a compact
+single-scattering term. The expensive noise synthesis is performed once at
+startup; each sky pixel uses one advected texture sample. This retains a
+bounded full-screen cost and avoids temporal boiling.
+
+Historical `landuse=grass` and `natural=grassland` polygons seed 133 crossed
+blade clusters inside 1.2 km of the event origin. Blade bases remain fixed,
+while tip displacement follows a squared cantilever height profile, bounded
+wind response, and two-frequency gust. Distant grass receives the same
+wind-aligned travelling-wave normal field, and tree crowns receive a smaller
+height-weighted sway. These paths share the atmospheric wind used by the
+JONSWAP river forcing.
+
+Water now applies wavelength-dependent Beer-Lambert absorption over a
+view-angle path estimate, blue-green subsurface scattering, mask-gradient
+shore foam, wind-gated crest foam, and slope/wind-dependent GGX roughness.
+Planar city reflection and clustered firework energy remain unchanged.
+
+The imported lamp heads are recovered as physical luminaire positions. A
+default 72 W street fixture uses the existing LED driver, quantum, extraction,
+phosphor, and optical-efficiency chain. Its downward cosine lobe illuminates
+nearby land and scene geometry with inverse-square attenuation. Four nearest
+lights are retained for detail geometry, while the 5 km land pass evaluates
+only the two nearest lights.
+
 ## p95 bottleneck analysis
 
 `python -m tools.profile_runtime --frames 120` runs three repeatable GL
@@ -506,6 +544,18 @@ moving-camera timestamp run measures 14.028 ms GPU p95. The coupled blocking
 visual section measures 16.474 ms p95. Reflection LOD is therefore required
 for the fidelity default; submitting the full furniture/tree batch to the
 30 Hz reflection pass is outside the intended laptop margin.
+
+After adding cloud/star radiative visibility, wind vegetation, spectral water,
+and local luminaires, a clean 240-frame `3d --integrated-only` run measures a
+12.282 ms visual mean and 15.116 ms visual p95. The graphics section remains
+inside 16.67 ms. The deliberately blocking diagnostic serializes two 120 Hz
+physics steps and GPU completion; it records 18.618 ms frame mean and
+24.522 ms frame p95, with physics p95 at 11.108 ms. Therefore this stage meets
+the isolated visual budget but does not claim a universal 60 Hz guarantee
+under host load or forced CPU/GPU serialization. The next latency priority is
+physics-step spike reduction and real frame-pacing telemetry rather than
+removing the new radiative terms.
+
 The next latency work is ordered as follows: add active sparse-brick dispatch
 beyond the current launch domain, add GPU source-reduction diagnostics, then
 calibrate smoke lighting and multiple scattering. Dynamic resolution, if

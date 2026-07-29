@@ -18,6 +18,7 @@ from .config import (
     SmokeConfig,
 )
 from .fluid import SmokeFluid2D
+from .environmental_optics import periodic_cloud_noise, procedural_star_catalogue
 from .lighting import (
     cluster_radiant_lights,
     led_energy_budget,
@@ -72,6 +73,11 @@ uniform float tan_half_fov; uniform float aspect;
 uniform vec3 sun_direction; uniform vec3 moon_direction;
 uniform float twilight_strength; uniform float moon_strength;
 uniform float cloud_cover;
+uniform float time_s;
+uniform vec2 wind_xz;
+uniform sampler2D cloud_noise;
+uniform sampler2D star_catalogue;
+const float PI = 3.14159265359;
 void main() {
     vec2 screen = uv * 2.0 - 1.0;
     vec3 ray = normalize(camera_forward
@@ -90,10 +96,52 @@ void main() {
                         * (.00032 + cloud_cover * .00070);
     float moon_disc = smoothstep(cos(radians(.31)), cos(radians(.24)),
                                  dot(ray, moon_direction)) * moon_strength;
-    vec3 sky = night
+    vec3 clear_sky = night
              + twilight_color * western_twilight * (1.0 - cloud_cover * .45)
              + vec3(.00045, .00036, .00024) * urban_horizon
              + vec3(.72, .80, 1.0) * moon_disc;
+    float cloud_density = 0.0;
+    if (ray.y > .018 && cloud_cover > .002) {
+        vec2 advection = wind_xz * time_s * .00016;
+        vec2 layer0 = ray.xz / max(ray.y, .065) * .19 + advection;
+        float coverage_bias = mix(.82, .28, cloud_cover);
+        float density_sample = texture(cloud_noise, layer0 * .085).r;
+        float low = smoothstep(coverage_bias, 1.0, density_sample);
+        cloud_density = clamp(low, 0.0, 1.0);
+    }
+    float cloud_optical_depth = cloud_density * mix(1.2, 7.0, cloud_cover);
+    float cloud_transmission = exp(-cloud_optical_depth);
+    float moon_forward = pow(max(dot(ray, moon_direction), 0.0), 12.0);
+    vec3 cloud_scatter = (
+        vec3(.0035, .0032, .0028) * (.26 + urban_horizon * 180.0)
+        + vec3(.009, .010, .012) * moon_strength * (0.18 + moon_forward)
+        + twilight_color * western_twilight * .35
+    ) * (1.0 - cloud_transmission);
+    vec3 sky = clear_sky * cloud_transmission + cloud_scatter;
+
+    // A stable procedural catalogue. Visibility is background-limited:
+    // extinction and urban/cloud radiance can reduce its contribution to zero.
+    vec2 celestial_uv = vec2(
+        atan(ray.z, ray.x) / (2.0 * PI) + .5,
+        altitude / PI + .5
+    );
+    vec3 catalogue_flux = texture(star_catalogue, celestial_uv).rgb;
+    float magnitude_flux = max(
+        max(catalogue_flux.r, catalogue_flux.g), catalogue_flux.b
+    );
+    float air_mass = 1.0 / max(ray.y + .025 * exp(-11.0 * ray.y), .035);
+    float atmosphere_transmission = exp(-.12 * max(air_mass - 1.0, 0.0));
+    // Flux is reconstructed over a finite raster footprint; this scale keeps
+    // all but the brightest sources below Seoul's urban background.
+    float star_radiance = .00035 * magnitude_flux
+                        * atmosphere_transmission * cloud_transmission;
+    float background_radiance = max(
+        dot(sky, vec3(.2126, .7152, .0722)), 1e-7
+    );
+    float contrast = star_radiance / background_radiance;
+    float visibility = smoothstep(.10, .28, contrast);
+    vec3 star_color = catalogue_flux / max(magnitude_flux, 1e-7);
+    sky += star_color * star_radiance * visibility * above_horizon;
     vec3 below = vec3(.000025, .000035, .000055);
     frag_color = vec4(mix(below, sky, above_horizon), 1);
 }
@@ -307,6 +355,7 @@ uniform vec4 waves[32];
 uniform float phases[32];
 uniform float time_s;
 uniform float air_extinction_per_m;
+uniform float wind_speed_mps;
 uniform int dynamic_light_count;
 uniform vec3 dynamic_light_position[8];
 uniform vec3 dynamic_light_color[8];
@@ -350,12 +399,31 @@ void main() {
     vec3 reflected_radiance = reflection_valid
         ? texture(reflection_texture, reflection_uv).rgb
         : fallback_radiance;
-    vec3 water_body = vec3(.00010, .00028, .00034);
+    float optical_path_m = .42 / max(n_dot_v, .08);
+    vec3 absorption_per_m = vec3(.62, .22, .095);
+    vec3 water_transmission = exp(-absorption_per_m * optical_path_m);
+    vec3 subsurface_scatter = vec3(.000055, .00024, .00031)
+                            * (vec3(1.0) - water_transmission);
+    vec3 water_body = vec3(.000035, .00011, .00015)
+                    * water_transmission + subsurface_scatter;
     float grazing_haze = pow(1.0 - n_dot_v, 3.0) * .0007;
     vec3 radiance = mix(water_body, reflected_radiance, fresnel)
                   + grazing_haze;
+    vec2 mask_texel = 1.0 / vec2(textureSize(water_mask, 0));
+    float shore_gradient = length(vec2(
+        texture(water_mask, mask_uv + vec2(mask_texel.x, 0)).r
+      - texture(water_mask, mask_uv - vec2(mask_texel.x, 0)).r,
+        texture(water_mask, mask_uv + vec2(0, mask_texel.y)).r
+      - texture(water_mask, mask_uv - vec2(0, mask_texel.y)).r
+    ));
+    float slope = length(fine_gradient + world_normal.xz);
+    float crest_foam = smoothstep(.34, .62, slope)
+                     * clamp(wind_speed_mps / 9.0, 0.0, 1.0);
+    float foam = clamp(shore_gradient * .78 + crest_foam * .24, 0.0, 1.0);
+    radiance = mix(radiance, vec3(.010, .012, .013), foam);
     // Fixed-cost GGX reflection from energy-conserving firework clusters.
-    float roughness = 0.11;
+    float roughness = clamp(.075 + slope * .11 + wind_speed_mps * .004,
+                            .075, .24);
     float alpha = roughness * roughness;
     float alpha_squared = alpha * alpha;
     for (int i = 0; i < 8; ++i) {
@@ -425,7 +493,12 @@ in vec3 world_normal;
 uniform sampler2D water_mask;
 uniform vec4 water_mask_bounds;
 uniform float sky_ambient_scale;
+uniform int static_light_count;
+uniform vec3 static_light_position[4];
+uniform vec3 static_light_color;
+uniform float static_light_power_w;
 out vec4 frag_color;
+const float PI = 3.14159265359;
 void main() {
     vec2 uv = (world_position.xz - water_mask_bounds.xy)
             / (water_mask_bounds.zw - water_mask_bounds.xy);
@@ -436,6 +509,18 @@ void main() {
     float sky_light = max(world_normal.y, 0.15);
     vec3 ground = (vec3(.00032, .00042, .00030) + variation * .000035)
                 * sky_light * sky_ambient_scale;
+    for (int i = 0; i < 4; ++i) {
+        if (i >= static_light_count) break;
+        vec3 displacement = static_light_position[i] - world_position;
+        float distance_squared = max(dot(displacement, displacement), .5);
+        float distance_m = sqrt(distance_squared);
+        vec3 light_direction = displacement / distance_m;
+        float down_lobe = pow(max(light_direction.y, 0.0), 3.0);
+        float irradiance = static_light_power_w * 2.0 * down_lobe
+                         / (PI * distance_squared);
+        ground += vec3(.16, .17, .15) * static_light_color * irradiance
+                * max(dot(world_normal, light_direction), 0.0) / PI;
+    }
     frag_color = vec4(ground, 1.0);
 }
 """
@@ -450,6 +535,9 @@ in float in_facade_style;
 uniform mat4 view_projection;
 uniform sampler2D terrain_height;
 uniform vec4 terrain_bounds;
+uniform float time_s;
+uniform vec2 wind_xz;
+uniform float wind_speed_mps;
 out vec3 world_position;
 out vec3 world_normal;
 out float surface;
@@ -459,8 +547,31 @@ void main() {
     vec2 terrain_uv = (in_position.xz - terrain_bounds.xy)
                     / (terrain_bounds.zw - terrain_bounds.xy);
     float base_height = texture(terrain_height, terrain_uv).r;
-    world_position = in_position + vec3(0.0, base_height, 0.0);
-    world_normal = in_normal;
+    vec3 animated_position = in_position;
+    vec3 animated_normal = in_normal;
+    vec2 wind_direction = length(wind_xz) > .01
+                        ? normalize(wind_xz) : vec2(1.0, 0.0);
+    float spatial_phase = dot(in_position.xz, vec2(.73, .51));
+    float gust = sin(time_s * 1.37 + spatial_phase)
+               + .38 * sin(time_s * 2.91 + spatial_phase * 1.83);
+    if (in_surface > 15.5) {
+        float tip_weight = in_surface_uv.y * in_surface_uv.y;
+        float response = 1.0 - exp(-max(wind_speed_mps, 0.0) / 3.2);
+        vec2 bend = wind_direction * tip_weight * response
+                  * (.16 + .045 * gust);
+        animated_position.xz += bend;
+        animated_position.y -= length(bend) * .18 * tip_weight;
+        animated_normal = normalize(
+            in_normal + vec3(-bend.x, .18, -bend.y) * tip_weight
+        );
+    } else if (in_surface > 10.5 && in_surface < 11.5) {
+        float crown_weight = smoothstep(2.0, 11.0, in_position.y);
+        vec2 sway = wind_direction * crown_weight
+                  * min(wind_speed_mps * .018, .13) * gust;
+        animated_position.xz += sway;
+    }
+    world_position = animated_position + vec3(0.0, base_height, 0.0);
+    world_normal = animated_normal;
     surface = in_surface;
     surface_uv = in_surface_uv;
     facade_style = in_facade_style;
@@ -479,6 +590,13 @@ uniform vec3 camera_position;
 uniform float ambient_irradiance_w_m2;
 uniform float window_radiance_w_m2_sr;
 uniform float air_extinction_per_m;
+uniform float time_s;
+uniform vec2 wind_xz;
+uniform float wind_speed_mps;
+uniform int static_light_count;
+uniform vec3 static_light_position[4];
+uniform vec3 static_light_color;
+uniform float static_light_power_w;
 uniform int dynamic_light_count;
 uniform vec3 dynamic_light_position[8];
 uniform vec3 dynamic_light_color[8];
@@ -496,6 +614,19 @@ float interval(float value, float lower, float upper, float antialias) {
 }
 vec3 reflected_radiance(vec3 n, vec3 albedo) {
     vec3 result = albedo * ambient_irradiance_w_m2 / PI;
+    for (int i = 0; i < 4; ++i) {
+        if (i >= static_light_count) break;
+        vec3 displacement = static_light_position[i] - world_position;
+        float distance_squared = max(dot(displacement, displacement), .5);
+        float distance_m = sqrt(distance_squared);
+        vec3 light_direction = displacement / distance_m;
+        float down_lobe = pow(max(light_direction.y, 0.0), 3.0);
+        float irradiance = static_light_power_w * 2.0 * down_lobe
+                         * exp(-air_extinction_per_m * distance_m)
+                         / (PI * distance_squared);
+        result += albedo * static_light_color * irradiance
+                * max(dot(n, light_direction), 0.0) / PI;
+    }
     for (int i = 0; i < 8; ++i) {
         if (i >= dynamic_light_count) break;
         vec3 displacement = dynamic_light_position[i] - world_position;
@@ -512,6 +643,22 @@ vec3 reflected_radiance(vec3 n, vec3 albedo) {
 }
 void main() {
     vec3 n = normalize(world_normal);
+    if (surface > 15.5) {
+        float blade = hash21(floor(world_position.xz * 9.0));
+        vec3 grass = mix(vec3(.028, .105, .018),
+                         vec3(.11, .24, .045), blade);
+        float translucency = pow(
+            max(dot(normalize(wind_xz.x == 0.0 && wind_xz.y == 0.0
+                ? vec3(1.0, .2, 0.0)
+                : vec3(wind_xz.x, .2, wind_xz.y)),
+                -n), 0.0), 2.0
+        ) * min(wind_speed_mps / 5.0, 1.0);
+        frag_color = vec4(
+            reflected_radiance(n, grass) + grass * translucency * .00018,
+            1.0
+        );
+        return;
+    }
     if (surface > 14.5) {
         float aggregate = hash21(floor(world_position.xz * 1.35));
         vec3 trail = mix(vec3(.16, .13, .095), vec3(.26, .22, .16), aggregate);
@@ -593,6 +740,20 @@ void main() {
         return;
     }
     if (surface > 3.5) {
+        vec2 wind_direction = length(wind_xz) > .01
+                            ? normalize(wind_xz) : vec2(1.0, 0.0);
+        float ripple = sin(
+            dot(world_position.xz, wind_direction) * 6.5
+            - time_s * (2.2 + wind_speed_mps * .35)
+        );
+        vec2 cross_wind = vec2(-wind_direction.y, wind_direction.x);
+        ripple += .42 * sin(
+            dot(world_position.xz, cross_wind) * 9.7 - time_s * 3.1
+        );
+        n = normalize(
+            n + vec3(wind_direction.x, 0.0, wind_direction.y)
+              * ripple * min(.055 + wind_speed_mps * .006, .10)
+        );
         float green_variation = hash21(floor(world_position.xz * .15));
         vec3 green = mix(vec3(.055, .16, .045),
                          vec3(.12, .25, .075), green_variation);
@@ -862,6 +1023,28 @@ class Renderer:
         )
         self.background_program["tan_half_fov"] = tan_half_fov
         self.background_program["aspect"] = config.width / config.height
+        cloud_noise = periodic_cloud_noise()
+        self.cloud_noise_texture = ctx.texture(
+            (cloud_noise.shape[1], cloud_noise.shape[0]),
+            components=1,
+            data=cloud_noise.tobytes(),
+            dtype="f1",
+        )
+        self.cloud_noise_texture.filter = moderngl.LINEAR, moderngl.LINEAR
+        self.cloud_noise_texture.repeat_x = True
+        self.cloud_noise_texture.repeat_y = True
+        star_catalogue = procedural_star_catalogue()
+        self.star_catalogue_texture = ctx.texture(
+            (star_catalogue.shape[1], star_catalogue.shape[0]),
+            components=3,
+            data=star_catalogue.astype(np.float16).tobytes(),
+            dtype="f2",
+        )
+        self.star_catalogue_texture.filter = moderngl.LINEAR, moderngl.LINEAR
+        self.star_catalogue_texture.repeat_x = True
+        self.star_catalogue_texture.repeat_y = False
+        self.background_program["cloud_noise"] = 8
+        self.background_program["star_catalogue"] = 9
         self.tonemap_program = ctx.program(
             vertex_shader=QUAD_VERTEX, fragment_shader=TONEMAP_FRAGMENT
         )
@@ -921,12 +1104,24 @@ class Renderer:
         )
         terrain_height = np.zeros((1, 1), dtype=np.float32)
         terrain_bounds = water_mask_bounds.copy()
+        self.static_light_positions = np.empty((0, 3), dtype=np.float32)
         if scene_path.exists():
             scene = load_scene(scene_path)
             water_mask = scene.water_mask
             water_mask_bounds = scene.water_mask_bounds
             terrain_height = scene.terrain_height_m
             terrain_bounds = scene.terrain_bounds
+            lamp_vertices = scene.detail_vertices[
+                np.isclose(scene.detail_vertices[:, 6], 10.0)
+            ]
+            complete_lamp_vertex_count = len(lamp_vertices) // 36 * 36
+            if complete_lamp_vertex_count:
+                self.static_light_positions = (
+                    lamp_vertices[:complete_lamp_vertex_count, :3]
+                    .reshape(-1, 36, 3)
+                    .mean(axis=1)
+                    .astype(np.float32)
+                )
             for scene_index, vertices in enumerate((
                 scene.building_vertices,
                 scene.bridge_vertices,
@@ -1031,6 +1226,25 @@ class Renderer:
         self.land_program = ctx.program(
             vertex_shader=LAND_VERTEX, fragment_shader=LAND_FRAGMENT
         )
+        street_lamp_budget = led_energy_budget(
+            replace(
+                self.lighting_config,
+                led_input_power_w=self.lighting_config.street_lamp_input_power_w,
+            )
+        )
+        self.static_light_power_w = street_lamp_budget.luminaire_radiant_w
+        self.static_light_color = np.array(
+            [1.0, 0.63, 0.31], dtype=np.float32
+        )
+        for program in (self.scene_program, self.land_program):
+            program["static_light_count"] = 0
+            program["static_light_position"].write(
+                np.zeros((4, 3), dtype=np.float32).tobytes()
+            )
+            program["static_light_color"].value = tuple(
+                self.static_light_color
+            )
+            program["static_light_power_w"] = self.static_light_power_w
         self.land_vertex_buffer = ctx.buffer(land_vertices.tobytes())
         self.land_index_buffer = ctx.buffer(land_indices.tobytes())
         self.land_vao = ctx.vertex_array(
@@ -1249,6 +1463,43 @@ class Renderer:
         )
         self._set_background_camera(camera.forward, camera.right)
 
+    def _update_static_lights(self, camera: FreeCamera) -> None:
+        maximum = min(self.lighting_config.street_lamp_light_count, 4)
+        selected = np.zeros((4, 3), dtype=np.float32)
+        count = min(len(self.static_light_positions), maximum)
+        if count:
+            distances_squared = np.sum(
+                (
+                    self.static_light_positions[:, [0, 2]]
+                    - camera.position_m[[0, 2]]
+                )
+                ** 2,
+                axis=1,
+            )
+            nearest = np.argpartition(
+                distances_squared, count - 1
+            )[:count]
+            selected[:count] = self.static_light_positions[nearest]
+        self.scene_program["static_light_count"] = count
+        self.scene_program["static_light_position"].write(selected.tobytes())
+        # The land mesh covers the full 5 km patch; two nearest luminaires
+        # bound its fragment cost while detailed objects retain four.
+        self.land_program["static_light_count"] = min(count, 2)
+        self.land_program["static_light_position"].write(selected.tobytes())
+
+    def _update_environment_animation(
+        self, atmosphere: AtmosphereConfig
+    ) -> None:
+        wind = np.asarray(atmosphere.wind_velocity_mps, dtype=np.float32)
+        wind_xz = wind[[0, 2]]
+        wind_speed = float(np.linalg.norm(wind_xz))
+        self.background_program["time_s"] = self.time_s
+        self.background_program["wind_xz"].value = tuple(wind_xz)
+        self.scene_program["time_s"] = self.time_s
+        self.scene_program["wind_xz"].value = tuple(wind_xz)
+        self.scene_program["wind_speed_mps"] = wind_speed
+        self.water_program["wind_speed_mps"] = wind_speed
+
     def _set_background_camera(
         self, forward: np.ndarray, right: np.ndarray
     ) -> None:
@@ -1280,6 +1531,8 @@ class Renderer:
         self.ctx.disable(moderngl.BLEND)
         self.ctx.disable(moderngl.DEPTH_TEST)
         self.reflection_fbo.clear(0, 0, 0, 1, depth=1)
+        self.cloud_noise_texture.use(8)
+        self.star_catalogue_texture.use(9)
         self.background_vao.render(moderngl.TRIANGLE_STRIP)
         self.ctx.enable(moderngl.DEPTH_TEST)
         self.water_mask_texture.use(1)
@@ -1405,6 +1658,8 @@ class Renderer:
         smoke: SmokeFluid2D | None = None,
     ) -> None:
         self.time_s += frame_dt_s
+        self._update_environment_animation(world.atmosphere)
+        self._update_static_lights(camera)
         self._update_celestial(celestial, world.atmosphere)
         radiant_power_w = self._update_dynamic_lights(world)
         self._update_water_forcing(world.atmosphere, frame_dt_s)
@@ -1447,6 +1702,8 @@ class Renderer:
         self.ctx.disable(moderngl.BLEND)
         self.ctx.disable(moderngl.DEPTH_TEST)
         self.hdr_fbo.clear(0, 0, 0, 1, depth=1)
+        self.cloud_noise_texture.use(8)
+        self.star_catalogue_texture.use(9)
         self.background_vao.render(moderngl.TRIANGLE_STRIP)
         self.ctx.enable(moderngl.DEPTH_TEST)
         self.water_mask_texture.use(1)

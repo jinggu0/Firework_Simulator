@@ -120,6 +120,8 @@ class LightingConfig:
     calibrated_urban_ambient_illuminance_lux: float = 1.2
     air_extinction_per_m: float = 0.00012
     dynamic_light_count: int = 8
+    street_lamp_input_power_w: float = 72.0
+    street_lamp_light_count: int = 4
 
 
 @dataclass(frozen=True, slots=True)

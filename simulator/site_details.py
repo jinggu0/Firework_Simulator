@@ -11,6 +11,7 @@ from .scene import (
     SURFACE_CYCLEWAY,
     SURFACE_FOLIAGE,
     SURFACE_FOOTWAY,
+    SURFACE_GRASS_BLADE,
     SURFACE_GARDEN,
     SURFACE_LAMP,
     SURFACE_METAL,
@@ -151,6 +152,31 @@ def _lamp(position: np.ndarray, yaw: float) -> list[list[float]]:
     vertices = _cylinder(position, 0.09, 6.8, SURFACE_METAL, sides=8)
     head = np.array([position[0], 6.88, position[1]])
     vertices.extend(_box(head, (0.85, 0.18, 0.32), SURFACE_LAMP, yaw))
+    return vertices
+
+
+def _grass_blade(
+    position: np.ndarray, height_m: float, width_m: float, yaw: float
+) -> list[list[float]]:
+    """Two crossed tapered cards with tip weights stored in surface UV.y."""
+
+    vertices: list[list[float]] = []
+    for angle in (yaw, yaw + math.pi * 0.5):
+        across = np.array([math.cos(angle), 0.0, math.sin(angle)])
+        facing = np.array([-math.sin(angle), 0.0, math.cos(angle)])
+        left = np.array([position[0], 0.025, position[1]]) - across * width_m
+        right = np.array([position[0], 0.025, position[1]]) + across * width_m
+        tip = np.array([position[0], height_m, position[1]])
+        vertices.extend(
+            [
+                _vertex(tuple(left), tuple(facing), SURFACE_GRASS_BLADE, (0.0, 0.0)),
+                _vertex(tuple(right), tuple(facing), SURFACE_GRASS_BLADE, (1.0, 0.0)),
+                _vertex(tuple(tip), tuple(facing), SURFACE_GRASS_BLADE, (0.5, 1.0)),
+                _vertex(tuple(right), tuple(-facing), SURFACE_GRASS_BLADE, (1.0, 0.0)),
+                _vertex(tuple(left), tuple(-facing), SURFACE_GRASS_BLADE, (0.0, 0.0)),
+                _vertex(tuple(tip), tuple(-facing), SURFACE_GRASS_BLADE, (0.5, 1.0)),
+            ]
+        )
     return vertices
 
 
@@ -439,8 +465,10 @@ def build_site_detail_mesh(
         "historical_surfaces": 0,
         "inferred_trees": 0,
         "official_facilities": 0,
+        "grass_blades": 0,
     }
     tree_limit = 900
+    grass_blade_limit = 2_500
     roof_vertices = scene.building_vertices[
         (scene.building_vertices[:, 6] > 0.5)
         & (scene.building_vertices[:, 6] < 1.5),
@@ -473,6 +501,49 @@ def build_site_detail_mesh(
         elif leisure == "garden" or tags.get("natural") == "scrub":
             vertices.extend(_surface_mesh(polygon.copy(), 0.065, SURFACE_GARDEN))
             counts["historical_surfaces"] += 1
+        is_grass = (
+            tags.get("landuse") == "grass"
+            or tags.get("natural") == "grassland"
+        )
+        if is_grass and counts["grass_blades"] < grass_blade_limit:
+            minimum, maximum = polygon.min(axis=0), polygon.max(axis=0)
+            seed = int(element.get("id", 0))
+            spacing = 6.0
+            offset = np.array(
+                [(seed % 29) / 29.0, (seed % 31) / 31.0]
+            ) * spacing
+            for x in np.arange(minimum[0] + offset[0], maximum[0], spacing):
+                for z in np.arange(minimum[1] + offset[1], maximum[1], spacing):
+                    if counts["grass_blades"] >= grass_blade_limit:
+                        break
+                    point = np.array([x, z])
+                    if np.linalg.norm(point) > 1_200.0 or not _inside_polygon(
+                        point, polygon
+                    ):
+                        continue
+                    hashed = (
+                        seed * 73856093
+                        ^ round(x * 10.0) * 19349663
+                        ^ round(z * 10.0) * 83492791
+                    ) & 0x7FFFFFFF
+                    jitter = np.array(
+                        [
+                            ((hashed & 255) / 255.0 - 0.5) * spacing * 0.72,
+                            (((hashed >> 8) & 255) / 255.0 - 0.5)
+                            * spacing
+                            * 0.72,
+                        ]
+                    )
+                    blade_position = point + jitter
+                    if not _inside_polygon(blade_position, polygon):
+                        continue
+                    height = 0.26 + ((hashed >> 16) & 255) / 255.0 * 0.24
+                    width = 0.028 + ((hashed >> 12) & 15) / 15.0 * 0.022
+                    yaw = (hashed % 6283) / 1000.0
+                    vertices.extend(
+                        _grass_blade(blade_position, height, width, yaw)
+                    )
+                    counts["grass_blades"] += 1
         if tags.get("natural") != "wood" or counts["inferred_trees"] >= tree_limit:
             continue
         minimum, maximum = polygon.min(axis=0), polygon.max(axis=0)
