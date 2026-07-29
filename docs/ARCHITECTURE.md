@@ -265,6 +265,54 @@ burn, smoke deposition, fluid solve, HDR trails, bloom, terrain, and water
 measures approximately 10.33 ms/frame (96.8 FPS uncapped), retaining practical
 headroom inside the 16.67 ms target.
 
+## Delayed blast acoustics
+
+Light propagation is treated as instantaneous at scene scale, while every
+burst now creates a separately propagating pressure event. Moist-air sound
+speed is calculated from temperature, pressure, and relative humidity using
+the Buck saturation-vapour-pressure relation and the moist-air gas constant.
+Wind projected along the source-to-listener ray changes effective propagation
+speed. The listener follows the free camera, so moving the camera changes both
+arrival time and stereo direction.
+
+The first subsonic radius is found from the Sedov-Taylor strong-shock solution
+`R = beta (E t^2 / rho)^(1/5)` with `beta = 1.033`. A provisional 32% of burst
+chemical energy drives this early blast. After shock velocity falls to local
+sound speed, the remaining distance propagates acoustically. This avoids both
+instant sound and the physically invalid use of the incompressible smoke
+solver for the detonation.
+
+Far-field acoustic energy is provisionally 1% of burst chemical energy.
+Spherical spreading, duration broadening with range, air absorption, density,
+and effective sound speed determine RMS pressure and SPL. At the default
+camera, the development shell's approximately 159 m burst altitude predicts
+about 0.787 s flash-to-boom delay, 100.5 dB RMS SPL, and 3.00 Pa peak
+pressure. These are model outputs, not
+measurements of the exact 2024 shell.
+
+Audio renders at 48 kHz as a Friedlander pressure impulse plus a deterministic
+32-180 Hz decaying tail. Equal-power stereo panning follows camera-relative
+source direction. The pressure-to-digital mapping reserves 20 Pa as full scale
+to prevent numerical clipping, but consumer speaker gain is not calibrated;
+displayed SPL remains the physical prediction while playback loudness remains
+device-dependent.
+
+Band-limited tail noise is prepared once. Final per-arrival synthesis costs
+about 4.7 ms on the development machine. It is dispatched to one audio worker
+when the wavefront is within 120 ms, then the prepared buffer is released on
+the exact 120 Hz arrival step. This prevents an audio FFT or PCM conversion
+from stalling the render frame. Remaining limitations are shell directivity,
+frequency-dependent ISO
+9613 absorption, water/ground reflection, bridge and building echoes,
+temperature-gradient refraction, and measured event-shell acoustic energy.
+
+A controlled 8,000-star end-to-end run with asynchronous audio preparation
+measures 10.26 ms mean frame time and 17.20 ms at the 95th percentile on the
+development machine. The audio-arrival frame measured 17.69 ms and coincided
+with a 30 Hz fluid step; it no longer contains synchronous waveform synthesis.
+The remaining near-budget tail is the CPU fluid quality tier and reinforces
+the planned migration to a 3D GPU solver.
+
 ## Required reference datasets
 
 - October 5, 2024 hourly and, where possible, sub-hourly weather observations

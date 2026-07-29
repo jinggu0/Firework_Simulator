@@ -74,6 +74,22 @@ class SmokeConfig:
 
 
 @dataclass(frozen=True, slots=True)
+class AcousticConfig:
+    """Far-field blast acoustics and calibrated playback settings."""
+
+    sample_rate_hz: int = 48_000
+    blast_wave_energy_fraction: float = 0.32
+    acoustic_energy_fraction: float = 0.01
+    atmospheric_absorption_db_m: float = 0.00012
+    impulse_duration_s: float = 0.16
+    range_duration_s_m: float = 0.00035
+    shock_decay: float = 3.2
+    reverberation_time_s: float = 1.8
+    full_scale_pressure_pa: float = 20.0
+    reference_pressure_pa: float = 20.0e-6
+
+
+@dataclass(frozen=True, slots=True)
 class RenderConfig:
     width: int = 1280
     height: int = 720
@@ -94,4 +110,5 @@ class SimulationConfig:
     render: RenderConfig = field(default_factory=RenderConfig)
     camera: CameraConfig = field(default_factory=CameraConfig)
     smoke: SmokeConfig = field(default_factory=SmokeConfig)
+    acoustics: AcousticConfig = field(default_factory=AcousticConfig)
     random_seed: int = 20241005

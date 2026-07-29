@@ -21,6 +21,7 @@ class Shell:
 @dataclass(frozen=True, slots=True)
 class BurstEvent:
     position_m: np.ndarray
+    chemical_energy_j: float
     smoke_mass_kg: float
     post_blast_thermal_energy_j: float
 
@@ -303,6 +304,7 @@ class FireworkWorld:
                 self._burst_events.append(
                     BurstEvent(
                         shell.position_m.copy(),
+                        chemical_energy_j,
                         config.burst_charge_mass_kg
                         * config.smoke_yield_fraction,
                         chemical_energy_j * config.post_blast_thermal_fraction,

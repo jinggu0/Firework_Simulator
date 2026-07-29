@@ -24,6 +24,7 @@ def test_shell_bursts_at_configured_fuse_time() -> None:
     assert 80.0 < float(world.stars.position_m[:256, 1].mean()) < 250.0
     events = world.consume_burst_events()
     assert len(events) == 1
+    assert events[0].chemical_energy_j > 0.0
     assert events[0].smoke_mass_kg > 0.0
     assert events[0].post_blast_thermal_energy_j > 0.0
     assert world.consume_burst_events() == []

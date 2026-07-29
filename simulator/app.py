@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import Future, ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import time
@@ -7,6 +8,7 @@ import time
 import moderngl
 import pygame
 
+from .acoustics import FireworkAcoustics, SoundArrival
 from .camera import FreeCamera
 from .astronomy import AstronomyModel
 from .clock import FixedStepClock
@@ -21,6 +23,9 @@ class SimulatorApp:
     def __init__(self, config: SimulationConfig | None = None) -> None:
         self.config = config or SimulationConfig()
         render = self.config.render
+        pygame.mixer.pre_init(
+            self.config.acoustics.sample_rate_hz, -16, 2, 512
+        )
         pygame.init()
         pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MAJOR_VERSION, 3)
         pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MINOR_VERSION, 3)
@@ -65,6 +70,17 @@ class SimulatorApp:
         self.smoke = SmokeFluid2D(self.config.smoke, initial_atmosphere)
         self.smoke_accumulator_s = 0.0
         self.camera = FreeCamera(config=self.config.camera)
+        self.acoustics = FireworkAcoustics(
+            self.config.acoustics, self.config.random_seed
+        )
+        self.audio_enabled = pygame.mixer.get_init() is not None
+        self.active_sounds: list[pygame.mixer.Sound] = []
+        self.audio_executor = ThreadPoolExecutor(
+            max_workers=1, thread_name_prefix="firework-audio"
+        )
+        self.pending_audio: dict[int, Future] = {}
+        self.audio_due: set[int] = set()
+        self.last_sound_level_db: float | None = None
         self.physics_clock = FixedStepClock(render.physics_hz)
         self.frame_clock = pygame.time.Clock()
         self.running = True
@@ -97,6 +113,24 @@ class SimulatorApp:
                         burst.smoke_mass_kg,
                         burst.post_blast_thermal_energy_j,
                     )
+                    self.acoustics.emit(
+                        burst.position_m, burst.chemical_energy_j
+                    )
+                for upcoming in self.acoustics.prepare_upcoming(
+                    0.12,
+                    self.camera.position_m,
+                    self.camera.right,
+                    self.world.atmosphere,
+                ):
+                    self._prepare_arrival(upcoming)
+                arrivals = self.acoustics.update(
+                    self.physics_clock.step_s,
+                    self.camera.position_m,
+                    self.camera.right,
+                    self.world.atmosphere,
+                )
+                for arrival in arrivals:
+                    self._play_arrival(arrival)
                 self.smoke_accumulator_s += self.physics_clock.step_s
                 smoke_step_s = 1.0 / self.config.smoke.update_hz
                 while self.smoke_accumulator_s >= smoke_step_s:
@@ -116,6 +150,7 @@ class SimulatorApp:
             self.renderer.render(
                 self.world, self.camera, self.celestial, dt_s, self.smoke
             )
+            self._flush_audio()
             pygame.display.flip()
             # Swap interval is the primary limiter. Applying SDL's millisecond
             # timer after a blocking swap produces systematic sub-60 FPS pacing.
@@ -126,6 +161,7 @@ class SimulatorApp:
             frame_count += 1
             if max_frames is not None and frame_count >= max_frames:
                 self.running = False
+        self.audio_executor.shutdown(wait=True, cancel_futures=True)
         pygame.quit()
 
     def _events(self) -> None:
@@ -154,6 +190,36 @@ class SimulatorApp:
         pygame.mouse.set_visible(not captured)
         pygame.mouse.get_rel()
 
+    def _play_arrival(self, arrival: SoundArrival) -> None:
+        self.last_sound_level_db = arrival.sound_pressure_level_db
+        if not self.audio_enabled:
+            return
+        self._prepare_arrival(arrival)
+        self.audio_due.add(arrival.seed)
+
+    def _prepare_arrival(self, arrival: SoundArrival) -> None:
+        if not self.audio_enabled or arrival.seed in self.pending_audio:
+            return
+        self.pending_audio[arrival.seed] = self.audio_executor.submit(
+            self.acoustics.synthesize_pcm, arrival
+        )
+
+    def _flush_audio(self) -> None:
+        waiting: dict[int, Future] = {}
+        for seed, future in self.pending_audio.items():
+            if seed not in self.audio_due or not future.done():
+                waiting[seed] = future
+                continue
+            try:
+                sound = pygame.sndarray.make_sound(future.result())
+                sound.play()
+                self.active_sounds.append(sound)
+            except (pygame.error, RuntimeError):
+                self.audio_enabled = False
+            self.audio_due.discard(seed)
+        self.pending_audio = waiting
+        self.active_sounds = self.active_sounds[-8:]
+
     def _update_camera(self, dt_s: float) -> None:
         keys = pygame.key.get_pressed()
         local_input = (
@@ -179,9 +245,14 @@ class SimulatorApp:
                     f" | {self.world.atmosphere.temperature_k - 273.15:.1f} C"
                     f" | wind {(wind[0] ** 2 + wind[2] ** 2) ** 0.5:.1f} m/s"
                 )
+            sound_level = (
+                f" | last boom {self.last_sound_level_db:.1f} dB"
+                if self.last_sound_level_db is not None else ""
+            )
             pygame.display.set_caption(
                 f"Yeouido Fireworks | {self.frame_clock.get_fps():.1f} FPS"
                 f" | {self.world.stars.count:,} stars"
+                f"{sound_level}"
                 f"{event_time}"
                 f"{weather}"
                 f" | XYZ {self.camera.position_m[0]:.0f},"
