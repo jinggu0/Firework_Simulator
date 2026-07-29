@@ -119,12 +119,21 @@ class StarField:
 
         n = self.count
         normalized_age = self.age_s[:n] / self.lifetime_s[:n]
-        ignition = np.clip(normalized_age / 0.025, 0.0, 1.0)
-        decay = np.clip((1.0 - normalized_age) / 0.18, 0.0, 1.0)
-        stochastic_burn = 0.92 + 0.08 * np.sin(
+        ignition_x = np.clip(normalized_age / 0.018, 0.0, 1.0)
+        ignition = ignition_x * ignition_x * (3.0 - 2.0 * ignition_x)
+        extinction_x = np.clip((1.0 - normalized_age) / 0.12, 0.0, 1.0)
+        extinction = extinction_x * extinction_x * (3.0 - 2.0 * extinction_x)
+        shrinking_surface = np.clip(1.0 - 0.32 * normalized_age, 0.0, 1.0)
+        stochastic_burn = 0.97 + 0.03 * np.sin(
             self.age_s[:n] * 53.0 + np.arange(n, dtype=np.float32) * 1.618
         )
-        return self.luminous_power_w[:n] * ignition * decay * stochastic_burn
+        return (
+            self.luminous_power_w[:n]
+            * ignition
+            * extinction
+            * shrinking_surface
+            * stochastic_burn
+        )
 
 
 class FireworkWorld:

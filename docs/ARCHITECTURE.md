@@ -178,6 +178,28 @@ luminance still require calibration against a RAW/reference camera exposure.
 The astronomical sky path measures approximately 1.90 ms per uncapped frame
 (about 525 FPS) in the current development workload.
 
+## Star exposure and bloom
+
+Burning stars now render as exposure-integrated trails. Each GPU primitive
+spans from the current physical position back along velocity by the configured
+1/60 s shutter time. A geometry shader expands the projected segment into a
+subpixel Gaussian ribbon, preserving direction and apparent angular width
+without adding CPU particles.
+
+Star power uses smooth ignition, a slowly shrinking luminous surface, and
+smooth final extinction. Small deterministic combustion variation avoids
+frame-random flicker while keeping replay output stable.
+
+The linear HDR target is downsampled to half resolution, soft-thresholded, and
+Gaussian blurred in two separable passes. Bloom is added before exposure and
+ACES tone mapping, so overlapping stars naturally overexpose the burst core
+instead of being clamped individually.
+
+The new trail and bloom path measures about 2.21 ms per uncapped frame (about
+453 FPS) with the 8,000-star development shell. The current shell still treats
+all 8,000 particles as one star class; production shells need separate primary
+stars, fine sparks, and embers with measured counts and burn laws.
+
 ## Required reference datasets
 
 - October 5, 2024 hourly and, where possible, sub-hourly weather observations

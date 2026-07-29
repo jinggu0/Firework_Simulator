@@ -68,3 +68,20 @@ near-zenith full-moon reference. Twilight illuminance is a bounded piecewise
 log interpolation across the civil, nautical, and astronomical thresholds; it
 is a rendering calibration model rather than a full atmospheric
 radiative-transfer solution.
+
+## Firework photometry references
+
+The initial star-expansion and drag model is informed by the observational
+description in:
+
+- "Fireworks on Weather Radar and Camera", Bulletin of the American
+  Meteorological Society, 2020:
+  https://journals.ametsoc.org/view/journals/bams/101/2/bams-d-18-0248.1.xml
+- "Burning characteristics of fireworks stars", Science and Technology of
+  Energetic Materials 67(1), 2006:
+  https://www.jes.or.jp/mag/stem/Vol.67/documents/Vol.67%2CNo.1%2Cp.43-47.pdf
+
+These references support spherical post-burst expansion, quadratic drag, and
+finite measured star burn time. Current luminous-power values remain
+calibration parameters rather than laboratory measurements of the exact 2024
+shell compositions.

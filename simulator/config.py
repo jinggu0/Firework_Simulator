@@ -55,6 +55,8 @@ class RenderConfig:
     physics_hz: int = 120
     vertical_fov_deg: float = 52.0
     exposure_ev100: float = 7.0
+    shutter_time_s: float = 1.0 / 60.0
+    bloom_strength: float = 0.72
     max_particles: int = 250_000
 
 

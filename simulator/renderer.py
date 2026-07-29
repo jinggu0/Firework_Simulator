@@ -80,46 +80,122 @@ void main() {
 
 PARTICLE_VERTEX = """
 #version 330
-in vec3 in_position; in vec3 in_color; in float in_power;
+in vec3 in_position; in vec3 in_trail_start; in vec3 in_color; in float in_power;
 uniform mat4 view_projection; uniform float reflection; uniform float time_s;
-out vec3 particle_color; out float particle_power;
+out vec4 trail_start_clip; out vec3 particle_color; out float particle_power;
 void main() {
     vec3 p = in_position;
+    vec3 start = in_trail_start;
     if (reflection > .5) {
         p.y = -p.y;
+        start.y = -start.y;
         p.x += sin(p.x * .12 + time_s * 2.1) * (.7 + .012 * abs(p.y));
+        start.x += sin(start.x * .12 + time_s * 2.1)
+                 * (.7 + .012 * abs(start.y));
     }
-    vec4 clip = view_projection * vec4(p, 1);
-    gl_Position = clip;
-    gl_PointSize = clamp(2.0 + 1150.0 / max(clip.w, 1.0), 2.0, 18.0);
+    gl_Position = view_projection * vec4(p, 1);
+    trail_start_clip = view_projection * vec4(start, 1);
     particle_color = in_color;
     particle_power = in_power * (reflection > .5 ? .13 : 1.0);
 }
 """
 
+PARTICLE_GEOMETRY = """
+#version 330
+layout(points) in;
+layout(triangle_strip, max_vertices = 4) out;
+in vec4 trail_start_clip[];
+in vec3 particle_color[];
+in float particle_power[];
+out vec3 trail_color;
+out float trail_power;
+out vec2 trail_coordinate;
+uniform vec2 viewport_size;
+void emit_trail_vertex(vec4 clip, vec2 offset_ndc, vec2 coordinate) {
+    gl_Position = clip;
+    gl_Position.xy += offset_ndc * clip.w;
+    trail_color = particle_color[0];
+    trail_power = particle_power[0];
+    trail_coordinate = coordinate;
+    EmitVertex();
+}
+void main() {
+    vec4 start_clip = trail_start_clip[0];
+    vec4 end_clip = gl_in[0].gl_Position;
+    if (start_clip.w <= 0.0 || end_clip.w <= 0.0) return;
+    vec2 start_ndc = start_clip.xy / start_clip.w;
+    vec2 end_ndc = end_clip.xy / end_clip.w;
+    vec2 delta_pixels = (end_ndc - start_ndc) * viewport_size * .5;
+    float length_pixels = length(delta_pixels);
+    vec2 direction = length_pixels > .1
+                   ? delta_pixels / length_pixels : vec2(0.0, 1.0);
+    vec2 perpendicular = vec2(-direction.y, direction.x);
+    float half_width = clamp(1.15 + 900.0 / max(end_clip.w, 1.0), 1.2, 5.5);
+    vec2 offset = perpendicular * half_width * 2.0 / viewport_size;
+    if (length_pixels < 1.0) {
+        vec2 extension = direction * (1.0 - length_pixels) * 2.0 / viewport_size;
+        start_clip.xy -= extension * start_clip.w;
+    }
+    emit_trail_vertex(start_clip, -offset, vec2(0.0, -1.0));
+    emit_trail_vertex(start_clip,  offset, vec2(0.0,  1.0));
+    emit_trail_vertex(end_clip,   -offset, vec2(1.0, -1.0));
+    emit_trail_vertex(end_clip,    offset, vec2(1.0,  1.0));
+    EndPrimitive();
+}
+"""
+
 PARTICLE_FRAGMENT = """
 #version 330
-in vec3 particle_color; in float particle_power; out vec4 frag_color;
+in vec3 trail_color; in float trail_power; in vec2 trail_coordinate;
+out vec4 frag_color;
 void main() {
-    vec2 q = gl_PointCoord * 2.0 - 1.0;
-    float r2 = dot(q, q);
-    if (r2 > 1.0) discard;
-    float radiance = (exp(-r2 * 18.0) + exp(-r2 * 3.0) * .16)
-                   * particle_power * .006;
-    frag_color = vec4(particle_color * radiance, 1);
+    float cross_section = exp(-trail_coordinate.y * trail_coordinate.y * 3.4);
+    float longitudinal = mix(.62, 1.0, trail_coordinate.x);
+    float radiance = cross_section * longitudinal * trail_power * .0045;
+    frag_color = vec4(trail_color * radiance, 1);
 }
 """
 
 TONEMAP_FRAGMENT = """
 #version 330
-uniform sampler2D hdr_texture; uniform float exposure_scale;
+uniform sampler2D hdr_texture; uniform sampler2D bloom_texture;
+uniform float exposure_scale; uniform float bloom_strength;
 in vec2 uv; out vec4 frag_color;
 vec3 aces(vec3 x) {
     return clamp((x*(2.51*x+.03))/(x*(2.43*x+.59)+.14), 0.0, 1.0);
 }
 void main() {
-    vec3 mapped = aces(texture(hdr_texture, uv).rgb * exposure_scale);
+    vec3 hdr = texture(hdr_texture, uv).rgb;
+    vec3 bloom = texture(bloom_texture, uv).rgb * bloom_strength;
+    vec3 mapped = aces((hdr + bloom) * exposure_scale);
     frag_color = vec4(pow(mapped, vec3(1.0/2.2)), 1);
+}
+"""
+
+BLOOM_PREFILTER_FRAGMENT = """
+#version 330
+uniform sampler2D hdr_texture;
+in vec2 uv; out vec4 frag_color;
+void main() {
+    vec3 color = texture(hdr_texture, uv).rgb;
+    float brightness = max(max(color.r, color.g), color.b);
+    float soft = clamp((brightness - .035) / .10, 0.0, 1.0);
+    frag_color = vec4(color * soft, 1.0);
+}
+"""
+
+BLOOM_BLUR_FRAGMENT = """
+#version 330
+uniform sampler2D source_texture; uniform vec2 direction;
+in vec2 uv; out vec4 frag_color;
+void main() {
+    vec2 texel = 1.0 / vec2(textureSize(source_texture, 0));
+    vec3 color = texture(source_texture, uv).rgb * .227027;
+    color += texture(source_texture, uv + direction * texel * 1.384615).rgb * .316216;
+    color += texture(source_texture, uv - direction * texel * 1.384615).rgb * .316216;
+    color += texture(source_texture, uv + direction * texel * 3.230769).rgb * .070270;
+    color += texture(source_texture, uv - direction * texel * 3.230769).rgb * .070270;
+    frag_color = vec4(color, 1.0);
 }
 """
 
@@ -317,6 +393,22 @@ class Renderer:
             self.tonemap_program, self.quad_buffer, "in_position"
         )
         self.tonemap_program["hdr_texture"] = 0
+        self.tonemap_program["bloom_texture"] = 3
+        self.tonemap_program["bloom_strength"] = config.bloom_strength
+        self.bloom_prefilter_program = ctx.program(
+            vertex_shader=QUAD_VERTEX, fragment_shader=BLOOM_PREFILTER_FRAGMENT
+        )
+        self.bloom_prefilter_vao = ctx.simple_vertex_array(
+            self.bloom_prefilter_program, self.quad_buffer, "in_position"
+        )
+        self.bloom_prefilter_program["hdr_texture"] = 0
+        self.bloom_blur_program = ctx.program(
+            vertex_shader=QUAD_VERTEX, fragment_shader=BLOOM_BLUR_FRAGMENT
+        )
+        self.bloom_blur_vao = ctx.simple_vertex_array(
+            self.bloom_blur_program, self.quad_buffer, "in_position"
+        )
+        self.bloom_blur_program["source_texture"] = 3
         self.scene_program = ctx.program(
             vertex_shader=SCENE_VERTEX, fragment_shader=SCENE_FRAGMENT
         )
@@ -404,22 +496,48 @@ class Renderer:
         self.scene_program["terrain_height"] = 2
         self.scene_program["terrain_bounds"].value = tuple(terrain_bounds)
         self.particle_program = ctx.program(
-            vertex_shader=PARTICLE_VERTEX, fragment_shader=PARTICLE_FRAGMENT
+            vertex_shader=PARTICLE_VERTEX,
+            geometry_shader=PARTICLE_GEOMETRY,
+            fragment_shader=PARTICLE_FRAGMENT,
         )
-        self.stride = 7
+        self.particle_program["viewport_size"].value = (
+            float(config.width),
+            float(config.height),
+        )
+        self.stride = 10
         self.particle_buffer = ctx.buffer(
             reserve=config.max_particles * self.stride * 4, dynamic=True
         )
         self.particle_vao = ctx.vertex_array(
             self.particle_program,
-            [(self.particle_buffer, "3f 3f 1f",
-              "in_position", "in_color", "in_power")],
+            [
+                (
+                    self.particle_buffer,
+                    "3f 3f 3f 1f",
+                    "in_position",
+                    "in_trail_start",
+                    "in_color",
+                    "in_power",
+                )
+            ],
         )
         self.hdr_texture = ctx.texture(
             (config.width, config.height), components=4, dtype="f2"
         )
         depth = ctx.depth_renderbuffer((config.width, config.height))
         self.hdr_fbo = ctx.framebuffer([self.hdr_texture], depth)
+        bloom_size = (max(config.width // 2, 1), max(config.height // 2, 1))
+        self.bloom_textures = [
+            ctx.texture(bloom_size, components=4, dtype="f2") for _ in range(2)
+        ]
+        for texture in self.bloom_textures:
+            texture.filter = moderngl.LINEAR, moderngl.LINEAR
+            texture.repeat_x = False
+            texture.repeat_y = False
+        self.bloom_fbos = [
+            ctx.framebuffer(color_attachments=[texture])
+            for texture in self.bloom_textures
+        ]
         projection = _perspective(
             config.vertical_fov_deg, config.width / config.height, .1, 2500
         )
@@ -497,8 +615,12 @@ class Renderer:
         if count:
             data = np.empty((count, self.stride), dtype=np.float32)
             data[:, :3] = world.stars.position_m[:count]
-            data[:, 3:6] = world.stars.color_linear[:count]
-            data[:, 6] = world.stars.intensity()
+            data[:, 3:6] = (
+                world.stars.position_m[:count]
+                - world.stars.velocity_mps[:count] * self.config.shutter_time_s
+            )
+            data[:, 6:9] = world.stars.color_linear[:count]
+            data[:, 9] = world.stars.intensity()
             self.particle_buffer.write(data.tobytes())
             self.ctx.enable(moderngl.BLEND)
             self.ctx.disable(moderngl.DEPTH_TEST)
@@ -507,9 +629,23 @@ class Renderer:
             for reflection in (1.0, 0.0):
                 self.particle_program["reflection"] = reflection
                 self.particle_vao.render(moderngl.POINTS, vertices=count)
+        self.ctx.disable(moderngl.BLEND)
+        self.ctx.disable(moderngl.DEPTH_TEST)
+        self.bloom_fbos[0].use()
+        self.hdr_texture.use(0)
+        self.bloom_prefilter_vao.render(moderngl.TRIANGLE_STRIP)
+        self.bloom_fbos[1].use()
+        self.bloom_textures[0].use(3)
+        self.bloom_blur_program["direction"].value = (1.0, 0.0)
+        self.bloom_blur_vao.render(moderngl.TRIANGLE_STRIP)
+        self.bloom_fbos[0].use()
+        self.bloom_textures[1].use(3)
+        self.bloom_blur_program["direction"].value = (0.0, 1.0)
+        self.bloom_blur_vao.render(moderngl.TRIANGLE_STRIP)
         self.ctx.screen.use()
         self.ctx.disable(moderngl.BLEND)
         self.hdr_texture.use(0)
+        self.bloom_textures[0].use(3)
         self.tonemap_program["exposure_scale"] = 2.0 ** (
             10.0 - self.config.exposure_ev100
         )
