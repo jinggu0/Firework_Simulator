@@ -15,6 +15,7 @@ from .clock import FixedStepClock
 from .config import SimulationConfig
 from .environment import EnvironmentTimeline
 from .fluid import SmokeFluid2D
+from .gpu_fluid import create_smoke_solver
 from .physics import FireworkWorld
 from .performance import FrameTimings
 from .renderer import Renderer
@@ -73,7 +74,9 @@ class SimulatorApp:
             self.config.lighting,
             self.config.physical_camera,
         )
-        self.smoke = SmokeFluid2D(self.config.smoke, initial_atmosphere)
+        self.smoke = create_smoke_solver(
+            self.ctx, self.config.smoke, initial_atmosphere
+        )
         self.smoke_accumulator_s = 0.0
         self.camera = FreeCamera(config=self.config.camera)
         self.acoustics = FireworkAcoustics(
@@ -141,7 +144,7 @@ class SimulatorApp:
                 for arrival in arrivals:
                     self._play_arrival(arrival)
                 self.smoke_accumulator_s += self.physics_clock.step_s
-                smoke_step_s = 1.0 / self.config.smoke.update_hz
+                smoke_step_s = 1.0 / self.smoke.update_hz
                 while self.smoke_accumulator_s >= smoke_step_s:
                     emissions = self.world.consume_combustion_emissions()
                     for emission in emissions:
@@ -270,6 +273,7 @@ class SimulatorApp:
                 f"Yeouido Fireworks | {self.frame_clock.get_fps():.1f} FPS"
                 f" | p95 {self.frame_timings.snapshot()['frame']['p95_ms']:.1f} ms"
                 f" | {self.world.stars.count:,} stars"
+                f" | fluid {getattr(self.smoke, 'backend_name', 'cpu')}"
                 f"{sound_level}"
                 f"{event_time}"
                 f"{weather}"

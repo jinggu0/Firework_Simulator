@@ -25,7 +25,7 @@ from .lighting import (
 )
 from .physics import FireworkWorld
 from .scene import load_scene
-from .volume import active_volume_bounds, box_vertices
+from .volume import active_slice_bounds, box_vertices
 from .water import (
     WaterConfig,
     build_directional_spectrum,
@@ -652,13 +652,13 @@ void main() {
 SMOKE_FRAGMENT = """
 #version 330
 in vec3 surface_position; out vec4 frag_color;
-uniform sampler3D smoke_density;
-uniform sampler3D temperature_excess;
+uniform sampler2D smoke_state;
 uniform vec3 camera_position;
 uniform vec3 volume_min;
 uniform vec3 volume_max;
-uniform vec3 texture_volume_min;
-uniform vec3 texture_volume_max;
+uniform vec4 smoke_xy_bounds;
+uniform float depth_profile_sigma_m;
+uniform float depth_profile_scale;
 uniform int camera_inside;
 uniform int ray_steps;
 float hash12(vec2 p) {
@@ -689,10 +689,15 @@ void main() {
         if (i >= ray_steps) break;
         float distance_m = t_near + (float(i) + jitter) * step_m;
         vec3 world = camera_position + ray * distance_m;
-        vec3 uvw = (world - texture_volume_min)
-                 / (texture_volume_max - texture_volume_min);
-        float density = max(texture(smoke_density, uvw).r, 0.0);
-        float temperature = max(texture(temperature_excess, uvw).r, 0.0);
+        vec2 field_uv = (world.xy - smoke_xy_bounds.xy)
+                      / (smoke_xy_bounds.zw - smoke_xy_bounds.xy);
+        vec2 state = texture(smoke_state, field_uv).rg;
+        float depth_profile = depth_profile_scale * exp(
+            -0.5 * world.z * world.z
+            / (depth_profile_sigma_m * depth_profile_sigma_m)
+        );
+        float density = max(state.r * depth_profile, 0.0);
+        float temperature = max(state.g * depth_profile, 0.0);
         float step_alpha = 1.0 - exp(-density * 4500.0 * step_m);
         float warm = clamp(temperature / 850.0, 0.0, 1.0);
         vec3 scattered = mix(vec3(.0010, .00115, .00135),
@@ -979,30 +984,35 @@ class Renderer:
             self.smoke_index_buffer,
             index_element_size=4,
         )
-        smoke_size = (
-            smoke_config.grid_size[0],
-            smoke_config.grid_size[1],
-            smoke_config.volume_slices,
+        self.smoke_state_texture = ctx.texture(
+            smoke_config.grid_size, components=2, dtype="f4"
         )
-        self.smoke_density_texture = ctx.texture3d(
-            smoke_size, components=1, dtype="f4"
-        )
-        self.smoke_temperature_texture = ctx.texture3d(
-            smoke_size, components=1, dtype="f4"
-        )
-        for texture in (
-            self.smoke_density_texture, self.smoke_temperature_texture
-        ):
-            texture.filter = moderngl.LINEAR, moderngl.LINEAR
-            texture.repeat_x = False
-            texture.repeat_y = False
-            texture.repeat_z = False
-        self.smoke_program["smoke_density"] = 4
-        self.smoke_program["temperature_excess"] = 5
+        self.smoke_state_texture.filter = moderngl.LINEAR, moderngl.LINEAR
+        self.smoke_state_texture.repeat_x = False
+        self.smoke_state_texture.repeat_y = False
+        self.smoke_program["smoke_state"] = 4
         self.smoke_program["volume_min"].value = (sx0, sy0, sz0)
         self.smoke_program["volume_max"].value = (sx1, sy1, sz1)
-        self.smoke_program["texture_volume_min"].value = (sx0, sy0, sz0)
-        self.smoke_program["texture_volume_max"].value = (sx1, sy1, sz1)
+        self.smoke_program["smoke_xy_bounds"].value = (sx0, sy0, sx1, sy1)
+        dz = smoke_config.volume_depth_m / smoke_config.volume_slices
+        depth_sigma_m = max(smoke_config.plume_depth_m * 0.5, dz)
+        depth_integral = (
+            math.sqrt(2.0 * math.pi)
+            * depth_sigma_m
+            * math.erf(
+                smoke_config.volume_depth_m
+                / (2.0 * math.sqrt(2.0) * depth_sigma_m)
+            )
+        )
+        self.smoke_program["depth_profile_sigma_m"] = depth_sigma_m
+        self.smoke_program["depth_profile_scale"] = (
+            smoke_config.plume_depth_m / depth_integral
+        )
+        # Four sigma on either side retains >99.993% of the normalized
+        # Gaussian mass while avoiding fragments in optically empty tails.
+        self.smoke_active_depth_m = min(
+            smoke_config.volume_depth_m, 8.0 * depth_sigma_m
+        )
         self.smoke_program["ray_steps"] = smoke_config.volume_ray_steps
         self.smoke_bounds = np.array(
             [[sx0, sy0, sz0], [sx1, sy1, sz1]], dtype=np.float32
@@ -1301,21 +1311,44 @@ class Renderer:
             for reflection in (1.0, 0.0):
                 self.particle_program["reflection"] = reflection
                 self.particle_vao.render(moderngl.POINTS, vertices=count)
-        if smoke is not None and np.any(smoke.density_kg_m3 > 1e-8):
+        if smoke is not None and smoke.has_visible_smoke():
             if smoke.revision != self.smoke_revision:
-                density_volume, temperature_volume = (
-                    smoke.reconstruct_volume()
+                render_state_texture = getattr(
+                    smoke, "render_state_texture", None
                 )
-                self.smoke_density_texture.write(
-                    np.ascontiguousarray(density_volume).tobytes()
+                if render_state_texture is None:
+                    smoke_state = np.empty(
+                        (
+                            smoke.density_kg_m3.shape[0],
+                            smoke.density_kg_m3.shape[1],
+                            2,
+                        ),
+                        dtype=np.float32,
+                    )
+                    smoke_state[:, :, 0] = smoke.density_kg_m3
+                    smoke_state[:, :, 1] = smoke.temperature_excess_k
+                    self.smoke_state_texture.write(smoke_state.tobytes())
+                active_bounds_method = getattr(
+                    smoke, "active_render_bounds", None
                 )
-                self.smoke_temperature_texture.write(
-                    np.ascontiguousarray(temperature_volume).tobytes()
-                )
-                active_bounds = active_volume_bounds(
-                    density_volume,
-                    self.smoke_texture_bounds[0],
-                    self.smoke_texture_bounds[1],
+                active_bounds = (
+                    active_bounds_method(
+                        self.smoke_active_depth_m
+                    )
+                    if active_bounds_method is not None
+                    else active_slice_bounds(
+                        smoke.density_kg_m3,
+                        (
+                            self.smoke_texture_bounds[0, 0],
+                            self.smoke_texture_bounds[0, 1],
+                        ),
+                        (
+                            self.smoke_texture_bounds[1, 0],
+                            self.smoke_texture_bounds[1, 1],
+                        ),
+                        -0.5 * self.smoke_active_depth_m,
+                        0.5 * self.smoke_active_depth_m,
+                    )
                 )
                 if active_bounds is not None:
                     active_minimum, active_maximum = active_bounds
@@ -1339,8 +1372,10 @@ class Renderer:
                         and np.all(camera.position_m <= active_maximum)
                     )
                 self.smoke_revision = smoke.revision
-            self.smoke_density_texture.use(4)
-            self.smoke_temperature_texture.use(5)
+            render_state_texture = getattr(
+                smoke, "render_state_texture", self.smoke_state_texture
+            )
+            render_state_texture.use(4)
             self.ctx.enable(moderngl.BLEND)
             self.ctx.enable(moderngl.DEPTH_TEST)
             self.ctx.depth_mask = False

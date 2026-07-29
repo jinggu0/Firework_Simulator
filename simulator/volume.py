@@ -45,3 +45,40 @@ def active_volume_bounds(
     maximum = np.asarray(world_minimum) + extent * upper_xyz / resolution_xyz
     return minimum.astype(np.float32), maximum.astype(np.float32)
 
+
+def active_slice_bounds(
+    field_yx: np.ndarray,
+    xy_minimum: tuple[float, float],
+    xy_maximum: tuple[float, float],
+    z_minimum: float,
+    z_maximum: float,
+    threshold: float = 1e-8,
+    margin_cells: int = 1,
+) -> tuple[np.ndarray, np.ndarray] | None:
+    """Return a conservative 3D AABB for an analytic-depth 2D field."""
+
+    active = np.argwhere(field_yx > threshold)
+    if not len(active):
+        return None
+    lower_yx = np.maximum(active.min(axis=0) - margin_cells, 0)
+    upper_yx = np.minimum(
+        active.max(axis=0) + margin_cells + 1,
+        np.asarray(field_yx.shape),
+    )
+    lower_xy = lower_yx[[1, 0]]
+    upper_xy = upper_yx[[1, 0]]
+    resolution_xy = np.asarray(field_yx.shape)[[1, 0]]
+    minimum_xy = np.asarray(xy_minimum) + (
+        np.asarray(xy_maximum) - np.asarray(xy_minimum)
+    ) * lower_xy / resolution_xy
+    maximum_xy = np.asarray(xy_minimum) + (
+        np.asarray(xy_maximum) - np.asarray(xy_minimum)
+    ) * upper_xy / resolution_xy
+    return (
+        np.asarray(
+            [minimum_xy[0], minimum_xy[1], z_minimum], dtype=np.float32
+        ),
+        np.asarray(
+            [maximum_xy[0], maximum_xy[1], z_maximum], dtype=np.float32
+        ),
+    )

@@ -12,11 +12,14 @@ from simulator.app import SimulatorApp
 from simulator.config import SimulationConfig
 
 
-def _prepare_populated_app() -> SimulatorApp:
+def _prepare_populated_app(prefer_gpu_fluid: bool = True) -> SimulatorApp:
     base = SimulationConfig()
     config = replace(
         base,
         render=replace(base.render, vsync=False, target_fps=0),
+        smoke=replace(
+            base.smoke, prefer_gpu_solver=prefer_gpu_fluid
+        ),
     )
     app = SimulatorApp(config)
     physics_dt = 1.0 / config.render.physics_hz
@@ -35,8 +38,9 @@ def _prepare_populated_app() -> SimulatorApp:
     if count:
         app.world.stars.lifetime_s[:count] = 100.0
         app.world.stars.age_s[:count] = 0.2
-    for _ in range(4):
-        app.smoke.step(1.0 / config.smoke.update_hz)
+    smoke_warmup_s = 4.0 / config.smoke.update_hz
+    for _ in range(round(smoke_warmup_s * app.smoke.update_hz)):
+        app.smoke.step(1.0 / app.smoke.update_hz)
     return app
 
 
@@ -50,8 +54,9 @@ def _profile_case(
     frames: int,
     include_smoke: bool,
     moving_camera: bool,
+    prefer_gpu_fluid: bool = True,
 ) -> dict[str, float | str]:
-    app = _prepare_populated_app()
+    app = _prepare_populated_app(prefer_gpu_fluid)
     frame_dt = 1.0 / 60.0
     smoke = app.smoke if include_smoke else None
     for _ in range(12):
@@ -85,6 +90,7 @@ def _profile_case(
     cpu = np.asarray(cpu_ms, dtype=np.float64)
     result: dict[str, float | str] = {
         "case": name,
+        "fluid_backend": getattr(app.smoke, "backend_name", "cpu"),
         "stars": float(app.world.stars.count),
         "cpu_mean_ms": float(cpu.mean()),
         "cpu_p95_ms": float(np.percentile(cpu, 95)),
@@ -95,10 +101,12 @@ def _profile_case(
     return result
 
 
-def _profile_integrated(frames: int) -> dict[str, float | str]:
+def _profile_integrated(
+    frames: int, prefer_gpu_fluid: bool = True
+) -> dict[str, float | str]:
     """Measure the coupled fixed-step simulation and blocking visual path."""
 
-    app = _prepare_populated_app()
+    app = _prepare_populated_app(prefer_gpu_fluid)
     frame_dt_s = 1.0 / 60.0
     physics_dt_s = 1.0 / app.config.render.physics_hz
     physics_ms: list[float] = []
@@ -122,7 +130,7 @@ def _profile_integrated(frames: int) -> dict[str, float | str]:
                     burst.post_blast_thermal_energy_j,
                 )
             app.smoke_accumulator_s += physics_dt_s
-            smoke_dt_s = 1.0 / app.config.smoke.update_hz
+            smoke_dt_s = 1.0 / app.smoke.update_hz
             while app.smoke_accumulator_s >= smoke_dt_s:
                 for emission in app.world.consume_combustion_emissions():
                     app.smoke.inject_particles(
@@ -142,7 +150,10 @@ def _profile_integrated(frames: int) -> dict[str, float | str]:
         physics_ms.append((physics_finished - physics_started) * 1000.0)
         visual_ms.append((frame_finished - physics_finished) * 1000.0)
         frame_ms.append((frame_finished - frame_started) * 1000.0)
-    result: dict[str, float | str] = {"case": "integrated_blocking"}
+    result: dict[str, float | str] = {
+        "case": "integrated_blocking",
+        "fluid_backend": getattr(app.smoke, "backend_name", "cpu"),
+    }
     for name, values in (
         ("frame", frame_ms),
         ("physics", physics_ms),
@@ -161,12 +172,40 @@ def main() -> None:
         description="Profile visual CPU submission and GPU latency."
     )
     parser.add_argument("--frames", type=int, default=120)
+    parser.add_argument(
+        "--fluid-backend",
+        choices=("gpu", "cpu"),
+        default="gpu",
+        help="Select the fluid backend for this isolated process.",
+    )
+    parser.add_argument(
+        "--integrated-only",
+        action="store_true",
+        help="Run only the coupled blocking case for clean A/B comparison.",
+    )
     args = parser.parse_args()
-    integrated = _profile_integrated(args.frames)
+    prefer_gpu_fluid = args.fluid_backend == "gpu"
+    integrated = _profile_integrated(args.frames, prefer_gpu_fluid)
+    if args.integrated_only:
+        print(json.dumps({
+            "frames": args.frames,
+            "integrated": integrated,
+            "note": (
+                "Run GPU and CPU backends in separate processes to avoid "
+                "cross-context driver contamination."
+            ),
+        }, indent=2))
+        return
     cases = [
-        _profile_case("full_moving", args.frames, True, True),
-        _profile_case("no_smoke_moving", args.frames, False, True),
-        _profile_case("full_static", args.frames, True, False),
+        _profile_case(
+            "full_moving", args.frames, True, True, prefer_gpu_fluid
+        ),
+        _profile_case(
+            "no_smoke_moving", args.frames, False, True, prefer_gpu_fluid
+        ),
+        _profile_case(
+            "full_static", args.frames, True, False, prefer_gpu_fluid
+        ),
     ]
     by_name = {str(case["case"]): case for case in cases}
     full = by_name["full_moving"]

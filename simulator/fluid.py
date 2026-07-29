@@ -19,10 +19,14 @@ class SmokeFluid2D:
     pressure projection is physically appropriate only for the slower plume.
     """
 
+    backend_name = "cpu_numpy_mac"
+
     def __init__(
         self, config: SmokeConfig, atmosphere: AtmosphereConfig
     ) -> None:
         self.config = config
+        self.update_hz = config.update_hz
+        self.pressure_iterations_per_step = config.pressure_iterations
         self.nx, self.ny = config.grid_size
         self.x_min, self.x_max, self.y_min, self.y_max = config.bounds_m
         self.dx = (self.x_max - self.x_min) / self.nx
@@ -56,6 +60,9 @@ class SmokeFluid2D:
         self.ambient_temperature_k = atmosphere.temperature_k
         self.air_density_kg_m3 = atmosphere.air_density_kg_m3
         self.background_wind_mps = float(atmosphere.wind_velocity_mps[0])
+
+    def has_visible_smoke(self) -> bool:
+        return bool(np.any(self.density_kg_m3 > 1e-8))
 
     def inject_burst(
         self,
@@ -181,7 +188,7 @@ class SmokeFluid2D:
         pressure.fill(0.0)
         dx2, dy2 = self.dx * self.dx, self.dy * self.dy
         denominator = 2.0 * (dx2 + dy2)
-        for _ in range(self.config.pressure_iterations):
+        for _ in range(self.pressure_iterations_per_step):
             padded = np.pad(pressure, 1, mode="edge")
             pressure = (
                 (padded[1:-1, :-2] + padded[1:-1, 2:]) * dy2
