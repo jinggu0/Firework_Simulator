@@ -66,6 +66,26 @@ slice renders uncapped at about 2.0 ms per frame. V-synced measurements report
 approximately 58 FPS because of the display/SDL swap interval; the uncapped
 measurement confirms substantial GPU/CPU headroom above the 60 FPS workload.
 
+## Initial geospatial scene
+
+The first reproducible scene snapshot is derived from OpenStreetMap geometry in
+the 37.515–37.545 N, 126.910–126.960 E bounding box. WGS84 coordinates are
+converted to local East-Up-South metres before rendering. It currently contains
+about 93,500 building vertices and 6,100 bridge-deck vertices. Explicit OSM
+heights are retained; `building:levels` is converted at 3.2 m per level, and
+features with neither value receive a clearly provisional 12 m fallback.
+
+The snapshot provides measured plan geometry, not a final October 2024 scene.
+Known gaps are terrain elevation, exact bridge structures, facade materials,
+shoreline clipping, vegetation, and dated construction state. These must be
+validated against Seoul/VWorld data and event footage. OSM attribution and
+licensing are recorded in `assets/ATTRIBUTION.md`.
+
+With this scene, water, and the initial firework active, the uncapped
+development-machine measurement is approximately 1.7 ms per frame. This is a
+pipeline headroom measurement, not a guarantee for the final volumetric and
+reflection workload.
+
 ## Required reference datasets
 
 - October 5, 2024 hourly and, where possible, sub-hourly weather observations

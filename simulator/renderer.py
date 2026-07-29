@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import math
+from pathlib import Path
 
 import moderngl
 import numpy as np
 
 from .config import RenderConfig
 from .physics import FireworkWorld
+from .scene import load_scene
 from .water import WaterConfig, build_directional_spectrum, build_water_mesh
 
 
@@ -14,8 +16,8 @@ def _perspective(fov_deg: float, aspect: float, near: float, far: float) -> np.n
     f = 1.0 / math.tan(math.radians(fov_deg) * 0.5)
     return np.array(
         [[f / aspect, 0, 0, 0], [0, f, 0, 0],
-         [0, 0, (far + near) / (near - far), -1],
-         [0, 0, 2 * far * near / (near - far), 0]],
+         [0, 0, (far + near) / (near - far), 2 * far * near / (near - far)],
+         [0, 0, -1, 0]],
         dtype=np.float32,
     )
 
@@ -151,6 +153,53 @@ void main() {
 }
 """
 
+SCENE_VERTEX = """
+#version 330
+in vec3 in_position; in vec3 in_normal; in float in_material;
+uniform mat4 view_projection;
+out vec3 world_position; out vec3 world_normal; out float material;
+void main() {
+    world_position = in_position;
+    world_normal = in_normal;
+    material = in_material;
+    gl_Position = view_projection * vec4(in_position, 1.0);
+}
+"""
+
+SCENE_FRAGMENT = """
+#version 330
+in vec3 world_position; in vec3 world_normal; in float material;
+out vec4 frag_color;
+float hash21(vec2 p) {
+    p = fract(p * vec2(123.34, 456.21));
+    p += dot(p, p + 45.32);
+    return fract(p.x * p.y);
+}
+void main() {
+    vec3 n = normalize(world_normal);
+    float sky_light = max(n.y * .5 + .5, .08);
+    vec3 concrete = vec3(.0015, .0017, .0020) * sky_light;
+    if (material > 1.5) {
+        frag_color = vec4(vec3(.0024, .0026, .0027), 1.0);
+        return;
+    }
+    if (material > .5) {
+        frag_color = vec4(concrete * .7, 1.0);
+        return;
+    }
+    float facade_axis = dot(world_position.xz, abs(n.zx));
+    vec2 cell = floor(vec2(facade_axis / 4.2, world_position.y / 3.25));
+    vec2 within = fract(vec2(facade_axis / 4.2, world_position.y / 3.25));
+    float pane = step(.13, within.x) * step(within.x, .82)
+               * step(.18, within.y) * step(within.y, .72);
+    float occupied = step(.42, hash21(cell));
+    float temperature = hash21(cell + 17.0);
+    vec3 window_color = mix(vec3(1.0, .42, .12), vec3(.55, .72, 1.0), temperature);
+    vec3 emission = window_color * pane * occupied * .035;
+    frag_color = vec4(concrete + emission, 1.0);
+}
+"""
+
 
 class Renderer:
     """Linear-HDR renderer. Terrain, water, and atmosphere are separate passes."""
@@ -173,6 +222,23 @@ class Renderer:
             self.tonemap_program, self.quad_buffer, "in_position"
         )
         self.tonemap_program["hdr_texture"] = 0
+        self.scene_program = ctx.program(
+            vertex_shader=SCENE_VERTEX, fragment_shader=SCENE_FRAGMENT
+        )
+        scene_path = Path(__file__).resolve().parent.parent / "assets" / "yeouido_scene.npz"
+        self.scene_vaos: list[tuple[moderngl.VertexArray, int]] = []
+        if scene_path.exists():
+            scene = load_scene(scene_path)
+            for vertices in (scene.building_vertices, scene.bridge_vertices):
+                if not len(vertices):
+                    continue
+                buffer = ctx.buffer(vertices.tobytes())
+                vao = ctx.vertex_array(
+                    self.scene_program,
+                    [(buffer, "3f 3f 1f",
+                      "in_position", "in_normal", "in_material")],
+                )
+                self.scene_vaos.append((vao, len(vertices)))
         self.water_config = WaterConfig()
         water_spectrum = build_directional_spectrum(self.water_config)
         water_vertices, water_indices = build_water_mesh(self.water_config)
@@ -213,13 +279,16 @@ class Renderer:
         camera_position = np.array([0, 24, 235], dtype=np.float32)
         view = _look_at(
             camera_position,
-            np.array([0, 105, 0], dtype=np.float32),
+            np.array([0, 72, 0], dtype=np.float32),
         )
         view_projection = projection @ view
         self.particle_program["view_projection"].write(
             view_projection.T.astype(np.float32).tobytes()
         )
         self.water_program["view_projection"].write(
+            view_projection.T.astype(np.float32).tobytes()
+        )
+        self.scene_program["view_projection"].write(
             view_projection.T.astype(np.float32).tobytes()
         )
         self.water_program["camera_position"].value = tuple(camera_position)
@@ -233,6 +302,8 @@ class Renderer:
         self.background_program["time_s"] = self.time_s
         self.background_vao.render(moderngl.TRIANGLE_STRIP)
         self.ctx.enable(moderngl.DEPTH_TEST)
+        for vao, vertex_count in self.scene_vaos:
+            vao.render(moderngl.TRIANGLES, vertices=vertex_count)
         self.water_program["time_s"] = self.time_s
         self.water_vao.render(moderngl.TRIANGLES)
         count = world.stars.count
@@ -253,6 +324,6 @@ class Renderer:
         self.ctx.disable(moderngl.BLEND)
         self.hdr_texture.use(0)
         self.tonemap_program["exposure_scale"] = 2.0 ** (
-            6.0 - self.config.exposure_ev100
+            10.0 - self.config.exposure_ev100
         )
         self.tonemap_vao.render(moderngl.TRIANGLE_STRIP)
