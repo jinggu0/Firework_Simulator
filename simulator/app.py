@@ -8,6 +8,7 @@ import moderngl
 import pygame
 
 from .camera import FreeCamera
+from .astronomy import AstronomyModel
 from .clock import FixedStepClock
 from .config import SimulationConfig
 from .environment import EnvironmentTimeline
@@ -54,6 +55,9 @@ class SimulatorApp:
             initial_atmosphere, self.config.shell,
             render.max_particles, self.config.random_seed
         )
+        self.astronomy = AstronomyModel(37.529, 126.935, 5.0)
+        self.celestial = self.astronomy.sample(self.event_timestamp)
+        self.next_astronomy_update = self.event_timestamp + 1.0
         self.renderer = Renderer(self.ctx, render, initial_atmosphere)
         self.camera = FreeCamera(config=self.config.camera)
         self.physics_clock = FixedStepClock(render.physics_hz)
@@ -82,7 +86,12 @@ class SimulatorApp:
                     )
                     self.event_timestamp += self.physics_clock.step_s
                 self.world.update(self.physics_clock.step_s)
-            self.renderer.render(self.world, self.camera, dt_s)
+            if self.event_timestamp >= self.next_astronomy_update:
+                self.celestial = self.astronomy.sample(self.event_timestamp)
+                self.next_astronomy_update = self.event_timestamp + 1.0
+            self.renderer.render(
+                self.world, self.camera, self.celestial, dt_s
+            )
             pygame.display.flip()
             # Swap interval is the primary limiter. Applying SDL's millisecond
             # timer after a blocking swap produces systematic sub-60 FPS pacing.

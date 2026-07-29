@@ -156,6 +156,28 @@ The environment timeline and altitude-dependent wind path bring the current
 uncapped full-frame measurement to approximately 2.36 ms (about 424 FPS) on
 the development machine.
 
+## Astronomical illumination
+
+Astronomy Engine supplies topocentric apparent Sun and Moon coordinates at the
+event observer location. At 19:20 KST the apparent Sun is at azimuth 275.13°
+and altitude -14.28°. The Moon is at azimuth 248.81°, altitude -2.56°, and
+6.23% illuminated, so direct moonlight is zero during the show start.
+
+The sky shader reconstructs a world-space ray from the free camera for every
+pixel. It combines directional western twilight, a dark zenith, cloud-enhanced
+urban horizon glow, and a photometrically scaled lunar disc when above the
+horizon. The same ambient scale reaches water Fresnel reflection and land
+lighting. Celestial positions update at 1 Hz; camera-dependent sky rays remain
+60 Hz.
+
+Twilight currently uses log-interpolated illuminance anchors at solar
+altitudes 0°, -6°, -12°, and -18°. This captures the rapid event-time decay but
+does not replace spectral atmospheric scattering. Absolute colour and
+luminance still require calibration against a RAW/reference camera exposure.
+
+The astronomical sky path measures approximately 1.90 ms per uncapped frame
+(about 525 FPS) in the current development workload.
+
 ## Required reference datasets
 
 - October 5, 2024 hourly and, where possible, sub-hourly weather observations

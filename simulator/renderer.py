@@ -7,6 +7,7 @@ import moderngl
 import numpy as np
 
 from .camera import FreeCamera
+from .astronomy import CelestialState
 from .config import AtmosphereConfig, RenderConfig
 from .physics import FireworkWorld
 from .scene import load_scene
@@ -44,16 +45,36 @@ void main() { uv = in_position * .5 + .5; gl_Position = vec4(in_position, 0, 1);
 
 BACKGROUND_FRAGMENT = """
 #version 330
-in vec2 uv; out vec4 frag_color; uniform float time_s;
+in vec2 uv; out vec4 frag_color;
+uniform vec3 camera_forward; uniform vec3 camera_right; uniform vec3 camera_up;
+uniform float tan_half_fov; uniform float aspect;
+uniform vec3 sun_direction; uniform vec3 moon_direction;
+uniform float twilight_strength; uniform float moon_strength;
+uniform float cloud_cover;
 void main() {
-    float horizon = smoothstep(.18, .58, uv.y);
-    vec3 sky = mix(vec3(.0030, .0040, .0060),
-                   vec3(.00020, .00035, .00075), horizon);
-    float water_mask = 1.0 - smoothstep(0.0, .19, uv.y);
-    float ripple = sin(uv.x * 410.0 + time_s * 1.2)
-                 * sin(uv.x * 93.0 - time_s * .7);
-    vec3 water = vec3(.00018, .00032, .00042) + ripple * .00005;
-    frag_color = vec4(mix(sky, water, water_mask), 1);
+    vec2 screen = uv * 2.0 - 1.0;
+    vec3 ray = normalize(camera_forward
+                       + camera_right * screen.x * aspect * tan_half_fov
+                       + camera_up * screen.y * tan_half_fov);
+    float altitude = asin(clamp(ray.y, -1.0, 1.0));
+    float above_horizon = smoothstep(-.025, .06, ray.y);
+    float zenith = smoothstep(-.02, .75, ray.y);
+    vec3 night = mix(vec3(.00034, .00043, .00062),
+                     vec3(.000055, .000085, .00018), zenith);
+    float sun_alignment = max(dot(ray, sun_direction), 0.0);
+    float western_twilight = pow(sun_alignment, 24.0) * twilight_strength;
+    vec3 twilight_color = mix(vec3(.0028, .00072, .00020),
+                              vec3(.00042, .00075, .0015), zenith);
+    float urban_horizon = exp(-max(altitude, 0.0) * 7.5)
+                        * (.00032 + cloud_cover * .00070);
+    float moon_disc = smoothstep(cos(radians(.31)), cos(radians(.24)),
+                                 dot(ray, moon_direction)) * moon_strength;
+    vec3 sky = night
+             + twilight_color * western_twilight * (1.0 - cloud_cover * .45)
+             + vec3(.00045, .00036, .00024) * urban_horizon
+             + vec3(.72, .80, 1.0) * moon_disc;
+    vec3 below = vec3(.000025, .000035, .000055);
+    frag_color = vec4(mix(below, sky, above_horizon), 1);
 }
 """
 
@@ -139,6 +160,7 @@ in vec3 world_normal;
 uniform vec3 camera_position;
 uniform sampler2D water_mask;
 uniform vec4 water_mask_bounds;
+uniform float sky_ambient_scale;
 out vec4 frag_color;
 void main() {
     vec2 mask_uv = (world_position.xz - water_mask_bounds.xy)
@@ -153,7 +175,8 @@ void main() {
     vec3 reflected = reflect(-view_direction, n);
     float sky_factor = smoothstep(-0.15, 0.75, reflected.y);
     vec3 sky_radiance = mix(vec3(.0018, .0024, .0035),
-                            vec3(.00018, .00032, .00072), sky_factor);
+                            vec3(.00018, .00032, .00072), sky_factor)
+                      * sky_ambient_scale;
     vec3 water_body = vec3(.00010, .00028, .00034);
     float grazing_haze = pow(1.0 - n_dot_v, 3.0) * .0007;
     vec3 radiance = mix(water_body, sky_radiance, fresnel) + grazing_haze;
@@ -195,6 +218,7 @@ in vec3 world_position;
 in vec3 world_normal;
 uniform sampler2D water_mask;
 uniform vec4 water_mask_bounds;
+uniform float sky_ambient_scale;
 out vec4 frag_color;
 void main() {
     vec2 uv = (world_position.xz - water_mask_bounds.xy)
@@ -205,7 +229,7 @@ void main() {
     float variation = sin(world_position.x * .07) * sin(world_position.z * .051);
     float sky_light = max(world_normal.y, 0.15);
     vec3 ground = (vec3(.00032, .00042, .00030) + variation * .000035)
-                * sky_light;
+                * sky_light * sky_ambient_scale;
     frag_color = vec4(ground, 1.0);
 }
 """
@@ -282,6 +306,10 @@ class Renderer:
         self.background_vao = ctx.simple_vertex_array(
             self.background_program, self.quad_buffer, "in_position"
         )
+        self.background_program["tan_half_fov"] = math.tan(
+            math.radians(config.vertical_fov_deg) * 0.5
+        )
+        self.background_program["aspect"] = config.width / config.height
         self.tonemap_program = ctx.program(
             vertex_shader=QUAD_VERTEX, fragment_shader=TONEMAP_FRAGMENT
         )
@@ -409,17 +437,53 @@ class Renderer:
         ):
             program["view_projection"].write(matrix_bytes)
         self.water_program["camera_position"].value = tuple(camera.position_m)
+        camera_up = np.cross(camera.right, camera.forward)
+        self.background_program["camera_forward"].value = tuple(camera.forward)
+        self.background_program["camera_right"].value = tuple(camera.right)
+        self.background_program["camera_up"].value = tuple(camera_up)
+
+    def _update_celestial(
+        self, celestial: CelestialState, atmosphere: AtmosphereConfig
+    ) -> None:
+        twilight_floor = math.log10(0.0002)
+        twilight_ceiling = math.log10(3.4)
+        twilight_strength = np.clip(
+            (math.log10(max(celestial.twilight_illuminance_lux, 0.0002))
+             - twilight_floor)
+            / (twilight_ceiling - twilight_floor),
+            0.0,
+            1.0,
+        )
+        cloud = atmosphere.cloud_cover_fraction
+        self.background_program["sun_direction"].value = tuple(
+            celestial.sun_direction_eus
+        )
+        self.background_program["moon_direction"].value = tuple(
+            celestial.moon_direction_eus
+        )
+        self.background_program["twilight_strength"] = float(twilight_strength)
+        self.background_program["moon_strength"] = float(
+            min(celestial.moon_illuminance_lux / 0.25, 1.0) * 0.04
+        )
+        self.background_program["cloud_cover"] = cloud
+        ambient_scale = 0.8 + float(twilight_strength) * 1.2 + cloud * 0.25
+        self.water_program["sky_ambient_scale"] = ambient_scale
+        self.land_program["sky_ambient_scale"] = ambient_scale
 
     def render(
-        self, world: FireworkWorld, camera: FreeCamera, frame_dt_s: float
+        self,
+        world: FireworkWorld,
+        camera: FreeCamera,
+        celestial: CelestialState,
+        frame_dt_s: float,
     ) -> None:
         self.time_s += frame_dt_s
         self._update_camera(camera)
+        self._update_celestial(celestial, world.atmosphere)
         self.hdr_fbo.use()
         self.ctx.disable(moderngl.BLEND)
         self.ctx.disable(moderngl.DEPTH_TEST)
         self.hdr_fbo.clear(0, 0, 0, 1, depth=1)
-        self.background_program["time_s"] = self.time_s
         self.background_vao.render(moderngl.TRIANGLE_STRIP)
         self.ctx.enable(moderngl.DEPTH_TEST)
         self.water_mask_texture.use(1)

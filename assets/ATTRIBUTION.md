@@ -52,3 +52,19 @@ and is converted to m/s by the importer.
 The 19:20–20:30 show interval is taken from the Seoul Metropolitan Government
 culture listing:
 https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=149765.&menuNo=200010
+
+## Astronomy
+
+Topocentric Sun and Moon positions, lunar phase, distance, and apparent
+magnitude are calculated with Astronomy Engine:
+
+- Project: https://github.com/cosinekitty/astronomy
+- Python package: `astronomy-engine`
+- Licence: MIT
+- Observer: 37.529 N, 126.935 E, 5 m
+
+Moonlight uses Astronomy Engine apparent magnitude and a documented 0.25 lux
+near-zenith full-moon reference. Twilight illuminance is a bounded piecewise
+log interpolation across the civil, nautical, and astronomical thresholds; it
+is a rendering calibration model rather than a full atmospheric
+radiative-transfer solution.
