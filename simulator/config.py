@@ -44,6 +44,10 @@ class ShellConfig:
     star_drag_time_s: float = 1.35
     luminous_power_w: float = 155.0
     color_temperature_k: float = 2_300.0
+    star_composition_mass_kg: float = 0.78
+    star_smoke_yield_fraction: float = 0.24
+    star_specific_energy_j_kg: float = 4_200_000.0
+    star_post_combustion_thermal_fraction: float = 0.06
     burst_charge_mass_kg: float = 0.085
     burst_specific_energy_j_kg: float = 3_000_000.0
     smoke_yield_fraction: float = 0.12

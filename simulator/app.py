@@ -100,6 +100,13 @@ class SimulatorApp:
                 self.smoke_accumulator_s += self.physics_clock.step_s
                 smoke_step_s = 1.0 / self.config.smoke.update_hz
                 while self.smoke_accumulator_s >= smoke_step_s:
+                    emissions = self.world.consume_combustion_emissions()
+                    for emission in emissions:
+                        self.smoke.inject_particles(
+                            emission.position_m,
+                            emission.smoke_mass_kg,
+                            emission.thermal_energy_j,
+                        )
                     self.smoke.set_atmosphere(self.world.atmosphere)
                     self.smoke.step(smoke_step_s)
                     self.smoke_accumulator_s -= smoke_step_s

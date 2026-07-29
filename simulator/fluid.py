@@ -80,6 +80,60 @@ class SmokeFluid2D:
         self.temperature_excess_k += weights * temperature_increment
         self.revision += 1
 
+    def inject_particles(
+        self,
+        positions_m: np.ndarray,
+        smoke_mass_kg: np.ndarray,
+        thermal_energy_j: np.ndarray,
+    ) -> tuple[float, float]:
+        """Conservative finite-volume deposit; returns accepted mass/energy."""
+
+        if not len(positions_m):
+            return 0.0, 0.0
+        ix = np.floor(
+            (positions_m[:, 0] - self.x_min) / self.dx
+        ).astype(np.int32)
+        iy = np.floor(
+            (positions_m[:, 1] - self.y_min) / self.dy
+        ).astype(np.int32)
+        inside = (
+            (ix >= 0) & (ix < self.nx) & (iy >= 0) & (iy < self.ny)
+        )
+        if not np.any(inside):
+            return 0.0, 0.0
+        cell_volume_m3 = self.dx * self.dy * self.config.plume_depth_m
+        accepted_mass = float(smoke_mass_kg[inside].sum(dtype=np.float64))
+        accepted_energy = float(thermal_energy_j[inside].sum(dtype=np.float64))
+        indices = iy[inside] * self.nx + ix[inside]
+        density_flat = self.density_kg_m3.ravel()
+        temperature_flat = self.temperature_excess_k.ravel()
+        density_flat += (
+            np.bincount(
+                indices,
+                weights=smoke_mass_kg[inside],
+                minlength=self.nx * self.ny,
+            ) / cell_volume_m3
+        ).astype(np.float32)
+        temperature_flat += (
+            np.bincount(
+                indices,
+                weights=thermal_energy_j[inside],
+                minlength=self.nx * self.ny,
+            )
+            / (
+                self.air_density_kg_m3
+                * cell_volume_m3
+                * AIR_HEAT_CAPACITY_J_KG_K
+            )
+        ).astype(np.float32)
+        np.minimum(
+            self.temperature_excess_k,
+            self.config.max_temperature_excess_k,
+            out=self.temperature_excess_k,
+        )
+        self.revision += 1
+        return accepted_mass, accepted_energy
+
     def divergence(self) -> np.ndarray:
         return (
             (self.u_mps[:, 1:] - self.u_mps[:, :-1]) / self.dx

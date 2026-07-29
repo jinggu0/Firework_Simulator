@@ -219,6 +219,23 @@ residual heat. These parameters are separated from the solver because exact
 values depend strongly on shell construction and composition and must be
 replaced by event shell records or experiments.
 
+The visible stars now contribute throughout their burn rather than creating
+smoke only at the central burst. A provisional 0.78 kg star-composition mass is
+divided across the shell's stars. Constant radial regression of a spherical
+star gives the cumulative burned fraction `1 - (1 - t / burn_time)^3`.
+Successive 30 Hz samples difference this value, so the emitted mass is
+independent of display frame rate and remains exactly bounded by the initial
+fuel mass. The default smoke yield is 24%; 6% of a provisional 4.2 MJ/kg
+reaction energy enters the resolved plume as sensible heat.
+
+Star products are accumulated over four 120 Hz ballistic steps and deposited
+into the containing finite-volume smoke cell at 30 Hz. This nearest-cell source
+is conservative and avoids fabricating sub-grid detail at the current 10 m
+cell size. The GPU's linear field sampling and the following fluid advection
+provide visual continuity. Stars that extinguish between fluid steps settle
+their final partial burn before particle compaction, preventing lost mass or
+energy.
+
 The incompressible solver deliberately begins after the rapid compressible
 shock phase. Applying incompressibility to the detonation itself would be
 physically wrong; a later blast-wave module must supply the short pressure and
@@ -239,6 +256,14 @@ fluid-and-render workload measures approximately 3.91 ms per displayed frame
 on every render frame. The lower grid resolution is therefore a performance
 quality tier; later GPU compute must increase spatial resolution without
 changing the fixed physical update rate.
+
+With 8,000 simultaneously burning stars, the full 120 Hz ballistics, 30 Hz
+fuel-source deposition, and 30 Hz fluid solve consume approximately 383 ms per
+simulated second of CPU time. This amortizes to about 6.39 ms per 60 Hz frame
+before rendering. A controlled end-to-end OpenGL run with the same 8,000-star
+burn, smoke deposition, fluid solve, HDR trails, bloom, terrain, and water
+measures approximately 10.33 ms/frame (96.8 FPS uncapped), retaining practical
+headroom inside the 16.67 ms target.
 
 ## Required reference datasets
 

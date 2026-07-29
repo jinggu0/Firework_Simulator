@@ -25,6 +25,13 @@ class BurstEvent:
     post_blast_thermal_energy_j: float
 
 
+@dataclass(frozen=True, slots=True)
+class CombustionEmission:
+    position_m: np.ndarray
+    smoke_mass_kg: np.ndarray
+    thermal_energy_j: np.ndarray
+
+
 class StarField:
     """Structure-of-arrays storage for vectorized star integration."""
 
@@ -39,6 +46,11 @@ class StarField:
         self.drag_time_s = np.empty(capacity, dtype=np.float32)
         self.luminous_power_w = np.empty(capacity, dtype=np.float32)
         self.color_linear = np.empty((capacity, 3), dtype=np.float32)
+        self.fuel_mass_kg = np.empty(capacity, dtype=np.float32)
+        self.emitted_burn_fraction = np.empty(capacity, dtype=np.float32)
+        self.last_emission_position_m = np.empty(
+            (capacity, 3), dtype=np.float32
+        )
 
     def clear(self) -> None:
         self.count = 0
@@ -79,12 +91,68 @@ class StarField:
         self.drag_time_s[start:end] = config.star_drag_time_s
         self.luminous_power_w[start:end] = config.luminous_power_w
         self.color_linear[start:end] = blackbody_rgb(config.color_temperature_k)
+        self.fuel_mass_kg[start:end] = (
+            config.star_composition_mass_kg / config.burst_star_count
+        )
+        self.emitted_burn_fraction[start:end] = 0.0
+        self.last_emission_position_m[start:end] = origin_m
         self.count = end
 
-    def update(self, dt_s: float, atmosphere: AtmosphereConfig) -> None:
+    def _make_emission(
+        self,
+        indices: np.ndarray,
+        burned_fraction: np.ndarray,
+        config: ShellConfig,
+    ) -> CombustionEmission | None:
+        delta = burned_fraction - self.emitted_burn_fraction[indices]
+        emitting = delta > 1e-8
+        if not np.any(emitting):
+            return None
+        selected = indices[emitting]
+        burned_mass_kg = self.fuel_mass_kg[selected] * delta[emitting]
+        positions = 0.5 * (
+            self.last_emission_position_m[selected]
+            + self.position_m[selected]
+        )
+        return CombustionEmission(
+            positions.copy(),
+            (
+                burned_mass_kg * config.star_smoke_yield_fraction
+            ).astype(np.float32),
+            (
+                burned_mass_kg
+                * config.star_specific_energy_j_kg
+                * config.star_post_combustion_thermal_fraction
+            ).astype(np.float32),
+        )
+
+    def consume_emission(
+        self, config: ShellConfig
+    ) -> CombustionEmission | None:
         n = self.count
         if n == 0:
-            return
+            return None
+        indices = np.arange(n)
+        normalized_age = np.clip(
+            self.age_s[:n] / self.lifetime_s[:n], 0.0, 1.0
+        )
+        # A spherical star with an approximately constant linear regression
+        # rate retains (1-t/t_burn)^3 of its initial reactive mass.
+        burned_fraction = 1.0 - (1.0 - normalized_age) ** 3
+        emission = self._make_emission(indices, burned_fraction, config)
+        self.emitted_burn_fraction[:n] = burned_fraction
+        self.last_emission_position_m[:n] = self.position_m[:n]
+        return emission
+
+    def update(
+        self,
+        dt_s: float,
+        atmosphere: AtmosphereConfig,
+        config: ShellConfig,
+    ) -> CombustionEmission | None:
+        n = self.count
+        if n == 0:
+            return None
 
         self.previous_position_m[:n] = self.position_m[:n]
         wind_10m = np.asarray(atmosphere.wind_velocity_mps, dtype=np.float32)
@@ -106,6 +174,19 @@ class StarField:
         alive = (self.age_s[:n] < self.lifetime_s[:n]) & (
             self.position_m[:n, 1] > -2.0
         )
+        dying = ~alive
+        emission = None
+        if np.any(dying):
+            dying_indices = np.flatnonzero(dying)
+            dying_age = np.clip(
+                self.age_s[dying_indices] / self.lifetime_s[dying_indices],
+                0.0,
+                1.0,
+            )
+            dying_burned = 1.0 - (1.0 - dying_age) ** 3
+            emission = self._make_emission(
+                dying_indices, dying_burned, config
+            )
         alive_count = int(np.count_nonzero(alive))
         if alive_count != n:
             for array in (
@@ -117,9 +198,13 @@ class StarField:
                 self.drag_time_s,
                 self.luminous_power_w,
                 self.color_linear,
+                self.fuel_mass_kg,
+                self.emitted_burn_fraction,
+                self.last_emission_position_m,
             ):
                 array[:alive_count] = array[:n][alive]
             self.count = alive_count
+        return emission
 
     def intensity(self) -> np.ndarray:
         """Return instantaneous radiant output including ignition and decay."""
@@ -157,10 +242,21 @@ class FireworkWorld:
         self.shells: list[Shell] = []
         self.rng = np.random.default_rng(seed)
         self._burst_events: list[BurstEvent] = []
+        self._combustion_emissions: list[CombustionEmission] = []
 
     def consume_burst_events(self) -> list[BurstEvent]:
         events, self._burst_events = self._burst_events, []
         return events
+
+    def consume_combustion_emissions(self) -> list[CombustionEmission]:
+        live_emission = self.stars.consume_emission(self.shell_config)
+        if live_emission is not None:
+            self._combustion_emissions.append(live_emission)
+        emissions, self._combustion_emissions = (
+            self._combustion_emissions,
+            [],
+        )
+        return emissions
 
     def launch(self, position_m: tuple[float, float, float] = (0.0, 0.0, 0.0)) -> None:
         self.shells.append(
@@ -216,4 +312,6 @@ class FireworkWorld:
                 surviving_shells.append(shell)
 
         self.shells = surviving_shells
-        self.stars.update(dt_s, self.atmosphere)
+        emission = self.stars.update(dt_s, self.atmosphere, config)
+        if emission is not None:
+            self._combustion_emissions.append(emission)
