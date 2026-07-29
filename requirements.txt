@@ -1,0 +1,4 @@
+moderngl>=5.12,<6
+numpy>=2.0,<3
+pygame>=2.6,<3
+
