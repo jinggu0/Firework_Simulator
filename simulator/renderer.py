@@ -512,6 +512,86 @@ vec3 reflected_radiance(vec3 n, vec3 albedo) {
 }
 void main() {
     vec3 n = normalize(world_normal);
+    if (surface > 14.5) {
+        float aggregate = hash21(floor(world_position.xz * 1.35));
+        vec3 trail = mix(vec3(.16, .13, .095), vec3(.26, .22, .16), aggregate);
+        frag_color = vec4(reflected_radiance(n, trail), 1.0);
+        return;
+    }
+    if (surface > 13.5) {
+        float bed = hash21(floor(world_position.xz * .32));
+        vec3 garden = mix(
+            vec3(.035, .11, .025), vec3(.17, .055, .025), bed * .34
+        );
+        frag_color = vec4(reflected_radiance(n, garden), 1.0);
+        return;
+    }
+    if (surface > 12.5) {
+        float tiles = step(.08, abs(fract(surface_uv.x * .25) - .5))
+                    * step(.08, abs(fract(surface_uv.y * .25) - .5));
+        vec3 rubber = mix(vec3(.12, .035, .025), vec3(.035, .10, .12), tiles);
+        frag_color = vec4(reflected_radiance(n, rubber), 1.0);
+        return;
+    }
+    if (surface > 11.5) {
+        float panels = step(.035, min(
+            abs(fract(surface_uv.x * .22) - .5),
+            abs(fract(surface_uv.y * .22) - .5)
+        ));
+        vec3 concrete = mix(vec3(.21), vec3(.15), panels * .12);
+        frag_color = vec4(reflected_radiance(n, concrete), 1.0);
+        return;
+    }
+    if (surface > 10.5) {
+        float leaf = hash21(floor(world_position.xz * .65 + world_position.y));
+        vec3 foliage = mix(vec3(.025, .095, .018),
+                           vec3(.075, .19, .038), leaf);
+        frag_color = vec4(reflected_radiance(n, foliage), 1.0);
+        return;
+    }
+    if (surface > 9.5) {
+        vec3 lamp = vec3(1.0, .48, .13) * window_radiance_w_m2_sr * 1.8;
+        frag_color = vec4(lamp + reflected_radiance(n, vec3(.22)), 1.0);
+        return;
+    }
+    if (surface > 8.5) {
+        float grain = hash21(floor(surface_uv * vec2(1.8, .18)));
+        vec3 wood = mix(vec3(.12, .050, .018), vec3(.28, .13, .045), grain);
+        frag_color = vec4(reflected_radiance(n, wood), 1.0);
+        return;
+    }
+    if (surface > 7.5) {
+        float fresnel = pow(
+            1.0 - max(dot(n, normalize(camera_position-world_position)), 0.0),
+            3.0
+        );
+        vec3 metal = mix(vec3(.18), vec3(.42), fresnel);
+        frag_color = vec4(reflected_radiance(n, metal), 1.0);
+        return;
+    }
+    if (surface > 6.5) {
+        float marking = 1.0 - smoothstep(
+            .025, .055, abs(fract(surface_uv.x * .05) - .5)
+        );
+        vec3 sport = mix(vec3(.035, .13, .075), vec3(.75), marking);
+        frag_color = vec4(reflected_radiance(n, sport), 1.0);
+        return;
+    }
+    if (surface > 5.5) {
+        float stripe = 1.0 - smoothstep(
+            .025, .055, abs(fract(surface_uv.x * .11) - .5)
+        );
+        vec3 cycleway = mix(vec3(.19, .045, .032), vec3(.72), stripe * .6);
+        frag_color = vec4(reflected_radiance(n, cycleway), 1.0);
+        return;
+    }
+    if (surface > 4.5) {
+        vec2 joints = abs(fract(surface_uv * vec2(.42, .28)) - .5);
+        float seam = 1.0 - smoothstep(.025, .055, min(joints.x, joints.y));
+        vec3 paving = mix(vec3(.24, .23, .21), vec3(.09), seam);
+        frag_color = vec4(reflected_radiance(n, paving), 1.0);
+        return;
+    }
     if (surface > 3.5) {
         float green_variation = hash21(floor(world_position.xz * .15));
         vec3 green = mix(vec3(.055, .16, .045),
@@ -612,6 +692,19 @@ void main() {
     float fresnel = pow(1.0 - max(dot(n, view_direction), 0.0), 4.0);
     vec3 facade = mix(wall, glass, pane * glass_amount);
     facade += glass * fresnel * glass_amount * .35;
+    float mullion = 1.0 - smoothstep(
+        .018, .055, min(abs(within.x-pane_bounds.x),
+                        abs(within.x-pane_bounds.y))
+    );
+    mullion += 1.0 - smoothstep(
+        .018, .055, min(abs(within.y-pane_bounds.z),
+                        abs(within.y-pane_bounds.w))
+    );
+    facade = mix(facade, vec3(.035, .040, .045), clamp(mullion, 0.0, 1.0));
+    float weathering = hash21(
+        floor(surface_uv / vec2(18.0, 26.0)) + facade_style * 7.3
+    );
+    facade *= mix(.94, 1.035, weathering);
     vec3 emission = window_color * pane * occupied
                   * window_radiance_w_m2_sr;
 
@@ -839,6 +932,7 @@ class Renderer:
                 scene.bridge_vertices,
                 scene.road_vertices,
                 scene.vegetation_vertices,
+                scene.detail_vertices,
             )):
                 if not len(vertices):
                     continue
@@ -858,6 +952,30 @@ class Renderer:
                 self.scene_vaos.append((vao, len(vertices)))
                 if scene_index < 2:
                     self.reflection_scene_vaos.append((vao, len(vertices)))
+                elif scene_index == 4:
+                    reflection_mask = np.isin(
+                        vertices[:, 6], (10.0, 12.0)
+                    )
+                    reflection_vertices = vertices[reflection_mask]
+                    if len(reflection_vertices):
+                        reflection_buffer = ctx.buffer(
+                            reflection_vertices.tobytes()
+                        )
+                        reflection_vao = ctx.vertex_array(
+                            self.scene_program,
+                            [(
+                                reflection_buffer,
+                                "3f 3f 1f 2f 1f",
+                                "in_position",
+                                "in_normal",
+                                "in_surface",
+                                "in_surface_uv",
+                                "in_facade_style",
+                            )],
+                        )
+                        self.reflection_scene_vaos.append(
+                            (reflection_vao, len(reflection_vertices))
+                        )
         atmosphere = atmosphere or AtmosphereConfig()
         wind = np.asarray(atmosphere.wind_velocity_mps, dtype=np.float32)
         wind_speed = float(np.linalg.norm(wind[[0, 2]]))

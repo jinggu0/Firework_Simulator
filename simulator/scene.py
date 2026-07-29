@@ -14,6 +14,17 @@ SURFACE_ROOF = 1.0
 SURFACE_BRIDGE = 2.0
 SURFACE_ROAD = 3.0
 SURFACE_VEGETATION = 4.0
+SURFACE_FOOTWAY = 5.0
+SURFACE_CYCLEWAY = 6.0
+SURFACE_SPORT = 7.0
+SURFACE_METAL = 8.0
+SURFACE_WOOD = 9.0
+SURFACE_LAMP = 10.0
+SURFACE_FOLIAGE = 11.0
+SURFACE_CONCRETE = 12.0
+SURFACE_PLAYGROUND = 13.0
+SURFACE_GARDEN = 14.0
+SURFACE_TRAIL = 15.0
 
 FACADE_GENERIC = 0.0
 FACADE_GLASS_BLUE = 1.0
@@ -30,6 +41,7 @@ class StaticScene:
     bridge_vertices: np.ndarray
     road_vertices: np.ndarray
     vegetation_vertices: np.ndarray
+    detail_vertices: np.ndarray
     water_mask: np.ndarray
     water_mask_bounds: np.ndarray
     terrain_height_m: np.ndarray
@@ -452,6 +464,7 @@ def build_scene(
         np.asarray(bridges, dtype=np.float32) if bridges else empty,
         np.asarray(roads, dtype=np.float32) if roads else empty,
         np.asarray(vegetation, dtype=np.float32) if vegetation else empty,
+        empty,
         np.full((1, 1), 255, dtype=np.uint8),
         np.array([-10_000.0, -10_000.0, 10_000.0, 10_000.0], dtype=np.float32),
         np.zeros((1, 1), dtype=np.float32),
@@ -551,6 +564,7 @@ def save_scene(scene: StaticScene, path: Path) -> None:
         bridge_vertices=scene.bridge_vertices,
         road_vertices=scene.road_vertices,
         vegetation_vertices=scene.vegetation_vertices,
+        detail_vertices=scene.detail_vertices,
         water_mask=scene.water_mask,
         water_mask_bounds=scene.water_mask_bounds,
         terrain_height_m=scene.terrain_height_m,
@@ -589,6 +603,9 @@ def load_scene(path: Path) -> StaticScene:
             if "road_vertices" in data else np.empty((0, 10), dtype=np.float32),
             _upgrade_vertex_layout(data["vegetation_vertices"])
             if "vegetation_vertices" in data
+            else np.empty((0, 10), dtype=np.float32),
+            _upgrade_vertex_layout(data["detail_vertices"])
+            if "detail_vertices" in data
             else np.empty((0, 10), dtype=np.float32),
             data["water_mask"].copy(),
             data["water_mask_bounds"].copy(),

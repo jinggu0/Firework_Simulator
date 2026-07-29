@@ -43,9 +43,9 @@ def download(snapshot_utc: str = SNAPSHOT_UTC) -> dict:
   way["building:part"]({south},{west},{north},{east});
   way["bridge"]({south},{west},{north},{east});
   way["highway"]({south},{west},{north},{east});
-  way["leisure"="park"]({south},{west},{north},{east});
-  way["landuse"~"^(grass|forest|recreation_ground)$"]({south},{west},{north},{east});
-  way["natural"~"^(wood|grassland)$"]({south},{west},{north},{east});
+  way["leisure"~"^(park|playground|pitch|track|garden)$"]({south},{west},{north},{east});
+  way["landuse"~"^(grass|meadow|flowerbed|forest|recreation_ground)$"]({south},{west},{north},{east});
+  way["natural"~"^(wood|grassland|scrub)$"]({south},{west},{north},{east});
 );
 out geom;
 """
@@ -70,8 +70,36 @@ def main() -> None:
         default=Path("assets/yeouido_scene.npz"),
     )
     parser.add_argument("--snapshot", default=SNAPSHOT_UTC)
+    parser.add_argument(
+        "--details-output",
+        type=Path,
+        default=Path("assets/yeouido_detail_osm_2024-10-05.json"),
+    )
     args = parser.parse_args()
     osm = download(args.snapshot)
+    detail_elements = [
+        element
+        for element in osm.get("elements", [])
+        if element.get("tags", {}).get("leisure")
+        in {"playground", "pitch", "track", "garden"}
+        or element.get("tags", {}).get("landuse")
+        in {"grass", "meadow", "flowerbed", "forest", "recreation_ground"}
+        or element.get("tags", {}).get("natural")
+        in {"wood", "grassland", "scrub"}
+    ]
+    args.details_output.write_text(
+        json.dumps(
+            {
+                "version": osm.get("version", 0.6),
+                "generator": osm.get("generator", "Overpass API"),
+                "snapshot_utc": args.snapshot,
+                "elements": detail_elements,
+            },
+            ensure_ascii=False,
+            separators=(",", ":"),
+        ),
+        encoding="utf-8",
+    )
     scene = build_scene(osm, *ORIGIN, snapshot_utc=args.snapshot)
     mask, bounds = build_water_mask(
         download_han_river(args.snapshot), *ORIGIN

@@ -1,8 +1,15 @@
 from pathlib import Path
+import json
 
 import numpy as np
 
 from simulator.scene import build_scene, build_water_mask, load_scene
+from simulator.scene import (
+    SURFACE_CYCLEWAY,
+    SURFACE_FOOTWAY,
+    SURFACE_TRAIL,
+)
+from simulator.site_details import classify_path_surfaces
 
 
 def test_building_footprint_becomes_walls_and_roof() -> None:
@@ -214,7 +221,55 @@ def test_shipped_scene_is_the_event_time_snapshot() -> None:
     assert len(scene.building_vertices) > 99_000
     assert len(scene.road_vertices) > 60_000
     assert len(scene.vegetation_vertices) > 5_000
+    assert len(scene.detail_vertices) > 100_000
+    assert {
+        7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0
+    }.issubset(set(np.unique(scene.detail_vertices[:, 6])))
     assert {1.0, 2.0, 3.0, 4.0, 5.0, 6.0}.issubset(
         set(np.unique(scene.building_vertices[:, 9]))
     )
     assert np.isclose(scene.building_vertices[:, 1].max(), 322.0)
+
+
+def test_imported_path_widths_select_distinct_surface_materials() -> None:
+    def segment(width: float, x: float) -> np.ndarray:
+        vertices = np.zeros((6, 10), dtype=np.float32)
+        vertices[:, :3] = np.array(
+            [
+                [x, 0.06, -width * 0.5],
+                [x, 0.06, width * 0.5],
+                [x + 10.0, 0.06, width * 0.5],
+                [x, 0.06, -width * 0.5],
+                [x + 10.0, 0.06, width * 0.5],
+                [x + 10.0, 0.06, -width * 0.5],
+            ]
+        )
+        vertices[:, 6] = 3.0
+        return vertices
+
+    roads = np.concatenate(
+        [segment(1.5, 0.0), segment(2.2, 20.0), segment(2.5, 40.0)]
+    )
+    classified = classify_path_surfaces(roads)
+    assert np.all(classified[:6, 6] == SURFACE_TRAIL)
+    assert np.all(classified[6:12, 6] == SURFACE_FOOTWAY)
+    assert np.all(classified[12:18, 6] == SURFACE_CYCLEWAY)
+
+
+def test_detail_source_snapshots_retain_provenance_and_counts() -> None:
+    assets = Path(__file__).resolve().parent.parent / "assets"
+    historical = json.loads(
+        (assets / "yeouido_detail_osm_2024-10-05.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    facilities = json.loads(
+        (assets / "yeouido_official_facilities.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert len(historical["elements"]) == 131
+    assert "2024-10-05T10:20:00Z" in str(historical["osm3s"])
+    assert facilities["park_code"] == "Hzone007"
+    assert facilities["retrieved_date"] == "2026-07-29"
+    assert len(facilities["facilities"]) == 121

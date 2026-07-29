@@ -111,6 +111,41 @@ daily GIS building integration dataset and 1–5 m NGII DEM require authenticate
 downloads and can replace these inputs when supplied. OSM attribution and
 licensing are recorded in `assets/ATTRIBUTION.md`.
 
+## Event-site ground cover and street furniture
+
+A second Overpass query fixed to 2024-10-05 10:20 UTC adds 49 distinct
+rendered sports fields, running tracks, playgrounds, gardens, and scrub areas
+that were absent from the first broad land-cover pass. Imported road widths
+retain the source hierarchy and select separate compacted-trail, concrete
+footway, red cycleway, and asphalt-road material families. Metric world
+coordinates drive joints, aggregate, lane markings, track markings, and
+rubber-playground tiles without a repeating image texture.
+
+The historical data contains 25 `natural=wood` regions but no individual tree
+nodes. The asset builder therefore distributes 201 deterministic low-poly
+trunks and crowns strictly inside those dated polygons. This reconstructs the
+mapped canopy volume and parallax while keeping the unsurveyed trunk positions
+explicitly provisional.
+
+The Seoul Future Hangang Headquarters facility map contributes 121 official
+current coordinates. Fifty-four visible structures remain after filtering
+non-geometric records and positions already covered by OSM buildings:
+toilets, shops, information and rescue centres, drinking fountains, smoking
+booths, rental kiosks, playground equipment, cafes, and observation
+structures. Coordinates are authoritative to the current map, but dimensions,
+heading, and 2024 existence remain calibration inputs.
+
+No dated source publishes individual bench or lamp coordinates. The detail
+builder consequently labels those meshes as inferred LOD and places them
+deterministically beside the actual mapped path segments. The railing is
+extracted from water-to-land transitions in the 1024 x 1024 Han River mask,
+median-filtered to remove raster stair steps, and rendered with two rails and
+regular posts. The resulting detailed batch adds 100,356 vertices while
+remaining one draw call in the main pass. The half-resolution water reflection
+keeps only 16,560 visually dominant lamp-head and concrete-facility vertices;
+dark tree crowns, benches, posts, and ground surfaces reuse the surrounding
+land reflection at that distance.
+
 ## Landmark geometry and facades
 
 Static scene vertices carry world position, normal, surface kind, metric
@@ -466,6 +501,11 @@ competes with rendering for memory bandwidth. With exact interior depth
 termination enabled, a 120-frame timestamp-query run records 8.096 ms GPU p95
 and 13.681 ms CPU-submit p95 for the full moving-camera case. Both remain
 inside the 16.67 ms display budget despite concurrent host-load variance.
+After adding the 100,356-vertex event-site batch, the conservative
+moving-camera timestamp run measures 14.028 ms GPU p95. The coupled blocking
+visual section measures 16.474 ms p95. Reflection LOD is therefore required
+for the fidelity default; submitting the full furniture/tree batch to the
+30 Hz reflection pass is outside the intended laptop margin.
 The next latency work is ordered as follows: add active sparse-brick dispatch
 beyond the current launch domain, add GPU source-reduction diagnostics, then
 calibrate smoke lighting and multiple scattering. Dynamic resolution, if
