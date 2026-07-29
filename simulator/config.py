@@ -103,6 +103,8 @@ class RenderConfig:
     exposure_ev100: float = 7.0
     shutter_time_s: float = 1.0 / 60.0
     bloom_strength: float = 0.72
+    reflection_scale: float = 0.5
+    reflection_hz: int = 30
     max_particles: int = 250_000
 
 

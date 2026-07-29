@@ -15,12 +15,14 @@ class WaterConfig:
     wind_direction_deg: float = 255.0
     fetch_length_m: float = 1_200.0
     wave_count: int = 32
-    minimum_wavelength_m: float = 0.35
-    maximum_wavelength_m: float = 24.0
+    minimum_wavelength_m: float = 0.12
+    maximum_wavelength_m: float = 30.0
     directional_spread_power: float = 8.0
     choppiness: float = 0.72
-    grid_size: tuple[int, int] = (161, 97)
-    extent_m: tuple[float, float] = (700.0, 420.0)
+    grid_size: tuple[int, int] = (181, 129)
+    extent_m: tuple[float, float] = (1_200.0, 900.0)
+    far_grid_size: tuple[int, int] = (121, 97)
+    far_extent_m: tuple[float, float] = (5_000.0, 4_000.0)
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,9 +39,9 @@ def build_directional_spectrum(
 ) -> WaveSpectrum:
     """Discretise a fetch-limited wind sea into directional wave components.
 
-    The spectrum uses a Phillips equilibrium term, finite-fetch suppression,
-    deep-water dispersion and cosine directional spreading. Its output is a
-    compact real-time approximation rather than an artist-authored wave set.
+    The spectrum uses the fetch-limited JONSWAP formulation with deep-water
+    dispersion. Its output is a compact real-time approximation rather than
+    an artist-authored wave set.
     """
 
     if config.wind_speed_mps <= 0.0:
@@ -55,30 +57,11 @@ def build_directional_spectrum(
         config.wave_count,
     )
     wave_numbers = 2.0 * np.pi / wavelengths
-    log_step = abs(math.log(wavelengths[-1] / wavelengths[0])) / max(
-        config.wave_count - 1, 1
-    )
-    delta_k = wave_numbers * log_step
+    angular_frequencies = np.sqrt(GRAVITY_MPS2 * wave_numbers)
+    delta_omega = np.gradient(angular_frequencies)
 
     wind_angle = math.radians(config.wind_direction_deg)
     travel_angle = wind_angle + math.pi
-    wind_direction = np.array(
-        [math.sin(travel_angle), -math.cos(travel_angle)], dtype=np.float64
-    )
-    peak_length = min(
-        config.maximum_wavelength_m,
-        max(0.5, 0.83 * config.wind_speed_mps**2 / GRAVITY_MPS2 * 2.0 * np.pi),
-    )
-    longest_supported = min(
-        config.maximum_wavelength_m,
-        max(
-            config.minimum_wavelength_m,
-            2.0 * np.pi * (config.fetch_length_m / 22_000.0) ** 0.44
-            * config.wind_speed_mps**1.1,
-        ),
-    )
-    peak_k = 2.0 * np.pi / min(peak_length, max(longest_supported, 0.5))
-
     angular_offsets = rng.normal(
         0.0,
         math.radians(32.0) / math.sqrt(config.directional_spread_power),
@@ -86,22 +69,43 @@ def build_directional_spectrum(
     )
     angles = travel_angle + angular_offsets
     directions = np.column_stack((np.sin(angles), -np.cos(angles)))
-    alignment = np.maximum(directions @ wind_direction, 0.0)
-    directional = alignment**config.directional_spread_power
 
-    largest_wave_m = config.wind_speed_mps**2 / GRAVITY_MPS2
-    phillips_alpha = 0.0065
-    spectrum_density = (
-        phillips_alpha
-        * np.exp(-1.0 / np.maximum((wave_numbers * largest_wave_m) ** 2, 1e-8))
-        / np.maximum(wave_numbers**4, 1e-8)
-        * directional
+    dimensionless_fetch = max(
+        GRAVITY_MPS2
+        * config.fetch_length_m
+        / max(config.wind_speed_mps**2, 1e-6),
+        1.0,
     )
-    # Suppress capillary-scale energy and wavelengths not developed by fetch.
-    spectrum_density *= np.exp(-(wave_numbers * 0.08) ** 2)
-    spectrum_density *= np.exp(-(peak_k / np.maximum(wave_numbers, 1e-6)) ** 4)
-    amplitudes = np.sqrt(2.0 * spectrum_density * delta_k)
-    amplitudes = np.minimum(amplitudes, 0.14 / np.maximum(wave_numbers, 1e-6))
+    peak_omega = (
+        22.0
+        * GRAVITY_MPS2
+        / config.wind_speed_mps
+        * dimensionless_fetch ** -0.33
+    )
+    alpha = float(np.clip(
+        0.076 * dimensionless_fetch ** -0.22, 0.001, 0.02
+    ))
+    sigma = np.where(angular_frequencies <= peak_omega, 0.07, 0.09)
+    peak_shape = np.exp(
+        -(
+            (angular_frequencies - peak_omega) ** 2
+            / (2.0 * sigma**2 * peak_omega**2)
+        )
+    )
+    spectrum_omega = (
+        alpha
+        * GRAVITY_MPS2**2
+        / np.maximum(angular_frequencies**5, 1e-9)
+        * np.exp(
+            -1.25
+            * (peak_omega / np.maximum(angular_frequencies, 1e-6)) ** 4
+        )
+        * 3.3**peak_shape
+    )
+    spectrum_omega *= np.exp(-(wave_numbers * 0.035) ** 2)
+    amplitudes = np.sqrt(
+        2.0 * spectrum_omega * np.maximum(delta_omega, 0.0)
+    )
 
     components = np.column_stack(
         (directions[:, 0], directions[:, 1], wave_numbers, amplitudes)
@@ -113,11 +117,49 @@ def build_directional_spectrum(
     return WaveSpectrum(components, phases, significant_height)
 
 
-def build_water_mesh(config: WaterConfig) -> tuple[np.ndarray, np.ndarray]:
-    columns, rows = config.grid_size
-    width, depth = config.extent_m
+def estimate_fetch_length_m(
+    water_mask: np.ndarray,
+    bounds: np.ndarray,
+    wind_velocity_xz_mps: np.ndarray,
+    origin_xz_m: tuple[float, float] = (0.0, 0.0),
+) -> float:
+    velocity = np.asarray(wind_velocity_xz_mps, dtype=np.float64)
+    speed = float(np.linalg.norm(velocity))
+    if speed < 1e-6:
+        return 100.0
+    upwind = -velocity / speed
+    minimum_x, minimum_z, maximum_x, maximum_z = map(float, bounds)
+    metres_per_pixel = max(
+        (maximum_x - minimum_x) / water_mask.shape[1],
+        (maximum_z - minimum_z) / water_mask.shape[0],
+    )
+    step_m = max(metres_per_pixel * 0.5, 1.0)
+    maximum_distance = math.hypot(
+        maximum_x - minimum_x, maximum_z - minimum_z
+    )
+    for distance in np.arange(0.0, maximum_distance, step_m):
+        point = np.asarray(origin_xz_m) + upwind * distance
+        u = (point[0] - minimum_x) / (maximum_x - minimum_x)
+        v = (point[1] - minimum_z) / (maximum_z - minimum_z)
+        if u < 0.0 or u >= 1.0 or v < 0.0 or v >= 1.0:
+            return max(float(distance), 20.0)
+        x = min(int(u * water_mask.shape[1]), water_mask.shape[1] - 1)
+        y = min(int(v * water_mask.shape[0]), water_mask.shape[0] - 1)
+        if water_mask[y, x] < 128:
+            return max(float(distance), 20.0)
+    return maximum_distance
+
+
+def build_water_mesh(
+    config: WaterConfig,
+    grid_size: tuple[int, int] | None = None,
+    extent_m: tuple[float, float] | None = None,
+    exclude_extent_m: tuple[float, float] | None = None,
+) -> tuple[np.ndarray, np.ndarray]:
+    columns, rows = grid_size or config.grid_size
+    width, depth = extent_m or config.extent_m
     x = np.linspace(-width * 0.5, width * 0.5, columns, dtype=np.float32)
-    z = np.linspace(-depth * 0.35, depth * 0.65, rows, dtype=np.float32)
+    z = np.linspace(-depth * 0.5, depth * 0.5, rows, dtype=np.float32)
     xx, zz = np.meshgrid(x, z)
     vertices = np.column_stack((xx.ravel(), zz.ravel())).astype(np.float32)
     index_rows = []
@@ -126,5 +168,15 @@ def build_water_mesh(config: WaterConfig) -> tuple[np.ndarray, np.ndarray]:
         for column in range(columns - 1):
             a = left + column
             b = a + columns
+            if exclude_extent_m is not None:
+                centre = 0.25 * (
+                    vertices[a] + vertices[a + 1]
+                    + vertices[b] + vertices[b + 1]
+                )
+                if (
+                    abs(float(centre[0])) < exclude_extent_m[0] * 0.5
+                    and abs(float(centre[1])) < exclude_extent_m[1] * 0.5
+                ):
+                    continue
             index_rows.extend((a, b, a + 1, a + 1, b, b + 1))
     return vertices, np.asarray(index_rows, dtype=np.uint32)

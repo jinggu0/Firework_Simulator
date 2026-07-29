@@ -12,7 +12,12 @@ from .config import AtmosphereConfig, RenderConfig, SmokeConfig
 from .fluid import SmokeFluid2D
 from .physics import FireworkWorld
 from .scene import load_scene
-from .water import WaterConfig, build_directional_spectrum, build_water_mesh
+from .water import (
+    WaterConfig,
+    build_directional_spectrum,
+    build_water_mesh,
+    estimate_fetch_length_m,
+)
 
 
 def _perspective(fov_deg: float, aspect: float, near: float, far: float) -> np.ndarray:
@@ -210,6 +215,8 @@ uniform float time_s;
 uniform float choppiness;
 out vec3 world_position;
 out vec3 world_normal;
+out vec4 reflection_clip;
+uniform mat4 reflection_view_projection;
 void main() {
     vec2 displaced_xz = in_xz;
     float height = 0.0;
@@ -220,12 +227,17 @@ void main() {
         float amplitude = waves[i].w;
         float omega = sqrt(9.80665 * k);
         float theta = k * dot(direction, in_xz) - omega * time_s + phases[i];
-        height += amplitude * sin(theta);
-        gradient += amplitude * k * direction * cos(theta);
-        displaced_xz += choppiness * amplitude * direction * cos(theta);
+        float wavelength = 6.28318530718 / k;
+        float geometry_weight = smoothstep(1.8, 7.0, wavelength);
+        height += amplitude * sin(theta) * geometry_weight;
+        gradient += amplitude * k * direction * cos(theta) * geometry_weight;
+        displaced_xz += choppiness * amplitude * direction * cos(theta)
+                      * geometry_weight;
     }
     world_position = vec3(displaced_xz.x, height, displaced_xz.y);
     world_normal = normalize(vec3(-gradient.x, 1.0, -gradient.y));
+    reflection_clip = reflection_view_projection
+                    * vec4(world_position, 1.0);
     gl_Position = view_projection * vec4(world_position, 1.0);
 }
 """
@@ -234,10 +246,15 @@ WATER_FRAGMENT = """
 #version 330
 in vec3 world_position;
 in vec3 world_normal;
+in vec4 reflection_clip;
 uniform vec3 camera_position;
 uniform sampler2D water_mask;
+uniform sampler2D reflection_texture;
 uniform vec4 water_mask_bounds;
 uniform float sky_ambient_scale;
+uniform vec4 waves[32];
+uniform float phases[32];
+uniform float time_s;
 out vec4 frag_color;
 void main() {
     vec2 mask_uv = (world_position.xz - water_mask_bounds.xy)
@@ -245,18 +262,41 @@ void main() {
     if (any(lessThan(mask_uv, vec2(0.0)))
         || any(greaterThan(mask_uv, vec2(1.0)))
         || texture(water_mask, mask_uv).r < 0.5) discard;
-    vec3 n = normalize(world_normal);
+    vec2 fine_gradient = vec2(0.0);
+    for (int i = 0; i < 32; ++i) {
+        vec2 direction = waves[i].xy;
+        float k = waves[i].z;
+        float amplitude = waves[i].w;
+        float omega = sqrt(9.80665 * k);
+        float theta = k * dot(direction, world_position.xz)
+                    - omega * time_s + phases[i];
+        float wavelength = 6.28318530718 / k;
+        float fine_weight = 1.0 - smoothstep(1.8, 7.0, wavelength);
+        fine_gradient += amplitude * k * direction * cos(theta) * fine_weight;
+    }
+    vec3 n = normalize(
+        world_normal + vec3(-fine_gradient.x, 0.0, -fine_gradient.y)
+    );
     vec3 view_direction = normalize(camera_position - world_position);
     float n_dot_v = max(dot(n, view_direction), 0.0);
     float fresnel = 0.02037 + (1.0 - 0.02037) * pow(1.0 - n_dot_v, 5.0);
-    vec3 reflected = reflect(-view_direction, n);
-    float sky_factor = smoothstep(-0.15, 0.75, reflected.y);
-    vec3 sky_radiance = mix(vec3(.0018, .0024, .0035),
-                            vec3(.00018, .00032, .00072), sky_factor)
-                      * sky_ambient_scale;
+    vec3 reflected_direction = reflect(-view_direction, n);
+    float sky_factor = smoothstep(-0.15, 0.75, reflected_direction.y);
+    vec3 fallback_radiance = mix(vec3(.0018, .0024, .0035),
+                                 vec3(.00018, .00032, .00072), sky_factor)
+                           * sky_ambient_scale;
+    vec2 reflection_uv = reflection_clip.xy / reflection_clip.w * .5 + .5;
+    reflection_uv += vec2(n.x, -n.z) * .018;
+    bool reflection_valid = reflection_clip.w > 0.0
+                         && all(greaterThanEqual(reflection_uv, vec2(0.0)))
+                         && all(lessThanEqual(reflection_uv, vec2(1.0)));
+    vec3 reflected_radiance = reflection_valid
+        ? texture(reflection_texture, reflection_uv).rgb
+        : fallback_radiance;
     vec3 water_body = vec3(.00010, .00028, .00034);
     float grazing_haze = pow(1.0 - n_dot_v, 3.0) * .0007;
-    vec3 radiance = mix(water_body, sky_radiance, fresnel) + grazing_haze;
+    vec3 radiance = mix(water_body, reflected_radiance, fresnel)
+                  + grazing_haze;
     frag_color = vec4(radiance, 1.0);
 }
 """
@@ -496,6 +536,9 @@ class Renderer:
         )
         scene_path = Path(__file__).resolve().parent.parent / "assets" / "yeouido_scene.npz"
         self.scene_vaos: list[tuple[moderngl.VertexArray, int]] = []
+        self.reflection_scene_vaos: list[
+            tuple[moderngl.VertexArray, int]
+        ] = []
         water_mask = np.full((1, 1), 255, dtype=np.uint8)
         water_mask_bounds = np.array(
             [-10_000.0, -10_000.0, 10_000.0, 10_000.0], dtype=np.float32
@@ -508,12 +551,12 @@ class Renderer:
             water_mask_bounds = scene.water_mask_bounds
             terrain_height = scene.terrain_height_m
             terrain_bounds = scene.terrain_bounds
-            for vertices in (
+            for scene_index, vertices in enumerate((
                 scene.building_vertices,
                 scene.bridge_vertices,
                 scene.road_vertices,
                 scene.vegetation_vertices,
-            ):
+            )):
                 if not len(vertices):
                     continue
                 buffer = ctx.buffer(vertices.tobytes())
@@ -523,39 +566,69 @@ class Renderer:
                       "in_position", "in_normal", "in_material")],
                 )
                 self.scene_vaos.append((vao, len(vertices)))
+                if scene_index < 2:
+                    self.reflection_scene_vaos.append((vao, len(vertices)))
         atmosphere = atmosphere or AtmosphereConfig()
         wind = np.asarray(atmosphere.wind_velocity_mps, dtype=np.float32)
         wind_speed = float(np.linalg.norm(wind[[0, 2]]))
         wind_from = math.degrees(math.atan2(-float(wind[0]), float(wind[2]))) % 360.0
+        fetch_length_m = estimate_fetch_length_m(
+            water_mask, water_mask_bounds, wind[[0, 2]]
+        )
         self.water_config = WaterConfig(
             wind_speed_mps=max(wind_speed, 0.1),
             wind_direction_deg=wind_from,
+            fetch_length_m=fetch_length_m,
         )
         water_spectrum = build_directional_spectrum(self.water_config)
-        water_vertices, water_indices = build_water_mesh(self.water_config)
+        near_vertices, near_indices = build_water_mesh(self.water_config)
+        far_vertices, far_indices = build_water_mesh(
+            self.water_config,
+            self.water_config.far_grid_size,
+            self.water_config.far_extent_m,
+            self.water_config.extent_m,
+        )
+        land_vertices, land_indices = build_water_mesh(
+            self.water_config,
+            self.water_config.far_grid_size,
+            self.water_config.far_extent_m,
+        )
         self.water_program = ctx.program(
             vertex_shader=WATER_VERTEX, fragment_shader=WATER_FRAGMENT
         )
-        self.water_vertex_buffer = ctx.buffer(water_vertices.tobytes())
-        self.water_index_buffer = ctx.buffer(water_indices.tobytes())
-        self.water_vao = ctx.vertex_array(
-            self.water_program,
-            [(self.water_vertex_buffer, "2f", "in_xz")],
-            self.water_index_buffer,
-            index_element_size=4,
-        )
+        self.water_vaos: list[moderngl.VertexArray] = []
+        self.water_buffers: list[moderngl.Buffer] = []
+        for vertices, indices in (
+            (far_vertices, far_indices),
+            (near_vertices, near_indices),
+        ):
+            vertex_buffer = ctx.buffer(vertices.tobytes())
+            index_buffer = ctx.buffer(indices.tobytes())
+            self.water_buffers.extend((vertex_buffer, index_buffer))
+            self.water_vaos.append(
+                ctx.vertex_array(
+                    self.water_program,
+                    [(vertex_buffer, "2f", "in_xz")],
+                    index_buffer,
+                    index_element_size=4,
+                )
+            )
         self.land_program = ctx.program(
             vertex_shader=LAND_VERTEX, fragment_shader=LAND_FRAGMENT
         )
+        self.land_vertex_buffer = ctx.buffer(land_vertices.tobytes())
+        self.land_index_buffer = ctx.buffer(land_indices.tobytes())
         self.land_vao = ctx.vertex_array(
             self.land_program,
-            [(self.water_vertex_buffer, "2f", "in_xz")],
-            self.water_index_buffer,
+            [(self.land_vertex_buffer, "2f", "in_xz")],
+            self.land_index_buffer,
             index_element_size=4,
         )
         self.water_program["waves"].write(water_spectrum.components.tobytes())
         self.water_program["phases"].write(water_spectrum.phases.tobytes())
         self.water_program["choppiness"] = self.water_config.choppiness
+        self.significant_wave_height_m = water_spectrum.significant_wave_height_m
+        self.water_program["reflection_texture"] = 7
         self.water_mask_texture = ctx.texture(
             (water_mask.shape[1], water_mask.shape[0]),
             components=1,
@@ -677,6 +750,24 @@ class Renderer:
         )
         depth = ctx.depth_renderbuffer((config.width, config.height))
         self.hdr_fbo = ctx.framebuffer([self.hdr_texture], depth)
+        reflection_size = (
+            max(int(config.width * config.reflection_scale), 1),
+            max(int(config.height * config.reflection_scale), 1),
+        )
+        self.reflection_texture = ctx.texture(
+            reflection_size, components=4, dtype="f2"
+        )
+        self.reflection_texture.filter = moderngl.LINEAR, moderngl.LINEAR
+        self.reflection_texture.repeat_x = False
+        self.reflection_texture.repeat_y = False
+        reflection_depth = ctx.depth_renderbuffer(reflection_size)
+        self.reflection_fbo = ctx.framebuffer(
+            [self.reflection_texture], reflection_depth
+        )
+        self.reflection_interval_s = 1.0 / max(config.reflection_hz, 1)
+        self.reflection_accumulator_s = self.reflection_interval_s
+        self.reflection_ready = False
+        self.last_rendered_smoke_revision = -1
         bloom_size = (max(config.width // 2, 1), max(config.height // 2, 1))
         self.bloom_textures = [
             ctx.texture(bloom_size, components=4, dtype="f2") for _ in range(2)
@@ -712,10 +803,45 @@ class Renderer:
             np.all(camera.position_m >= self.smoke_bounds[0])
             and np.all(camera.position_m <= self.smoke_bounds[1])
         )
-        camera_up = np.cross(camera.right, camera.forward)
-        self.background_program["camera_forward"].value = tuple(camera.forward)
-        self.background_program["camera_right"].value = tuple(camera.right)
+        self._set_background_camera(camera.forward, camera.right)
+
+    def _set_background_camera(
+        self, forward: np.ndarray, right: np.ndarray
+    ) -> None:
+        camera_up = np.cross(right, forward)
+        self.background_program["camera_forward"].value = tuple(forward)
+        self.background_program["camera_right"].value = tuple(right)
         self.background_program["camera_up"].value = tuple(camera_up)
+
+    def _render_reflection(self, camera: FreeCamera) -> None:
+        reflected_position = camera.position_m.copy()
+        reflected_position[1] *= -1.0
+        reflected_forward = camera.forward.copy()
+        reflected_forward[1] *= -1.0
+        reflection_view = _look_at(
+            reflected_position,
+            reflected_position + reflected_forward,
+        )
+        reflection_view_projection = self.projection @ reflection_view
+        matrix_bytes = (
+            reflection_view_projection.T.astype(np.float32).tobytes()
+        )
+        self.land_program["view_projection"].write(matrix_bytes)
+        self.scene_program["view_projection"].write(matrix_bytes)
+        self.water_program["reflection_view_projection"].write(matrix_bytes)
+        self._set_background_camera(reflected_forward, camera.right)
+
+        self.reflection_fbo.use()
+        self.ctx.disable(moderngl.BLEND)
+        self.ctx.disable(moderngl.DEPTH_TEST)
+        self.reflection_fbo.clear(0, 0, 0, 1, depth=1)
+        self.background_vao.render(moderngl.TRIANGLE_STRIP)
+        self.ctx.enable(moderngl.DEPTH_TEST)
+        self.water_mask_texture.use(1)
+        self.terrain_texture.use(2)
+        self.land_vao.render(moderngl.TRIANGLES)
+        for vao, vertex_count in self.reflection_scene_vaos:
+            vao.render(moderngl.TRIANGLES, vertices=vertex_count)
 
     def _update_celestial(
         self, celestial: CelestialState, atmosphere: AtmosphereConfig
@@ -754,8 +880,22 @@ class Renderer:
         smoke: SmokeFluid2D | None = None,
     ) -> None:
         self.time_s += frame_dt_s
-        self._update_camera(camera)
         self._update_celestial(celestial, world.atmosphere)
+        self.reflection_accumulator_s += frame_dt_s
+        smoke_revision = smoke.revision if smoke is not None else -1
+        fluid_updated = smoke_revision != self.last_rendered_smoke_revision
+        if (
+            not self.reflection_ready
+            or (
+                self.reflection_accumulator_s >= self.reflection_interval_s
+                and not fluid_updated
+            )
+        ):
+            self._render_reflection(camera)
+            self.reflection_accumulator_s %= self.reflection_interval_s
+            self.reflection_ready = True
+        self.last_rendered_smoke_revision = smoke_revision
+        self._update_camera(camera)
         self.hdr_fbo.use()
         self.ctx.disable(moderngl.BLEND)
         self.ctx.disable(moderngl.DEPTH_TEST)
@@ -768,7 +908,9 @@ class Renderer:
         for vao, vertex_count in self.scene_vaos:
             vao.render(moderngl.TRIANGLES, vertices=vertex_count)
         self.water_program["time_s"] = self.time_s
-        self.water_vao.render(moderngl.TRIANGLES)
+        self.reflection_texture.use(7)
+        for water_vao in self.water_vaos:
+            water_vao.render(moderngl.TRIANGLES)
         count = world.stars.count
         if count:
             data = np.empty((count, self.stride), dtype=np.float32)

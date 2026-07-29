@@ -56,6 +56,10 @@ The 19:20–20:30 show interval is taken from the Seoul Metropolitan Government
 culture listing:
 https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=149765.&menuNo=200010
 
+The same official listing and event map identify the fireworks presentation
+area around Wonhyo Bridge. This reference constrains scene placement; it does
+not provide individual barge coordinates or surveyed temporary structures.
+
 ## Astronomy
 
 Topocentric Sun and Moon positions, lunar phase, distance, and apparent

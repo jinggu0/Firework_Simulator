@@ -13,8 +13,8 @@ data can replace them without redesigning the engine.
 - Ballistics and burning stars: fixed 120 Hz.
 - Smoke velocity/density/temperature fields: planned fixed 30 Hz with temporal
   interpolation.
-- Water spectrum: analytic deep-water phase evaluation at 60 Hz; a future FFT
-  spectrum will update displacement at 15–30 Hz with 60 Hz shading.
+- Water spectrum: analytic deep-water phase evaluation at 60 Hz. Long waves
+  displace the mesh while sub-grid ripples contribute to the fragment normal.
 - Rendering: linear RGBA16F followed by camera exposure and tone mapping.
 
 Simulation results must not depend on display frame rate. Random generation uses
@@ -42,15 +42,33 @@ in scenario data rather than source code.
 5. Participating-media smoke and light scattering
 6. HDR bloom, camera exposure, sensor response, and tone mapping
 
-The water surface now uses a discrete directional wind-wave spectrum with
-deep-water dispersion. Wave energy is derived from wind speed, direction, and
-fetch rather than hand-authored amplitudes. The current reflected firework
-displacement remains a bounded prototype; it will be replaced by reflected
-scene radiance sampled at the displaced water normal.
+The water surface uses a 32-component, fetch-limited JONSWAP wind-wave
+spectrum with deep-water dispersion. Wave energy is derived from the stored
+October 5, 2024 wind observation and from an upwind ray traced through the
+historical Han River mask, rather than from hand-authored amplitudes. At show
+start, the imported 10 m wind is 0.471 m/s from 315 degrees. The river mask
+gives a 2,094.7 m effective fetch at the scene origin, and the resulting
+significant wave height is 0.0130 m.
 
-The default provisional wind input produces a significant wave height of about
-0.05 m. It is a safe development condition, not a claim about the event night.
-The value must be regenerated from verified October 5, 2024 observations.
+The surface is split into a 1,200 x 900 m near grid and a 5,000 x 4,000 m far
+grid. The far grid omits the near patch, preventing overlap and z-fighting.
+Wavelengths too short for the mesh sampling density are evaluated only in the
+fragment normal, avoiding aliased geometry while retaining fine reflected
+highlights.
+
+Water Fresnel reflection samples a half-resolution HDR planar-reflection pass
+containing the astronomical sky, terrain, 2024 building geometry, and bridges.
+The reflection camera is mirrored around the water datum and the projected
+sample is perturbed by the same spectrum-derived normal used for shading.
+This pass is cached at 30 Hz and scheduled away from a newly completed fluid
+step to keep CPU/GPU spikes under the 60 Hz frame budget. Resolution scale and
+update rate are explicit `RenderConfig` quality controls; the fidelity default
+is half resolution at 30 Hz.
+
+The water datum is the median DEM elevation beneath the river mask (5.01 m in
+the source elevation model), not a verified October 5 gauge observation.
+Exact tide-controlled river stage and local wakes remain calibration inputs
+until timestamped gauge and vessel records are available.
 
 ## Performance rules
 
@@ -281,10 +299,13 @@ changing the fixed physical update rate.
 With a populated volume held active, the complete render path measures
 approximately 4.78 ms/frame (209 FPS uncapped). A controlled end-to-end run
 with 8,000 stars, 120 Hz ballistics, 30 Hz source deposition and fluid, 3D
-volume integration, asynchronous acoustics, terrain, water, HDR trails, and
-bloom measures 8.16 ms mean frame time and 15.59 ms at the 95th percentile
-(122.6 FPS by the mean), retaining the 60 FPS target on the development
-machine.
+volume integration, asynchronous acoustics, terrain, two-scale water, planar
+city reflection, HDR trails, and bloom measures 8.71 ms mean frame time and
+16.73 ms at the 95th percentile (114.8 FPS by the mean) in the live-loop
+timing method. A deliberately stricter per-frame GPU-finish measurement records
+15.45 ms mean and 24.39 ms at the 95th percentile. The average 60 FPS budget is
+retained on the development machine, but the strict tail is not yet a stable
+60 FPS guarantee; the remaining spikes are dominated by the CPU fluid step.
 
 ## Delayed blast acoustics
 

@@ -244,6 +244,7 @@ class SimulatorApp:
                 weather = (
                     f" | {self.world.atmosphere.temperature_k - 273.15:.1f} C"
                     f" | wind {(wind[0] ** 2 + wind[2] ** 2) ** 0.5:.1f} m/s"
+                    f" | Hs {self.renderer.significant_wave_height_m * 100:.1f} cm"
                 )
             sound_level = (
                 f" | last boom {self.last_sound_level_db:.1f} dB"
