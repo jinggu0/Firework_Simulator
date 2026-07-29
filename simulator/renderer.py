@@ -654,8 +654,10 @@ SMOKE_FRAGMENT = """
 in vec3 surface_position; out vec4 frag_color;
 uniform sampler2D smoke_state;
 uniform sampler3D smoke_state_3d;
+uniform sampler2D scene_depth;
 uniform int smoke_is_3d;
 uniform vec3 camera_position;
+uniform mat4 inverse_view_projection;
 uniform vec3 volume_min;
 uniform vec3 volume_max;
 uniform vec4 smoke_xy_bounds;
@@ -665,6 +667,7 @@ uniform float depth_profile_sigma_m;
 uniform float depth_profile_scale;
 uniform int camera_inside;
 uniform int ray_steps;
+uniform float depth_bias_m;
 float hash12(vec2 p) {
     vec3 p3 = fract(vec3(p.xyx) * .1031);
     p3 += dot(p3, p3.yzx + 33.33);
@@ -683,6 +686,18 @@ void main() {
     float t_near = max(max(near_axis.x, near_axis.y), near_axis.z);
     float t_far = min(min(far_axis.x, far_axis.y), far_axis.z);
     t_near = max(t_near, 0.0);
+
+    ivec2 depth_pixel = ivec2(gl_FragCoord.xy);
+    float opaque_depth = texelFetch(scene_depth, depth_pixel, 0).r;
+    if (opaque_depth < 1.0) {
+        vec2 depth_size = vec2(textureSize(scene_depth, 0));
+        vec2 ndc_xy = gl_FragCoord.xy / depth_size * 2.0 - 1.0;
+        vec4 opaque_h = inverse_view_projection
+                      * vec4(ndc_xy, opaque_depth * 2.0 - 1.0, 1.0);
+        vec3 opaque_world = opaque_h.xyz / opaque_h.w;
+        float opaque_distance = dot(opaque_world - camera_position, ray);
+        t_far = min(t_far, opaque_distance - depth_bias_m);
+    }
     if (t_far <= t_near) discard;
 
     float step_m = (t_far - t_near) / float(ray_steps);
@@ -1004,7 +1019,9 @@ class Renderer:
         self.smoke_state_texture.repeat_y = False
         self.smoke_program["smoke_state"] = 4
         self.smoke_program["smoke_state_3d"] = 5
+        self.smoke_program["scene_depth"] = 6
         self.smoke_program["smoke_is_3d"] = 0
+        self.smoke_program["depth_bias_m"] = smoke_config.volume_depth_bias_m
         self.smoke_program["volume_min"].value = (sx0, sy0, sz0)
         self.smoke_program["volume_max"].value = (sx1, sy1, sz1)
         self.smoke_program["smoke_xy_bounds"].value = (sx0, sy0, sx1, sy1)
@@ -1038,8 +1055,20 @@ class Renderer:
         self.hdr_texture = ctx.texture(
             (config.width, config.height), components=4, dtype="f2"
         )
-        depth = ctx.depth_renderbuffer((config.width, config.height))
-        self.hdr_fbo = ctx.framebuffer([self.hdr_texture], depth)
+        self.scene_depth_texture = ctx.depth_texture(
+            (config.width, config.height)
+        )
+        self.scene_depth_texture.compare_func = ""
+        self.scene_depth_texture.filter = (
+            moderngl.NEAREST,
+            moderngl.NEAREST,
+        )
+        self.scene_depth_texture.repeat_x = False
+        self.scene_depth_texture.repeat_y = False
+        self.hdr_fbo = ctx.framebuffer(
+            [self.hdr_texture], self.scene_depth_texture
+        )
+        self.smoke_fbo = ctx.framebuffer([self.hdr_texture])
         reflection_size = (
             max(int(config.width * config.reflection_scale), 1),
             max(int(config.height * config.reflection_scale), 1),
@@ -1090,6 +1119,9 @@ class Renderer:
             self.smoke_program,
         ):
             program["view_projection"].write(matrix_bytes)
+        self.smoke_program["inverse_view_projection"].write(
+            np.linalg.inv(view_projection).T.astype(np.float32).tobytes()
+        )
         self.water_program["camera_position"].value = tuple(camera.position_m)
         self.scene_program["camera_position"].value = tuple(camera.position_m)
         self.smoke_program["camera_position"].value = tuple(camera.position_m)
@@ -1328,6 +1360,7 @@ class Renderer:
                 self.particle_program["reflection"] = reflection
                 self.particle_vao.render(moderngl.POINTS, vertices=count)
         if smoke is not None and smoke.has_visible_smoke():
+            self.smoke_fbo.use()
             if smoke.revision != self.smoke_revision:
                 render_state_texture = getattr(
                     smoke, "render_state_texture", None
@@ -1401,14 +1434,13 @@ class Renderer:
                     smoke.x_max, smoke.y_max, smoke.z_max
                 )
             render_state_texture.use(5 if smoke_is_3d else 4)
+            self.scene_depth_texture.use(6)
             self.ctx.enable(moderngl.BLEND)
-            self.ctx.enable(moderngl.DEPTH_TEST)
-            self.ctx.depth_mask = False
+            self.ctx.disable(moderngl.DEPTH_TEST)
             self.ctx.blend_func = (
                 moderngl.ONE, moderngl.ONE_MINUS_SRC_ALPHA
             )
             self.smoke_vao.render(moderngl.TRIANGLES)
-            self.ctx.depth_mask = True
         self.ctx.disable(moderngl.BLEND)
         self.ctx.disable(moderngl.DEPTH_TEST)
         self.bloom_fbos[0].use()

@@ -342,11 +342,22 @@ and early termination at high opacity. Integration distance is measured in
 metres, so oblique views naturally produce a longer optical path. Front/back
 face selection also supports a camera located inside the volume.
 
-The volume bounding geometry uses the opaque scene depth buffer, so terrain or
-buildings entirely in front of the plume occlude it. Geometry entering the
-volume after its front boundary cannot yet terminate an individual ray; exact
-interior occlusion requires sampling a copied depth texture or ray tracing the
-scene geometry.
+The opaque pass now writes a sampleable full-resolution depth texture rather
+than an inaccessible renderbuffer. Before smoke compositing, the renderer
+rebinds the HDR colour target without that depth attachment; this avoids a
+texture feedback loop while preserving the completed terrain, building, and
+water depths. The smoke fragment reconstructs the opaque world position with
+the inverse view-projection matrix and clamps its ray exit distance to 0.20 m
+before that surface. Geometry in front of the volume rejects the ray,
+geometry inside it terminates integration exactly, and geometry behind it does
+not alter the plume. Firework stars remain emissive participants rather than
+opaque depth writers.
+
+A depth pyramid is deliberately not built for this operation. The ray marcher
+needs only the nearest opaque hit for its pixel, so one exact full-resolution
+fetch is both cheaper and more accurate than an extra hierarchy construction
+pass. Hierarchical depth remains useful only if a future adaptive marcher
+performs multiple screen-space visibility queries per ray.
 
 The 3D field retains its complete physical domain, but its rendered proxy is
 restricted to conservative source bounds and then expanded each step by the
@@ -451,12 +462,15 @@ volumetric ray marching, water, camera, particles, and exposure stay at 60 Hz.
 Doubling pressure iterations per fluid step preserves 720
 iterations/s, and the real 3D field removes the former Gaussian-depth visual
 assumption. A threaded NumPy double-buffer remains rejected because it
-competes with rendering for memory bandwidth. The next latency work is ordered
-as follows: add active sparse-brick dispatch beyond the current launch domain,
-add GPU source-reduction diagnostics, then add depth-pyramid interior smoke
-occlusion. Dynamic resolution, if required, applies only to volumetric
-radiance and reflection, never to trajectory, terrain, building geometry, or
-the fixed physics clocks.
+competes with rendering for memory bandwidth. With exact interior depth
+termination enabled, a 120-frame timestamp-query run records 8.096 ms GPU p95
+and 13.681 ms CPU-submit p95 for the full moving-camera case. Both remain
+inside the 16.67 ms display budget despite concurrent host-load variance.
+The next latency work is ordered as follows: add active sparse-brick dispatch
+beyond the current launch domain, add GPU source-reduction diagnostics, then
+calibrate smoke lighting and multiple scattering. Dynamic resolution, if
+required, applies only to volumetric radiance and reflection, never to
+trajectory, terrain, building geometry, or the fixed physics clocks.
 
 ## Delayed blast acoustics
 

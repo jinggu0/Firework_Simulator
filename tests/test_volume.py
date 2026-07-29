@@ -1,6 +1,13 @@
 import numpy as np
 
-from simulator.volume import active_slice_bounds, active_volume_bounds, box_vertices
+from simulator.renderer import _look_at, _perspective
+from simulator.volume import (
+    active_slice_bounds,
+    active_volume_bounds,
+    box_vertices,
+    opaque_ray_limit,
+    reconstruct_world_position,
+)
 
 
 def test_active_volume_bounds_conservatively_wraps_density() -> None:
@@ -33,3 +40,27 @@ def test_active_slice_bounds_preserves_full_analytic_depth() -> None:
     minimum, maximum = bounds
     np.testing.assert_allclose(minimum, [-2.0, 2.0, -3.0])
     np.testing.assert_allclose(maximum, [3.0, 6.0, 3.0])
+
+
+def test_depth_sample_reconstructs_original_world_position() -> None:
+    eye = np.array([12.0, 18.0, 35.0], dtype=np.float32)
+    target = np.array([-4.0, 9.0, -20.0], dtype=np.float32)
+    view_projection = _perspective(47.0, 16.0 / 9.0, 0.1, 2500.0) @ (
+        _look_at(eye, target)
+    )
+    world = np.array([1.0, 11.0, -8.0, 1.0], dtype=np.float64)
+    clip = view_projection.astype(np.float64) @ world
+    ndc = clip[:3] / clip[3]
+    reconstructed = reconstruct_world_position(
+        ndc[:2] * 0.5 + 0.5,
+        ndc[2] * 0.5 + 0.5,
+        np.linalg.inv(view_projection.astype(np.float64)),
+    )
+    np.testing.assert_allclose(reconstructed, world[:3], atol=2e-4)
+
+
+def test_opaque_ray_limit_stops_before_surface() -> None:
+    camera = np.array([0.0, 2.0, 5.0])
+    ray = np.array([0.0, 0.0, -2.0])
+    surface = np.array([0.0, 2.0, -15.0])
+    assert opaque_ray_limit(camera, ray, surface, 0.2) == 19.8

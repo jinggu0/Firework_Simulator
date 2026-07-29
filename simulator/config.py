@@ -81,6 +81,7 @@ class SmokeConfig:
     volume_depth_m: float = 120.0
     volume_slices: int = 24
     volume_ray_steps: int = 40
+    volume_depth_bias_m: float = 0.20
     max_temperature_excess_k: float = 850.0
 
 

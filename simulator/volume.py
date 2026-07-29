@@ -3,6 +3,45 @@ from __future__ import annotations
 import numpy as np
 
 
+def reconstruct_world_position(
+    screen_uv: np.ndarray,
+    depth_01: float,
+    inverse_view_projection: np.ndarray,
+) -> np.ndarray:
+    """Reconstruct one world point from an OpenGL depth-buffer sample."""
+
+    clip = np.array(
+        [
+            float(screen_uv[0]) * 2.0 - 1.0,
+            float(screen_uv[1]) * 2.0 - 1.0,
+            float(depth_01) * 2.0 - 1.0,
+            1.0,
+        ],
+        dtype=np.float64,
+    )
+    world_h = np.asarray(inverse_view_projection, dtype=np.float64) @ clip
+    if abs(float(world_h[3])) < 1e-12:
+        raise ValueError("depth sample reconstructs a point at infinity")
+    return (world_h[:3] / world_h[3]).astype(np.float64)
+
+
+def opaque_ray_limit(
+    camera_position: np.ndarray,
+    ray_direction: np.ndarray,
+    opaque_world_position: np.ndarray,
+    depth_bias_m: float,
+) -> float:
+    """Return the conservative ray distance immediately before an opaque hit."""
+
+    ray = np.asarray(ray_direction, dtype=np.float64)
+    ray /= np.linalg.norm(ray)
+    hit_vector = (
+        np.asarray(opaque_world_position, dtype=np.float64)
+        - np.asarray(camera_position, dtype=np.float64)
+    )
+    return max(float(np.dot(hit_vector, ray)) - depth_bias_m, 0.0)
+
+
 def box_vertices(
     minimum: np.ndarray | tuple[float, float, float],
     maximum: np.ndarray | tuple[float, float, float],
