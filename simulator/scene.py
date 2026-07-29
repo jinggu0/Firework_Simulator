@@ -14,6 +14,8 @@ from .geodesy import LocalTangentPlane
 class StaticScene:
     building_vertices: np.ndarray
     bridge_vertices: np.ndarray
+    road_vertices: np.ndarray
+    vegetation_vertices: np.ndarray
     water_mask: np.ndarray
     water_mask_bounds: np.ndarray
     terrain_height_m: np.ndarray
@@ -21,6 +23,7 @@ class StaticScene:
     elevation_datum_m: float
     origin_latitude_deg: float
     origin_longitude_deg: float
+    snapshot_utc: str
 
 
 def _height(tags: dict[str, str]) -> float:
@@ -125,7 +128,12 @@ def _building_mesh(points: np.ndarray, height_m: float) -> list[list[float]]:
     return vertices
 
 
-def _bridge_mesh(points: np.ndarray, width_m: float, elevation_m: float) -> list[list[float]]:
+def _bridge_mesh(
+    points: np.ndarray,
+    width_m: float,
+    elevation_m: float,
+    material: float = 2.0,
+) -> list[list[float]]:
     vertices: list[list[float]] = []
     for a, b in zip(points[:-1], points[1:]):
         edge = b - a
@@ -138,17 +146,66 @@ def _bridge_mesh(points: np.ndarray, width_m: float, elevation_m: float) -> list
             for index in indices:
                 point = corners[index]
                 vertices.append(
-                    _vertex((point[0], elevation_m, point[1]), (0.0, 1.0, 0.0), 2.0)
+                    _vertex(
+                        (point[0], elevation_m, point[1]),
+                        (0.0, 1.0, 0.0),
+                        material,
+                    )
                 )
     return vertices
 
 
+def _surface_mesh(
+    points: np.ndarray, elevation_m: float, material: float
+) -> list[list[float]]:
+    vertices: list[list[float]] = []
+    normal = (0.0, 1.0, 0.0)
+    for a, b, c in _triangulate(points.copy()):
+        for index in (a, b, c):
+            point = points[index]
+            vertices.append(
+                _vertex(
+                    (point[0], elevation_m, point[1]), normal, material
+                )
+            )
+    return vertices
+
+
+def _road_width(tags: dict[str, str]) -> float:
+    raw_width = tags.get("width", "").lower().replace("m", "").strip()
+    try:
+        return max(float(raw_width), 1.0)
+    except ValueError:
+        pass
+    try:
+        return max(float(tags.get("lanes", "")) * 3.2, 2.0)
+    except ValueError:
+        pass
+    return {
+        "motorway": 24.0,
+        "trunk": 22.0,
+        "primary": 18.0,
+        "secondary": 14.0,
+        "tertiary": 11.0,
+        "residential": 7.0,
+        "service": 4.0,
+        "cycleway": 2.5,
+        "footway": 2.2,
+        "path": 1.5,
+    }.get(tags.get("highway", ""), 5.0)
+
+
 def build_scene(
-    osm: dict[str, Any], origin_latitude_deg: float, origin_longitude_deg: float
+    osm: dict[str, Any],
+    origin_latitude_deg: float,
+    origin_longitude_deg: float,
+    snapshot_utc: str = "",
 ) -> StaticScene:
     plane = LocalTangentPlane(origin_latitude_deg, origin_longitude_deg)
     buildings: list[list[float]] = []
     bridges: list[list[float]] = []
+    roads: list[list[float]] = []
+    vegetation: list[list[float]] = []
     for element in osm.get("elements", []):
         geometry = element.get("geometry", [])
         tags = element.get("tags", {})
@@ -171,10 +228,24 @@ def build_scene(
             except ValueError:
                 width = 12.0
             bridges.extend(_bridge_mesh(local, width, 7.0))
+        elif "highway" in tags and len(local) >= 2:
+            roads.extend(
+                _bridge_mesh(local, _road_width(tags), 0.06, 3.0)
+            )
+        is_green = (
+            tags.get("leisure") == "park"
+            or tags.get("landuse")
+            in {"grass", "forest", "recreation_ground"}
+            or tags.get("natural") in {"wood", "grassland"}
+        )
+        if is_green and len(local) >= 3:
+            vegetation.extend(_surface_mesh(local, 0.035, 4.0))
     empty = np.empty((0, 7), dtype=np.float32)
     return StaticScene(
         np.asarray(buildings, dtype=np.float32) if buildings else empty,
         np.asarray(bridges, dtype=np.float32) if bridges else empty,
+        np.asarray(roads, dtype=np.float32) if roads else empty,
+        np.asarray(vegetation, dtype=np.float32) if vegetation else empty,
         np.full((1, 1), 255, dtype=np.uint8),
         np.array([-10_000.0, -10_000.0, 10_000.0, 10_000.0], dtype=np.float32),
         np.zeros((1, 1), dtype=np.float32),
@@ -182,6 +253,7 @@ def build_scene(
         0.0,
         origin_latitude_deg,
         origin_longitude_deg,
+        snapshot_utc,
     )
 
 
@@ -271,6 +343,8 @@ def save_scene(scene: StaticScene, path: Path) -> None:
         path,
         building_vertices=scene.building_vertices,
         bridge_vertices=scene.bridge_vertices,
+        road_vertices=scene.road_vertices,
+        vegetation_vertices=scene.vegetation_vertices,
         water_mask=scene.water_mask,
         water_mask_bounds=scene.water_mask_bounds,
         terrain_height_m=scene.terrain_height_m,
@@ -280,6 +354,7 @@ def save_scene(scene: StaticScene, path: Path) -> None:
             [scene.origin_latitude_deg, scene.origin_longitude_deg],
             dtype=np.float64,
         ),
+        snapshot_utc=np.array([scene.snapshot_utc]),
     )
 
 
@@ -289,6 +364,11 @@ def load_scene(path: Path) -> StaticScene:
         return StaticScene(
             data["building_vertices"].copy(),
             data["bridge_vertices"].copy(),
+            data["road_vertices"].copy()
+            if "road_vertices" in data else np.empty((0, 7), dtype=np.float32),
+            data["vegetation_vertices"].copy()
+            if "vegetation_vertices" in data
+            else np.empty((0, 7), dtype=np.float32),
             data["water_mask"].copy(),
             data["water_mask_bounds"].copy(),
             data["terrain_height_m"].copy(),
@@ -296,4 +376,6 @@ def load_scene(path: Path) -> StaticScene:
             float(data["elevation_datum_m"][0]),
             float(origin[0]),
             float(origin[1]),
+            str(data["snapshot_utc"][0])
+            if "snapshot_utc" in data else "",
         )

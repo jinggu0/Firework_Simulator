@@ -68,17 +68,20 @@ measurement confirms substantial GPU/CPU headroom above the 60 FPS workload.
 
 ## Initial geospatial scene
 
-The first reproducible scene snapshot is derived from OpenStreetMap geometry in
-the 37.515–37.545 N, 126.910–126.960 E bounding box. WGS84 coordinates are
-converted to local East-Up-South metres before rendering. It currently contains
-about 93,500 building vertices and 6,100 bridge-deck vertices. Explicit OSM
-heights are retained; `building:levels` is converted at 3.2 m per level, and
-features with neither value receive a clearly provisional 12 m fallback.
+The reproducible scene snapshot uses the OpenStreetMap historical state at
+2024-10-05 10:20 UTC (19:20 KST) in the 37.515–37.545 N,
+126.910–126.960 E bounding box. WGS84 coordinates are converted to local
+East-Up-South metres before rendering. The shipped asset contains 83,859
+building vertices, 6,330 bridge-deck vertices, 68,244 road vertices, and 5,469
+park/grass/forest vertices. Explicit OSM heights are retained;
+`building:levels` is converted at 3.2 m per level, and features with neither
+value receive a clearly provisional 12 m fallback.
 
-The snapshot provides measured plan geometry, not a final October 2024 scene.
-Known gaps are terrain elevation, exact bridge structures, facade materials,
-vegetation, and dated construction state. These must be
-validated against Seoul/VWorld data and event footage. OSM attribution and
+The snapshot now guarantees dated plan geometry but not survey accuracy. Known
+gaps are untagged building heights, exact bridge superstructures, facade
+materials, individual trees, and temporary event structures. The national
+daily GIS building integration dataset and 1–5 m NGII DEM require authenticated
+downloads and can replace these inputs when supplied. OSM attribution and
 licensing are recorded in `assets/ATTRIBUTION.md`.
 
 The Han River surface is clipped by a 1024 × 1024 geographic coverage mask

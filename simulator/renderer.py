@@ -325,7 +325,7 @@ void main() {
     world_position = in_position + vec3(0.0, base_height, 0.0);
     world_normal = in_normal;
     material = in_material;
-    gl_Position = view_projection * vec4(in_position, 1.0);
+    gl_Position = view_projection * vec4(world_position, 1.0);
 }
 """
 
@@ -342,6 +342,20 @@ void main() {
     vec3 n = normalize(world_normal);
     float sky_light = max(n.y * .5 + .5, .08);
     vec3 concrete = vec3(.0015, .0017, .0020) * sky_light;
+    if (material > 3.5) {
+        float green_variation = hash21(floor(world_position.xz * .15));
+        vec3 green = mix(vec3(.00016, .00034, .00016),
+                         vec3(.00032, .00052, .00022), green_variation);
+        frag_color = vec4(green * sky_light, 1.0);
+        return;
+    }
+    if (material > 2.5) {
+        float lane_hint = smoothstep(.46, .50,
+            abs(fract(world_position.x * .12 + world_position.z * .08) - .5));
+        vec3 asphalt = vec3(.00030, .00032, .00035);
+        frag_color = vec4(asphalt + lane_hint * vec3(.00016), 1.0);
+        return;
+    }
     if (material > 1.5) {
         frag_color = vec4(vec3(.0024, .0026, .0027), 1.0);
         return;
@@ -494,7 +508,12 @@ class Renderer:
             water_mask_bounds = scene.water_mask_bounds
             terrain_height = scene.terrain_height_m
             terrain_bounds = scene.terrain_bounds
-            for vertices in (scene.building_vertices, scene.bridge_vertices):
+            for vertices in (
+                scene.building_vertices,
+                scene.bridge_vertices,
+                scene.road_vertices,
+                scene.vegetation_vertices,
+            ):
                 if not len(vertices):
                     continue
                 buffer = ctx.buffer(vertices.tobytes())

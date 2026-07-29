@@ -10,12 +10,15 @@ the Open Data Commons Open Database License (ODbL).
 - Licence: https://www.openstreetmap.org/copyright
 - Extract bounding box: 37.515–37.545 N, 126.910–126.960 E
 - Local scene origin: 37.529 N, 126.935 E
-- Snapshot retrieved: 2026-07-29
+- Historical data timestamp: 2024-10-05 10:20 UTC (19:20 KST)
+- Snapshot retrieved: 2026-07-29 through an Overpass attic-capable endpoint
 - Han River water multipolygon: OpenStreetMap relation `152336`
 
-This snapshot is an initial geometry reference. It does not establish that
-every feature or height matches October 5, 2024. Production validation must
-compare it with dated Seoul/VWorld data and event footage.
+The shipped snapshot contains the OSM state at show start rather than the
+current map state. It includes building footprints, tagged heights, bridge and
+road ways, parks, grass, forest, and the Han River multipolygon. OSM remains a
+community dataset: missing heights use documented fallbacks and do not
+establish survey-grade equality with every October 5, 2024 structure.
 
 ## Elevation
 

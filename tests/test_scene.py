@@ -1,6 +1,8 @@
+from pathlib import Path
+
 import numpy as np
 
-from simulator.scene import build_scene, build_water_mask
+from simulator.scene import build_scene, build_water_mask, load_scene
 
 
 def test_building_footprint_becomes_walls_and_roof() -> None:
@@ -22,6 +24,7 @@ def test_building_footprint_becomes_walls_and_roof() -> None:
     assert scene.building_vertices.shape == (30, 7)
     assert np.isclose(scene.building_vertices[:, 1].max(), 16.0)
     assert np.isfinite(scene.building_vertices).all()
+    assert scene.snapshot_utc == ""
 
 
 def test_bridge_way_becomes_a_deck() -> None:
@@ -39,6 +42,36 @@ def test_bridge_way_becomes_a_deck() -> None:
     scene = build_scene(osm, 37.5, 126.9)
     assert scene.bridge_vertices.shape == (6, 7)
     assert np.all(scene.bridge_vertices[:, 1] == 7.0)
+
+
+def test_road_width_and_green_surface_are_meshed() -> None:
+    osm = {
+        "elements": [
+            {
+                "tags": {"highway": "primary", "lanes": "4"},
+                "geometry": [
+                    {"lat": 37.5, "lon": 126.9},
+                    {"lat": 37.501, "lon": 126.9},
+                ],
+            },
+            {
+                "tags": {"leisure": "park"},
+                "geometry": [
+                    {"lat": 37.5, "lon": 126.9},
+                    {"lat": 37.5, "lon": 126.9001},
+                    {"lat": 37.5001, "lon": 126.9001},
+                    {"lat": 37.5001, "lon": 126.9},
+                    {"lat": 37.5, "lon": 126.9},
+                ],
+            },
+        ]
+    }
+    scene = build_scene(osm, 37.5, 126.9, "2024-10-05T10:20:00Z")
+    assert scene.road_vertices.shape == (6, 7)
+    assert np.all(scene.road_vertices[:, 6] == 3.0)
+    assert scene.vegetation_vertices.shape == (6, 7)
+    assert np.all(scene.vegetation_vertices[:, 6] == 4.0)
+    assert scene.snapshot_utc == "2024-10-05T10:20:00Z"
 
 
 def test_water_relation_preserves_inner_land_ring() -> None:
@@ -76,3 +109,15 @@ def test_water_relation_preserves_inner_land_ring() -> None:
     )
     assert mask[64, 64] == 0
     assert mask[30, 30] == 255
+
+
+def test_shipped_scene_is_the_event_time_snapshot() -> None:
+    scene = load_scene(
+        Path(__file__).resolve().parent.parent
+        / "assets"
+        / "yeouido_scene.npz"
+    )
+    assert scene.snapshot_utc == "2024-10-05T10:20:00Z"
+    assert len(scene.building_vertices) > 80_000
+    assert len(scene.road_vertices) > 60_000
+    assert len(scene.vegetation_vertices) > 5_000
