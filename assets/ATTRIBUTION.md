@@ -85,3 +85,17 @@ These references support spherical post-burst expansion, quadratic drag, and
 finite measured star burn time. Current luminous-power values remain
 calibration parameters rather than laboratory measurements of the exact 2024
 shell compositions.
+
+## Fluid-solver design reference
+
+The post-blast smoke solver design was informed by CubbyFlow's open-source
+grid-fluid architecture, including staggered grids, semi-Lagrangian advection,
+pressure projection, smoke buoyancy, and fixed/adaptive substeps:
+
+- Project: https://github.com/utilForever/CubbyFlow
+- Licence: MIT
+- Reference consulted: 2026-07-29
+
+The simulator contains an independent Python/NumPy implementation rather than
+copied CubbyFlow source. CubbyFlow is used as an architectural and numerical
+reference.

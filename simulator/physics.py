@@ -18,6 +18,13 @@ class Shell:
     alive: bool = True
 
 
+@dataclass(frozen=True, slots=True)
+class BurstEvent:
+    position_m: np.ndarray
+    smoke_mass_kg: float
+    post_blast_thermal_energy_j: float
+
+
 class StarField:
     """Structure-of-arrays storage for vectorized star integration."""
 
@@ -149,6 +156,11 @@ class FireworkWorld:
         self.stars = StarField(max_particles)
         self.shells: list[Shell] = []
         self.rng = np.random.default_rng(seed)
+        self._burst_events: list[BurstEvent] = []
+
+    def consume_burst_events(self) -> list[BurstEvent]:
+        events, self._burst_events = self._burst_events, []
+        return events
 
     def launch(self, position_m: tuple[float, float, float] = (0.0, 0.0, 0.0)) -> None:
         self.shells.append(
@@ -187,6 +199,18 @@ class FireworkWorld:
             if shell.age_s >= config.fuse_delay_s:
                 self.stars.spawn_burst(
                     shell.position_m, shell.velocity_mps, config, self.rng
+                )
+                chemical_energy_j = (
+                    config.burst_charge_mass_kg
+                    * config.burst_specific_energy_j_kg
+                )
+                self._burst_events.append(
+                    BurstEvent(
+                        shell.position_m.copy(),
+                        config.burst_charge_mass_kg
+                        * config.smoke_yield_fraction,
+                        chemical_energy_j * config.post_blast_thermal_fraction,
+                    )
                 )
             else:
                 surviving_shells.append(shell)

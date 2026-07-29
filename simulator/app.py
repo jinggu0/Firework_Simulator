@@ -12,6 +12,7 @@ from .astronomy import AstronomyModel
 from .clock import FixedStepClock
 from .config import SimulationConfig
 from .environment import EnvironmentTimeline
+from .fluid import SmokeFluid2D
 from .physics import FireworkWorld
 from .renderer import Renderer
 
@@ -58,7 +59,11 @@ class SimulatorApp:
         self.astronomy = AstronomyModel(37.529, 126.935, 5.0)
         self.celestial = self.astronomy.sample(self.event_timestamp)
         self.next_astronomy_update = self.event_timestamp + 1.0
-        self.renderer = Renderer(self.ctx, render, initial_atmosphere)
+        self.renderer = Renderer(
+            self.ctx, render, initial_atmosphere, self.config.smoke
+        )
+        self.smoke = SmokeFluid2D(self.config.smoke, initial_atmosphere)
+        self.smoke_accumulator_s = 0.0
         self.camera = FreeCamera(config=self.config.camera)
         self.physics_clock = FixedStepClock(render.physics_hz)
         self.frame_clock = pygame.time.Clock()
@@ -86,11 +91,23 @@ class SimulatorApp:
                     )
                     self.event_timestamp += self.physics_clock.step_s
                 self.world.update(self.physics_clock.step_s)
+                for burst in self.world.consume_burst_events():
+                    self.smoke.inject_burst(
+                        burst.position_m,
+                        burst.smoke_mass_kg,
+                        burst.post_blast_thermal_energy_j,
+                    )
+                self.smoke_accumulator_s += self.physics_clock.step_s
+                smoke_step_s = 1.0 / self.config.smoke.update_hz
+                while self.smoke_accumulator_s >= smoke_step_s:
+                    self.smoke.set_atmosphere(self.world.atmosphere)
+                    self.smoke.step(smoke_step_s)
+                    self.smoke_accumulator_s -= smoke_step_s
             if self.event_timestamp >= self.next_astronomy_update:
                 self.celestial = self.astronomy.sample(self.event_timestamp)
                 self.next_astronomy_update = self.event_timestamp + 1.0
             self.renderer.render(
-                self.world, self.camera, self.celestial, dt_s
+                self.world, self.camera, self.celestial, dt_s, self.smoke
             )
             pygame.display.flip()
             # Swap interval is the primary limiter. Applying SDL's millisecond

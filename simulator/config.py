@@ -44,6 +44,29 @@ class ShellConfig:
     star_drag_time_s: float = 1.35
     luminous_power_w: float = 155.0
     color_temperature_k: float = 2_300.0
+    burst_charge_mass_kg: float = 0.085
+    burst_specific_energy_j_kg: float = 3_000_000.0
+    smoke_yield_fraction: float = 0.12
+    post_blast_thermal_fraction: float = 0.18
+
+
+@dataclass(frozen=True, slots=True)
+class SmokeConfig:
+    """Low-Mach post-blast plume solver settings in SI units."""
+
+    grid_size: tuple[int, int] = (64, 36)
+    bounds_m: tuple[float, float, float, float] = (-320.0, 320.0, 0.0, 360.0)
+    update_hz: int = 30
+    pressure_iterations: int = 24
+    smoke_diffusivity_m2_s: float = 0.025
+    thermal_diffusivity_m2_s: float = 0.035
+    kinematic_viscosity_m2_s: float = 1.5e-5
+    smoke_half_life_s: float = 38.0
+    thermal_half_life_s: float = 7.5
+    vorticity_confinement: float = 0.18
+    source_radius_m: float = 7.5
+    plume_depth_m: float = 24.0
+    max_temperature_excess_k: float = 850.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,4 +89,5 @@ class SimulationConfig:
     shell: ShellConfig = field(default_factory=ShellConfig)
     render: RenderConfig = field(default_factory=RenderConfig)
     camera: CameraConfig = field(default_factory=CameraConfig)
+    smoke: SmokeConfig = field(default_factory=SmokeConfig)
     random_seed: int = 20241005

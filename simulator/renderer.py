@@ -8,7 +8,8 @@ import numpy as np
 
 from .camera import FreeCamera
 from .astronomy import CelestialState
-from .config import AtmosphereConfig, RenderConfig
+from .config import AtmosphereConfig, RenderConfig, SmokeConfig
+from .fluid import SmokeFluid2D
 from .physics import FireworkWorld
 from .scene import load_scene
 from .water import WaterConfig, build_directional_spectrum, build_water_mesh
@@ -362,6 +363,38 @@ void main() {
 }
 """
 
+SMOKE_VERTEX = """
+#version 330
+in vec3 in_position; in vec2 in_uv;
+uniform mat4 view_projection;
+out vec2 uv;
+void main() {
+    uv = in_uv;
+    gl_Position = view_projection * vec4(in_position, 1.0);
+}
+"""
+
+SMOKE_FRAGMENT = """
+#version 330
+in vec2 uv; out vec4 frag_color;
+uniform sampler2D smoke_density;
+uniform sampler2D temperature_excess;
+uniform float plume_depth_m;
+void main() {
+    float density = max(texture(smoke_density, uv).r, 0.0);
+    float temperature = max(texture(temperature_excess, uv).r, 0.0);
+    // Beer-Lambert extinction. 4.5 m2/g is an explicitly calibratable
+    // effective coefficient for fine mixed post-burst aerosol.
+    float optical_depth = density * plume_depth_m * 4500.0;
+    float alpha = 1.0 - exp(-optical_depth);
+    if (alpha < 0.001) discard;
+    float warm = clamp(temperature / 850.0, 0.0, 1.0);
+    vec3 scattered = mix(vec3(.0010, .00115, .00135),
+                         vec3(.018, .0062, .0014), warm);
+    frag_color = vec4(scattered, alpha);
+}
+"""
+
 
 class Renderer:
     """Linear-HDR renderer. Terrain, water, and atmosphere are separate passes."""
@@ -371,6 +404,7 @@ class Renderer:
         ctx: moderngl.Context,
         config: RenderConfig,
         atmosphere: AtmosphereConfig | None = None,
+        smoke_config: SmokeConfig | None = None,
     ) -> None:
         self.ctx, self.config, self.time_s = ctx, config, 0.0
         ctx.enable(moderngl.PROGRAM_POINT_SIZE)
@@ -521,6 +555,42 @@ class Renderer:
                 )
             ],
         )
+        smoke_config = smoke_config or SmokeConfig()
+        sx0, sx1, sy0, sy1 = smoke_config.bounds_m
+        smoke_vertices = np.array(
+            [
+                sx0, sy0, 0.0, 0.0, 0.0,
+                sx1, sy0, 0.0, 1.0, 0.0,
+                sx0, sy1, 0.0, 0.0, 1.0,
+                sx1, sy1, 0.0, 1.0, 1.0,
+            ],
+            dtype=np.float32,
+        )
+        self.smoke_program = ctx.program(
+            vertex_shader=SMOKE_VERTEX, fragment_shader=SMOKE_FRAGMENT
+        )
+        self.smoke_buffer = ctx.buffer(smoke_vertices.tobytes())
+        self.smoke_vao = ctx.vertex_array(
+            self.smoke_program,
+            [(self.smoke_buffer, "3f 2f", "in_position", "in_uv")],
+        )
+        smoke_size = smoke_config.grid_size
+        self.smoke_density_texture = ctx.texture(
+            smoke_size, components=1, dtype="f4"
+        )
+        self.smoke_temperature_texture = ctx.texture(
+            smoke_size, components=1, dtype="f4"
+        )
+        for texture in (
+            self.smoke_density_texture, self.smoke_temperature_texture
+        ):
+            texture.filter = moderngl.LINEAR, moderngl.LINEAR
+            texture.repeat_x = False
+            texture.repeat_y = False
+        self.smoke_program["smoke_density"] = 4
+        self.smoke_program["temperature_excess"] = 5
+        self.smoke_program["plume_depth_m"] = smoke_config.plume_depth_m
+        self.smoke_revision = -1
         self.hdr_texture = ctx.texture(
             (config.width, config.height), components=4, dtype="f2"
         )
@@ -552,6 +622,7 @@ class Renderer:
             self.water_program,
             self.land_program,
             self.scene_program,
+            self.smoke_program,
         ):
             program["view_projection"].write(matrix_bytes)
         self.water_program["camera_position"].value = tuple(camera.position_m)
@@ -594,6 +665,7 @@ class Renderer:
         camera: FreeCamera,
         celestial: CelestialState,
         frame_dt_s: float,
+        smoke: SmokeFluid2D | None = None,
     ) -> None:
         self.time_s += frame_dt_s
         self._update_camera(camera)
@@ -629,6 +701,23 @@ class Renderer:
             for reflection in (1.0, 0.0):
                 self.particle_program["reflection"] = reflection
                 self.particle_vao.render(moderngl.POINTS, vertices=count)
+        if smoke is not None and np.any(smoke.density_kg_m3 > 1e-8):
+            if smoke.revision != self.smoke_revision:
+                self.smoke_density_texture.write(
+                    np.ascontiguousarray(smoke.density_kg_m3).tobytes()
+                )
+                self.smoke_temperature_texture.write(
+                    np.ascontiguousarray(smoke.temperature_excess_k).tobytes()
+                )
+                self.smoke_revision = smoke.revision
+            self.smoke_density_texture.use(4)
+            self.smoke_temperature_texture.use(5)
+            self.ctx.enable(moderngl.BLEND)
+            self.ctx.disable(moderngl.DEPTH_TEST)
+            self.ctx.blend_func = (
+                moderngl.SRC_ALPHA, moderngl.ONE_MINUS_SRC_ALPHA
+            )
+            self.smoke_vao.render(moderngl.TRIANGLE_STRIP)
         self.ctx.disable(moderngl.BLEND)
         self.ctx.disable(moderngl.DEPTH_TEST)
         self.bloom_fbos[0].use()

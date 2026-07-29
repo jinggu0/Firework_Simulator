@@ -200,6 +200,46 @@ The new trail and bloom path measures about 2.21 ms per uncapped frame (about
 all 8,000 particles as one star class; production shells need separate primary
 stars, fine sparks, and embers with measured counts and burn laws.
 
+## Post-blast smoke fluid
+
+The first plume solver is a 64 x 36 vertical East-Up slice covering 640 x 360
+m. It advances at a fixed 30 Hz independently of the display rate. Smoke mass
+and temperature excess occupy cell centres; horizontal and vertical velocity
+occupy their respective faces on a Marker-and-Cell grid.
+
+Each step uses midpoint semi-Lagrangian backtracing, molecular diffusion,
+Boussinesq thermal buoyancy, particulate loading, vorticity confinement, and a
+Jacobi pressure projection. Automated checks require the projection to reduce
+velocity divergence, preserve the injected smoke mass to discretization
+tolerance, carry smoke downwind, and move a heated plume upward.
+
+The shell's provisional 85 g burst charge emits 12% particulate mass. Of the
+charge's provisional 3 MJ/kg chemical energy, 18% enters the slow plume as
+residual heat. These parameters are separated from the solver because exact
+values depend strongly on shell construction and composition and must be
+replaced by event shell records or experiments.
+
+The incompressible solver deliberately begins after the rapid compressible
+shock phase. Applying incompressibility to the detonation itself would be
+physically wrong; a later blast-wave module must supply the short pressure and
+acoustic transient.
+
+Smoke rendering maps the slice into the HDR scene using Beer-Lambert
+extinction and a provisional 4.5 m2/g fine-aerosol mass-extinction
+coefficient. This is a
+physically testable stepping stone, not the final participating medium: the
+slice has no crosswind structure or view-dependent optical path. Production
+quality requires a sparse 3D GPU MAC grid, combustion-species calibration,
+multiple scattering, and light injection from individual burning stars.
+
+On the development machine, the default fluid step costs approximately 11-12
+ms at 30 Hz, or about 6 ms amortized per 60 Hz display frame. An uncapped
+fluid-and-render workload measures approximately 3.91 ms per displayed frame
+(about 256 FPS); the difference reflects that the 30 Hz solver does not execute
+on every render frame. The lower grid resolution is therefore a performance
+quality tier; later GPU compute must increase spatial resolution without
+changing the fixed physical update rate.
+
 ## Required reference datasets
 
 - October 5, 2024 hourly and, where possible, sub-hourly weather observations
