@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import replace
 import json
 from pathlib import Path
 import urllib.parse
 import urllib.request
 
-from simulator.scene import build_scene, save_scene
+from simulator.scene import build_scene, build_water_mask, save_scene
 
 BBOX = (37.515, 126.910, 37.545, 126.960)
 ORIGIN = (37.529, 126.935)
@@ -31,6 +32,15 @@ out geom;
         return json.load(response)
 
 
+def download_han_river() -> dict:
+    request = urllib.request.Request(
+        "https://api.openstreetmap.org/api/0.6/relation/152336/full.json",
+        headers={"User-Agent": "FireworkSimulator/0.1 (local research project)"},
+    )
+    with urllib.request.urlopen(request, timeout=120) as response:
+        return json.load(response)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -41,6 +51,8 @@ def main() -> None:
     args = parser.parse_args()
     osm = download()
     scene = build_scene(osm, *ORIGIN)
+    mask, bounds = build_water_mask(download_han_river(), *ORIGIN)
+    scene = replace(scene, water_mask=mask, water_mask_bounds=bounds)
     save_scene(scene, args.output)
     print(
         f"saved {args.output}: "
@@ -51,4 +63,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

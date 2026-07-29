@@ -11,6 +11,7 @@ the Open Data Commons Open Database License (ODbL).
 - Extract bounding box: 37.515–37.545 N, 126.910–126.960 E
 - Local scene origin: 37.529 N, 126.935 E
 - Snapshot retrieved: 2026-07-29
+- Han River water multipolygon: OpenStreetMap relation `152336`
 
 This snapshot is an initial geometry reference. It does not establish that
 every feature or height matches October 5, 2024. Production validation must

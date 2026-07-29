@@ -14,6 +14,8 @@ from .geodesy import LocalTangentPlane
 class StaticScene:
     building_vertices: np.ndarray
     bridge_vertices: np.ndarray
+    water_mask: np.ndarray
+    water_mask_bounds: np.ndarray
     origin_latitude_deg: float
     origin_longitude_deg: float
 
@@ -170,9 +172,91 @@ def build_scene(
     return StaticScene(
         np.asarray(buildings, dtype=np.float32) if buildings else empty,
         np.asarray(bridges, dtype=np.float32) if bridges else empty,
+        np.full((1, 1), 255, dtype=np.uint8),
+        np.array([-10_000.0, -10_000.0, 10_000.0, 10_000.0], dtype=np.float32),
         origin_latitude_deg,
         origin_longitude_deg,
     )
+
+
+def _assemble_rings(
+    relation_data: dict[str, Any], role: str
+) -> list[list[dict[str, float]]]:
+    elements = relation_data.get("elements", [])
+    nodes = {
+        element["id"]: {"lat": element["lat"], "lon": element["lon"]}
+        for element in elements
+        if element.get("type") == "node"
+    }
+    ways = {
+        element["id"]: element.get("nodes", [])
+        for element in elements
+        if element.get("type") == "way"
+    }
+    relation = next(
+        element
+        for element in elements
+        if element.get("type") == "relation" and element.get("id") == 152336
+    )
+    remaining = [
+        list(ways[member["ref"]])
+        for member in relation.get("members", [])
+        if member.get("type") == "way"
+        and member.get("role") == role
+        and member.get("ref") in ways
+    ]
+    rings: list[list[dict[str, float]]] = []
+    while remaining:
+        chain = remaining.pop(0)
+        while chain[0] != chain[-1]:
+            match = next(
+                (
+                    index
+                    for index, candidate in enumerate(remaining)
+                    if candidate[0] == chain[-1] or candidate[-1] == chain[-1]
+                ),
+                None,
+            )
+            if match is None:
+                break
+            candidate = remaining.pop(match)
+            if candidate[-1] == chain[-1]:
+                candidate.reverse()
+            chain.extend(candidate[1:])
+        if len(chain) >= 4 and chain[0] == chain[-1]:
+            rings.append([nodes[node_id] for node_id in chain if node_id in nodes])
+    return rings
+
+
+def build_water_mask(
+    relation_data: dict[str, Any],
+    origin_latitude_deg: float,
+    origin_longitude_deg: float,
+    bounds: tuple[float, float, float, float] = (-2_500.0, -2_000.0, 2_500.0, 2_000.0),
+    resolution: tuple[int, int] = (1024, 1024),
+) -> tuple[np.ndarray, np.ndarray]:
+    from PIL import Image, ImageDraw
+
+    plane = LocalTangentPlane(origin_latitude_deg, origin_longitude_deg)
+    minimum_x, minimum_z, maximum_x, maximum_z = bounds
+    width, height = resolution
+
+    def raster_points(ring: list[dict[str, float]]) -> list[tuple[float, float]]:
+        result = []
+        for point in ring:
+            local = plane.to_local(point["lat"], point["lon"])
+            pixel_x = (local[0] - minimum_x) / (maximum_x - minimum_x) * (width - 1)
+            pixel_y = (local[2] - minimum_z) / (maximum_z - minimum_z) * (height - 1)
+            result.append((pixel_x, pixel_y))
+        return result
+
+    image = Image.new("L", resolution, 0)
+    draw = ImageDraw.Draw(image)
+    for ring in _assemble_rings(relation_data, "outer"):
+        draw.polygon(raster_points(ring), fill=255)
+    for ring in _assemble_rings(relation_data, "inner"):
+        draw.polygon(raster_points(ring), fill=0)
+    return np.asarray(image, dtype=np.uint8), np.asarray(bounds, dtype=np.float32)
 
 
 def save_scene(scene: StaticScene, path: Path) -> None:
@@ -181,6 +265,8 @@ def save_scene(scene: StaticScene, path: Path) -> None:
         path,
         building_vertices=scene.building_vertices,
         bridge_vertices=scene.bridge_vertices,
+        water_mask=scene.water_mask,
+        water_mask_bounds=scene.water_mask_bounds,
         origin=np.array(
             [scene.origin_latitude_deg, scene.origin_longitude_deg],
             dtype=np.float64,
@@ -194,7 +280,8 @@ def load_scene(path: Path) -> StaticScene:
         return StaticScene(
             data["building_vertices"].copy(),
             data["bridge_vertices"].copy(),
+            data["water_mask"].copy(),
+            data["water_mask_bounds"].copy(),
             float(origin[0]),
             float(origin[1]),
         )
-

@@ -77,14 +77,25 @@ features with neither value receive a clearly provisional 12 m fallback.
 
 The snapshot provides measured plan geometry, not a final October 2024 scene.
 Known gaps are terrain elevation, exact bridge structures, facade materials,
-shoreline clipping, vegetation, and dated construction state. These must be
+vegetation, and dated construction state. These must be
 validated against Seoul/VWorld data and event footage. OSM attribution and
 licensing are recorded in `assets/ATTRIBUTION.md`.
+
+The Han River surface is clipped by a 1024 × 1024 geographic coverage mask
+generated from OSM multipolygon relation 152336. Both outer riverbanks and
+inner land/island rings are preserved. The mask covers a 5 × 4 km local area,
+which gives roughly 4–5 m source-mask resolution before GPU interpolation.
+This removes water from Yeouido park and other land while keeping the wave
+simulation independent of shoreline complexity. The current land pass is a
+flat provisional surface; surveyed terrain elevations remain required.
 
 With this scene, water, and the initial firework active, the uncapped
 development-machine measurement is approximately 1.7 ms per frame. This is a
 pipeline headroom measurement, not a guarantee for the final volumetric and
 reflection workload.
+
+After geographic shoreline masking and the provisional land pass, the same
+uncapped workload measures approximately 2.6 ms per frame (about 383 FPS).
 
 ## Required reference datasets
 

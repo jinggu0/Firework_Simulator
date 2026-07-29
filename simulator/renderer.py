@@ -136,8 +136,15 @@ WATER_FRAGMENT = """
 in vec3 world_position;
 in vec3 world_normal;
 uniform vec3 camera_position;
+uniform sampler2D water_mask;
+uniform vec4 water_mask_bounds;
 out vec4 frag_color;
 void main() {
+    vec2 mask_uv = (world_position.xz - water_mask_bounds.xy)
+                 / (water_mask_bounds.zw - water_mask_bounds.xy);
+    if (any(lessThan(mask_uv, vec2(0.0)))
+        || any(greaterThan(mask_uv, vec2(1.0)))
+        || texture(water_mask, mask_uv).r < 0.5) discard;
     vec3 n = normalize(world_normal);
     vec3 view_direction = normalize(camera_position - world_position);
     float n_dot_v = max(dot(n, view_direction), 0.0);
@@ -150,6 +157,35 @@ void main() {
     float grazing_haze = pow(1.0 - n_dot_v, 3.0) * .0007;
     vec3 radiance = mix(water_body, sky_radiance, fresnel) + grazing_haze;
     frag_color = vec4(radiance, 1.0);
+}
+"""
+
+LAND_VERTEX = """
+#version 330
+in vec2 in_xz;
+uniform mat4 view_projection;
+out vec3 world_position;
+void main() {
+    world_position = vec3(in_xz.x, -0.04, in_xz.y);
+    gl_Position = view_projection * vec4(world_position, 1.0);
+}
+"""
+
+LAND_FRAGMENT = """
+#version 330
+in vec3 world_position;
+uniform sampler2D water_mask;
+uniform vec4 water_mask_bounds;
+out vec4 frag_color;
+void main() {
+    vec2 uv = (world_position.xz - water_mask_bounds.xy)
+            / (water_mask_bounds.zw - water_mask_bounds.xy);
+    if (all(greaterThanEqual(uv, vec2(0.0)))
+        && all(lessThanEqual(uv, vec2(1.0)))
+        && texture(water_mask, uv).r >= 0.5) discard;
+    float variation = sin(world_position.x * .07) * sin(world_position.z * .051);
+    vec3 ground = vec3(.00032, .00042, .00030) + variation * .000035;
+    frag_color = vec4(ground, 1.0);
 }
 """
 
@@ -227,8 +263,14 @@ class Renderer:
         )
         scene_path = Path(__file__).resolve().parent.parent / "assets" / "yeouido_scene.npz"
         self.scene_vaos: list[tuple[moderngl.VertexArray, int]] = []
+        water_mask = np.full((1, 1), 255, dtype=np.uint8)
+        water_mask_bounds = np.array(
+            [-10_000.0, -10_000.0, 10_000.0, 10_000.0], dtype=np.float32
+        )
         if scene_path.exists():
             scene = load_scene(scene_path)
+            water_mask = scene.water_mask
+            water_mask_bounds = scene.water_mask_bounds
             for vertices in (scene.building_vertices, scene.bridge_vertices):
                 if not len(vertices):
                     continue
@@ -253,9 +295,29 @@ class Renderer:
             self.water_index_buffer,
             index_element_size=4,
         )
+        self.land_program = ctx.program(
+            vertex_shader=LAND_VERTEX, fragment_shader=LAND_FRAGMENT
+        )
+        self.land_vao = ctx.vertex_array(
+            self.land_program,
+            [(self.water_vertex_buffer, "2f", "in_xz")],
+            self.water_index_buffer,
+            index_element_size=4,
+        )
         self.water_program["waves"].write(water_spectrum.components.tobytes())
         self.water_program["phases"].write(water_spectrum.phases.tobytes())
         self.water_program["choppiness"] = self.water_config.choppiness
+        self.water_mask_texture = ctx.texture(
+            (water_mask.shape[1], water_mask.shape[0]),
+            components=1,
+            data=np.ascontiguousarray(water_mask).tobytes(),
+            dtype="f1",
+        )
+        self.water_mask_texture.filter = moderngl.LINEAR, moderngl.LINEAR
+        self.water_program["water_mask"] = 1
+        self.water_program["water_mask_bounds"].value = tuple(water_mask_bounds)
+        self.land_program["water_mask"] = 1
+        self.land_program["water_mask_bounds"].value = tuple(water_mask_bounds)
         self.particle_program = ctx.program(
             vertex_shader=PARTICLE_VERTEX, fragment_shader=PARTICLE_FRAGMENT
         )
@@ -288,6 +350,9 @@ class Renderer:
         self.water_program["view_projection"].write(
             view_projection.T.astype(np.float32).tobytes()
         )
+        self.land_program["view_projection"].write(
+            view_projection.T.astype(np.float32).tobytes()
+        )
         self.scene_program["view_projection"].write(
             view_projection.T.astype(np.float32).tobytes()
         )
@@ -302,6 +367,8 @@ class Renderer:
         self.background_program["time_s"] = self.time_s
         self.background_vao.render(moderngl.TRIANGLE_STRIP)
         self.ctx.enable(moderngl.DEPTH_TEST)
+        self.water_mask_texture.use(1)
+        self.land_vao.render(moderngl.TRIANGLES)
         for vao, vertex_count in self.scene_vaos:
             vao.render(moderngl.TRIANGLES, vertices=vertex_count)
         self.water_program["time_s"] = self.time_s
