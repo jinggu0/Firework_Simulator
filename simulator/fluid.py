@@ -134,6 +134,30 @@ class SmokeFluid2D:
         self.revision += 1
         return accepted_mass, accepted_energy
 
+    def reconstruct_volume(self) -> tuple[np.ndarray, np.ndarray]:
+        """Reconstruct a depth profile while preserving column integrals."""
+
+        slices = self.config.volume_slices
+        depth_m = self.config.volume_depth_m
+        dz = depth_m / slices
+        z = (
+            (np.arange(slices, dtype=np.float32) + 0.5) * dz
+            - 0.5 * depth_m
+        )
+        sigma_m = max(self.config.plume_depth_m * 0.5, dz)
+        profile = np.exp(-0.5 * (z / sigma_m) ** 2).astype(np.float32)
+        profile *= self.config.plume_depth_m / (
+            float(profile.sum(dtype=np.float64)) * dz
+        )
+        density = (
+            profile[:, None, None] * self.density_kg_m3[None, :, :]
+        ).astype(np.float32)
+        temperature = (
+            profile[:, None, None]
+            * self.temperature_excess_k[None, :, :]
+        ).astype(np.float32)
+        return density, temperature
+
     def divergence(self) -> np.ndarray:
         return (
             (self.u_mps[:, 1:] - self.u_mps[:, :-1]) / self.dx

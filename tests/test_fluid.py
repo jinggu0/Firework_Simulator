@@ -72,6 +72,27 @@ def test_particle_deposition_conserves_interior_mass_and_energy() -> None:
     assert np.isclose(represented_energy, thermal_energy.sum(), rtol=1e-5)
 
 
+def test_volume_reconstruction_preserves_column_mass_and_heat() -> None:
+    fluid = small_fluid()
+    fluid.inject_burst(np.array([0.0, 45.0, 0.0]), 0.012, 50_000.0)
+    density, temperature = fluid.reconstruct_volume()
+    dz = fluid.config.volume_depth_m / fluid.config.volume_slices
+    expected_density_column = (
+        fluid.density_kg_m3 * fluid.config.plume_depth_m
+    )
+    expected_temperature_column = (
+        fluid.temperature_excess_k * fluid.config.plume_depth_m
+    )
+    np.testing.assert_allclose(
+        density.sum(axis=0) * dz, expected_density_column, rtol=2e-6
+    )
+    np.testing.assert_allclose(
+        temperature.sum(axis=0) * dz,
+        expected_temperature_column,
+        rtol=2e-6,
+    )
+
+
 def test_hot_plume_rises_and_wind_advects_it() -> None:
     fluid = small_fluid(wind_mps=5.0)
     fluid.inject_burst(np.array([-20.0, 25.0, 0.0]), 0.015, 600_000.0)

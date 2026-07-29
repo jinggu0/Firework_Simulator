@@ -365,33 +365,67 @@ void main() {
 
 SMOKE_VERTEX = """
 #version 330
-in vec3 in_position; in vec2 in_uv;
+in vec3 in_position;
 uniform mat4 view_projection;
-out vec2 uv;
+out vec3 surface_position;
 void main() {
-    uv = in_uv;
+    surface_position = in_position;
     gl_Position = view_projection * vec4(in_position, 1.0);
 }
 """
 
 SMOKE_FRAGMENT = """
 #version 330
-in vec2 uv; out vec4 frag_color;
-uniform sampler2D smoke_density;
-uniform sampler2D temperature_excess;
-uniform float plume_depth_m;
+in vec3 surface_position; out vec4 frag_color;
+uniform sampler3D smoke_density;
+uniform sampler3D temperature_excess;
+uniform vec3 camera_position;
+uniform vec3 volume_min;
+uniform vec3 volume_max;
+uniform int camera_inside;
+uniform int ray_steps;
+float hash12(vec2 p) {
+    vec3 p3 = fract(vec3(p.xyx) * .1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
+}
 void main() {
-    float density = max(texture(smoke_density, uv).r, 0.0);
-    float temperature = max(texture(temperature_excess, uv).r, 0.0);
-    // Beer-Lambert extinction. 4.5 m2/g is an explicitly calibratable
-    // effective coefficient for fine mixed post-burst aerosol.
-    float optical_depth = density * plume_depth_m * 4500.0;
-    float alpha = 1.0 - exp(-optical_depth);
-    if (alpha < 0.001) discard;
-    float warm = clamp(temperature / 850.0, 0.0, 1.0);
-    vec3 scattered = mix(vec3(.0010, .00115, .00135),
-                         vec3(.018, .0062, .0014), warm);
-    frag_color = vec4(scattered, alpha);
+    if ((camera_inside == 0 && !gl_FrontFacing)
+        || (camera_inside == 1 && gl_FrontFacing)) discard;
+    vec3 ray = normalize(surface_position - camera_position);
+    vec3 safe_ray = mix(ray, vec3(1e-6),
+                        lessThan(abs(ray), vec3(1e-6)));
+    vec3 t0 = (volume_min - camera_position) / safe_ray;
+    vec3 t1 = (volume_max - camera_position) / safe_ray;
+    vec3 near_axis = min(t0, t1);
+    vec3 far_axis = max(t0, t1);
+    float t_near = max(max(near_axis.x, near_axis.y), near_axis.z);
+    float t_far = min(min(far_axis.x, far_axis.y), far_axis.z);
+    t_near = max(t_near, 0.0);
+    if (t_far <= t_near) discard;
+
+    float step_m = (t_far - t_near) / float(ray_steps);
+    float jitter = hash12(gl_FragCoord.xy);
+    float transmittance = 1.0;
+    vec3 radiance = vec3(0.0);
+    for (int i = 0; i < 64; ++i) {
+        if (i >= ray_steps) break;
+        float distance_m = t_near + (float(i) + jitter) * step_m;
+        vec3 world = camera_position + ray * distance_m;
+        vec3 uvw = (world - volume_min) / (volume_max - volume_min);
+        float density = max(texture(smoke_density, uvw).r, 0.0);
+        float temperature = max(texture(temperature_excess, uvw).r, 0.0);
+        float step_alpha = 1.0 - exp(-density * 4500.0 * step_m);
+        float warm = clamp(temperature / 850.0, 0.0, 1.0);
+        vec3 scattered = mix(vec3(.0010, .00115, .00135),
+                             vec3(.018, .0062, .0014), warm);
+        radiance += transmittance * scattered * step_alpha;
+        transmittance *= 1.0 - step_alpha;
+        if (transmittance < .01) break;
+    }
+    float alpha = 1.0 - transmittance;
+    if (alpha < .001) discard;
+    frag_color = vec4(radiance, alpha);
 }
 """
 
@@ -557,28 +591,50 @@ class Renderer:
         )
         smoke_config = smoke_config or SmokeConfig()
         sx0, sx1, sy0, sy1 = smoke_config.bounds_m
+        sz0, sz1 = (
+            -0.5 * smoke_config.volume_depth_m,
+            0.5 * smoke_config.volume_depth_m,
+        )
         smoke_vertices = np.array(
             [
-                sx0, sy0, 0.0, 0.0, 0.0,
-                sx1, sy0, 0.0, 1.0, 0.0,
-                sx0, sy1, 0.0, 0.0, 1.0,
-                sx1, sy1, 0.0, 1.0, 1.0,
+                sx0, sy0, sz0, sx1, sy0, sz0,
+                sx1, sy1, sz0, sx0, sy1, sz0,
+                sx0, sy0, sz1, sx1, sy0, sz1,
+                sx1, sy1, sz1, sx0, sy1, sz1,
             ],
             dtype=np.float32,
+        ).reshape(-1, 3)
+        smoke_indices = np.array(
+            [
+                0, 3, 2, 0, 2, 1,
+                4, 5, 6, 4, 6, 7,
+                0, 4, 7, 0, 7, 3,
+                1, 2, 6, 1, 6, 5,
+                0, 1, 5, 0, 5, 4,
+                3, 7, 6, 3, 6, 2,
+            ],
+            dtype=np.uint32,
         )
         self.smoke_program = ctx.program(
             vertex_shader=SMOKE_VERTEX, fragment_shader=SMOKE_FRAGMENT
         )
         self.smoke_buffer = ctx.buffer(smoke_vertices.tobytes())
+        self.smoke_index_buffer = ctx.buffer(smoke_indices.tobytes())
         self.smoke_vao = ctx.vertex_array(
             self.smoke_program,
-            [(self.smoke_buffer, "3f 2f", "in_position", "in_uv")],
+            [(self.smoke_buffer, "3f", "in_position")],
+            self.smoke_index_buffer,
+            index_element_size=4,
         )
-        smoke_size = smoke_config.grid_size
-        self.smoke_density_texture = ctx.texture(
+        smoke_size = (
+            smoke_config.grid_size[0],
+            smoke_config.grid_size[1],
+            smoke_config.volume_slices,
+        )
+        self.smoke_density_texture = ctx.texture3d(
             smoke_size, components=1, dtype="f4"
         )
-        self.smoke_temperature_texture = ctx.texture(
+        self.smoke_temperature_texture = ctx.texture3d(
             smoke_size, components=1, dtype="f4"
         )
         for texture in (
@@ -587,9 +643,15 @@ class Renderer:
             texture.filter = moderngl.LINEAR, moderngl.LINEAR
             texture.repeat_x = False
             texture.repeat_y = False
+            texture.repeat_z = False
         self.smoke_program["smoke_density"] = 4
         self.smoke_program["temperature_excess"] = 5
-        self.smoke_program["plume_depth_m"] = smoke_config.plume_depth_m
+        self.smoke_program["volume_min"].value = (sx0, sy0, sz0)
+        self.smoke_program["volume_max"].value = (sx1, sy1, sz1)
+        self.smoke_program["ray_steps"] = smoke_config.volume_ray_steps
+        self.smoke_bounds = np.array(
+            [[sx0, sy0, sz0], [sx1, sy1, sz1]], dtype=np.float32
+        )
         self.smoke_revision = -1
         self.hdr_texture = ctx.texture(
             (config.width, config.height), components=4, dtype="f2"
@@ -626,6 +688,11 @@ class Renderer:
         ):
             program["view_projection"].write(matrix_bytes)
         self.water_program["camera_position"].value = tuple(camera.position_m)
+        self.smoke_program["camera_position"].value = tuple(camera.position_m)
+        self.smoke_program["camera_inside"] = int(
+            np.all(camera.position_m >= self.smoke_bounds[0])
+            and np.all(camera.position_m <= self.smoke_bounds[1])
+        )
         camera_up = np.cross(camera.right, camera.forward)
         self.background_program["camera_forward"].value = tuple(camera.forward)
         self.background_program["camera_right"].value = tuple(camera.right)
@@ -703,21 +770,26 @@ class Renderer:
                 self.particle_vao.render(moderngl.POINTS, vertices=count)
         if smoke is not None and np.any(smoke.density_kg_m3 > 1e-8):
             if smoke.revision != self.smoke_revision:
+                density_volume, temperature_volume = (
+                    smoke.reconstruct_volume()
+                )
                 self.smoke_density_texture.write(
-                    np.ascontiguousarray(smoke.density_kg_m3).tobytes()
+                    np.ascontiguousarray(density_volume).tobytes()
                 )
                 self.smoke_temperature_texture.write(
-                    np.ascontiguousarray(smoke.temperature_excess_k).tobytes()
+                    np.ascontiguousarray(temperature_volume).tobytes()
                 )
                 self.smoke_revision = smoke.revision
             self.smoke_density_texture.use(4)
             self.smoke_temperature_texture.use(5)
             self.ctx.enable(moderngl.BLEND)
-            self.ctx.disable(moderngl.DEPTH_TEST)
+            self.ctx.enable(moderngl.DEPTH_TEST)
+            self.ctx.depth_mask = False
             self.ctx.blend_func = (
-                moderngl.SRC_ALPHA, moderngl.ONE_MINUS_SRC_ALPHA
+                moderngl.ONE, moderngl.ONE_MINUS_SRC_ALPHA
             )
-            self.smoke_vao.render(moderngl.TRIANGLE_STRIP)
+            self.smoke_vao.render(moderngl.TRIANGLES)
+            self.ctx.depth_mask = True
         self.ctx.disable(moderngl.BLEND)
         self.ctx.disable(moderngl.DEPTH_TEST)
         self.bloom_fbos[0].use()

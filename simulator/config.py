@@ -70,6 +70,9 @@ class SmokeConfig:
     vorticity_confinement: float = 0.18
     source_radius_m: float = 7.5
     plume_depth_m: float = 24.0
+    volume_depth_m: float = 120.0
+    volume_slices: int = 24
+    volume_ray_steps: int = 40
     max_temperature_excess_k: float = 850.0
 
 

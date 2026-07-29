@@ -238,16 +238,34 @@ energy.
 
 The incompressible solver deliberately begins after the rapid compressible
 shock phase. Applying incompressibility to the detonation itself would be
-physically wrong; a later blast-wave module must supply the short pressure and
-acoustic transient.
+physically wrong; the separate blast-acoustics module supplies the short
+pressure and acoustic transient.
 
-Smoke rendering maps the slice into the HDR scene using Beer-Lambert
-extinction and a provisional 4.5 m2/g fine-aerosol mass-extinction
-coefficient. This is a
-physically testable stepping stone, not the final participating medium: the
-slice has no crosswind structure or view-dependent optical path. Production
-quality requires a sparse 3D GPU MAC grid, combustion-species calibration,
-multiple scattering, and light injection from individual burning stars.
+The renderer reconstructs the slice into a 64 x 36 x 24 density and
+temperature volume spanning 120 m in depth. A Gaussian depth profile is
+discretely normalized so integrating every reconstructed column gives exactly
+the original 2D smoke mass and sensible heat. This removes the former flat
+plane without silently creating or destroying source material.
+
+For every visible pixel, the GPU intersects the camera ray with the volume and
+integrates up to 40 jittered samples. Each segment applies Beer-Lambert
+extinction with a provisional 4.5 m2/g fine-aerosol mass-extinction
+coefficient, front-to-back transmittance, temperature-dependent source colour,
+and early termination at high opacity. Integration distance is measured in
+metres, so oblique views naturally produce a longer optical path. Front/back
+face selection also supports a camera located inside the volume.
+
+The volume bounding geometry uses the opaque scene depth buffer, so terrain or
+buildings entirely in front of the plume occlude it. Geometry entering the
+volume after its front boundary cannot yet terminate an individual ray; exact
+interior occlusion requires sampling a copied depth texture or ray tracing the
+scene geometry.
+
+This is a view-dependent 3D participating medium but not yet a 3D fluid solve.
+The Gaussian depth assumption is symmetric and cannot produce independent
+crosswind vortices. Production quality still requires a sparse 3D GPU MAC
+grid, combustion-species calibration, multiple scattering, and direct light
+injection from individual burning stars.
 
 On the development machine, the default fluid step costs approximately 11-12
 ms at 30 Hz, or about 6 ms amortized per 60 Hz display frame. An uncapped
@@ -257,13 +275,13 @@ on every render frame. The lower grid resolution is therefore a performance
 quality tier; later GPU compute must increase spatial resolution without
 changing the fixed physical update rate.
 
-With 8,000 simultaneously burning stars, the full 120 Hz ballistics, 30 Hz
-fuel-source deposition, and 30 Hz fluid solve consume approximately 383 ms per
-simulated second of CPU time. This amortizes to about 6.39 ms per 60 Hz frame
-before rendering. A controlled end-to-end OpenGL run with the same 8,000-star
-burn, smoke deposition, fluid solve, HDR trails, bloom, terrain, and water
-measures approximately 10.33 ms/frame (96.8 FPS uncapped), retaining practical
-headroom inside the 16.67 ms target.
+With a populated volume held active, the complete render path measures
+approximately 4.78 ms/frame (209 FPS uncapped). A controlled end-to-end run
+with 8,000 stars, 120 Hz ballistics, 30 Hz source deposition and fluid, 3D
+volume integration, asynchronous acoustics, terrain, water, HDR trails, and
+bloom measures 8.16 ms mean frame time and 15.59 ms at the 95th percentile
+(122.6 FPS by the mean), retaining the 60 FPS target on the development
+machine.
 
 ## Delayed blast acoustics
 
@@ -306,12 +324,10 @@ frequency-dependent ISO
 9613 absorption, water/ground reflection, bridge and building echoes,
 temperature-gradient refraction, and measured event-shell acoustic energy.
 
-A controlled 8,000-star end-to-end run with asynchronous audio preparation
-measures 10.26 ms mean frame time and 17.20 ms at the 95th percentile on the
-development machine. The audio-arrival frame measured 17.69 ms and coincided
-with a 30 Hz fluid step; it no longer contains synchronous waveform synthesis.
-The remaining near-budget tail is the CPU fluid quality tier and reinforces
-the planned migration to a 3D GPU solver.
+The prepared audio buffer adds no synchronous waveform synthesis to its
+arrival frame. End-to-end timing is recorded with the current smoke renderer
+above; the remaining frame-time tail is dominated by the CPU fluid quality
+tier and reinforces the planned migration to a 3D GPU solver.
 
 ## Required reference datasets
 
