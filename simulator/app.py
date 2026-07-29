@@ -24,7 +24,7 @@ class SimulatorApp:
         pygame.display.set_mode(
             (render.width, render.height),
             pygame.OPENGL | pygame.DOUBLEBUF,
-            vsync=1,
+            vsync=1 if render.vsync else 0,
         )
         pygame.display.set_caption("Yeouido Fireworks Simulator")
         self.ctx = moderngl.create_context()
@@ -51,7 +51,11 @@ class SimulatorApp:
                 self.world.update(self.physics_clock.step_s)
             self.renderer.render(self.world, dt_s)
             pygame.display.flip()
-            self.frame_clock.tick(self.config.render.target_fps)
+            # Swap interval is the primary limiter. Applying SDL's millisecond
+            # timer after a blocking swap produces systematic sub-60 FPS pacing.
+            self.frame_clock.tick(
+                0 if self.config.render.vsync else self.config.render.target_fps
+            )
             self._title(dt_s)
             frame_count += 1
             if max_frames is not None and frame_count >= max_frames:

@@ -13,7 +13,8 @@ data can replace them without redesigning the engine.
 - Ballistics and burning stars: fixed 120 Hz.
 - Smoke velocity/density/temperature fields: planned fixed 30 Hz with temporal
   interpolation.
-- Water spectrum: planned 15–30 Hz displacement update; shading remains 60 Hz.
+- Water spectrum: analytic deep-water phase evaluation at 60 Hz; a future FFT
+  spectrum will update displacement at 15–30 Hz with 60 Hz shading.
 - Rendering: linear RGBA16F followed by camera exposure and tone mapping.
 
 Simulation results must not depend on display frame rate. Random generation uses
@@ -41,9 +42,15 @@ in scenario data rather than source code.
 5. Participating-media smoke and light scattering
 6. HDR bloom, camera exposure, sensor response, and tone mapping
 
-The current water background and reflection displacement are bounded
-prototypes, not accepted physical models. They provide the pass boundary that
-will receive a directional wave spectrum and reflected scene radiance.
+The water surface now uses a discrete directional wind-wave spectrum with
+deep-water dispersion. Wave energy is derived from wind speed, direction, and
+fetch rather than hand-authored amplitudes. The current reflected firework
+displacement remains a bounded prototype; it will be replaced by reflected
+scene radiance sampled at the displaced water normal.
+
+The default provisional wind input produces a significant wave height of about
+0.05 m. It is a safe development condition, not a claim about the event night.
+The value must be regenerated from verified October 5, 2024 observations.
 
 ## Performance rules
 
@@ -54,6 +61,11 @@ will receive a directional wave spectrum and reflected scene radiance.
 - Every feature ships with a GPU/CPU timing measurement and a scalable quality
   control; physical trajectory parameters are never reduced for performance.
 
+On the initial development laptop, the terrain-free water and firework vertical
+slice renders uncapped at about 2.0 ms per frame. V-synced measurements report
+approximately 58 FPS because of the display/SDL swap interval; the uncapped
+measurement confirms substantial GPU/CPU headroom above the 60 FPS workload.
+
 ## Required reference datasets
 
 - October 5, 2024 hourly and, where possible, sub-hourly weather observations
@@ -62,4 +74,3 @@ will receive a directional wave spectrum and reflected scene radiance.
 - Han River wind-wave observations or a defensible wind-driven spectrum
 - Solar/lunar ephemeris, cloud cover, atmospheric visibility, and sky luminance
 - Camera position, focal length/FOV, exposure, white balance, and sensor curve
-

@@ -7,6 +7,7 @@ import numpy as np
 
 from .config import RenderConfig
 from .physics import FireworkWorld
+from .water import WaterConfig, build_directional_spectrum, build_water_mesh
 
 
 def _perspective(fov_deg: float, aspect: float, near: float, far: float) -> np.ndarray:
@@ -98,6 +99,58 @@ void main() {
 }
 """
 
+WATER_VERTEX = """
+#version 330
+in vec2 in_xz;
+uniform mat4 view_projection;
+uniform vec4 waves[32];
+uniform float phases[32];
+uniform float time_s;
+uniform float choppiness;
+out vec3 world_position;
+out vec3 world_normal;
+void main() {
+    vec2 displaced_xz = in_xz;
+    float height = 0.0;
+    vec2 gradient = vec2(0.0);
+    for (int i = 0; i < 32; ++i) {
+        vec2 direction = waves[i].xy;
+        float k = waves[i].z;
+        float amplitude = waves[i].w;
+        float omega = sqrt(9.80665 * k);
+        float theta = k * dot(direction, in_xz) - omega * time_s + phases[i];
+        height += amplitude * sin(theta);
+        gradient += amplitude * k * direction * cos(theta);
+        displaced_xz += choppiness * amplitude * direction * cos(theta);
+    }
+    world_position = vec3(displaced_xz.x, height, displaced_xz.y);
+    world_normal = normalize(vec3(-gradient.x, 1.0, -gradient.y));
+    gl_Position = view_projection * vec4(world_position, 1.0);
+}
+"""
+
+WATER_FRAGMENT = """
+#version 330
+in vec3 world_position;
+in vec3 world_normal;
+uniform vec3 camera_position;
+out vec4 frag_color;
+void main() {
+    vec3 n = normalize(world_normal);
+    vec3 view_direction = normalize(camera_position - world_position);
+    float n_dot_v = max(dot(n, view_direction), 0.0);
+    float fresnel = 0.02037 + (1.0 - 0.02037) * pow(1.0 - n_dot_v, 5.0);
+    vec3 reflected = reflect(-view_direction, n);
+    float sky_factor = smoothstep(-0.15, 0.75, reflected.y);
+    vec3 sky_radiance = mix(vec3(.0018, .0024, .0035),
+                            vec3(.00018, .00032, .00072), sky_factor);
+    vec3 water_body = vec3(.00010, .00028, .00034);
+    float grazing_haze = pow(1.0 - n_dot_v, 3.0) * .0007;
+    vec3 radiance = mix(water_body, sky_radiance, fresnel) + grazing_haze;
+    frag_color = vec4(radiance, 1.0);
+}
+"""
+
 
 class Renderer:
     """Linear-HDR renderer. Terrain, water, and atmosphere are separate passes."""
@@ -120,6 +173,23 @@ class Renderer:
             self.tonemap_program, self.quad_buffer, "in_position"
         )
         self.tonemap_program["hdr_texture"] = 0
+        self.water_config = WaterConfig()
+        water_spectrum = build_directional_spectrum(self.water_config)
+        water_vertices, water_indices = build_water_mesh(self.water_config)
+        self.water_program = ctx.program(
+            vertex_shader=WATER_VERTEX, fragment_shader=WATER_FRAGMENT
+        )
+        self.water_vertex_buffer = ctx.buffer(water_vertices.tobytes())
+        self.water_index_buffer = ctx.buffer(water_indices.tobytes())
+        self.water_vao = ctx.vertex_array(
+            self.water_program,
+            [(self.water_vertex_buffer, "2f", "in_xz")],
+            self.water_index_buffer,
+            index_element_size=4,
+        )
+        self.water_program["waves"].write(water_spectrum.components.tobytes())
+        self.water_program["phases"].write(water_spectrum.phases.tobytes())
+        self.water_program["choppiness"] = self.water_config.choppiness
         self.particle_program = ctx.program(
             vertex_shader=PARTICLE_VERTEX, fragment_shader=PARTICLE_FRAGMENT
         )
@@ -140,13 +210,19 @@ class Renderer:
         projection = _perspective(
             config.vertical_fov_deg, config.width / config.height, .1, 2500
         )
+        camera_position = np.array([0, 24, 235], dtype=np.float32)
         view = _look_at(
-            np.array([0, 24, 235], dtype=np.float32),
+            camera_position,
             np.array([0, 105, 0], dtype=np.float32),
         )
+        view_projection = projection @ view
         self.particle_program["view_projection"].write(
-            (projection @ view).T.astype(np.float32).tobytes()
+            view_projection.T.astype(np.float32).tobytes()
         )
+        self.water_program["view_projection"].write(
+            view_projection.T.astype(np.float32).tobytes()
+        )
+        self.water_program["camera_position"].value = tuple(camera_position)
 
     def render(self, world: FireworkWorld, frame_dt_s: float) -> None:
         self.time_s += frame_dt_s
@@ -156,6 +232,9 @@ class Renderer:
         self.hdr_fbo.clear(0, 0, 0, 1, depth=1)
         self.background_program["time_s"] = self.time_s
         self.background_vao.render(moderngl.TRIANGLE_STRIP)
+        self.ctx.enable(moderngl.DEPTH_TEST)
+        self.water_program["time_s"] = self.time_s
+        self.water_vao.render(moderngl.TRIANGLES)
         count = world.stars.count
         if count:
             data = np.empty((count, self.stride), dtype=np.float32)
@@ -164,6 +243,7 @@ class Renderer:
             data[:, 6] = world.stars.intensity()
             self.particle_buffer.write(data.tobytes())
             self.ctx.enable(moderngl.BLEND)
+            self.ctx.disable(moderngl.DEPTH_TEST)
             self.ctx.blend_func = moderngl.ONE, moderngl.ONE
             self.particle_program["time_s"] = self.time_s
             for reflection in (1.0, 0.0):
@@ -176,4 +256,3 @@ class Renderer:
             6.0 - self.config.exposure_ev100
         )
         self.tonemap_vao.render(moderngl.TRIANGLE_STRIP)
-

@@ -38,6 +38,7 @@ class RenderConfig:
     width: int = 1280
     height: int = 720
     target_fps: int = 60
+    vsync: bool = True
     physics_hz: int = 120
     vertical_fov_deg: float = 52.0
     exposure_ev100: float = 7.0
@@ -50,4 +51,3 @@ class SimulationConfig:
     shell: ShellConfig = field(default_factory=ShellConfig)
     render: RenderConfig = field(default_factory=RenderConfig)
     random_seed: int = 20241005
-
