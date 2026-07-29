@@ -40,6 +40,7 @@ def download(snapshot_utc: str = SNAPSHOT_UTC) -> dict:
 [out:json][timeout:240][date:"{snapshot_utc}"];
 (
   way["building"]({south},{west},{north},{east});
+  way["building:part"]({south},{west},{north},{east});
   way["bridge"]({south},{west},{north},{east});
   way["highway"]({south},{west},{north},{east});
   way["leisure"="park"]({south},{west},{north},{east});

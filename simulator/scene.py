@@ -9,6 +9,20 @@ import numpy as np
 
 from .geodesy import LocalTangentPlane
 
+SURFACE_WALL = 0.0
+SURFACE_ROOF = 1.0
+SURFACE_BRIDGE = 2.0
+SURFACE_ROAD = 3.0
+SURFACE_VEGETATION = 4.0
+
+FACADE_GENERIC = 0.0
+FACADE_GLASS_BLUE = 1.0
+FACADE_GOLD_63 = 2.0
+FACADE_RESIDENTIAL = 3.0
+FACADE_INSTITUTIONAL = 4.0
+FACADE_PARC1 = 5.0
+FACADE_HOTEL = 6.0
+
 
 @dataclass(frozen=True, slots=True)
 class StaticScene:
@@ -37,6 +51,56 @@ def _height(tags: dict[str, str]) -> float:
         return max(3.2, levels * 3.2)
     except ValueError:
         return 12.0
+
+
+def _minimum_height(tags: dict[str, str]) -> float:
+    raw_height = tags.get("min_height", "").lower().replace("m", "").strip()
+    try:
+        return max(float(raw_height), 0.0)
+    except ValueError:
+        pass
+    try:
+        return max(float(tags.get("building:min_level", "")) * 3.2, 0.0)
+    except ValueError:
+        return 0.0
+
+
+def _facade_style(tags: dict[str, str]) -> float:
+    names = " ".join(
+        tags.get(key, "") for key in ("name", "name:en", "official_name")
+    ).lower()
+    building = tags.get("building", "").lower()
+    material = tags.get("building:material", "").lower()
+    colour = tags.get("building:colour", "").lower()
+    if "63시티" in names or "63 city" in names or "63square" in names:
+        return FACADE_GOLD_63
+    if (
+        "parc.1" in names
+        or "파크원" in names
+        or "nh financial tower" in names
+        or "nh금융타워" in names
+    ):
+        return FACADE_PARC1
+    if (
+        "ifc" in names
+        or "국제금융" in names
+        or "전경련회관" in names
+        or "fki tow" in names
+    ):
+        return FACADE_GLASS_BLUE
+    if "conrad" in names or building == "hotel":
+        return FACADE_HOTEL
+    if building in {"apartments", "residential", "officetel"}:
+        return FACADE_RESIDENTIAL
+    if building in {
+        "government", "public", "civic", "school", "university", "church"
+    } or tags.get("roof:shape") == "dome":
+        return FACADE_INSTITUTIONAL
+    if material == "glass" or colour in {"#547bbc", "#2240ca", "blue"}:
+        return FACADE_GLASS_BLUE
+    if colour in {"gold", "golden"}:
+        return FACADE_GOLD_63
+    return FACADE_GENERIC
 
 
 def _signed_area(points: np.ndarray) -> float:
@@ -95,36 +159,162 @@ def _triangulate(points: np.ndarray) -> list[tuple[int, int, int]]:
     return triangles
 
 
-def _vertex(position: tuple[float, float, float], normal: tuple[float, float, float],
-            material: float) -> list[float]:
-    return [*position, *normal, material]
+def _vertex(
+    position: tuple[float, float, float],
+    normal: tuple[float, float, float],
+    surface: float,
+    surface_uv: tuple[float, float] = (0.0, 0.0),
+    facade_style: float = FACADE_GENERIC,
+) -> list[float]:
+    return [*position, *normal, surface, *surface_uv, facade_style]
 
 
-def _building_mesh(points: np.ndarray, height_m: float) -> list[list[float]]:
+def _building_mesh(
+    points: np.ndarray,
+    height_m: float,
+    minimum_height_m: float = 0.0,
+    facade_style: float = FACADE_GENERIC,
+) -> list[list[float]]:
+    if _signed_area(points) < 0.0:
+        points = points[::-1].copy()
     vertices: list[list[float]] = []
-    for index, a in enumerate(points):
-        b = points[(index + 1) % len(points)]
-        edge = b - a
-        length = float(np.linalg.norm(edge))
-        if length < 0.05:
-            continue
-        normal = (edge[1] / length, 0.0, -edge[0] / length)
-        p0, p1 = (a[0], 0.0, a[1]), (b[0], 0.0, b[1])
-        p2, p3 = (b[0], height_m, b[1]), (a[0], height_m, a[1])
+    base_height = min(max(minimum_height_m, 0.0), height_m - 0.1)
+    band_count = 16 if facade_style == FACADE_GOLD_63 else 1
+    centre = points.mean(axis=0)
+    perimeter_u = np.concatenate(
+        (
+            np.array([0.0]),
+            np.cumsum(
+                np.linalg.norm(np.roll(points, -1, axis=0) - points, axis=1)
+            ),
+        )
+    )
+
+    def ring(height: float) -> np.ndarray:
+        if facade_style != FACADE_GOLD_63:
+            return points
+        alpha = (height - base_height) / max(height_m - base_height, 0.1)
+        # 63 City has a visibly narrower, softly curved upper silhouette.
+        scale = 1.0 - 0.14 * alpha * alpha
+        return centre + (points - centre) * scale
+
+    heights = np.linspace(base_height, height_m, band_count + 1)
+    for band in range(band_count):
+        lower, upper = ring(heights[band]), ring(heights[band + 1])
+        for index, a in enumerate(lower):
+            next_index = (index + 1) % len(points)
+            b, c, d = lower[next_index], upper[next_index], upper[index]
+            p0 = np.array((a[0], heights[band], a[1]))
+            p1 = np.array((b[0], heights[band], b[1]))
+            p2 = np.array((c[0], heights[band + 1], c[1]))
+            p3 = np.array((d[0], heights[band + 1], d[1]))
+            normal_vector = np.cross(p3 - p0, p1 - p0)
+            normal_length = float(np.linalg.norm(normal_vector))
+            if normal_length < 0.05:
+                continue
+            normal = tuple(normal_vector / normal_length)
+            u0, u1 = float(perimeter_u[index]), float(perimeter_u[index + 1])
+            v0, v1 = heights[band] - base_height, heights[band + 1] - base_height
+            vertices.extend(
+                [
+                    _vertex(tuple(p0), normal, SURFACE_WALL, (u0, v0), facade_style),
+                    _vertex(tuple(p1), normal, SURFACE_WALL, (u1, v0), facade_style),
+                    _vertex(tuple(p2), normal, SURFACE_WALL, (u1, v1), facade_style),
+                    _vertex(tuple(p0), normal, SURFACE_WALL, (u0, v0), facade_style),
+                    _vertex(tuple(p2), normal, SURFACE_WALL, (u1, v1), facade_style),
+                    _vertex(tuple(p3), normal, SURFACE_WALL, (u0, v1), facade_style),
+                ]
+            )
+    roof_normal = (0.0, 1.0, 0.0)
+    roof_points = ring(height_m)
+    for a, b, c in _triangulate(roof_points.copy()):
+        for index in (a, b, c):
+            point = roof_points[index]
+            vertices.append(
+                _vertex(
+                    (point[0], height_m, point[1]),
+                    roof_normal,
+                    SURFACE_ROOF,
+                    (point[0], point[1]),
+                    facade_style,
+                )
+            )
+    return vertices
+
+
+def _dome_mesh(
+    points: np.ndarray,
+    height_m: float,
+    minimum_height_m: float,
+    facade_style: float,
+) -> list[list[float]]:
+    if _signed_area(points) < 0.0:
+        points = points[::-1].copy()
+    centre = points.mean(axis=0)
+    base_height = min(max(minimum_height_m, 0.0), height_m - 0.1)
+    rings = 8
+    ring_points: list[np.ndarray] = []
+    ring_heights: list[float] = []
+    for ring_index in range(rings):
+        angle = (ring_index / rings) * math.pi * 0.5
+        ring_points.append(centre + (points - centre) * math.cos(angle))
+        ring_heights.append(
+            base_height + (height_m - base_height) * math.sin(angle)
+        )
+    vertices: list[list[float]] = []
+    for ring_index in range(rings - 1):
+        lower, upper = ring_points[ring_index], ring_points[ring_index + 1]
+        for index, a in enumerate(lower):
+            following = (index + 1) % len(points)
+            p0 = np.array((a[0], ring_heights[ring_index], a[1]))
+            p1 = np.array(
+                (
+                    lower[following, 0],
+                    ring_heights[ring_index],
+                    lower[following, 1],
+                )
+            )
+            p2 = np.array(
+                (
+                    upper[following, 0],
+                    ring_heights[ring_index + 1],
+                    upper[following, 1],
+                )
+            )
+            p3 = np.array(
+                (
+                    upper[index, 0],
+                    ring_heights[ring_index + 1],
+                    upper[index, 1],
+                )
+            )
+            normal_vector = np.cross(p3 - p0, p1 - p0)
+            normal = tuple(normal_vector / np.linalg.norm(normal_vector))
+            vertices.extend(
+                [
+                    _vertex(tuple(p0), normal, SURFACE_ROOF, tuple(p0[[0, 2]]), facade_style),
+                    _vertex(tuple(p1), normal, SURFACE_ROOF, tuple(p1[[0, 2]]), facade_style),
+                    _vertex(tuple(p2), normal, SURFACE_ROOF, tuple(p2[[0, 2]]), facade_style),
+                    _vertex(tuple(p0), normal, SURFACE_ROOF, tuple(p0[[0, 2]]), facade_style),
+                    _vertex(tuple(p2), normal, SURFACE_ROOF, tuple(p2[[0, 2]]), facade_style),
+                    _vertex(tuple(p3), normal, SURFACE_ROOF, tuple(p3[[0, 2]]), facade_style),
+                ]
+            )
+    top_ring = ring_points[-1]
+    top = np.array((centre[0], height_m, centre[1]))
+    for index, point in enumerate(top_ring):
+        following = top_ring[(index + 1) % len(top_ring)]
+        p0 = np.array((point[0], ring_heights[-1], point[1]))
+        p1 = np.array((following[0], ring_heights[-1], following[1]))
+        normal_vector = np.cross(top - p0, p1 - p0)
+        normal = tuple(normal_vector / np.linalg.norm(normal_vector))
         vertices.extend(
             [
-                _vertex(p0, normal, 0.0), _vertex(p1, normal, 0.0),
-                _vertex(p2, normal, 0.0), _vertex(p0, normal, 0.0),
-                _vertex(p2, normal, 0.0), _vertex(p3, normal, 0.0),
+                _vertex(tuple(p0), normal, SURFACE_ROOF, tuple(p0[[0, 2]]), facade_style),
+                _vertex(tuple(p1), normal, SURFACE_ROOF, tuple(p1[[0, 2]]), facade_style),
+                _vertex(tuple(top), normal, SURFACE_ROOF, tuple(top[[0, 2]]), facade_style),
             ]
         )
-    roof_normal = (0.0, 1.0, 0.0)
-    for a, b, c in _triangulate(points.copy()):
-        for index in (a, b, c):
-            point = points[index]
-            vertices.append(
-                _vertex((point[0], height_m, point[1]), roof_normal, 1.0)
-            )
     return vertices
 
 
@@ -150,6 +340,7 @@ def _bridge_mesh(
                         (point[0], elevation_m, point[1]),
                         (0.0, 1.0, 0.0),
                         material,
+                        (point[0], point[1]),
                     )
                 )
     return vertices
@@ -165,7 +356,10 @@ def _surface_mesh(
             point = points[index]
             vertices.append(
                 _vertex(
-                    (point[0], elevation_m, point[1]), normal, material
+                    (point[0], elevation_m, point[1]),
+                    normal,
+                    material,
+                    (point[0], point[1]),
                 )
             )
     return vertices
@@ -220,8 +414,20 @@ def build_scene(
         )
         if np.linalg.norm(local[0] - local[-1]) < 0.05:
             local = local[:-1]
-        if "building" in tags and len(local) >= 3:
-            buildings.extend(_building_mesh(local, _height(tags)))
+        if (
+            "building" in tags or "building:part" in tags
+        ) and len(local) >= 3:
+            height = _height(tags)
+            minimum_height = _minimum_height(tags)
+            style = _facade_style(tags)
+            if tags.get("roof:shape") == "dome":
+                buildings.extend(
+                    _dome_mesh(local, height, minimum_height, style)
+                )
+            else:
+                buildings.extend(
+                    _building_mesh(local, height, minimum_height, style)
+                )
         if "bridge" in tags and len(local) >= 2:
             try:
                 width = float(tags.get("width", "").replace("m", "").strip())
@@ -240,7 +446,7 @@ def build_scene(
         )
         if is_green and len(local) >= 3:
             vegetation.extend(_surface_mesh(local, 0.035, 4.0))
-    empty = np.empty((0, 7), dtype=np.float32)
+    empty = np.empty((0, 10), dtype=np.float32)
     return StaticScene(
         np.asarray(buildings, dtype=np.float32) if buildings else empty,
         np.asarray(bridges, dtype=np.float32) if bridges else empty,
@@ -358,17 +564,32 @@ def save_scene(scene: StaticScene, path: Path) -> None:
     )
 
 
+def _upgrade_vertex_layout(vertices: np.ndarray) -> np.ndarray:
+    vertices = np.asarray(vertices, dtype=np.float32)
+    if vertices.shape[1] == 10:
+        return vertices.copy()
+    if vertices.shape[1] != 7:
+        raise ValueError(f"unsupported static-scene vertex width: {vertices.shape[1]}")
+    upgraded = np.zeros((len(vertices), 10), dtype=np.float32)
+    upgraded[:, :7] = vertices
+    upgraded[:, 7] = vertices[:, 0]
+    upgraded[:, 8] = np.where(
+        vertices[:, 6] < 0.5, vertices[:, 1], vertices[:, 2]
+    )
+    return upgraded
+
+
 def load_scene(path: Path) -> StaticScene:
     with np.load(path) as data:
         origin = data["origin"]
         return StaticScene(
-            data["building_vertices"].copy(),
-            data["bridge_vertices"].copy(),
-            data["road_vertices"].copy()
-            if "road_vertices" in data else np.empty((0, 7), dtype=np.float32),
-            data["vegetation_vertices"].copy()
+            _upgrade_vertex_layout(data["building_vertices"]),
+            _upgrade_vertex_layout(data["bridge_vertices"]),
+            _upgrade_vertex_layout(data["road_vertices"])
+            if "road_vertices" in data else np.empty((0, 10), dtype=np.float32),
+            _upgrade_vertex_layout(data["vegetation_vertices"])
             if "vegetation_vertices" in data
-            else np.empty((0, 7), dtype=np.float32),
+            else np.empty((0, 10), dtype=np.float32),
             data["water_mask"].copy(),
             data["water_mask_bounds"].copy(),
             data["terrain_height_m"].copy(),

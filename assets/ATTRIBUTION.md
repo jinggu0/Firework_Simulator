@@ -15,10 +15,31 @@ the Open Data Commons Open Database License (ODbL).
 - Han River water multipolygon: OpenStreetMap relation `152336`
 
 The shipped snapshot contains the OSM state at show start rather than the
-current map state. It includes building footprints, tagged heights, bridge and
-road ways, parks, grass, forest, and the Han River multipolygon. OSM remains a
-community dataset: missing heights use documented fallbacks and do not
-establish survey-grade equality with every October 5, 2024 structure.
+current map state. It includes building footprints and parts, tagged heights,
+bridge and road ways, parks, grass, forest, and the Han River multipolygon.
+OSM remains a community dataset: missing heights use documented fallbacks and
+do not establish survey-grade equality with every October 5, 2024 structure.
+
+## Landmark facade references
+
+Historical OSM names, heights, uses, material tags, and colour tags select the
+runtime facade family. The following references constrain distinctive
+landmark treatments:
+
+- IFC Seoul describes its three office towers and Conrad hotel as a
+  crystalline glass composition with reflected light and shadow:
+  https://www.ifcseoul.com/en/BD_02_00.asp
+- The Parc.1 architectural report describes the externally expressed red
+  structural columns and their relationship to the Han River and Yeouido
+  Park:
+  https://r.yna.co.kr/www/imazine/202004/232.pdf
+- The historical OSM snapshot identifies 63 City as a 252 m glass tower and
+  tags its building colour as gold.
+
+These sources calibrate procedural material families; no copyrighted facade
+photographs are packaged as textures. Window occupancy is deterministic
+simulation data and is not a record of which rooms were illuminated during
+the 2024 event.
 
 ## Elevation
 

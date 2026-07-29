@@ -89,7 +89,7 @@ measurement confirms substantial GPU/CPU headroom above the 60 FPS workload.
 The reproducible scene snapshot uses the OpenStreetMap historical state at
 2024-10-05 10:20 UTC (19:20 KST) in the 37.515–37.545 N,
 126.910–126.960 E bounding box. WGS84 coordinates are converted to local
-East-Up-South metres before rendering. The shipped asset contains 83,859
+East-Up-South metres before rendering. The shipped asset contains 99,570
 building vertices, 6,330 bridge-deck vertices, 68,244 road vertices, and 5,469
 park/grass/forest vertices. Explicit OSM heights are retained;
 `building:levels` is converted at 3.2 m per level, and features with neither
@@ -101,6 +101,38 @@ materials, individual trees, and temporary event structures. The national
 daily GIS building integration dataset and 1–5 m NGII DEM require authenticated
 downloads and can replace these inputs when supplied. OSM attribution and
 licensing are recorded in `assets/ATTRIBUTION.md`.
+
+## Landmark geometry and facades
+
+Static scene vertices carry world position, normal, surface kind, metric
+surface coordinates, and a facade family. Buildings remain true 3D meshes in
+the same terrain-displaced world and depth buffer as water, smoke, fireworks,
+roads, and bridges. The existing free camera traverses that world with
+W/A/S/D, Q/E vertical motion, Shift sprint, and mouse yaw/pitch; it does not
+switch to a 2D map or billboard representation.
+
+Historical OSM building and `building:part` ways select seven facade families:
+generic office, blue curtain wall, 63 City gold glass, residential,
+institutional stone, Parc.1 glass with red expressed structure, and hotel.
+Metric facade coordinates produce anti-aliased floor slabs, bays, mullions,
+balconies, deterministic occupied windows, view-dependent glass Fresnel, and
+night emission in one batched building draw. This retains individual building
+geometry without issuing a material draw call per building.
+
+Named historical features receive targeted treatment. The 252 m 63 City mesh
+uses sixteen tapered vertical bands to reproduce its narrowing upper
+silhouette. IFC and FKI towers use a blue crystalline curtain-wall response.
+The 322 m and 256 m Parc.1 towers expose red vertical columns and beams.
+Residential buildings receive smaller floor spacing and balcony bands.
+`min_height` is preserved for elevated parts, and OSM dome roof parts generate
+curved 3D geometry, including the National Assembly dome data.
+
+This is appearance reconstruction, not a claim of photogrammetric identity.
+Facade panel dimensions are family calibrations; deterministic window
+occupancy is not measured room-by-room lighting from October 5, 2024. Exact
+signage, curtain-wall reflectance spectra, rooftop equipment, trees, temporary
+event installations, and sub-metre silhouettes require licensed
+timestamp-matched photography or survey/photogrammetry.
 
 The Han River surface is clipped by a 1024 × 1024 geographic coverage mask
 generated from OSM multipolygon relation 152336. Both outer riverbanks and
@@ -288,24 +320,47 @@ crosswind vortices. Production quality still requires a sparse 3D GPU MAC
 grid, combustion-species calibration, multiple scattering, and direct light
 injection from individual burning stars.
 
-On the development machine, the default fluid step costs approximately 11-12
-ms at 30 Hz, or about 6 ms amortized per 60 Hz display frame. An uncapped
-fluid-and-render workload measures approximately 3.91 ms per displayed frame
-(about 256 FPS); the difference reflects that the 30 Hz solver does not execute
-on every render frame. The lower grid resolution is therefore a performance
-quality tier; later GPU compute must increase spatial resolution without
-changing the fixed physical update rate.
+The volume texture retains its physical domain, but its rendered proxy is
+contracted after every fluid update to the conservative AABB of optically
+active voxels plus one-cell interpolation margin. Empty portions of the
+640 x 360 x 120 m domain therefore create neither fragments nor 40-sample ray
+loops. Texture coordinates still reference the complete domain, so this is
+empty-space skipping rather than a change to density, temperature, or optical
+path length.
 
-With a populated volume held active, the complete render path measures
-approximately 4.78 ms/frame (209 FPS uncapped). A controlled end-to-end run
-with 8,000 stars, 120 Hz ballistics, 30 Hz source deposition and fluid, 3D
-volume integration, asynchronous acoustics, terrain, two-scale water, planar
-city reflection, HDR trails, and bloom measures 8.71 ms mean frame time and
-16.73 ms at the 95th percentile (114.8 FPS by the mean) in the live-loop
-timing method. A deliberately stricter per-frame GPU-finish measurement records
-15.45 ms mean and 24.39 ms at the 95th percentile. The average 60 FPS budget is
-retained on the development machine, but the strict tail is not yet a stable
-60 FPS guarantee; the remaining spikes are dominated by the CPU fluid step.
+## p95 bottleneck analysis
+
+`python -m tools.profile_runtime --frames 120` runs three repeatable GL
+timestamp-query cases with 8,000 held stars: full moving-camera rendering,
+moving-camera rendering without smoke, and full static-camera rendering.
+After active-volume contraction, the full moving case measures 4.925 ms GPU
+p95 and 6.267 ms CPU-submit p95. The no-smoke GPU p95 is 4.878 ms and the
+static-camera GPU p95 is 4.640 ms. The small residuals show that neither the
+contracted plume nor the camera-invalidated planar reflection is now the
+dominant visual p95 cost. Before contraction, the equivalent full visual GPU
+p95 was 7.544 ms.
+
+The reflection texture is redrawn at up to 30 Hz while the camera moves, but a
+stationary camera reuses static city geometry and refreshes only for the
+one-second sky-lighting invalidation. Animated water normals continue to
+distort the cached radiance every 60 Hz frame. Far facades also replace
+per-window occupancy hashes with filtered average emission beyond 1,600 m,
+limiting shader aliasing and work without replacing geometry with billboards.
+
+A stricter 240-frame integrated run calls GPU finish every frame while moving
+the camera and updating 8,000 stars, 120 Hz ballistics, 30 Hz fluid, smoke
+uploads, water, reflection, bloom, and tone mapping. It measures 13.325 ms mean
+(75.0 FPS), 20.122 ms p95, and 21.936 ms p99. Physics averages 6.634 ms and the
+visual section 6.690 ms. The mean 60 FPS budget is met, but the integrated p95
+still exceeds 16.67 ms because the CPU fluid solve lands on alternating
+display frames.
+
+The next latency work is therefore ordered as follows: migrate pressure
+projection and advection to a GPU MAC grid without reducing physical
+iterations; double-buffer volume reconstruction/uploads so they overlap the
+previous frame; then add depth-pyramid interior smoke occlusion. Dynamic
+resolution, if required, applies only to volumetric radiance and reflection,
+never to trajectory, terrain, building geometry, or the fixed physics clocks.
 
 ## Delayed blast acoustics
 

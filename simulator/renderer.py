@@ -12,6 +12,7 @@ from .config import AtmosphereConfig, RenderConfig, SmokeConfig
 from .fluid import SmokeFluid2D
 from .physics import FireworkWorld
 from .scene import load_scene
+from .volume import active_volume_bounds, box_vertices
 from .water import (
     WaterConfig,
     build_directional_spectrum,
@@ -353,67 +354,169 @@ void main() {
 
 SCENE_VERTEX = """
 #version 330
-in vec3 in_position; in vec3 in_normal; in float in_material;
+in vec3 in_position;
+in vec3 in_normal;
+in float in_surface;
+in vec2 in_surface_uv;
+in float in_facade_style;
 uniform mat4 view_projection;
 uniform sampler2D terrain_height;
 uniform vec4 terrain_bounds;
-out vec3 world_position; out vec3 world_normal; out float material;
+out vec3 world_position;
+out vec3 world_normal;
+out float surface;
+out vec2 surface_uv;
+out float facade_style;
 void main() {
     vec2 terrain_uv = (in_position.xz - terrain_bounds.xy)
                     / (terrain_bounds.zw - terrain_bounds.xy);
     float base_height = texture(terrain_height, terrain_uv).r;
     world_position = in_position + vec3(0.0, base_height, 0.0);
     world_normal = in_normal;
-    material = in_material;
+    surface = in_surface;
+    surface_uv = in_surface_uv;
+    facade_style = in_facade_style;
     gl_Position = view_projection * vec4(world_position, 1.0);
 }
 """
 
 SCENE_FRAGMENT = """
 #version 330
-in vec3 world_position; in vec3 world_normal; in float material;
+in vec3 world_position;
+in vec3 world_normal;
+in float surface;
+in vec2 surface_uv;
+in float facade_style;
+uniform vec3 camera_position;
 out vec4 frag_color;
 float hash21(vec2 p) {
     p = fract(p * vec2(123.34, 456.21));
     p += dot(p, p + 45.32);
     return fract(p.x * p.y);
 }
+float interval(float value, float lower, float upper, float antialias) {
+    return smoothstep(lower - antialias, lower + antialias, value)
+         * (1.0 - smoothstep(upper - antialias, upper + antialias, value));
+}
 void main() {
     vec3 n = normalize(world_normal);
     float sky_light = max(n.y * .5 + .5, .08);
-    vec3 concrete = vec3(.0015, .0017, .0020) * sky_light;
-    if (material > 3.5) {
+    if (surface > 3.5) {
         float green_variation = hash21(floor(world_position.xz * .15));
         vec3 green = mix(vec3(.00016, .00034, .00016),
                          vec3(.00032, .00052, .00022), green_variation);
         frag_color = vec4(green * sky_light, 1.0);
         return;
     }
-    if (material > 2.5) {
+    if (surface > 2.5) {
         float lane_hint = smoothstep(.46, .50,
             abs(fract(world_position.x * .12 + world_position.z * .08) - .5));
         vec3 asphalt = vec3(.00030, .00032, .00035);
         frag_color = vec4(asphalt + lane_hint * vec3(.00016), 1.0);
         return;
     }
-    if (material > 1.5) {
+    if (surface > 1.5) {
         frag_color = vec4(vec3(.0024, .0026, .0027), 1.0);
         return;
     }
-    if (material > .5) {
-        frag_color = vec4(concrete * .7, 1.0);
+    if (surface > .5) {
+        vec3 roof = vec3(.00072, .00078, .00084);
+        if (facade_style > 1.5 && facade_style < 2.5) {
+            roof = vec3(.0022, .00155, .00055);
+        } else if (facade_style > 4.5 && facade_style < 5.5) {
+            roof = vec3(.0018, .00024, .00018);
+        }
+        float roof_variation = hash21(floor(surface_uv * .08)) * .00014;
+        frag_color = vec4((roof + roof_variation) * sky_light, 1.0);
         return;
     }
-    float facade_axis = dot(world_position.xz, abs(n.zx));
-    vec2 cell = floor(vec2(facade_axis / 4.2, world_position.y / 3.25));
-    vec2 within = fract(vec2(facade_axis / 4.2, world_position.y / 3.25));
-    float pane = step(.13, within.x) * step(within.x, .82)
-               * step(.18, within.y) * step(within.y, .72);
-    float occupied = step(.42, hash21(cell));
-    float temperature = hash21(cell + 17.0);
-    vec3 window_color = mix(vec3(1.0, .42, .12), vec3(.55, .72, 1.0), temperature);
+
+    float bay_width = 4.2;
+    float floor_height = 3.25;
+    vec4 pane_bounds = vec4(.13, .82, .18, .72);
+    vec3 wall = vec3(.0015, .0017, .0020);
+    vec3 glass = vec3(.0011, .00175, .00265);
+    float glass_amount = .18;
+    float occupancy_threshold = .68;
+    if (facade_style > .5 && facade_style < 1.5) {
+        bay_width = 3.6; floor_height = 4.57;
+        pane_bounds = vec4(.05, .95, .08, .92);
+        wall = vec3(.00036, .00065, .00105);
+        glass = vec3(.0011, .0023, .0044);
+        glass_amount = .88; occupancy_threshold = .72;
+    } else if (facade_style > 1.5 && facade_style < 2.5) {
+        bay_width = 3.25; floor_height = 4.0;
+        pane_bounds = vec4(.04, .96, .06, .93);
+        wall = vec3(.0027, .00175, .00045);
+        glass = vec3(.0065, .0037, .00062);
+        glass_amount = .93; occupancy_threshold = .75;
+    } else if (facade_style > 2.5 && facade_style < 3.5) {
+        bay_width = 3.4; floor_height = 3.05;
+        pane_bounds = vec4(.18, .78, .24, .68);
+        wall = vec3(.0018, .00165, .00142);
+        glass = vec3(.0010, .00155, .0020);
+        glass_amount = .28; occupancy_threshold = .55;
+    } else if (facade_style > 3.5 && facade_style < 4.5) {
+        bay_width = 5.4; floor_height = 3.8;
+        pane_bounds = vec4(.22, .76, .28, .69);
+        wall = vec3(.0023, .00215, .00182);
+        glass_amount = .12; occupancy_threshold = .82;
+    } else if (facade_style > 4.5 && facade_style < 5.5) {
+        bay_width = 3.8; floor_height = 4.65;
+        pane_bounds = vec4(.05, .95, .08, .92);
+        wall = vec3(.00030, .00046, .00064);
+        glass = vec3(.00072, .00130, .00225);
+        glass_amount = .90; occupancy_threshold = .72;
+    } else if (facade_style > 5.5) {
+        bay_width = 3.2; floor_height = 3.55;
+        pane_bounds = vec4(.12, .86, .16, .78);
+        wall = vec3(.00125, .00120, .00116);
+        glass = vec3(.0010, .00145, .00185);
+        glass_amount = .55; occupancy_threshold = .38;
+    }
+
+    vec2 grid = surface_uv / vec2(bay_width, floor_height);
+    vec2 within = fract(grid);
+    vec2 aa = min(fwidth(grid) * 1.25, vec2(.12));
+    float pane = interval(within.x, pane_bounds.x, pane_bounds.y, aa.x)
+               * interval(within.y, pane_bounds.z, pane_bounds.w, aa.y);
+    vec2 cell = floor(grid);
+    float distance_m = length(camera_position - world_position);
+    float occupied = distance_m < 1600.0
+        ? step(occupancy_threshold, hash21(cell + facade_style * 31.7))
+        : .38;
+    float temperature = distance_m < 1600.0
+        ? hash21(cell + facade_style * 17.0 + 11.3)
+        : .55;
+    vec3 window_color = mix(
+        vec3(1.0, .42, .12), vec3(.55, .72, 1.0), temperature
+    );
+    vec3 view_direction = normalize(camera_position - world_position);
+    float fresnel = pow(1.0 - max(dot(n, view_direction), 0.0), 4.0);
+    vec3 facade = mix(wall, glass, pane * glass_amount);
+    facade += glass * fresnel * glass_amount * 1.8;
     vec3 emission = window_color * pane * occupied * .035;
-    frag_color = vec4(concrete + emission, 1.0);
+
+    if (facade_style > 2.5 && facade_style < 3.5) {
+        float balcony = 1.0 - smoothstep(
+            .035, .09, min(within.y, 1.0 - within.y)
+        );
+        facade += balcony * vec3(.0010, .00095, .00086);
+    }
+    if (facade_style > 4.5 && facade_style < 5.5) {
+        float column_mod = mod(surface_uv.x, 18.0);
+        float column_distance = min(column_mod, 18.0 - column_mod);
+        float red_column = 1.0 - smoothstep(.42, .86, column_distance);
+        float beam_mod = mod(surface_uv.y, 32.0);
+        float beam_distance = min(beam_mod, 32.0 - beam_mod);
+        float red_beam = 1.0 - smoothstep(.30, .72, beam_distance);
+        facade = mix(
+            facade,
+            vec3(.055, .00065, .00032),
+            max(red_column, red_beam) * .92
+        );
+    }
+    frag_color = vec4(facade * sky_light + emission, 1.0);
 }
 """
 
@@ -436,6 +539,8 @@ uniform sampler3D temperature_excess;
 uniform vec3 camera_position;
 uniform vec3 volume_min;
 uniform vec3 volume_max;
+uniform vec3 texture_volume_min;
+uniform vec3 texture_volume_max;
 uniform int camera_inside;
 uniform int ray_steps;
 float hash12(vec2 p) {
@@ -466,7 +571,8 @@ void main() {
         if (i >= ray_steps) break;
         float distance_m = t_near + (float(i) + jitter) * step_m;
         vec3 world = camera_position + ray * distance_m;
-        vec3 uvw = (world - volume_min) / (volume_max - volume_min);
+        vec3 uvw = (world - texture_volume_min)
+                 / (texture_volume_max - texture_volume_min);
         float density = max(texture(smoke_density, uvw).r, 0.0);
         float temperature = max(texture(temperature_excess, uvw).r, 0.0);
         float step_alpha = 1.0 - exp(-density * 4500.0 * step_m);
@@ -562,8 +668,15 @@ class Renderer:
                 buffer = ctx.buffer(vertices.tobytes())
                 vao = ctx.vertex_array(
                     self.scene_program,
-                    [(buffer, "3f 3f 1f",
-                      "in_position", "in_normal", "in_material")],
+                    [(
+                        buffer,
+                        "3f 3f 1f 2f 1f",
+                        "in_position",
+                        "in_normal",
+                        "in_surface",
+                        "in_surface_uv",
+                        "in_facade_style",
+                    )],
                 )
                 self.scene_vaos.append((vao, len(vertices)))
                 if scene_index < 2:
@@ -687,15 +800,9 @@ class Renderer:
             -0.5 * smoke_config.volume_depth_m,
             0.5 * smoke_config.volume_depth_m,
         )
-        smoke_vertices = np.array(
-            [
-                sx0, sy0, sz0, sx1, sy0, sz0,
-                sx1, sy1, sz0, sx0, sy1, sz0,
-                sx0, sy0, sz1, sx1, sy0, sz1,
-                sx1, sy1, sz1, sx0, sy1, sz1,
-            ],
-            dtype=np.float32,
-        ).reshape(-1, 3)
+        smoke_vertices = box_vertices(
+            (sx0, sy0, sz0), (sx1, sy1, sz1)
+        )
         smoke_indices = np.array(
             [
                 0, 3, 2, 0, 2, 1,
@@ -710,7 +817,9 @@ class Renderer:
         self.smoke_program = ctx.program(
             vertex_shader=SMOKE_VERTEX, fragment_shader=SMOKE_FRAGMENT
         )
-        self.smoke_buffer = ctx.buffer(smoke_vertices.tobytes())
+        self.smoke_buffer = ctx.buffer(
+            smoke_vertices.tobytes(), dynamic=True
+        )
         self.smoke_index_buffer = ctx.buffer(smoke_indices.tobytes())
         self.smoke_vao = ctx.vertex_array(
             self.smoke_program,
@@ -740,10 +849,13 @@ class Renderer:
         self.smoke_program["temperature_excess"] = 5
         self.smoke_program["volume_min"].value = (sx0, sy0, sz0)
         self.smoke_program["volume_max"].value = (sx1, sy1, sz1)
+        self.smoke_program["texture_volume_min"].value = (sx0, sy0, sz0)
+        self.smoke_program["texture_volume_max"].value = (sx1, sy1, sz1)
         self.smoke_program["ray_steps"] = smoke_config.volume_ray_steps
         self.smoke_bounds = np.array(
             [[sx0, sy0, sz0], [sx1, sy1, sz1]], dtype=np.float32
         )
+        self.smoke_texture_bounds = self.smoke_bounds.copy()
         self.smoke_revision = -1
         self.hdr_texture = ctx.texture(
             (config.width, config.height), components=4, dtype="f2"
@@ -766,7 +878,10 @@ class Renderer:
         )
         self.reflection_interval_s = 1.0 / max(config.reflection_hz, 1)
         self.reflection_accumulator_s = self.reflection_interval_s
+        self.reflection_sky_accumulator_s = 1.0
         self.reflection_ready = False
+        self.reflection_camera_position = np.full(3, np.inf, dtype=np.float32)
+        self.reflection_camera_forward = np.zeros(3, dtype=np.float32)
         self.last_rendered_smoke_revision = -1
         bloom_size = (max(config.width // 2, 1), max(config.height // 2, 1))
         self.bloom_textures = [
@@ -798,6 +913,7 @@ class Renderer:
         ):
             program["view_projection"].write(matrix_bytes)
         self.water_program["camera_position"].value = tuple(camera.position_m)
+        self.scene_program["camera_position"].value = tuple(camera.position_m)
         self.smoke_program["camera_position"].value = tuple(camera.position_m)
         self.smoke_program["camera_inside"] = int(
             np.all(camera.position_m >= self.smoke_bounds[0])
@@ -828,6 +944,7 @@ class Renderer:
         )
         self.land_program["view_projection"].write(matrix_bytes)
         self.scene_program["view_projection"].write(matrix_bytes)
+        self.scene_program["camera_position"].value = tuple(reflected_position)
         self.water_program["reflection_view_projection"].write(matrix_bytes)
         self._set_background_camera(reflected_forward, camera.right)
 
@@ -882,18 +999,38 @@ class Renderer:
         self.time_s += frame_dt_s
         self._update_celestial(celestial, world.atmosphere)
         self.reflection_accumulator_s += frame_dt_s
+        self.reflection_sky_accumulator_s += frame_dt_s
         smoke_revision = smoke.revision if smoke is not None else -1
         fluid_updated = smoke_revision != self.last_rendered_smoke_revision
+        camera_changed = (
+            float(
+                np.linalg.norm(
+                    camera.position_m - self.reflection_camera_position
+                )
+            )
+            > 0.025
+            or float(
+                np.dot(camera.forward, self.reflection_camera_forward)
+            )
+            < 0.9999985
+        )
+        reflection_invalid = camera_changed or (
+            self.reflection_sky_accumulator_s >= 1.0
+        )
         if (
             not self.reflection_ready
             or (
                 self.reflection_accumulator_s >= self.reflection_interval_s
+                and reflection_invalid
                 and not fluid_updated
             )
         ):
             self._render_reflection(camera)
             self.reflection_accumulator_s %= self.reflection_interval_s
+            self.reflection_sky_accumulator_s = 0.0
             self.reflection_ready = True
+            self.reflection_camera_position[:] = camera.position_m
+            self.reflection_camera_forward[:] = camera.forward
         self.last_rendered_smoke_revision = smoke_revision
         self._update_camera(camera)
         self.hdr_fbo.use()
@@ -940,6 +1077,32 @@ class Renderer:
                 self.smoke_temperature_texture.write(
                     np.ascontiguousarray(temperature_volume).tobytes()
                 )
+                active_bounds = active_volume_bounds(
+                    density_volume,
+                    self.smoke_texture_bounds[0],
+                    self.smoke_texture_bounds[1],
+                )
+                if active_bounds is not None:
+                    active_minimum, active_maximum = active_bounds
+                    self.smoke_bounds[:] = (
+                        active_minimum,
+                        active_maximum,
+                    )
+                    self.smoke_buffer.write(
+                        box_vertices(
+                            active_minimum, active_maximum
+                        ).tobytes()
+                    )
+                    self.smoke_program["volume_min"].value = tuple(
+                        active_minimum
+                    )
+                    self.smoke_program["volume_max"].value = tuple(
+                        active_maximum
+                    )
+                    self.smoke_program["camera_inside"] = int(
+                        np.all(camera.position_m >= active_minimum)
+                        and np.all(camera.position_m <= active_maximum)
+                    )
                 self.smoke_revision = smoke.revision
             self.smoke_density_texture.use(4)
             self.smoke_temperature_texture.use(5)

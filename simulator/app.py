@@ -16,6 +16,7 @@ from .config import SimulationConfig
 from .environment import EnvironmentTimeline
 from .fluid import SmokeFluid2D
 from .physics import FireworkWorld
+from .performance import FrameTimings
 from .renderer import Renderer
 
 
@@ -86,6 +87,7 @@ class SimulatorApp:
         self.running = True
         self.mouse_captured = True
         self.title_timer_s = 0.0
+        self.frame_timings = FrameTimings()
         pygame.event.set_grab(True)
         pygame.mouse.set_visible(False)
         pygame.mouse.get_rel()
@@ -95,10 +97,12 @@ class SimulatorApp:
         previous = time.perf_counter()
         frame_count = 0
         while self.running:
+            frame_started = time.perf_counter()
             now = time.perf_counter()
             dt_s, previous = now - previous, now
             self._events()
             self._update_camera(min(dt_s, 0.1))
+            physics_started = time.perf_counter()
             steps, _alpha = self.physics_clock.consume(dt_s)
             for _ in range(steps):
                 if self.environment:
@@ -144,6 +148,7 @@ class SimulatorApp:
                     self.smoke.set_atmosphere(self.world.atmosphere)
                     self.smoke.step(smoke_step_s)
                     self.smoke_accumulator_s -= smoke_step_s
+            physics_finished = time.perf_counter()
             if self.event_timestamp >= self.next_astronomy_update:
                 self.celestial = self.astronomy.sample(self.event_timestamp)
                 self.next_astronomy_update = self.event_timestamp + 1.0
@@ -152,6 +157,12 @@ class SimulatorApp:
             )
             self._flush_audio()
             pygame.display.flip()
+            frame_finished = time.perf_counter()
+            self.frame_timings.record(
+                (frame_finished - frame_started) * 1000.0,
+                (physics_finished - physics_started) * 1000.0,
+                (frame_finished - physics_finished) * 1000.0,
+            )
             # Swap interval is the primary limiter. Applying SDL's millisecond
             # timer after a blocking swap produces systematic sub-60 FPS pacing.
             self.frame_clock.tick(
@@ -252,6 +263,7 @@ class SimulatorApp:
             )
             pygame.display.set_caption(
                 f"Yeouido Fireworks | {self.frame_clock.get_fps():.1f} FPS"
+                f" | p95 {self.frame_timings.snapshot()['frame']['p95_ms']:.1f} ms"
                 f" | {self.world.stars.count:,} stars"
                 f"{sound_level}"
                 f"{event_time}"
