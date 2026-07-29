@@ -16,3 +16,19 @@ the Open Data Commons Open Database License (ODbL).
 This snapshot is an initial geometry reference. It does not establish that
 every feature or height matches October 5, 2024. Production validation must
 compare it with dated Seoul/VWorld data and event footage.
+
+## Elevation
+
+Terrain elevation is derived from the Mapzen Terrain Tiles dataset hosted in
+the AWS Registry of Open Data.
+
+- Dataset: https://registry.opendata.aws/terrain-tiles/
+- Tile format: Terrarium PNG, Web Mercator
+- Zoom level: 12
+- Snapshot accessed: 2026-07-29
+- Dataset-specific source licences:
+  https://github.com/tilezen/joerd/blob/master/docs/attribution.md
+
+The AWS registry describes this as a global bare-earth elevation dataset.
+Higher zoom tiles can be resampled from coarser sources, so zoom level must not
+be interpreted as source survey resolution.

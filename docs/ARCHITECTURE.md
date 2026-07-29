@@ -97,6 +97,30 @@ reflection workload.
 After geographic shoreline masking and the provisional land pass, the same
 uncapped workload measures approximately 2.6 ms per frame (about 383 FPS).
 
+## Terrain elevation
+
+The initial terrain height map samples Mapzen/AWS Terrarium elevation tiles at
+zoom 12 into a 512 × 512 local grid. The median DEM elevation under the Han
+River mask is 5.01 m and becomes simulation `y=0`; stored land elevations are
+relative to that datum. The current 5 × 4 km scene ranges from -1 m to about
+87 m relative height.
+
+Terrain is sampled in the GPU vertex stage. Buildings and bridge decks sample
+the same texture at their footprint positions, preventing detached or buried
+geometry. Finite differences over the terrain texture provide land normals for
+night-sky shading.
+
+This DEM is a regional bare-earth baseline, not a survey of individual
+embankments. Its effective source resolution is roughly 30 m in this area and
+cannot resolve narrow levees, stairs, roads, or the exact riverside viewing
+surface. Those features require a higher-resolution Seoul/VWorld dataset or
+manual photogrammetric calibration.
+
+With terrain displacement and terrain-sampled buildings enabled, the uncapped
+development-machine run measures approximately 1.94 ms per frame (about
+515 FPS). Timing varies with driver scheduling, so the frame time—not the
+uncapped FPS headline—is retained for later regression comparisons.
+
 ## Required reference datasets
 
 - October 5, 2024 hourly and, where possible, sub-hourly weather observations

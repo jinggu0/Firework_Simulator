@@ -16,6 +16,9 @@ class StaticScene:
     bridge_vertices: np.ndarray
     water_mask: np.ndarray
     water_mask_bounds: np.ndarray
+    terrain_height_m: np.ndarray
+    terrain_bounds: np.ndarray
+    elevation_datum_m: float
     origin_latitude_deg: float
     origin_longitude_deg: float
 
@@ -174,6 +177,9 @@ def build_scene(
         np.asarray(bridges, dtype=np.float32) if bridges else empty,
         np.full((1, 1), 255, dtype=np.uint8),
         np.array([-10_000.0, -10_000.0, 10_000.0, 10_000.0], dtype=np.float32),
+        np.zeros((1, 1), dtype=np.float32),
+        np.array([-10_000.0, -10_000.0, 10_000.0, 10_000.0], dtype=np.float32),
+        0.0,
         origin_latitude_deg,
         origin_longitude_deg,
     )
@@ -267,6 +273,9 @@ def save_scene(scene: StaticScene, path: Path) -> None:
         bridge_vertices=scene.bridge_vertices,
         water_mask=scene.water_mask,
         water_mask_bounds=scene.water_mask_bounds,
+        terrain_height_m=scene.terrain_height_m,
+        terrain_bounds=scene.terrain_bounds,
+        elevation_datum_m=np.array([scene.elevation_datum_m], dtype=np.float32),
         origin=np.array(
             [scene.origin_latitude_deg, scene.origin_longitude_deg],
             dtype=np.float64,
@@ -282,6 +291,9 @@ def load_scene(path: Path) -> StaticScene:
             data["bridge_vertices"].copy(),
             data["water_mask"].copy(),
             data["water_mask_bounds"].copy(),
+            data["terrain_height_m"].copy(),
+            data["terrain_bounds"].copy(),
+            float(data["elevation_datum_m"][0]),
             float(origin[0]),
             float(origin[1]),
         )

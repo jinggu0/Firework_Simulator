@@ -164,9 +164,26 @@ LAND_VERTEX = """
 #version 330
 in vec2 in_xz;
 uniform mat4 view_projection;
+uniform sampler2D terrain_height;
+uniform vec4 terrain_bounds;
 out vec3 world_position;
+out vec3 world_normal;
 void main() {
-    world_position = vec3(in_xz.x, -0.04, in_xz.y);
+    vec2 uv = (in_xz - terrain_bounds.xy) / (terrain_bounds.zw - terrain_bounds.xy);
+    ivec2 dimensions = textureSize(terrain_height, 0);
+    vec2 metres_per_texel = (terrain_bounds.zw - terrain_bounds.xy)
+                          / vec2(dimensions);
+    float height = texture(terrain_height, uv).r;
+    float left = textureOffset(terrain_height, uv, ivec2(-1, 0)).r;
+    float right = textureOffset(terrain_height, uv, ivec2(1, 0)).r;
+    float back = textureOffset(terrain_height, uv, ivec2(0, -1)).r;
+    float front = textureOffset(terrain_height, uv, ivec2(0, 1)).r;
+    world_normal = normalize(vec3(
+        -(right - left) / (2.0 * metres_per_texel.x),
+        1.0,
+        -(front - back) / (2.0 * metres_per_texel.y)
+    ));
+    world_position = vec3(in_xz.x, height - 0.04, in_xz.y);
     gl_Position = view_projection * vec4(world_position, 1.0);
 }
 """
@@ -174,6 +191,7 @@ void main() {
 LAND_FRAGMENT = """
 #version 330
 in vec3 world_position;
+in vec3 world_normal;
 uniform sampler2D water_mask;
 uniform vec4 water_mask_bounds;
 out vec4 frag_color;
@@ -184,7 +202,9 @@ void main() {
         && all(lessThanEqual(uv, vec2(1.0)))
         && texture(water_mask, uv).r >= 0.5) discard;
     float variation = sin(world_position.x * .07) * sin(world_position.z * .051);
-    vec3 ground = vec3(.00032, .00042, .00030) + variation * .000035;
+    float sky_light = max(world_normal.y, 0.15);
+    vec3 ground = (vec3(.00032, .00042, .00030) + variation * .000035)
+                * sky_light;
     frag_color = vec4(ground, 1.0);
 }
 """
@@ -193,9 +213,14 @@ SCENE_VERTEX = """
 #version 330
 in vec3 in_position; in vec3 in_normal; in float in_material;
 uniform mat4 view_projection;
+uniform sampler2D terrain_height;
+uniform vec4 terrain_bounds;
 out vec3 world_position; out vec3 world_normal; out float material;
 void main() {
-    world_position = in_position;
+    vec2 terrain_uv = (in_position.xz - terrain_bounds.xy)
+                    / (terrain_bounds.zw - terrain_bounds.xy);
+    float base_height = texture(terrain_height, terrain_uv).r;
+    world_position = in_position + vec3(0.0, base_height, 0.0);
     world_normal = in_normal;
     material = in_material;
     gl_Position = view_projection * vec4(in_position, 1.0);
@@ -267,10 +292,14 @@ class Renderer:
         water_mask_bounds = np.array(
             [-10_000.0, -10_000.0, 10_000.0, 10_000.0], dtype=np.float32
         )
+        terrain_height = np.zeros((1, 1), dtype=np.float32)
+        terrain_bounds = water_mask_bounds.copy()
         if scene_path.exists():
             scene = load_scene(scene_path)
             water_mask = scene.water_mask
             water_mask_bounds = scene.water_mask_bounds
+            terrain_height = scene.terrain_height_m
+            terrain_bounds = scene.terrain_bounds
             for vertices in (scene.building_vertices, scene.bridge_vertices):
                 if not len(vertices):
                     continue
@@ -314,10 +343,25 @@ class Renderer:
             dtype="f1",
         )
         self.water_mask_texture.filter = moderngl.LINEAR, moderngl.LINEAR
+        self.water_mask_texture.repeat_x = False
+        self.water_mask_texture.repeat_y = False
+        self.terrain_texture = ctx.texture(
+            (terrain_height.shape[1], terrain_height.shape[0]),
+            components=1,
+            data=np.ascontiguousarray(terrain_height).tobytes(),
+            dtype="f4",
+        )
+        self.terrain_texture.filter = moderngl.LINEAR, moderngl.LINEAR
+        self.terrain_texture.repeat_x = False
+        self.terrain_texture.repeat_y = False
         self.water_program["water_mask"] = 1
         self.water_program["water_mask_bounds"].value = tuple(water_mask_bounds)
         self.land_program["water_mask"] = 1
         self.land_program["water_mask_bounds"].value = tuple(water_mask_bounds)
+        self.land_program["terrain_height"] = 2
+        self.land_program["terrain_bounds"].value = tuple(terrain_bounds)
+        self.scene_program["terrain_height"] = 2
+        self.scene_program["terrain_bounds"].value = tuple(terrain_bounds)
         self.particle_program = ctx.program(
             vertex_shader=PARTICLE_VERTEX, fragment_shader=PARTICLE_FRAGMENT
         )
@@ -368,6 +412,7 @@ class Renderer:
         self.background_vao.render(moderngl.TRIANGLE_STRIP)
         self.ctx.enable(moderngl.DEPTH_TEST)
         self.water_mask_texture.use(1)
+        self.terrain_texture.use(2)
         self.land_vao.render(moderngl.TRIANGLES)
         for vao, vertex_count in self.scene_vaos:
             vao.render(moderngl.TRIANGLES, vertices=vertex_count)
