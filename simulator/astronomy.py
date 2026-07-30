@@ -1,11 +1,42 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 import math
 
 import astronomy
 import numpy as np
+
+from .starcatalogue import eus_to_equatorial_matrix
+
+
+NAKED_EYE_PLANETS: tuple[str, ...] = (
+    "Mercury",
+    "Venus",
+    "Mars",
+    "Jupiter",
+    "Saturn",
+)
+"""Planets that can reach naked-eye visibility."""
+
+TELESCOPIC_PLANETS: tuple[str, ...] = ("Uranus", "Neptune")
+"""Included because the visibility gate suppresses them, not because they show."""
+
+
+@dataclass(frozen=True, slots=True)
+class BodyState:
+    """Apparent topocentric position and brightness of one solar-system body."""
+
+    name: str
+    azimuth_deg: float
+    altitude_deg: float
+    direction_eus: np.ndarray
+    apparent_magnitude: float
+    illuminated_fraction: float
+
+    @property
+    def above_horizon(self) -> bool:
+        return self.altitude_deg > 0.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -19,6 +50,40 @@ class CelestialState:
     moon_phase_fraction: float
     moon_illuminance_lux: float
     twilight_illuminance_lux: float
+    planets: tuple[BodyState, ...] = ()
+    equatorial_from_eus: np.ndarray = field(
+        default_factory=lambda: np.eye(3, dtype=np.float64)
+    )
+    """Rotation taking a local East-Up-South ray to J2000 equatorial.
+
+    The star catalogue is stored in the fixed celestial frame, so the sky
+    rotates by transforming the view ray rather than by re-rasterising the
+    texture every second.
+    """
+
+    def planet(self, name: str) -> BodyState:
+        for candidate in self.planets:
+            if candidate.name == name:
+                return candidate
+        raise KeyError(
+            f"planet {name!r} not sampled; have "
+            f"{[candidate.name for candidate in self.planets]}"
+        )
+
+    def visible_planets(self, magnitude_limit: float = 6.5) -> tuple[BodyState, ...]:
+        """Planets above the horizon and brighter than the naked-eye limit.
+
+        Atmospheric extinction and urban sky brightness are applied by the
+        renderer, so a planet listed here is geometrically up, not necessarily
+        perceptible.
+        """
+
+        return tuple(
+            candidate
+            for candidate in self.planets
+            if candidate.above_horizon
+            and candidate.apparent_magnitude <= magnitude_limit
+        )
 
 
 def horizontal_direction_eus(azimuth_deg: float, altitude_deg: float) -> np.ndarray:
@@ -90,7 +155,24 @@ class AstronomyModel:
         )
         return horizontal.azimuth, horizontal.altitude
 
-    def sample(self, timestamp: float) -> CelestialState:
+    def _planet_state(
+        self, name: str, time: astronomy.Time
+    ) -> BodyState:
+        body = getattr(astronomy.Body, name)
+        azimuth, altitude = self._horizontal(body, time)
+        illumination = astronomy.Illumination(body, time)
+        return BodyState(
+            name=name,
+            azimuth_deg=azimuth,
+            altitude_deg=altitude,
+            direction_eus=horizontal_direction_eus(azimuth, altitude),
+            apparent_magnitude=illumination.mag,
+            illuminated_fraction=illumination.phase_fraction,
+        )
+
+    def sample(
+        self, timestamp: float, include_planets: bool = True
+    ) -> CelestialState:
         utc = datetime.fromtimestamp(timestamp, timezone.utc)
         time = astronomy.Time(utc.isoformat().replace("+00:00", "Z"))
         sun_azimuth, sun_altitude = self._horizontal(astronomy.Body.Sun, time)
@@ -119,5 +201,14 @@ class AstronomyModel:
             moon_phase_fraction=moon_info.phase_fraction,
             moon_illuminance_lux=moon_lux,
             twilight_illuminance_lux=twilight_illuminance_lux(sun_altitude),
+            planets=(
+                tuple(
+                    self._planet_state(name, time)
+                    for name in NAKED_EYE_PLANETS + TELESCOPIC_PLANETS
+                )
+                if include_planets
+                else ()
+            ),
+            equatorial_from_eus=eus_to_equatorial_matrix(time, self.observer),
         )
 

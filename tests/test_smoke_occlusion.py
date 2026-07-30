@@ -5,12 +5,8 @@ import numpy as np
 import pygame
 import pytest
 
-from simulator.renderer import (
-    SMOKE_FRAGMENT,
-    SMOKE_VERTEX,
-    _look_at,
-    _perspective,
-)
+from simulator import shaders
+from simulator.renderer import _look_at, _perspective
 from simulator.volume import box_vertices
 
 
@@ -49,10 +45,7 @@ def _render_centre_alpha(
     context: moderngl.Context, opaque_depth: float
 ) -> float:
     size = (64, 64)
-    program = context.program(
-        vertex_shader=SMOKE_VERTEX,
-        fragment_shader=SMOKE_FRAGMENT,
-    )
+    program = shaders.program(context, "smoke.vert", "smoke.frag")
     vertices = box_vertices((-1.0, -1.0, -1.0), (1.0, 1.0, 1.0))
     indices = np.array(
         [

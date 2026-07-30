@@ -29,9 +29,257 @@ The runtime coordinate system is right-handed and measured in metres:
 - +Y: up
 - +Z: local south
 
-Geospatial source data will be transformed from WGS84 to a local ENU origin
-near the 2024 launch barges. Camera calibration and launch coordinates belong
-in scenario data rather than source code.
+Geospatial source data is transformed from WGS84 to a local ENU origin using
+`simulator/geodesy.py`. The transform is bidirectional: `to_geodetic` inverts a
+local position back to WGS84 so simulated positions can be compared against
+externally reconstructed ones in a shared frame. Observer position, epoch,
+launch coordinates, and seeds live in scenario data rather than source code —
+see "Scenario, time, and provenance" below.
+
+## Scenario, time, and provenance
+
+`assets/scenario_yeouido_2024-10-05.json` is the single authority for what is
+being reconstructed, where it is observed from, and when. `simulator/scenario.py`
+loads and validates it; `simulator/app.py` no longer contains an observer
+position, a launch coordinate, or a seed literal.
+
+Three clocks are kept distinct by `simulator/timebase.py`:
+
+- **Absolute event time** — timezone-aware, stored UTC, displayed `Asia/Seoul`.
+- **Playback time** — seconds since the playback origin, which is the show
+  start. Position is held as an integer fixed-step count, so 12,000 steps of
+  1/120 s land on exactly 100 s with no accumulated float drift.
+- **Wall time** — used only to decide how many fixed steps to run, never how
+  long a step is.
+
+`PlaybackMode.REALTIME` reproduces the previous accumulator behaviour, including
+its 0.25 s clamp and 8-step catch-up cap, so simulated time may lag wall time
+under load. `PlaybackMode.DETERMINISTIC` advances exactly one step per frame and
+ignores wall time; this is the mode in which a capture can be compared against
+reference footage frame by frame, and it is exercised by the V-02 replay test.
+
+There is no default epoch. A scenario without a timezone-aware
+`reference_epoch` fails to load, and a timestamp without a UTC offset is
+rejected rather than being reinterpreted in the host machine's local timezone.
+The previous code path defaulted the event timestamp to POSIX zero whenever the
+weather asset was absent, which silently evaluated the sky at
+1970-01-01T00:00:00Z.
+
+`simulator/provenance.py` makes the source-confidence grade a runtime value
+rather than prose. Grades are A (measured), B (reconstructed), C (modelled),
+D (artistic), U (unverified). Grades A and B require a named source. A derived
+quantity can query `Provenance.worst_grade` so it cannot claim stronger
+evidence than its weakest input.
+
+The shipped scenario carries **empty** `launch_sites` and `events` lists with
+grade-U records. No dated source publishing 2024-10-05 barge coordinates or a
+firing timeline has been located, and populating either with an estimate would
+convert an unknown into an apparent measurement. Until those datasets arrive,
+the simulator has no historical performance to replay.
+
+Random draws come from a named seed registry derived from the scenario's master
+seed by `blake2b`, so adding a new stochastic subsystem cannot perturb the
+sequence an existing one sees.
+
+`python -m tools.scenario_report` prints the whole resolved state — clock,
+derived seeds, observers in both WGS84 and local East-Up-South metres with the
+round-trip residual, celestial and atmospheric samples, provenance counts, and
+the list of missing datasets — as JSON, with no OpenGL context required.
+
+## Astrometry and atmospheric optics
+
+`simulator/starcatalogue.py` reads a real catalogue, propagates each star from
+J2000 by its proper motion, applies annual aberration from the Earth's
+barycentric velocity, and transforms the whole set into apparent horizontal
+coordinates with one 3x3 multiply per frame rather than one library call per
+star. Refraction is applied afterwards because it depends only on the resulting
+altitude.
+
+The transform is validated against Astronomy Engine's own per-star path: the
+two agree to **0.037 arcsecond**. Omitting aberration moves that to 18
+arcseconds, which is the classical aberration constant and why the term is
+applied rather than documented away.
+
+The catalogue is stored in J2000 equatorial coordinates and the sky shader
+receives the East-Up-South to equatorial rotation as three row uniforms, so the
+sky rotates by transforming the view ray instead of re-rasterising the texture
+every second.
+
+`python -m tools.import_star_catalogue` fetches the Yale Bright Star Catalogue
+(Hoffleit & Warren 1991) from the CDS archive and writes 8,404 stars to
+magnitude 6.5 with a provenance sidecar recording URL, checksum, retrieval time,
+and citation. **The result is not committed**: the CDS ReadMe for this catalogue
+states no explicit licence, so redistributing a derived copy is the repository
+owner's decision. Until the importer is run, the renderer falls back to
+`procedural_star_catalogue` — 3,500 invented positions, confidence grade D — and
+records that it is doing so in `Renderer.star_catalogue_is_measured`.
+
+Star colour comes from the catalogue's B-V index through the Ballesteros (2012)
+temperature relation and the existing black-body path. That relation reproduces
+the Sun at 5778 K and an A0V star near 10,000 K, which is why a measured colour
+index can drive the renderer directly instead of an invented hue.
+
+Sun and Moon are joined by Mercury through Neptune, each with apparent
+magnitude and illuminated fraction. At the reference epoch only Venus (altitude
+0.5 degrees, magnitude -3.90) and Saturn (altitude 26.5 degrees, magnitude
++0.56) are both above the horizon and naked-eye; Neptune is up at magnitude
+7.81 and is suppressed by the visibility gate.
+
+`simulator/atmosphere.py` replaces a hardcoded `exp(-0.12 * (air_mass - 1))`,
+which had no recorded source and was duplicated between Python and GLSL, with a
+wavelength-resolved optical depth. Molecular scattering uses the Bodhaine et al.
+(1999) fit and reproduces published optical depths to **0.06 percent** across
+400-700 nm; it scales linearly with the observed station pressure, so
+extinction now tracks the weather timeline. Aerosol uses Ångström turbidity,
+whose form is standard but whose parameters are a grade C urban estimate. Ozone
+is present as a named, wired-in term that **defaults to zero and is graded U**,
+because neither the Chappuis-band cross-sections nor the column amount for the
+event is held; folding it into the aerosol term would make an absent
+measurement look like a modelled one.
+
+The shader keeps the zenith-relative form of the extinction deliberately. The
+absolute zenith extinction at the documented turbidity is 0.39 magnitudes;
+applying it would dim every star by a further 30 percent and invalidate the
+separately calibrated star radiance scale. The calibration and the physics stay
+separate until a measured sky luminance is available to recalibrate against,
+and the absolute figure is reported by the validation harness instead.
+
+## Shell library and performance scheduler
+
+`simulator/shells.py` replaces the single global shell config with a library of
+profiles. A profile carries ballistics, a break pattern, an optical description,
+an energy budget, and its own confidence grade. Break patterns are star
+**emission distributions**, not new solvers, so they reuse the existing
+structure-of-arrays integration and the energy-conserving radiant power solve.
+
+Eleven patterns are implemented — peony, chrysanthemum, willow, palm, ring,
+crossette, horsetail, comet, mine, fan, waterfall — across seventeen profiles,
+plus strobe and crackle temporal modulation, colour-changing stars, and
+secondary breaks for crossette and multi-break shells.
+
+Nothing in this module describes a chemical composition, formulation, or
+manufacturing procedure. Colour is either a dominant emission wavelength or a
+colour temperature; energy is a specific energy in J/kg; a break is a velocity
+distribution.
+
+Coloured stars radiate in narrow bands, so a colour temperature cannot describe
+them. `simulator/color.py` maps a dominant emission wavelength to linear RGB
+through the CIE 1931 colour matching functions, using the analytic multi-lobe
+Gaussian fit of Wyman, Sloan and Shirley (JCGT 2(2), 2013), then the standard
+XYZ to linear sRGB matrix. Incandescent effects keep the black-body path, which
+is physically correct for them. Both normalise to a peak channel of 1.0, so the
+vector carries hue while radiant power stays a separate solved quantity. A
+three-channel representation cannot express that a deep blue line delivers far
+less luminance per watt than a green one; that needs a spectral renderer.
+
+Secondary breaks draw from their own declared composition mass, so a crossette
+cannot inflate its parent shell's energy or smoke budget. Carriers expire over a
+spread of steps, so each released batch takes a share of the declared mass
+proportional to the carriers it represents — allocating the full budget per
+batch silently multiplied a crossette's emitted mass about sixfold before this
+was corrected.
+
+Combustion coefficients are stored per star rather than per world. A show mixing
+shell types would otherwise attribute every star's smoke and heat to whichever
+profile the world was constructed with.
+
+`simulator/show.py` turns a scenario's `events` into launches keyed to absolute
+event time. It holds no randomness: every launch follows from the event record
+and the clock, which is what allows a replay to be compared frame by frame
+against a recording. Seeking moves the cursor without firing, so jumping forward
+does not dump the whole show into one frame. A per-shot record may override the
+profile's calibre, muzzle velocity, or fuse delay; fields left unset keep the
+archetype's value, so "not recorded" stays distinguishable from "recorded as
+zero".
+
+Launch geometry is a site position plus a tube azimuth and elevation, replacing
+the previous fixed vertical launch from the origin. An elevation of 90 degrees
+reproduces the old behaviour exactly.
+
+**Every shipped profile is confidence grade D.** No measured shell record for
+the 2024-10-05 performance has been obtained. The profiles are archetypes that
+reproduce each named effect's documented visual behaviour; they are not a claim
+about any shell that was actually fired. The historical scenario therefore
+carries an empty firing timeline, and
+`assets/scenario_demo_synthetic.json` — a twenty-two shot sequence covering
+every pattern — is labelled a synthetic demonstration throughout.
+
+## Validation harness
+
+`python -m tools.validate --summary` runs the reconstruction validation suite
+and prints each metric's status and residuals; `--include-performance` adds the
+frame-budget measurement. Exit code is non-zero only for `FAIL` or `ERROR`.
+
+Metrics are declared in `simulator/validation/catalogue.py` with their tolerance
+and the physical reason for that tolerance, and implemented in
+`simulator/validation/metrics.py`. A metric whose reference dataset is absent
+reports `NO_REFERENCE` and never `PASS`; nine of seventeen are in that state
+because the firing timeline, launch coordinates, reference footage, and river
+gauge records have not been obtained.
+
+Everything except the frame budget and the frame-difference metric runs without
+an OpenGL context. The frame budget executes `tools.profile_runtime` in a
+separate process, so the harness itself has no GL dependency and records the
+machine, platform, backend, frame count, and date alongside the number — a frame
+time without that context is not comparable across machines.
+
+Currently passing: deterministic replay (clock, ballistics, burst events, and
+acoustic arrival compare bit-exactly), geodetic round trip (2.2e-9 m worst
+residual), blast propagation against the analytic Sedov-Taylor solution
+(exponent 0.40000), combustion and plume conservation (radiated energy closes to
+2.9e-4, pressure projection removes 88% of RMS divergence), and two
+astronomical transform cross-checks. Reported without a gate: the CPU
+simulation-state footprint, 32.9 MiB at the shipped 250,000-particle capacity.
+
+Colour and brightness comparison reads the linear RGBA16F buffer through
+`simulator/validation/capture.py`, before exposure and tone mapping, and stores
+frames as `.npy`. A gamma-encoded screenshot has already lost the quantity being
+validated, and an SDR display cannot represent firework luminance in any case.
+
+## Renderer structure
+
+`simulator/renderer.py` was 1,891 lines: 904 of GLSL held as Python string
+constants, a 463-line constructor that allocated every program, buffer,
+texture, and framebuffer in the engine, and a 190-line draw method. It is now
+382 lines and does one job — coordinating passes.
+
+GLSL lives in `simulator/shaders/*.glsl`, loaded and cached by
+`simulator/shaders/__init__.py`. `shaders.program()` wraps compilation so a
+driver error names the files involved; a raw error reports a line number
+against an anonymous string, which is not enough to locate the fault among
+sixteen shaders.
+
+`simulator/passes/` holds one module per pass, each owning its own programs,
+buffers, textures, and draw call:
+
+| Module | Owns |
+|---|---|
+| `targets.py` | HDR colour and sampleable depth, reflection, bloom attachments |
+| `sky.py` | Background program, cloud noise, star catalogue, celestial frame |
+| `scene.py` | Static city batches, reflection subset, luminaire positions |
+| `water.py` | Near/far grids, JONSWAP spectrum, wind relaxation |
+| `land.py` | Terrain-displaced ground plane |
+| `particles.py` | Star trails and the reusable staging buffer |
+| `smoke.py` | Volume proxy box, state texture, active-bounds shrinking |
+| `post.py` | Bloom and the display transform |
+
+The dependency runs one way — the coordinator knows the passes, never the
+reverse — and a test asserts it. Pass ordering, the planar-reflection pre-pass,
+and the uniforms several passes share (camera, ambient scale, clustered
+firework lights) stay in `Renderer`, because those are genuinely cross-pass
+concerns rather than anything one pass owns.
+
+Texture unit numbers are now constants in the modules that bind them, and a
+test asserts they do not collide. Before the split they were bare integers
+repeated across a single long file, where a collision would silently bind the
+wrong texture rather than fail to compile.
+
+**The decomposition was verified pixel-exact.**
+`python -m tools.capture_reference` renders a fixed scene and writes the linear
+RGBA16F buffer; comparing captures from before and after the refactor gives
+zero differing components out of 3,686,400 across both stages. The capture is
+also bit-identical between separate processes, which is what makes it usable as
+a gate rather than an indication.
 
 ## Render passes
 

@@ -1,0 +1,180 @@
+{
+  "schema_version": 1,
+  "scenario_id": "demo-synthetic-not-historical",
+  "reference_epoch": "2024-10-05T19:30:00+09:00",
+  "show": {
+    "name": "SYNTHETIC DEMONSTRATION SEQUENCE - NOT THE 2024 PERFORMANCE",
+    "location": "Yeouido Hangang Park, Seoul, Republic of Korea",
+    "start": "2024-10-05T19:20:00+09:00",
+    "end": "2024-10-05T20:30:00+09:00"
+  },
+  "origin": {
+    "latitude_deg": 37.529,
+    "longitude_deg": 126.935,
+    "altitude_m": 0.0,
+    "vertical_datum": "wgs84_ellipsoid"
+  },
+  "render_vertical_datum": "dem_median_river_2024",
+  "observers": [
+    {
+      "observer_id": "scene_origin_reference",
+      "name": "Scene origin reference observer",
+      "position": {
+        "latitude_deg": 37.529,
+        "longitude_deg": 126.935,
+        "altitude_m": 5.0,
+        "vertical_datum": "wgs84_ellipsoid"
+      },
+      "notes": "Same reference observer as the historical scenario. Not an attested spectator position."
+    }
+  ],
+  "launch_sites": [
+    {
+      "site_id": "synthetic_site_centre",
+      "name": "Synthetic firing position C",
+      "position": {
+        "latitude_deg": 37.530081,
+        "longitude_deg": 126.935,
+        "altitude_m": 0.0,
+        "vertical_datum": "dem_median_river_2024"
+      },
+      "notes": "ARBITRARY DEMONSTRATION POSITION. Chosen only because it falls inside the Han River water mask 120 m north of the scene origin. This is NOT a reconstructed barge location."
+    },
+    {
+      "site_id": "synthetic_site_east",
+      "name": "Synthetic firing position E",
+      "position": {
+        "latitude_deg": 37.530081,
+        "longitude_deg": 126.93896,
+        "altitude_m": 0.0,
+        "vertical_datum": "dem_median_river_2024"
+      },
+      "notes": "ARBITRARY DEMONSTRATION POSITION, 350 m east of position C. NOT a reconstructed barge location."
+    },
+    {
+      "site_id": "synthetic_site_far_east",
+      "name": "Synthetic firing position F",
+      "position": {
+        "latitude_deg": 37.530081,
+        "longitude_deg": 126.942919,
+        "altitude_m": 0.0,
+        "vertical_datum": "dem_median_river_2024"
+      },
+      "notes": "ARBITRARY DEMONSTRATION POSITION, 700 m east of position C. NOT a reconstructed barge location."
+    }
+  ],
+  "events": [
+    {"event_id": "d01", "launch_time_utc": "2024-10-05T19:20:04+09:00", "launch_site_id": "synthetic_site_centre", "shell_profile_id": "comet_75mm_gold", "confidence_grade": "D", "tube_elevation_deg": 86.0},
+    {"event_id": "d02", "launch_time_utc": "2024-10-05T19:20:05+09:00", "launch_site_id": "synthetic_site_east", "shell_profile_id": "comet_75mm_gold", "confidence_grade": "D", "tube_elevation_deg": 94.0},
+    {"event_id": "d03", "launch_time_utc": "2024-10-05T19:20:08+09:00", "launch_site_id": "synthetic_site_centre", "shell_profile_id": "peony_100mm_gold", "confidence_grade": "D"},
+    {"event_id": "d04", "launch_time_utc": "2024-10-05T19:20:11+09:00", "launch_site_id": "synthetic_site_east", "shell_profile_id": "peony_150mm_red", "confidence_grade": "D"},
+    {"event_id": "d05", "launch_time_utc": "2024-10-05T19:20:14+09:00", "launch_site_id": "synthetic_site_far_east", "shell_profile_id": "ring_125mm_green", "confidence_grade": "D"},
+    {"event_id": "d06", "launch_time_utc": "2024-10-05T19:20:17+09:00", "launch_site_id": "synthetic_site_centre", "shell_profile_id": "chrysanthemum_125mm_silver", "confidence_grade": "D"},
+    {"event_id": "d07", "launch_time_utc": "2024-10-05T19:20:20+09:00", "launch_site_id": "synthetic_site_east", "shell_profile_id": "willow_150mm_gold", "confidence_grade": "D"},
+    {"event_id": "d08", "launch_time_utc": "2024-10-05T19:20:24+09:00", "launch_site_id": "synthetic_site_centre", "shell_profile_id": "palm_150mm_gold", "confidence_grade": "D"},
+    {"event_id": "d09", "launch_time_utc": "2024-10-05T19:20:27+09:00", "launch_site_id": "synthetic_site_far_east", "shell_profile_id": "crossette_125mm_blue", "confidence_grade": "D"},
+    {"event_id": "d10", "launch_time_utc": "2024-10-05T19:20:30+09:00", "launch_site_id": "synthetic_site_centre", "shell_profile_id": "colorchange_125mm_green_red", "confidence_grade": "D"},
+    {"event_id": "d11", "launch_time_utc": "2024-10-05T19:20:33+09:00", "launch_site_id": "synthetic_site_east", "shell_profile_id": "strobe_125mm_white", "confidence_grade": "D"},
+    {"event_id": "d12", "launch_time_utc": "2024-10-05T19:20:36+09:00", "launch_site_id": "synthetic_site_centre", "shell_profile_id": "crackling_100mm_gold", "confidence_grade": "D"},
+    {"event_id": "d13", "launch_time_utc": "2024-10-05T19:20:39+09:00", "launch_site_id": "synthetic_site_far_east", "shell_profile_id": "multibreak_150mm_red_green", "confidence_grade": "D"},
+    {"event_id": "d14", "launch_time_utc": "2024-10-05T19:20:42+09:00", "launch_site_id": "synthetic_site_east", "shell_profile_id": "horsetail_150mm_gold", "confidence_grade": "D"},
+    {"event_id": "d15", "launch_time_utc": "2024-10-05T19:20:45+09:00", "launch_site_id": "synthetic_site_centre", "shell_profile_id": "violet_125mm", "confidence_grade": "D"},
+    {"event_id": "d16", "launch_time_utc": "2024-10-05T19:20:47+09:00", "launch_site_id": "synthetic_site_centre", "shell_profile_id": "mine_100mm_mixed", "confidence_grade": "D"},
+    {"event_id": "d17", "launch_time_utc": "2024-10-05T19:20:47+09:00", "launch_site_id": "synthetic_site_east", "shell_profile_id": "mine_100mm_mixed", "confidence_grade": "D"},
+    {"event_id": "d18", "launch_time_utc": "2024-10-05T19:20:49+09:00", "launch_site_id": "synthetic_site_far_east", "shell_profile_id": "fan_100mm_yellow", "confidence_grade": "D", "tube_azimuth_deg": 270.0, "tube_elevation_deg": 72.0},
+    {"event_id": "d19", "launch_time_utc": "2024-10-05T19:20:52+09:00", "launch_site_id": "synthetic_site_centre", "shell_profile_id": "waterfall_bridge_gold", "confidence_grade": "D"},
+    {"event_id": "d20", "launch_time_utc": "2024-10-05T19:20:56+09:00", "launch_site_id": "synthetic_site_east", "shell_profile_id": "peony_150mm_red", "confidence_grade": "D", "tube_azimuth_deg": 45.0, "tube_elevation_deg": 82.0},
+    {"event_id": "d21", "launch_time_utc": "2024-10-05T19:20:56+09:00", "launch_site_id": "synthetic_site_far_east", "shell_profile_id": "ring_125mm_green", "confidence_grade": "D", "tube_azimuth_deg": 315.0, "tube_elevation_deg": 82.0},
+    {"event_id": "d22", "launch_time_utc": "2024-10-05T19:21:00+09:00", "launch_site_id": "synthetic_site_centre", "shell_profile_id": "peony_150mm_red", "confidence_grade": "D", "calibre_mm": 200.0, "muzzle_velocity_mps": 112.0, "fuse_delay_s": 5.2, "notes": "Exercises per-event override of calibre, muzzle velocity, and fuse delay."}
+  ],
+  "seeds": {
+    "master_seed": 20241005,
+    "notes": "Same master seed as the historical scenario so subsystem streams match."
+  },
+  "provenance": {
+    "scenario": {
+      "source_id": "",
+      "source_url": "",
+      "license": "",
+      "captured_at": "",
+      "valid_from": "",
+      "valid_to": "",
+      "coordinate_reference_system": "EPSG:4326 (WGS84)",
+      "units": "degrees, metres, seconds",
+      "confidence_grade": "D",
+      "uncertainty": "Entirely synthetic",
+      "checksum": "",
+      "notes": "THIS ENTIRE SCENARIO IS A DEMONSTRATION SEQUENCE. It exists to exercise the shell library, the break patterns, the launch geometry, and the show scheduler. It is NOT a reconstruction of the 2024-10-05 Seoul International Fireworks Festival and must never be presented as one. The historical scenario, assets/scenario_yeouido_2024-10-05.json, deliberately carries an empty firing timeline because no dated record has been obtained."
+    },
+    "launch_sites": {
+      "source_id": "",
+      "source_url": "",
+      "license": "",
+      "captured_at": "",
+      "valid_from": "",
+      "valid_to": "",
+      "coordinate_reference_system": "EPSG:4326 (WGS84)",
+      "units": "degrees, metres",
+      "confidence_grade": "D",
+      "uncertainty": "Arbitrary; selected only for falling inside the Han River water mask",
+      "checksum": "",
+      "notes": "Three positions offset 0 m, 350 m, and 700 m east of the scene origin and 120 m north of it. No relationship to any real barge or firing position is claimed or implied."
+    },
+    "events": {
+      "source_id": "",
+      "source_url": "",
+      "license": "",
+      "captured_at": "",
+      "valid_from": "",
+      "valid_to": "",
+      "coordinate_reference_system": "n/a",
+      "units": "ISO-8601 datetime with offset",
+      "confidence_grade": "D",
+      "uncertainty": "Invented sequence",
+      "checksum": "",
+      "notes": "Twenty-two invented launches covering every break pattern and modifier in the shipped shell library. Timings, orderings, and shell selections are arbitrary."
+    },
+    "shell_profiles": {
+      "source_id": "",
+      "source_url": "",
+      "license": "",
+      "captured_at": "",
+      "valid_from": "",
+      "valid_to": "",
+      "coordinate_reference_system": "n/a",
+      "units": "SI",
+      "confidence_grade": "D",
+      "uncertainty": "Archetypes, not measured shell records",
+      "checksum": "",
+      "notes": "Profiles are defined in simulator/shells.py. Every shipped profile is grade D: no measured shell record for the 2024 performance has been obtained. They reproduce the documented visual behaviour of each named effect and nothing more."
+    },
+    "observers": {
+      "source_id": "project-defined",
+      "source_url": "",
+      "license": "",
+      "captured_at": "",
+      "valid_from": "",
+      "valid_to": "",
+      "coordinate_reference_system": "EPSG:4326 (WGS84)",
+      "units": "degrees, metres",
+      "confidence_grade": "C",
+      "uncertainty": "Scene reference point",
+      "checksum": "",
+      "notes": "Identical to the historical scenario's reference observer."
+    },
+    "astronomy": {
+      "source_id": "astronomy-engine-2.1.19",
+      "source_url": "https://github.com/cosinekitty/astronomy",
+      "license": "MIT",
+      "captured_at": "",
+      "valid_from": "",
+      "valid_to": "",
+      "coordinate_reference_system": "Topocentric horizontal, of-date equinox, with aberration and refraction",
+      "units": "degrees, lux",
+      "confidence_grade": "A",
+      "uncertainty": "Library algorithm accuracy",
+      "checksum": "",
+      "notes": "The sky is computed identically to the historical scenario; only the firing timeline is synthetic."
+    }
+  }
+}

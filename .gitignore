@@ -3,3 +3,9 @@ __pycache__/
 .pytest_cache/
 .venv/
 
+# Imported star catalogue. The CDS ReadMe for V/50 states no explicit licence,
+# so redistributing a derived copy is the repository owner's decision, not this
+# tool's. Regenerate with:  python -m tools.import_star_catalogue
+assets/star_catalogue.npz
+assets/star_catalogue.provenance.json
+

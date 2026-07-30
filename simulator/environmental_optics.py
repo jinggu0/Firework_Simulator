@@ -34,7 +34,16 @@ def procedural_star_catalogue(
     count: int = 3_500,
     seed: int = 20241005,
 ) -> np.ndarray:
-    """Stable equirectangular flux catalogue with subpixel reconstruction."""
+    """Stable equirectangular flux field with subpixel reconstruction.
+
+    .. warning::
+
+        These positions and magnitudes are **invented**, not astrometry. This
+        is confidence grade D and exists only so the sky is populated before
+        ``python -m tools.import_star_catalogue`` has been run. Deterministic
+        is not the same as real. :class:`simulator.starcatalogue.StarCatalogue`
+        supersedes it whenever measured data is present.
+    """
 
     generator = np.random.default_rng(seed)
     catalogue = np.zeros((height, width, 3), dtype=np.float32)
@@ -90,17 +99,35 @@ def relative_air_mass(altitude_rad: float) -> float:
     return 1.0 / max(cosine + correction, 1e-3)
 
 
+LEGACY_ZENITH_RELATIVE_OPTICAL_DEPTH = 0.12
+"""Retained default for the zenith-relative star extinction.
+
+The physically derived depth now comes from
+:mod:`simulator.atmosphere`; at standard pressure with the documented urban
+turbidity it is about 0.36 at 550 nm. Passing that here would dim every star by
+a further 30 percent, which would invalidate the separately calibrated radiance
+scale in the sky shader. The calibration and the physics are therefore kept
+separate until a measured sky luminance is available to recalibrate against.
+"""
+
+
 def star_contrast_visibility(
     star_radiance: float,
     sky_radiance: float,
     cloud_optical_depth: float,
     air_mass: float,
     contrast_threshold: float = 0.18,
+    vertical_optical_depth: float = LEGACY_ZENITH_RELATIVE_OPTICAL_DEPTH,
 ) -> float:
-    """Smooth background-limited stellar visibility after extinction."""
+    """Smooth background-limited stellar visibility after extinction.
+
+    ``vertical_optical_depth`` is applied relative to the zenith, matching the
+    sky shader. Supply :meth:`simulator.atmosphere.AtmosphericOptics.
+    vertical_optical_depth` to make the wavelength and pressure dependence real.
+    """
 
     atmospheric_transmission = math.exp(
-        -0.12 * max(air_mass - 1.0, 0.0)
+        -max(vertical_optical_depth, 0.0) * max(air_mass - 1.0, 0.0)
     )
     cloud_transmission = math.exp(-max(cloud_optical_depth, 0.0))
     apparent = max(star_radiance, 0.0) * atmospheric_transmission

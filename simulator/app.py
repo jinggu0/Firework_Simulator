@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from concurrent.futures import Future, ThreadPoolExecutor
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import time
 
@@ -19,10 +18,17 @@ from .gpu_fluid import create_smoke_solver
 from .physics import FireworkWorld
 from .performance import FrameTimings
 from .renderer import Renderer
+from .scenario import DEFAULT_SCENARIO_PATH, Scenario
+from .shells import SHELL_LIBRARY
+from .show import ShowScheduler
 
 
 class SimulatorApp:
-    def __init__(self, config: SimulationConfig | None = None) -> None:
+    def __init__(
+        self,
+        config: SimulationConfig | None = None,
+        scenario_path: Path | None = None,
+    ) -> None:
         self.config = config or SimulationConfig()
         render = self.config.render
         pygame.mixer.pre_init(
@@ -32,18 +38,21 @@ class SimulatorApp:
         self.requested_gl_version = self._create_display(render)
         pygame.display.set_caption("Yeouido Fireworks Simulator")
         self.ctx = moderngl.create_context()
-        environment_path = (
-            Path(__file__).resolve().parent.parent
-            / "assets"
-            / "yeouido_2024-10-05_environment.json"
-        )
+        assets = Path(__file__).resolve().parent.parent / "assets"
+        # The scenario file, not this module, is the authority for the observer
+        # position and the show's absolute time. Loading fails loudly on a
+        # missing or timezone-naive epoch; there is deliberately no fallback,
+        # because the previous default silently evaluated the sky at
+        # 1970-01-01T00:00:00Z whenever the weather asset was absent.
+        self.scenario = Scenario.load(scenario_path or DEFAULT_SCENARIO_PATH)
+        # Playback position zero is the show start; the scenario's reference
+        # epoch is a separate reporting instant, not the playback origin.
+        self.clock = self.scenario.make_clock(render.physics_hz)
+        environment_path = assets / "yeouido_2024-10-05_environment.json"
         self.environment = (
             EnvironmentTimeline.load(environment_path)
             if environment_path.exists()
             else None
-        )
-        self.event_timestamp = (
-            self.environment.show_start_timestamp if self.environment else 0.0
         )
         initial_atmosphere = (
             self.environment.sample(self.event_timestamp)
@@ -52,9 +61,18 @@ class SimulatorApp:
         )
         self.world = FireworkWorld(
             initial_atmosphere, self.config.shell,
-            render.max_particles, self.config.random_seed
+            render.max_particles,
+            self.scenario.seeds.derive("shell_burst"),
         )
-        self.astronomy = AstronomyModel(37.529, 126.935, 5.0)
+        observer = self.scenario.default_observer
+        self.observer_position_eus_m = self.scenario.observer_position_eus_m(
+            observer.observer_id
+        )
+        self.astronomy = AstronomyModel(
+            observer.position.latitude_deg,
+            observer.position.longitude_deg,
+            observer.position.altitude_m,
+        )
         self.celestial = self.astronomy.sample(self.event_timestamp)
         self.next_astronomy_update = self.event_timestamp + 1.0
         self.renderer = Renderer(
@@ -71,7 +89,7 @@ class SimulatorApp:
         self.smoke_accumulator_s = 0.0
         self.camera = FreeCamera(config=self.config.camera)
         self.acoustics = FireworkAcoustics(
-            self.config.acoustics, self.config.random_seed
+            self.config.acoustics, self.scenario.seeds.derive("acoustics")
         )
         self.audio_enabled = pygame.mixer.get_init() is not None
         self.active_sounds: list[pygame.mixer.Sound] = []
@@ -83,6 +101,10 @@ class SimulatorApp:
         self.last_sound_level_db: float | None = None
         self.physics_clock = FixedStepClock(render.physics_hz)
         self.frame_clock = pygame.time.Clock()
+        self.scheduler = ShowScheduler(self.scenario)
+        self.scheduler.seek_to(self.clock.absolute_time)
+        self.manual_profile_ids = SHELL_LIBRARY.ids()
+        self.manual_profile_index = 0
         self.running = True
         self.mouse_captured = True
         self.title_timer_s = 0.0
@@ -90,7 +112,26 @@ class SimulatorApp:
         pygame.event.set_grab(True)
         pygame.mouse.set_visible(False)
         pygame.mouse.get_rel()
-        self.world.launch()
+        if not self.scheduler.launches:
+            # The historical scenario carries no firing timeline, so nothing
+            # would ever be visible. One development shell keeps the scene
+            # inspectable without implying it is part of the performance.
+            self.world.launch()
+
+    @property
+    def event_timestamp(self) -> float:
+        """Absolute event time in POSIX seconds, owned by the simulation clock.
+
+        Kept as a float property so existing float-based call sites, including
+        ``tools/profile_runtime.py``, continue to work while the clock remains
+        the single authority.
+        """
+
+        return self.clock.posix_timestamp
+
+    @event_timestamp.setter
+    def event_timestamp(self, timestamp: float) -> None:
+        self.clock.seek_to_posix(timestamp)
 
     @staticmethod
     def _create_display(render) -> tuple[int, int]:
@@ -137,7 +178,18 @@ class SimulatorApp:
                     self.world.atmosphere = self.environment.sample(
                         self.event_timestamp
                     )
-                    self.event_timestamp += self.physics_clock.step_s
+                # Absolute time advances whether or not the weather asset is
+                # present, so the celestial state can no longer freeze at the
+                # scenario epoch when an asset is missing.
+                self.clock.advance_steps(1)
+                for launch in self.scheduler.due(self.clock.absolute_time):
+                    self.world.launch(
+                        tuple(float(value) for value in launch.position_eus_m),
+                        profile=launch.profile,
+                        azimuth_deg=launch.azimuth_deg,
+                        elevation_deg=launch.elevation_deg,
+                        event_id=launch.event_id,
+                    )
                 self.world.update(self.physics_clock.step_s)
                 for burst in self.world.consume_burst_events():
                     self.smoke.inject_burst(
@@ -216,12 +268,24 @@ class SimulatorApp:
                 elif event.key == pygame.K_TAB:
                     self._set_mouse_capture(not self.mouse_captured)
                 elif event.key == pygame.K_SPACE:
-                    self.world.launch()
+                    self.world.launch(profile=self.manual_profile())
+                elif event.key in (pygame.K_LEFTBRACKET, pygame.K_RIGHTBRACKET):
+                    step = 1 if event.key == pygame.K_RIGHTBRACKET else -1
+                    self.manual_profile_index = (
+                        self.manual_profile_index + step
+                    ) % len(self.manual_profile_ids)
             elif event.type == pygame.MOUSEBUTTONDOWN and not self.mouse_captured:
                 if event.button == 1:
                     self._set_mouse_capture(True)
             elif event.type == pygame.MOUSEMOTION and self.mouse_captured:
                 self.camera.look(*event.rel)
+
+    def manual_profile(self):
+        """Shell profile fired by the manual launch key."""
+
+        return SHELL_LIBRARY.get(
+            self.manual_profile_ids[self.manual_profile_index]
+        )
 
     def _set_mouse_capture(self, captured: bool) -> None:
         self.mouse_captured = captured
@@ -272,13 +336,9 @@ class SimulatorApp:
     def _title(self, dt_s: float) -> None:
         self.title_timer_s += dt_s
         if self.title_timer_s >= .5:
-            event_time = ""
+            event_time = self.clock.local_time.strftime(" | %H:%M:%S KST")
             weather = ""
             if self.environment:
-                kst = timezone(timedelta(hours=9))
-                event_time = datetime.fromtimestamp(
-                    self.event_timestamp, kst
-                ).strftime(" | %H:%M:%S KST")
                 wind = self.world.atmosphere.wind_velocity_mps
                 weather = (
                     f" | {self.world.atmosphere.temperature_k - 273.15:.1f} C"
@@ -289,9 +349,17 @@ class SimulatorApp:
                 f" | last boom {self.last_sound_level_db:.1f} dB"
                 if self.last_sound_level_db is not None else ""
             )
+            if self.scheduler.launches:
+                show = (
+                    f" | shot {self.scheduler.fired_count}"
+                    f"/{len(self.scheduler)}"
+                )
+            else:
+                show = f" | manual {self.manual_profile().profile_id}"
             pygame.display.set_caption(
                 f"Yeouido Fireworks | {self.frame_clock.get_fps():.1f} FPS"
                 f" | p95 {self.frame_timings.snapshot()['frame']['p95_ms']:.1f} ms"
+                f"{show}"
                 f" | {self.world.stars.count:,} stars"
                 f" | fluid {getattr(self.smoke, 'backend_name', 'cpu')}"
                 f"{sound_level}"
@@ -304,5 +372,7 @@ class SimulatorApp:
             self.title_timer_s = 0.0
 
 
-def run(max_frames: int | None = None) -> None:
-    SimulatorApp().run(max_frames=max_frames)
+def run(
+    max_frames: int | None = None, scenario_path: Path | None = None
+) -> None:
+    SimulatorApp(scenario_path=scenario_path).run(max_frames=max_frames)
