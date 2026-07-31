@@ -641,9 +641,14 @@ class FireworkWorld:
         for shell in self.shells:
             profile = shell.profile
             cross_section_m2 = np.pi * (profile.diameter_m * 0.5) ** 2
+            # Density at the shell's own altitude rather than at the surface.
+            # Air is about 1.5% thinner at a 160 m break and 2.8% at 300 m, so
+            # the surface value overstates drag through the whole climb.
             drag_factor = (
                 0.5
-                * self.atmosphere.air_density_kg_m3
+                * self.atmosphere.air_density_at_height_kg_m3(
+                    float(shell.position_m[1])
+                )
                 * profile.drag_coefficient
                 * cross_section_m2
                 / profile.dry_mass_kg

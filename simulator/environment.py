@@ -8,21 +8,8 @@ from pathlib import Path
 
 import numpy as np
 
+from .atmosphere import moist_air_density, wind_scale_at_height
 from .config import AtmosphereConfig
-
-
-def moist_air_density(
-    temperature_k: float, pressure_pa: float, relative_humidity: float
-) -> float:
-    temperature_c = temperature_k - 273.15
-    saturation_vapour_pressure = 611.2 * math.exp(
-        17.67 * temperature_c / (temperature_c + 243.5)
-    )
-    vapour_pressure = relative_humidity * saturation_vapour_pressure
-    dry_pressure = pressure_pa - vapour_pressure
-    return dry_pressure / (287.05 * temperature_k) + vapour_pressure / (
-        461.495 * temperature_k
-    )
 
 
 def meteorological_wind_to_eus(
@@ -105,7 +92,10 @@ class EnvironmentTimeline:
         humidity = float(interpolate(self.relative_humidity_fraction))
         pressure_pa = float(interpolate(self.pressure_hpa) * 100.0)
         wind = interpolate(self.wind_velocity_mps)
-        upper_wind = wind * 1.4
+        # Neutral logarithmic surface-layer profile at the roughness length of
+        # the river corridor, replacing a bare 1.4x factor. The two agree to
+        # 0.3%, so this names the physics without moving the trajectory.
+        upper_wind = wind * wind_scale_at_height(100.0)
         density = moist_air_density(temperature_k, pressure_pa, humidity)
         return AtmosphereConfig(
             temperature_k=temperature_k,

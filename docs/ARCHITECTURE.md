@@ -445,6 +445,52 @@ be measuring the tone mapper. Reproducing absolute luminance would need an HDR
 display path and a measured display characterisation, neither of which exists
 here.
 
+## Atmosphere as a field
+
+`EnvironmentTimeline.sample(t)` returned one global state with no spatial
+dependence at all, and there was never a visibility term.
+`simulator/environment_field.py` provides the `wind / temperature / humidity /
+pressure / visibility (x, y, z, t)` interface the requirements ask for.
+
+What one station observation can honestly support is **vertical** structure.
+A single point carries no horizontal information, so `StationTimelineField` is
+horizontally uniform and says so; a test asserts it. The profiles are standard
+relations driven by the observed surface values — barometric pressure with an
+ISA lapse rate, temperature from that lapse rate, humidity at a conserved
+mixing ratio, wind from the neutral logarithmic surface layer, and visibility
+from aerosol extinction through the Koschmieder relation.
+
+Each has a real consumer rather than being interface scaffolding:
+
+- **Density aloft drives shell drag.** Air is 1.5% thinner at a 160 m break and
+  2.8% thinner at 300 m, so using the surface value overstated drag through the
+  whole climb. `FireworkWorld` now samples density at the shell's own altitude.
+- **The unsourced ×1.4 wind factor is retired.** At the roughness length of the
+  river corridor, 0.03 m — short grass over water, which is what the Han River
+  banks are — the logarithmic profile gives 1.396 at 100 m. Naming the physics
+  reproduces the old literal to 0.3% rather than changing the trajectory.
+- **Humidity now drives aerosol extinction.** Particles take up water and
+  scatter more, so the Ångström turbidity is treated as a dry value and grown
+  hygroscopically. The dry coefficient is anchored so that at the show's
+  observed 56% humidity the extinction is exactly what it was before: the
+  change adds a response rather than silently re-tuning a calibration.
+- **Visibility comes out at 17 km** for the show's modelled aerosol. This is
+  what the model implies, **not** an observation — the Meteostat record carries
+  no visibility field. Supplying a measured visibility would invert the
+  relation and calibrate the turbidity instead, which is the more useful
+  direction and is the reason the relation is written this way.
+
+A likely **nocturnal inversion is not modelled**. A clear October night over
+water very probably carried warmer air above cooler, which would refract sound
+downward and extend audible range. No sounding for the event exists, so the
+standard lapse rate is used and the inversion is recorded as unmeasured rather
+than guessed at.
+
+A `PrecomputedWindField` sampling an offline solve is deliberately **absent**.
+Without a solved field it would be an empty class, and the architecture's own
+reason for preferring offline to runtime CFD was that an uncalibrated
+city-scale solve is a grade-C model wearing the costume of a measurement.
+
 ## Render passes
 
 1. Sky radiance and astronomical lighting

@@ -26,6 +26,29 @@ class AtmosphereConfig:
             )
         )
 
+    def air_density_at_height_kg_m3(self, height_m: float) -> float:
+        """Moist-air density aloft, from the barometric and lapse relations.
+
+        A shell bursting near 160 m sits in air about 1.5% thinner than the
+        surface value, and one reaching 300 m about 2.8% thinner. Using the
+        surface density for the whole trajectory overstates drag throughout the
+        climb.
+
+        Imported locally because :mod:`simulator.atmosphere` depends on this
+        module's dataclasses.
+        """
+
+        from .atmosphere import (
+            moist_air_density_at_height_kg_m3,
+        )
+
+        return moist_air_density_at_height_kg_m3(
+            self.temperature_k,
+            self.pressure_pa,
+            self.relative_humidity,
+            height_m,
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class ShellConfig:
