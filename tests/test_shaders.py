@@ -21,6 +21,10 @@ EXPECTED = {
     "scene.frag",
     "smoke.vert",
     "smoke.frag",
+    # Human Vision Mode: a second display transform and the local retinal
+    # adaptation buffer it reads.
+    "human_vision.frag",
+    "adaptation.frag",
 }
 
 

@@ -167,6 +167,7 @@ class Renderer:
         self.reflection_camera_position = np.full(3, np.inf, dtype=np.float32)
         self.reflection_camera_forward = np.zeros(3, dtype=np.float32)
         self.last_rendered_smoke_revision = -1
+        self.scene_illuminance_lux = 0.0
         self.projection = _perspective(
             physical_fov_deg, config.width / config.height, .1, 2500
         )
@@ -193,6 +194,15 @@ class Renderer:
     @property
     def frame_index(self) -> int:
         return self.post.frame_index
+
+    @property
+    def display_mode(self):
+        return self.post.mode
+
+    def toggle_display_mode(self):
+        """Switch between the camera and the observer display transform."""
+
+        return self.post.toggle_mode()
 
     # -- per-frame updates -------------------------------------------------
 
@@ -310,6 +320,10 @@ class Renderer:
             + celestial.moon_illuminance_lux
             + self.lighting_config.calibrated_urban_ambient_illuminance_lux
         )
+        # Human Vision Mode adapts to the scene's own computed illuminance.
+        # Reading the rendered frame back would be more direct but would stall
+        # the pipeline every frame.
+        self.scene_illuminance_lux = ambient_illuminance_lux
         self.scene.set_ambient_irradiance(
             radiometric_irradiance_from_illuminance(
                 ambient_illuminance_lux,
@@ -419,4 +433,4 @@ class Renderer:
             self.smoke.draw(
                 smoke, camera.position_m, self.targets.scene_depth_texture
             )
-        self.post.run(self.targets)
+        self.post.run(self.targets, frame_dt_s, self.scene_illuminance_lux)

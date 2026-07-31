@@ -30,6 +30,10 @@ class RenderTargets:
         "bloom_textures",
         "bloom_fbos",
         "bloom_size",
+        "adaptation_size",
+        "adaptation_textures",
+        "adaptation_fbos",
+        "adaptation_index",
     )
 
     def __init__(self, ctx: moderngl.Context, config: RenderConfig) -> None:
@@ -82,6 +86,41 @@ class RenderTargets:
             ctx.framebuffer(color_attachments=[texture])
             for texture in self.bloom_textures
         ]
+
+        # Local retinal adaptation, ping-ponged so a frame can read the
+        # previous state while writing the next. Quarter resolution: adaptation
+        # pools over about a degree of visual angle, so per-pixel state would
+        # be finer than the process it models.
+        self.adaptation_size = (
+            max(config.width // 4, 1),
+            max(config.height // 4, 1),
+        )
+        self.adaptation_textures = [
+            ctx.texture(self.adaptation_size, components=1, dtype="f2")
+            for _ in range(2)
+        ]
+        for texture in self.adaptation_textures:
+            texture.filter = moderngl.LINEAR, moderngl.LINEAR
+            texture.repeat_x = False
+            texture.repeat_y = False
+        self.adaptation_fbos = [
+            ctx.framebuffer(color_attachments=[texture])
+            for texture in self.adaptation_textures
+        ]
+        for framebuffer in self.adaptation_fbos:
+            framebuffer.clear(0.0, 0.0, 0.0, 1.0)
+        self.adaptation_index = 0
+
+    @property
+    def current_adaptation(self) -> moderngl.Texture:
+        return self.adaptation_textures[self.adaptation_index]
+
+    @property
+    def previous_adaptation(self) -> moderngl.Texture:
+        return self.adaptation_textures[1 - self.adaptation_index]
+
+    def swap_adaptation(self) -> None:
+        self.adaptation_index = 1 - self.adaptation_index
 
     def read_linear_hdr(self) -> np.ndarray:
         """Linear float32 RGBA in image order, for validation capture."""

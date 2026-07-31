@@ -378,6 +378,73 @@ moves onto the sports fields. Placing a spectator on a bank to make grass
 appear would be inventing an observer position, which
 `DATA_PROVENANCE.md` records as an unobtained dataset.
 
+## Two observers, and the limit they share
+
+The renderer presents the linear HDR buffer through one of two models, switched
+with `V`. They are separate shaders with no shared terms, and a test asserts
+neither carries the other's concepts.
+
+**Physical Camera Mode** (`tonemap.frag`) is the existing sensor path: aperture,
+shutter, per-channel quantum efficiency, Poisson shot noise, read noise, full
+well, cos⁴ falloff, ACES.
+
+**Human Vision Mode** (`human_vision.frag`) replaces all of that with the
+observer state computed in `simulator/human_vision.py`:
+
+- **Pupil** from Stanley & Davies (1995), the function Watson & Yellott (2012)
+  build their unified formula on. It gives 7.7 mm under starlight and 2.7 mm at
+  1,000 cd/m², and it replaces the camera's fixed f-number — a dark-adapted eye
+  gathers roughly five times the light of a photopic one. Retinal illuminance
+  carries the Stiles-Crawford correction, so a wide pupil delivers less than its
+  geometric area suggests.
+- **Adaptation** with the asymmetric time constants of Pattanaik et al. (2000):
+  0.4 s toward brighter, 120 s toward darker. This is why a burst dazzles
+  instantly and the recovery takes the gap before the next shell. It is driven
+  by the scene's own computed ambient illuminance rather than a readback, which
+  would stall the frame.
+- **Mesopic mixing** across the CIE 191:2010 range, 0.005 to 5 cd/m². There is
+  one rod photopigment, so rod vision carries no hue and the image collapses
+  toward luminance as the cone contribution falls. **At the show's ambient
+  illuminance the observer sits at a cone fraction near 0.5 — squarely mesopic**,
+  which is the regime the mode exists to represent.
+- **Disability glare** from the Stiles-Holladay inverse-square term of the CIE
+  glare equation. Scatter in the ocular media veils the retinal image, which is
+  why a burst washes out its surroundings rather than merely looking bright.
+  The bloom kernel stands in for the near-field point spread and a heavily
+  reduced mip for the wide 1/θ² tail; this approximates the CIE equation rather
+  than evaluating it.
+- **Local adaptation and afterimage** from a quarter-resolution ping-pong
+  buffer (`adaptation.frag`). Normalising by the *locally* adapted level rather
+  than one global exposure is what leaves a dark patch where a burst has just
+  faded. Quarter resolution because adaptation pools over about a degree of
+  visual angle, so per-pixel state would be finer than the process it models.
+- **Peripheral acuity** by cortical magnification, `1 / (1 + e / E₂)` with
+  E₂ = 2.5°, applied as a mip bias from the fixation point. Gaze is fixed at
+  screen centre: no tracking is available, and a viewer watching a burst does
+  fixate it, so the default is right for the moments that matter and wrong in
+  the gaps.
+
+**Not modelled**: the Purkinje spectral shift. Rod vision peaks at 507 nm
+against the photopic 555 nm, so short wavelengths should additionally gain as
+the eye moves into rod vision. Applying that needs the tabulated scotopic
+luminous efficiency V′(λ), which this project does not hold; only the achromatic
+collapse is applied, and the colour shift is a known omission rather than an
+approximated one.
+
+### The display limit both modes hit
+
+An SDR monitor covers roughly 0.1 to 300 cd/m². A shell burst is orders of
+magnitude beyond its top, and the night sky between shells is below its bottom.
+**Neither mode reproduces the absolute luminance of the scene, and neither can.**
+Both end in a tone-mapping step that is a perceptual compromise.
+
+This is why the validation harness reads the linear RGBA16F buffer *before*
+either transform. The HDR buffer is the physical output; the screen is a
+rendering of it, and a colour or brightness metric computed on the screen would
+be measuring the tone mapper. Reproducing absolute luminance would need an HDR
+display path and a measured display characterisation, neither of which exists
+here.
+
 ## Render passes
 
 1. Sky radiance and astronomical lighting

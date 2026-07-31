@@ -92,6 +92,7 @@ def run_validation(
         "V-20": lambda: metrics.star_catalogue_astrometry(
             scenario, star_catalogue_path
         ),
+        "V-21": lambda: metrics.asset_checksum_integrity(scenario),
     }
     if include_performance:
         from .performance import frame_budget

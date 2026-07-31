@@ -257,6 +257,34 @@ def test_shell_library_integrity_fails_on_an_evidence_grade_claim() -> None:
     assert isinstance(library, ShellLibrary)
 
 
+def test_asset_checksums_match_the_shipped_files(report) -> None:
+    result = report.result("V-21")
+    assert result.status is MetricStatus.PASS
+    assert result.residuals["checksums_verified"] >= 3
+    assert result.residuals["checksums_mismatched"] == 0
+    assert result.detail["mismatched"] == []
+    assert result.detail["missing_files"] == []
+
+
+def test_a_stale_checksum_fails(scenario) -> None:
+    # This is the failure the metric exists for: regenerating a derived asset
+    # leaves the declared checksum pointing at the previous file.
+    from dataclasses import replace as dataclass_replace
+
+    from simulator.provenance import Provenance
+
+    record = scenario.provenance.record_for("scene.osm")
+    stale = dataclass_replace(record, checksum="sha256:" + "0" * 64)
+    corrupted = dataclass_replace(
+        scenario,
+        provenance=Provenance({**scenario.provenance.records, "scene.osm": stale}),
+    )
+    result = metrics.asset_checksum_integrity(corrupted)
+    assert result.status is MetricStatus.FAIL
+    assert result.residuals["checksums_mismatched"] == 1
+    assert any("scene.osm" in entry for entry in result.detail["mismatched"])
+
+
 def test_performance_metric_is_absent_unless_requested(report) -> None:
     # V-12 needs OpenGL, so a headless run must declare it rather than fail.
     assert report.result("V-12").status is MetricStatus.NOT_IMPLEMENTED

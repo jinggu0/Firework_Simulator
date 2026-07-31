@@ -9,15 +9,38 @@ input to a colour metric.
 
 from __future__ import annotations
 
+from enum import Enum
+import math
+
 import moderngl
 
 from .. import shaders
 from ..camera_optics import analog_gain, photon_to_electron_scale
 from ..config import PhysicalCameraConfig, RenderConfig
+from ..human_vision import (
+    DARK_ADAPTATION_TIME_S,
+    LIGHT_ADAPTATION_TIME_S,
+    HumanVisionState,
+)
 from .targets import RenderTargets
 
 HDR_UNIT = 0
 BLOOM_UNIT = 3
+ADAPTATION_UNIT = 10
+PREVIOUS_ADAPTATION_UNIT = 11
+
+ADAPTATION_POOLING_LOD = 3.0
+"""Mip level the adaptation pass reads, standing in for the pooling area."""
+
+
+class DisplayMode(Enum):
+    """Which observer the linear HDR buffer is presented through."""
+
+    PHYSICAL_CAMERA = "physical_camera"
+    """Sensor response: aperture, shutter, quantum efficiency, noise, full well."""
+
+    HUMAN_VISION = "human_vision"
+    """Observer response: pupil, adaptation, mesopic mixing, glare, acuity."""
 
 
 class PostProcessPass:
@@ -71,11 +94,46 @@ class PostProcessPass:
         )
         self.blur_program["source_texture"] = BLOOM_UNIT
 
-    def run(self, targets: RenderTargets) -> None:
-        """Prefilter, blur separably, then tone map to the default framebuffer."""
+        # -- human vision path ---------------------------------------------
+        self.mode = DisplayMode.PHYSICAL_CAMERA
+        self.vision = HumanVisionState()
+        self.vision_program = shaders.program(
+            ctx, "quad.vert", "human_vision.frag"
+        )
+        self.vision_vao = ctx.simple_vertex_array(
+            self.vision_program, quad_buffer, "in_position"
+        )
+        self.vision_program["hdr_texture"] = HDR_UNIT
+        self.vision_program["bloom_texture"] = BLOOM_UNIT
+        self.vision_program["adaptation_texture"] = ADAPTATION_UNIT
+        self.vision_program["bloom_strength"] = config.bloom_strength
+        self.vision_program["tan_half_fov"] = tan_half_fov
+        self.vision_program["aspect"] = config.width / config.height
 
-        self.ctx.disable(moderngl.BLEND)
-        self.ctx.disable(moderngl.DEPTH_TEST)
+        self.adaptation_program = shaders.program(
+            ctx, "quad.vert", "adaptation.frag"
+        )
+        self.adaptation_vao = ctx.simple_vertex_array(
+            self.adaptation_program, quad_buffer, "in_position"
+        )
+        self.adaptation_program["hdr_texture"] = HDR_UNIT
+        self.adaptation_program["previous_adaptation"] = (
+            PREVIOUS_ADAPTATION_UNIT
+        )
+        self.adaptation_program["pooling_lod"] = ADAPTATION_POOLING_LOD
+
+    def set_mode(self, mode: DisplayMode) -> None:
+        self.mode = mode
+
+    def toggle_mode(self) -> DisplayMode:
+        self.mode = (
+            DisplayMode.HUMAN_VISION
+            if self.mode is DisplayMode.PHYSICAL_CAMERA
+            else DisplayMode.PHYSICAL_CAMERA
+        )
+        return self.mode
+
+    def _run_bloom(self, targets: RenderTargets) -> None:
         targets.bloom_fbos[0].use()
         targets.hdr_texture.use(HDR_UNIT)
         self.prefilter_vao.render(moderngl.TRIANGLE_STRIP)
@@ -89,6 +147,54 @@ class PostProcessPass:
         targets.bloom_textures[1].use(BLOOM_UNIT)
         self.blur_program["direction"].value = (0.0, 1.0)
         self.blur_vao.render(moderngl.TRIANGLE_STRIP)
+
+    def _advance_adaptation(
+        self, targets: RenderTargets, frame_dt_s: float
+    ) -> None:
+        """Update the local retinal adaptation buffer for this frame."""
+
+        targets.swap_adaptation()
+        self.adaptation_program["light_response"] = 1.0 - math.exp(
+            -max(frame_dt_s, 0.0) / LIGHT_ADAPTATION_TIME_S
+        )
+        self.adaptation_program["dark_response"] = 1.0 - math.exp(
+            -max(frame_dt_s, 0.0) / DARK_ADAPTATION_TIME_S
+        )
+        targets.adaptation_fbos[targets.adaptation_index].use()
+        targets.hdr_texture.use(HDR_UNIT)
+        targets.previous_adaptation.use(PREVIOUS_ADAPTATION_UNIT)
+        self.adaptation_vao.render(moderngl.TRIANGLE_STRIP)
+
+    def run(
+        self,
+        targets: RenderTargets,
+        frame_dt_s: float = 1.0 / 60.0,
+        scene_illuminance_lux: float = 0.0,
+    ) -> None:
+        """Bloom, then present through the selected observer model."""
+
+        self.ctx.disable(moderngl.BLEND)
+        self.ctx.disable(moderngl.DEPTH_TEST)
+        self._run_bloom(targets)
+
+        if self.mode is DisplayMode.HUMAN_VISION:
+            # Mip chains: peripheral acuity samples a coarser level of the
+            # scene, and both the glare tail and adaptation pooling read
+            # reduced levels of their sources.
+            targets.hdr_texture.build_mipmaps()
+            targets.bloom_textures[0].build_mipmaps()
+            self._advance_adaptation(targets, frame_dt_s)
+            self.vision.update(scene_illuminance_lux, frame_dt_s)
+            for name, value in self.vision.uniforms().items():
+                self.vision_program[name] = value
+
+            self.ctx.screen.use()
+            self.ctx.disable(moderngl.BLEND)
+            targets.hdr_texture.use(HDR_UNIT)
+            targets.bloom_textures[0].use(BLOOM_UNIT)
+            targets.current_adaptation.use(ADAPTATION_UNIT)
+            self.vision_vao.render(moderngl.TRIANGLE_STRIP)
+            return
 
         self.ctx.screen.use()
         self.ctx.disable(moderngl.BLEND)

@@ -269,6 +269,8 @@ class SimulatorApp:
                     self._set_mouse_capture(not self.mouse_captured)
                 elif event.key == pygame.K_SPACE:
                     self.world.launch(profile=self.manual_profile())
+                elif event.key == pygame.K_v:
+                    self.renderer.toggle_display_mode()
                 elif event.key in (pygame.K_LEFTBRACKET, pygame.K_RIGHTBRACKET):
                     step = 1 if event.key == pygame.K_RIGHTBRACKET else -1
                     self.manual_profile_index = (
