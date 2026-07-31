@@ -324,6 +324,41 @@ left at the dataclass default. Consuming the reflectance channels then changed
 248,251 components on purpose, which is the specular, occlusion, and
 transmission response arriving.
 
+## Vegetation level of detail
+
+Grass blades were generated once at build time inside a fixed 1,200 m radius of
+the scene origin and then drawn at every distance with no further gating. That
+radius is measured from the **origin**, not the observer, so it was a detail
+budget rather than a level of detail: it neither removed geometry the camera
+could not resolve nor added any where the camera actually went.
+
+`simulator/vegetation.py` derives the bands from the camera's own optics. At the
+default 24 mm lens on a 20.25 mm sensor across 720 rows, one pixel subtends
+1.109 mrad. A 0.04 m blade therefore covers 1.5 px at **24.0 m** and 0.5 px at
+**72.1 m**, and those are the band edges: full height in, smoothstep collapse to
+a degenerate triangle out. A blade narrower than the sample spacing has its
+coverage decided by where the pixel centre falls, so drawing it is aliasing, not
+detail. Changing the sensor, focal length, or resolution moves the bands with no
+further edit — a test asserts that.
+
+Tree crowns keep their geometry at all distances, because a crown is metres
+across and stays resolvable. Only the sway animation is gated, at the distance
+where its 0.13 m amplitude drops below two pixels (58.6 m): a displacement
+smaller than a pixel cannot be seen but is still computed per vertex.
+
+The authoring radius stays, now named `EVENT_SITE_DETAIL_RADIUS_M` and
+documented as what it is — where blades may be authored, separate from whether
+authored blades are drawn.
+
+**A finding the work exposed.** Every one of the 266 blades in the shipped asset
+sits 1,049–1,184 m from the origin, where a blade subtends 0.03 px. None is
+within 600 m of the camera, because the detail dataset contains no
+`landuse=grass` or `natural=grassland` polygon inside that radius — the event
+site is tagged `pitch`, `track`, `garden`, and `playground` instead. The LOD is
+correct and now removes that aliasing, but the blade feature is dormant until
+placement is revisited. A test records this property of the asset so it cannot
+regress silently.
+
 ## Render passes
 
 1. Sky radiance and astronomical lighting

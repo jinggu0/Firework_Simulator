@@ -9,10 +9,11 @@ import moderngl
 import numpy as np
 
 from .. import shaders
-from ..config import LightingConfig
+from ..config import LightingConfig, PhysicalCameraConfig, RenderConfig
 from ..lighting import led_energy_budget
 from ..materials import MATERIAL_LIBRARY, MaterialLibrary
 from ..scene import load_scene
+from ..vegetation import VegetationLod
 
 VERTEX_LAYOUT = (
     "3f 3f 1f 2f 1f",
@@ -66,10 +67,16 @@ class ScenePass:
         ctx: moderngl.Context,
         lighting_config: LightingConfig,
         scene_path: Path,
+        render_config: RenderConfig | None = None,
+        camera_config: PhysicalCameraConfig | None = None,
         materials: MaterialLibrary = MATERIAL_LIBRARY,
     ) -> None:
         self.ctx = ctx
         self.materials = materials
+        self.lod = VegetationLod.from_camera(
+            camera_config or PhysicalCameraConfig(),
+            render_config or RenderConfig(),
+        )
         self.program = shaders.program(ctx, "scene.vert", "scene.frag")
         budget = led_energy_budget(lighting_config)
         self.program["window_radiance_w_m2_sr"] = budget.window_radiance_w_m2_sr
@@ -79,6 +86,11 @@ class ScenePass:
         # Surface appearance is a uniform table rather than a shader branch
         # chain, so adding a material is a row in simulator/materials.py.
         materials.upload(self.program)
+        # Vegetation detail bands follow from the camera optics, so a change of
+        # sensor, focal length, or resolution moves them automatically.
+        self.program["blade_full_detail_m"] = self.lod.blade_full_detail_m
+        self.program["blade_cutoff_m"] = self.lod.blade_cutoff_m
+        self.program["tree_sway_cutoff_m"] = self.lod.tree_sway_cutoff_m
         self.vaos: list[tuple[moderngl.VertexArray, int]] = []
         self.reflection_vaos: list[tuple[moderngl.VertexArray, int]] = []
         self.buffers: list[moderngl.Buffer] = []

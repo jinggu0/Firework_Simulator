@@ -23,6 +23,7 @@ from .scene import (
     _surface_mesh,
     _vertex,
 )
+from .vegetation import EVENT_SITE_DETAIL_RADIUS_M
 
 
 def _box(
@@ -517,8 +518,11 @@ def build_site_detail_mesh(
                     if counts["grass_blades"] >= grass_blade_limit:
                         break
                     point = np.array([x, z])
-                    if np.linalg.norm(point) > 1_200.0 or not _inside_polygon(
-                        point, polygon
+                    # A budget on where blades are authored, not a level of
+                    # detail: whether authored geometry is drawn is decided at
+                    # runtime by observation distance in simulator/vegetation.py.
+                    if np.linalg.norm(point) > EVENT_SITE_DETAIL_RADIUS_M or (
+                        not _inside_polygon(point, polygon)
                     ):
                         continue
                     hashed = (

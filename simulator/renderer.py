@@ -104,7 +104,9 @@ class Renderer:
         self.post = PostProcessPass(
             ctx, config, self.camera_config, self.quad_buffer, tan_half_fov
         )
-        self.scene = ScenePass(ctx, self.lighting_config, SCENE_ASSET)
+        self.scene = ScenePass(
+            ctx, self.lighting_config, SCENE_ASSET, config, self.camera_config
+        )
         scene_data = self.scene.data
         self.water = WaterPass(
             ctx,
