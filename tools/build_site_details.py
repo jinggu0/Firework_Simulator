@@ -5,6 +5,9 @@ from dataclasses import replace
 import json
 from pathlib import Path
 
+import numpy as np
+
+from simulator.scenario import DEFAULT_SCENARIO_PATH, Scenario
 from simulator.scene import load_scene, save_scene
 from simulator.site_details import (
     build_site_detail_mesh,
@@ -30,8 +33,27 @@ def main() -> None:
         default=Path("assets/yeouido_official_facilities.json"),
     )
     parser.add_argument("--output", type=Path)
+    parser.add_argument(
+        "--scenario",
+        type=Path,
+        default=DEFAULT_SCENARIO_PATH,
+        help=(
+            "Scenario whose observers the grass-blade budget is spent around. "
+            "Without one the budget falls back to the scene origin."
+        ),
+    )
     args = parser.parse_args()
     scene = load_scene(args.scene)
+    observers = None
+    if args.scenario is not None and args.scenario.exists():
+        scenario = Scenario.load(args.scenario)
+        observers = np.array(
+            [
+                scenario.observer_position_eus_m(observer.observer_id)[[0, 2]]
+                for observer in scenario.observers
+            ],
+            dtype=np.float64,
+        )
     historical = json.loads(
         args.historical_details.read_text(encoding="utf-8")
     )
@@ -39,7 +61,7 @@ def main() -> None:
         args.official_facilities.read_text(encoding="utf-8")
     )
     detail_vertices, counts = build_site_detail_mesh(
-        scene, historical, facilities
+        scene, historical, facilities, observers
     )
     detailed_scene = replace(
         scene,

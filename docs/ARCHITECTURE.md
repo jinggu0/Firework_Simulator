@@ -350,14 +350,33 @@ The authoring radius stays, now named `EVENT_SITE_DETAIL_RADIUS_M` and
 documented as what it is — where blades may be authored, separate from whether
 authored blades are drawn.
 
-**A finding the work exposed.** Every one of the 266 blades in the shipped asset
-sits 1,049–1,184 m from the origin, where a blade subtends 0.03 px. None is
-within 600 m of the camera, because the detail dataset contains no
-`landuse=grass` or `natural=grassland` polygon inside that radius — the event
-site is tagged `pitch`, `track`, `garden`, and `playground` instead. The LOD is
-correct and now removes that aliasing, but the blade feature is dormant until
-placement is revisited. A test records this property of the asset so it cannot
-regress silently.
+## Grass blade placement
+
+The LOD work exposed that every authored blade sat 1,049–1,184 m from the
+origin, where a blade subtends 0.03 px. The cause was the builder spending a
+fixed 2,500-blade budget in source-file order inside an origin radius, so the
+budget was exhausted on whichever polygons the extract happened to list first.
+
+Two things changed. Eligibility now includes `leisure=pitch` whose `sport` is
+played on turf, and the budget is spent on the candidates nearest the
+**scenario's observers** rather than in file order. The result went from 133 to
+299 blade clusters, with the nearest moving from 1,049 m to 415 m of the
+observer and from 840 m to 208 m of the default camera.
+
+No pitch at this site carries a `surface` tag, so the playing surface is
+inferred from the sport and the inference is recorded as such. Soccer, football,
+rugby, cricket, and hockey are treated as turf; basketball, tennis, and running
+tracks are excluded because those are hard or synthetic. Natural grass and
+artificial turf are not distinguished — both are bladed, and they read the same
+at any distance the renderer resolves.
+
+**Blades are still not visible from the default view, and that is a data gap
+rather than a rendering one.** The scenario's only observer is the scene-origin
+reference point, which sits on the Han River; the nearest mapped turf of any
+kind is 415 m away, well beyond the 72 m cutoff. Grass appears when the camera
+moves onto the sports fields. Placing a spectator on a bank to make grass
+appear would be inventing an observer position, which
+`DATA_PROVENANCE.md` records as an unobtained dataset.
 
 ## Render passes
 

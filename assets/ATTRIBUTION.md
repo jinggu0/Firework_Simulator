@@ -35,6 +35,16 @@ historical date; the runtime therefore places deterministic tree geometry
 inside the dated `natural=wood` boundaries without claiming surveyed trunk
 positions.
 
+Grass blades are authored on `landuse=grass` and `natural=grassland` polygons,
+and additionally on `leisure=pitch` polygons whose `sport` is played on turf
+(soccer, football, rugby, cricket, hockey). **No pitch in this extract carries a
+`surface` tag**, so the playing surface is inferred from the sport; basketball,
+tennis, and running tracks are excluded as hard or synthetic. Natural grass and
+artificial turf are not distinguished, because both are bladed and read the same
+at any distance the renderer resolves. Blade positions are deterministic
+placements inside mapped polygons, not surveyed locations, and the fixed blade
+budget is spent on the polygons nearest the scenario's observers.
+
 `yeouido_official_facilities.json` contains 121 coordinates retrieved from the
 Seoul Future Hangang Headquarters' official Yeouido facility map on
 2026-07-29:

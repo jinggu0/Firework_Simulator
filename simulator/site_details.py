@@ -25,6 +25,36 @@ from .scene import (
 )
 from .vegetation import EVENT_SITE_DETAIL_RADIUS_M
 
+TURF_SPORTS: frozenset[str] = frozenset(
+    {"soccer", "football", "rugby_union", "rugby_league", "cricket", "hockey"}
+)
+"""Sports played on a turf field, natural or artificial.
+
+The historical extract carries **no** ``surface`` tag on any pitch at this site,
+so the playing surface is inferred from the sport. Both natural grass and
+artificial turf are bladed and read the same at any distance the renderer
+resolves, which is why they are not distinguished. Basketball, tennis, and
+running tracks are excluded: those are hard or synthetic surfaces.
+"""
+
+NON_TURF_SURFACES: frozenset[str] = frozenset(
+    {
+        "asphalt",
+        "concrete",
+        "paving_stones",
+        "clay",
+        "sand",
+        "gravel",
+        "dirt",
+        "ground",
+        "tartan",
+        "rubber",
+        "acrylic",
+        "hard",
+    }
+)
+"""Surfaces that override a turf sport inference when the tag is present."""
+
 
 def _box(
     centre: np.ndarray,
@@ -453,10 +483,77 @@ def _covered_by_building(
     return False
 
 
+def _is_bladed_surface(tags: dict[str, str]) -> bool:
+    """Whether a mapped polygon should carry individual grass blades."""
+
+    if tags.get("landuse") == "grass" or tags.get("natural") == "grassland":
+        return True
+    if tags.get("leisure") != "pitch":
+        return False
+    if tags.get("surface", "").lower() in NON_TURF_SURFACES:
+        return False
+    return tags.get("sport", "").lower() in TURF_SPORTS
+
+
+def _blade_candidates(
+    polygon: np.ndarray, seed: int, spacing: float = 6.0
+) -> list[tuple[np.ndarray, float, float, float]]:
+    """Deterministic blade positions and dimensions inside one polygon.
+
+    Emitting candidates rather than geometry lets the caller spend a fixed
+    budget on the polygons nearest the observer instead of on whichever ones
+    the source file happens to list first.
+    """
+
+    minimum, maximum = polygon.min(axis=0), polygon.max(axis=0)
+    offset = np.array([(seed % 29) / 29.0, (seed % 31) / 31.0]) * spacing
+    candidates: list[tuple[np.ndarray, float, float, float]] = []
+    for x in np.arange(minimum[0] + offset[0], maximum[0], spacing):
+        for z in np.arange(minimum[1] + offset[1], maximum[1], spacing):
+            point = np.array([x, z])
+            if not _inside_polygon(point, polygon):
+                continue
+            hashed = (
+                seed * 73856093
+                ^ round(x * 10.0) * 19349663
+                ^ round(z * 10.0) * 83492791
+            ) & 0x7FFFFFFF
+            jitter = np.array(
+                [
+                    ((hashed & 255) / 255.0 - 0.5) * spacing * 0.72,
+                    (((hashed >> 8) & 255) / 255.0 - 0.5) * spacing * 0.72,
+                ]
+            )
+            blade_position = point + jitter
+            if not _inside_polygon(blade_position, polygon):
+                continue
+            candidates.append(
+                (
+                    blade_position,
+                    0.26 + ((hashed >> 16) & 255) / 255.0 * 0.24,
+                    0.028 + ((hashed >> 12) & 15) / 15.0 * 0.022,
+                    (hashed % 6283) / 1000.0,
+                )
+            )
+    return candidates
+
+
+def _nearest_observer_distance_m(
+    positions: np.ndarray, observers_eus_m: np.ndarray
+) -> np.ndarray:
+    """Distance from each candidate to the closest observer, in the ground plane."""
+
+    if not len(observers_eus_m):
+        return np.linalg.norm(positions, axis=1)
+    deltas = positions[:, None, :] - observers_eus_m[None, :, :]
+    return np.linalg.norm(deltas, axis=2).min(axis=1)
+
+
 def build_site_detail_mesh(
     scene: StaticScene,
     detail_osm: dict[str, Any],
     official_facilities: dict[str, Any],
+    observers_eus_m: np.ndarray | None = None,
 ) -> tuple[np.ndarray, dict[str, int]]:
     plane = LocalTangentPlane(
         scene.origin_latitude_deg, scene.origin_longitude_deg
@@ -470,6 +567,15 @@ def build_site_detail_mesh(
     }
     tree_limit = 900
     grass_blade_limit = 2_500
+    blade_candidates: list[tuple[np.ndarray, float, float, float]] = []
+    # Ground-plane observer positions the blade budget is spent around. With
+    # none supplied this falls back to the scene origin, which is what the
+    # previous origin-radius rule effectively did.
+    observers = (
+        np.zeros((0, 2), dtype=np.float64)
+        if observers_eus_m is None
+        else np.asarray(observers_eus_m, dtype=np.float64).reshape(-1, 2)
+    )
     roof_vertices = scene.building_vertices[
         (scene.building_vertices[:, 6] > 0.5)
         & (scene.building_vertices[:, 6] < 1.5),
@@ -502,52 +608,10 @@ def build_site_detail_mesh(
         elif leisure == "garden" or tags.get("natural") == "scrub":
             vertices.extend(_surface_mesh(polygon.copy(), 0.065, SURFACE_GARDEN))
             counts["historical_surfaces"] += 1
-        is_grass = (
-            tags.get("landuse") == "grass"
-            or tags.get("natural") == "grassland"
-        )
-        if is_grass and counts["grass_blades"] < grass_blade_limit:
-            minimum, maximum = polygon.min(axis=0), polygon.max(axis=0)
-            seed = int(element.get("id", 0))
-            spacing = 6.0
-            offset = np.array(
-                [(seed % 29) / 29.0, (seed % 31) / 31.0]
-            ) * spacing
-            for x in np.arange(minimum[0] + offset[0], maximum[0], spacing):
-                for z in np.arange(minimum[1] + offset[1], maximum[1], spacing):
-                    if counts["grass_blades"] >= grass_blade_limit:
-                        break
-                    point = np.array([x, z])
-                    # A budget on where blades are authored, not a level of
-                    # detail: whether authored geometry is drawn is decided at
-                    # runtime by observation distance in simulator/vegetation.py.
-                    if np.linalg.norm(point) > EVENT_SITE_DETAIL_RADIUS_M or (
-                        not _inside_polygon(point, polygon)
-                    ):
-                        continue
-                    hashed = (
-                        seed * 73856093
-                        ^ round(x * 10.0) * 19349663
-                        ^ round(z * 10.0) * 83492791
-                    ) & 0x7FFFFFFF
-                    jitter = np.array(
-                        [
-                            ((hashed & 255) / 255.0 - 0.5) * spacing * 0.72,
-                            (((hashed >> 8) & 255) / 255.0 - 0.5)
-                            * spacing
-                            * 0.72,
-                        ]
-                    )
-                    blade_position = point + jitter
-                    if not _inside_polygon(blade_position, polygon):
-                        continue
-                    height = 0.26 + ((hashed >> 16) & 255) / 255.0 * 0.24
-                    width = 0.028 + ((hashed >> 12) & 15) / 15.0 * 0.022
-                    yaw = (hashed % 6283) / 1000.0
-                    vertices.extend(
-                        _grass_blade(blade_position, height, width, yaw)
-                    )
-                    counts["grass_blades"] += 1
+        if _is_bladed_surface(tags):
+            blade_candidates.extend(
+                _blade_candidates(polygon, int(element.get("id", 0)))
+            )
         if tags.get("natural") != "wood" or counts["inferred_trees"] >= tree_limit:
             continue
         minimum, maximum = polygon.min(axis=0), polygon.max(axis=0)
@@ -582,6 +646,34 @@ def build_site_detail_mesh(
         if mesh:
             vertices.extend(mesh)
             counts["official_facilities"] += 1
+    # Spend the blade budget on the candidates nearest an observer rather than
+    # on whichever polygons the source file listed first. The authoring radius
+    # still bounds how far detail may be placed at all.
+    if blade_candidates:
+        positions = np.array(
+            [candidate[0] for candidate in blade_candidates], dtype=np.float64
+        )
+        distances = _nearest_observer_distance_m(positions, observers)
+        within_budget = np.flatnonzero(
+            np.linalg.norm(positions, axis=1) <= EVENT_SITE_DETAIL_RADIUS_M
+        )
+        # Stable sort keeps the source ordering for equidistant candidates, so
+        # the asset is reproducible.
+        order = within_budget[
+            np.argsort(distances[within_budget], kind="stable")
+        ][:grass_blade_limit]
+        for index in order:
+            position, height, width, yaw = blade_candidates[int(index)]
+            vertices.extend(_grass_blade(position, height, width, yaw))
+            counts["grass_blades"] += 1
+        counts["blade_candidates"] = len(blade_candidates)
+        counts["nearest_blade_m"] = (
+            int(round(float(distances[order].min()))) if len(order) else -1
+        )
+        counts["farthest_blade_m"] = (
+            int(round(float(distances[order].max()))) if len(order) else -1
+        )
+
     furniture = _road_furniture(scene.road_vertices)
     railing = _shoreline_railing(scene)
     vertices.extend(furniture)

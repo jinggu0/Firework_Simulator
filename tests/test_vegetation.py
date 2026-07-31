@@ -142,10 +142,10 @@ def test_a_blade_at_the_authoring_radius_is_far_below_a_pixel(lod) -> None:
     not SCENE_ASSET.exists(), reason="geospatial scene asset not present"
 )
 def test_every_authored_blade_currently_sits_beyond_the_cutoff(lod) -> None:
-    # Documents a real property of the shipped asset: no landuse=grass polygon
-    # falls within 600 m of the scene origin, so every blade is authored around
-    # 1.1 km out and none is resolvable from the default camera. The LOD is
-    # therefore correct but dormant until blade placement is revisited.
+    # Documents a real property of the shipped asset. The nearest mapped turf
+    # of any kind is roughly 400 m from the scenario's only observer, which
+    # stands on the river at the scene origin, so no blade is resolvable from
+    # it. The LOD is correct; the gap is that no observer stands on land.
     scene = load_scene(SCENE_ASSET)
     detail = scene.detail_vertices
     blades = detail[np.isclose(detail[:, 6], SURFACE_GRASS_BLADE)]
