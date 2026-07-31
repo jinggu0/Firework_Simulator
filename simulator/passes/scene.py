@@ -11,6 +11,7 @@ import numpy as np
 from .. import shaders
 from ..config import LightingConfig
 from ..lighting import led_energy_budget
+from ..materials import MATERIAL_LIBRARY, MaterialLibrary
 from ..scene import load_scene
 
 VERTEX_LAYOUT = (
@@ -65,14 +66,19 @@ class ScenePass:
         ctx: moderngl.Context,
         lighting_config: LightingConfig,
         scene_path: Path,
+        materials: MaterialLibrary = MATERIAL_LIBRARY,
     ) -> None:
         self.ctx = ctx
+        self.materials = materials
         self.program = shaders.program(ctx, "scene.vert", "scene.frag")
         budget = led_energy_budget(lighting_config)
         self.program["window_radiance_w_m2_sr"] = budget.window_radiance_w_m2_sr
         self.program["air_extinction_per_m"] = (
             lighting_config.air_extinction_per_m
         )
+        # Surface appearance is a uniform table rather than a shader branch
+        # chain, so adding a material is a row in simulator/materials.py.
+        materials.upload(self.program)
         self.vaos: list[tuple[moderngl.VertexArray, int]] = []
         self.reflection_vaos: list[tuple[moderngl.VertexArray, int]] = []
         self.buffers: list[moderngl.Buffer] = []

@@ -281,6 +281,49 @@ zero differing components out of 3,686,400 across both stages. The capture is
 also bit-identical between separate processes, which is what makes it usable as
 a gate rather than an indication.
 
+## Materials
+
+`scene.frag` carried a 140-line if/else chain in which every surface's colour,
+pattern scale, and blend factor was a literal buried in GLSL. Those values now
+live in `simulator/materials.py` as a table indexed by surface code and uploaded
+as uniform arrays, so adding a material is a row rather than a shader edit.
+
+Each material carries the full channel set: base colour (two colours plus a
+named procedural pattern), normal strength, roughness, metallic, height,
+ambient occlusion, emissive, and transmission. **Every channel is consumed.**
+The extension channels the architecture reserves — spectral reflectance, index
+of refraction, subsurface scattering, anisotropy, clear coat, wetness,
+weathering — are deliberately absent, because a field the renderer ignores
+misrepresents the material model; they arrive with the transport that uses them.
+
+The shading path is no longer purely Lambertian. Diffuse and a Trowbridge-Reitz
+GGX specular lobe share the same formulation the water pass uses, so the river
+and the city respond to a burst the same way. Metallic selects between an
+achromatic 4% dielectric reflectance and a tinted conductor response; ambient
+occlusion attenuates the sky term only, since that is the term arriving from the
+whole hemisphere; transmission adds the backlit glow that thin blades and leaves
+show. Height is read as a screen-space bump from the pattern gradient — it has
+no parallax, and a true displacement needs the per-pixel surface footprint the
+vertex stage does not yet carry.
+
+Building elevations keep their dedicated path. A facade is an assembly — slabs,
+mullions, glazing, balconies, expressed structure — not a material, and forcing
+it into one base-colour row would lose that detail. Its PBR channels still come
+from the table, which is what gives curtain wall its glint under a burst.
+
+**Nothing in the table is measured.** No reflectance for any Yeouido surface has
+been obtained, so every material is an appearance calibration at confidence
+grade D, and a test asserts none claims otherwise.
+
+The move was verified in two steps against `tools/capture_reference.py`. Lifting
+the colours and patterns out of GLSL left **5 components of 3,686,400** changed,
+each by one or two ulp of the float16 target at scattered isolated pixels —
+compiler float contraction, not a changed value. That check caught a real
+transcription error first: the roof colour had been routed through the table but
+left at the dataclass default. Consuming the reflectance channels then changed
+248,251 components on purpose, which is the specular, occlusion, and
+transmission response arriving.
+
 ## Render passes
 
 1. Sky radiance and astronomical lighting

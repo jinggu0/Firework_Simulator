@@ -19,8 +19,40 @@ uniform int dynamic_light_count;
 uniform vec3 dynamic_light_position[8];
 uniform vec3 dynamic_light_color[8];
 uniform float dynamic_light_power_w[8];
+
+// Material table, one row per surface code. See simulator/materials.py.
+uniform vec3 material_base_primary[17];
+uniform vec3 material_base_secondary[17];
+uniform vec4 material_pattern[17];      // kind, scale u, scale v, mix
+uniform vec4 material_reflectance[17];  // roughness, metallic, ao, transmission
+uniform vec4 material_emissive[17];     // rgb, scale
+uniform vec2 material_relief[17];       // normal strength, height scale
+
 out vec4 frag_color;
 const float PI = 3.14159265359;
+
+const int PATTERN_UNIFORM = 0;
+const int PATTERN_HASH_CELL = 1;
+const int PATTERN_HASH_UV = 2;
+const int PATTERN_HASH_VOLUME = 3;
+const int PATTERN_GRID = 4;
+const int PATTERN_PANELS = 5;
+const int PATTERN_STRIPE = 6;
+const int PATTERN_JOINTS = 7;
+const int PATTERN_LANE = 8;
+const int PATTERN_FRESNEL = 9;
+const int PATTERN_FACADE = 10;
+// Normal-incidence reflectance of a dielectric near an index of 1.5.
+const float DIELECTRIC_NORMAL_REFLECTANCE = 0.04;
+// Radiance a fully transmissive surface adds when backlit, in W/(m2 sr).
+// Calibrated so grass blades match their previous appearance at the 0.35
+// transmission the material table gives them.
+const float TRANSMISSION_RADIANCE = 0.00018 / 0.35;
+// Converts a per-pixel pattern gradient into a normal tilt. Purely a scaling
+// choice: without the surface footprint in metres the height channel cannot be
+// converted to a slope, so this sets how pronounced a seam reads at all.
+const float RELIEF_GRADIENT_TO_NORMAL = 64.0;
+
 float hash21(vec2 p) {
     p = fract(p * vec2(123.34, 456.21));
     p += dot(p, p + 45.32);
@@ -30,8 +62,49 @@ float interval(float value, float lower, float upper, float antialias) {
     return smoothstep(lower - antialias, lower + antialias, value)
          * (1.0 - smoothstep(upper - antialias, upper + antialias, value));
 }
-vec3 reflected_radiance(vec3 n, vec3 albedo) {
-    vec3 result = albedo * ambient_irradiance_w_m2 / PI;
+// Trowbridge-Reitz GGX with the Smith height-correlated visibility and a
+// Schlick Fresnel, matching the formulation the water pass already uses so the
+// river and the city respond to a burst the same way.
+vec3 specular_brdf(
+    vec3 n, vec3 view_direction, vec3 light_direction,
+    float roughness, vec3 normal_reflectance
+) {
+    float n_dot_l = max(dot(n, light_direction), 0.0);
+    float n_dot_v = max(dot(n, view_direction), 1e-4);
+    if (n_dot_l <= 0.0) return vec3(0.0);
+    float alpha = roughness * roughness;
+    float alpha_squared = alpha * alpha;
+    vec3 half_vector = normalize(view_direction + light_direction);
+    float n_dot_h = max(dot(n, half_vector), 0.0);
+    float v_dot_h = max(dot(view_direction, half_vector), 0.0);
+    float denominator = n_dot_h * n_dot_h * (alpha_squared - 1.0) + 1.0;
+    float distribution = alpha_squared
+                       / max(PI * denominator * denominator, 1e-5);
+    float k = (roughness + 1.0) * (roughness + 1.0) / 8.0;
+    float geometry_v = n_dot_v / mix(n_dot_v, 1.0, k);
+    float geometry_l = n_dot_l / mix(n_dot_l, 1.0, k);
+    vec3 fresnel = normal_reflectance
+        + (vec3(1.0) - normal_reflectance) * pow(1.0 - v_dot_h, 5.0);
+    return fresnel * distribution * geometry_v * geometry_l
+         / max(4.0 * n_dot_v * n_dot_l, 1e-5);
+}
+
+// reflectance is (roughness, metallic, ambient occlusion, transmission).
+vec3 reflected_radiance(vec3 n, vec3 albedo, vec4 reflectance) {
+    float roughness = clamp(reflectance.x, .03, 1.0);
+    float metallic = reflectance.y;
+    // A conductor has no diffuse lobe and tints its specular reflection with
+    // its own colour; a dielectric reflects a few percent achromatically.
+    vec3 normal_reflectance = mix(
+        vec3(DIELECTRIC_NORMAL_REFLECTANCE), albedo, metallic
+    );
+    vec3 diffuse_albedo = albedo * (1.0 - metallic);
+    vec3 view_direction = normalize(camera_position - world_position);
+
+    // Ambient sky light is the term occlusion applies to: it arrives from the
+    // whole hemisphere, so a recessed surface receives less of it.
+    vec3 result = diffuse_albedo * ambient_irradiance_w_m2
+                * reflectance.z / PI;
     for (int i = 0; i < 4; ++i) {
         if (i >= static_light_count) break;
         vec3 displacement = static_light_position[i] - world_position;
@@ -42,8 +115,13 @@ vec3 reflected_radiance(vec3 n, vec3 albedo) {
         float irradiance = static_light_power_w * 2.0 * down_lobe
                          * exp(-air_extinction_per_m * distance_m)
                          / (PI * distance_squared);
-        result += albedo * static_light_color * irradiance
-                * max(dot(n, light_direction), 0.0) / PI;
+        float n_dot_l = max(dot(n, light_direction), 0.0);
+        vec3 brdf = diffuse_albedo / PI
+            + specular_brdf(
+                n, view_direction, light_direction,
+                roughness, normal_reflectance
+            );
+        result += static_light_color * irradiance * brdf * n_dot_l;
     }
     for (int i = 0; i < 8; ++i) {
         if (i >= dynamic_light_count) break;
@@ -54,147 +132,128 @@ vec3 reflected_radiance(vec3 n, vec3 albedo) {
         float irradiance = dynamic_light_power_w[i]
                          * exp(-air_extinction_per_m * distance_m)
                          / (4.0 * PI * distance_squared);
-        result += albedo * dynamic_light_color[i] * irradiance
-                * max(dot(n, light_direction), 0.0) / PI;
+        float n_dot_l = max(dot(n, light_direction), 0.0);
+        vec3 brdf = diffuse_albedo / PI
+            + specular_brdf(
+                n, view_direction, light_direction,
+                roughness, normal_reflectance
+            );
+        result += dynamic_light_color[i] * irradiance * brdf * n_dot_l;
     }
     return result;
 }
-void main() {
-    vec3 n = normalize(world_normal);
-    if (surface > 15.5) {
-        float blade = hash21(floor(world_position.xz * 9.0));
-        vec3 grass = mix(vec3(.028, .105, .018),
-                         vec3(.11, .24, .045), blade);
-        float translucency = pow(
-            max(dot(normalize(wind_xz.x == 0.0 && wind_xz.y == 0.0
-                ? vec3(1.0, .2, 0.0)
-                : vec3(wind_xz.x, .2, wind_xz.y)),
-                -n), 0.0), 2.0
-        ) * min(wind_speed_mps / 5.0, 1.0);
-        frag_color = vec4(
-            reflected_radiance(n, grass) + grass * translucency * .00018,
-            1.0
-        );
-        return;
+
+// Blend factor between a material's two base colours. Each form is the one the
+// surface previously carried inline; naming them turns a branch into a row.
+float surface_pattern(int kind, vec2 scale, vec3 n) {
+    if (kind == PATTERN_HASH_CELL) {
+        return hash21(floor(world_position.xz * scale));
     }
-    if (surface > 14.5) {
-        float aggregate = hash21(floor(world_position.xz * 1.35));
-        vec3 trail = mix(vec3(.16, .13, .095), vec3(.26, .22, .16), aggregate);
-        frag_color = vec4(reflected_radiance(n, trail), 1.0);
-        return;
+    if (kind == PATTERN_HASH_UV) {
+        return hash21(floor(surface_uv * scale));
     }
-    if (surface > 13.5) {
-        float bed = hash21(floor(world_position.xz * .32));
-        vec3 garden = mix(
-            vec3(.035, .11, .025), vec3(.17, .055, .025), bed * .34
-        );
-        frag_color = vec4(reflected_radiance(n, garden), 1.0);
-        return;
+    if (kind == PATTERN_HASH_VOLUME) {
+        return hash21(floor(world_position.xz * scale.x + world_position.y));
     }
-    if (surface > 12.5) {
-        float tiles = step(.08, abs(fract(surface_uv.x * .25) - .5))
-                    * step(.08, abs(fract(surface_uv.y * .25) - .5));
-        vec3 rubber = mix(vec3(.12, .035, .025), vec3(.035, .10, .12), tiles);
-        frag_color = vec4(reflected_radiance(n, rubber), 1.0);
-        return;
+    if (kind == PATTERN_GRID) {
+        return step(.08, abs(fract(surface_uv.x * scale.x) - .5))
+             * step(.08, abs(fract(surface_uv.y * scale.y) - .5));
     }
-    if (surface > 11.5) {
-        float panels = step(.035, min(
-            abs(fract(surface_uv.x * .22) - .5),
-            abs(fract(surface_uv.y * .22) - .5)
+    if (kind == PATTERN_PANELS) {
+        return step(.035, min(
+            abs(fract(surface_uv.x * scale.x) - .5),
+            abs(fract(surface_uv.y * scale.y) - .5)
         ));
-        vec3 concrete = mix(vec3(.21), vec3(.15), panels * .12);
-        frag_color = vec4(reflected_radiance(n, concrete), 1.0);
-        return;
     }
-    if (surface > 10.5) {
-        float leaf = hash21(floor(world_position.xz * .65 + world_position.y));
-        vec3 foliage = mix(vec3(.025, .095, .018),
-                           vec3(.075, .19, .038), leaf);
-        frag_color = vec4(reflected_radiance(n, foliage), 1.0);
-        return;
+    if (kind == PATTERN_STRIPE) {
+        return 1.0 - smoothstep(
+            .025, .055, abs(fract(surface_uv.x * scale.x) - .5)
+        );
     }
-    if (surface > 9.5) {
-        vec3 lamp = vec3(1.0, .48, .13) * window_radiance_w_m2_sr * 1.8;
-        frag_color = vec4(lamp + reflected_radiance(n, vec3(.22)), 1.0);
-        return;
+    if (kind == PATTERN_JOINTS) {
+        vec2 joints = abs(fract(surface_uv * scale) - .5);
+        return 1.0 - smoothstep(.025, .055, min(joints.x, joints.y));
     }
-    if (surface > 8.5) {
-        float grain = hash21(floor(surface_uv * vec2(1.8, .18)));
-        vec3 wood = mix(vec3(.12, .050, .018), vec3(.28, .13, .045), grain);
-        frag_color = vec4(reflected_radiance(n, wood), 1.0);
-        return;
+    if (kind == PATTERN_LANE) {
+        return smoothstep(.46, .50, abs(fract(
+            world_position.x * scale.x + world_position.z * scale.y
+        ) - .5));
     }
-    if (surface > 7.5) {
-        float fresnel = pow(
-            1.0 - max(dot(n, normalize(camera_position-world_position)), 0.0),
+    if (kind == PATTERN_FRESNEL) {
+        return pow(
+            1.0 - max(dot(n, normalize(camera_position - world_position)), 0.0),
             3.0
         );
-        vec3 metal = mix(vec3(.18), vec3(.42), fresnel);
-        frag_color = vec4(reflected_radiance(n, metal), 1.0);
+    }
+    return 0.0;
+}
+
+void main() {
+    vec3 n = normalize(world_normal);
+    int material = int(clamp(surface + .5, 0.0, 16.0));
+    vec4 pattern = material_pattern[material];
+    int kind = int(pattern.x + .5);
+    vec4 reflectance = material_reflectance[material];
+    vec4 emissive = material_emissive[material];
+    vec2 relief = material_relief[material];
+
+    if (kind != PATTERN_FACADE) {
+        // Grass sward carries a wind-driven travelling wave in its normal;
+        // the material's normal strength scales it.
+        if (relief.x > 0.0) {
+            vec2 wind_direction = length(wind_xz) > .01
+                                ? normalize(wind_xz) : vec2(1.0, 0.0);
+            float ripple = sin(
+                dot(world_position.xz, wind_direction) * 6.5
+                - time_s * (2.2 + wind_speed_mps * .35)
+            );
+            vec2 cross_wind = vec2(-wind_direction.y, wind_direction.x);
+            ripple += .42 * sin(
+                dot(world_position.xz, cross_wind) * 9.7 - time_s * 3.1
+            );
+            n = normalize(
+                n + vec3(wind_direction.x, 0.0, wind_direction.y)
+                  * ripple * min(.055 + wind_speed_mps * .006, .10)
+                  * relief.x
+            );
+        }
+        float pattern_value = surface_pattern(kind, pattern.yz, n);
+        // Height reads the pattern as relief. The gradient is taken in screen
+        // space, so this is a bump normal rather than true displacement: it
+        // has no parallax and its strength varies with viewing distance. A
+        // real height channel needs the surface footprint per pixel, which the
+        // vertex stage does not currently carry.
+        if (relief.y > 0.0) {
+            n = normalize(
+                n - vec3(dFdx(pattern_value), 0.0, dFdy(pattern_value))
+                  * relief.y * RELIEF_GRADIENT_TO_NORMAL
+            );
+        }
+        vec3 albedo = mix(
+            material_base_primary[material],
+            material_base_secondary[material],
+            pattern_value * pattern.w
+        );
+        vec3 radiance = reflected_radiance(n, albedo, reflectance);
+        // Thin surfaces lit from behind. The wind direction stands in for the
+        // dominant backlight until a directional sky model supplies one.
+        if (reflectance.w > 0.0) {
+            float translucency = pow(
+                max(dot(normalize(wind_xz.x == 0.0 && wind_xz.y == 0.0
+                    ? vec3(1.0, .2, 0.0)
+                    : vec3(wind_xz.x, .2, wind_xz.y)),
+                    -n), 0.0), 2.0
+            ) * min(wind_speed_mps / 5.0, 1.0);
+            radiance += albedo * translucency
+                      * reflectance.w * TRANSMISSION_RADIANCE;
+        }
+        radiance += emissive.rgb * window_radiance_w_m2_sr * emissive.w;
+        frag_color = vec4(radiance, 1.0);
         return;
     }
-    if (surface > 6.5) {
-        float marking = 1.0 - smoothstep(
-            .025, .055, abs(fract(surface_uv.x * .05) - .5)
-        );
-        vec3 sport = mix(vec3(.035, .13, .075), vec3(.75), marking);
-        frag_color = vec4(reflected_radiance(n, sport), 1.0);
-        return;
-    }
-    if (surface > 5.5) {
-        float stripe = 1.0 - smoothstep(
-            .025, .055, abs(fract(surface_uv.x * .11) - .5)
-        );
-        vec3 cycleway = mix(vec3(.19, .045, .032), vec3(.72), stripe * .6);
-        frag_color = vec4(reflected_radiance(n, cycleway), 1.0);
-        return;
-    }
-    if (surface > 4.5) {
-        vec2 joints = abs(fract(surface_uv * vec2(.42, .28)) - .5);
-        float seam = 1.0 - smoothstep(.025, .055, min(joints.x, joints.y));
-        vec3 paving = mix(vec3(.24, .23, .21), vec3(.09), seam);
-        frag_color = vec4(reflected_radiance(n, paving), 1.0);
-        return;
-    }
-    if (surface > 3.5) {
-        vec2 wind_direction = length(wind_xz) > .01
-                            ? normalize(wind_xz) : vec2(1.0, 0.0);
-        float ripple = sin(
-            dot(world_position.xz, wind_direction) * 6.5
-            - time_s * (2.2 + wind_speed_mps * .35)
-        );
-        vec2 cross_wind = vec2(-wind_direction.y, wind_direction.x);
-        ripple += .42 * sin(
-            dot(world_position.xz, cross_wind) * 9.7 - time_s * 3.1
-        );
-        n = normalize(
-            n + vec3(wind_direction.x, 0.0, wind_direction.y)
-              * ripple * min(.055 + wind_speed_mps * .006, .10)
-        );
-        float green_variation = hash21(floor(world_position.xz * .15));
-        vec3 green = mix(vec3(.055, .16, .045),
-                         vec3(.12, .25, .075), green_variation);
-        frag_color = vec4(reflected_radiance(n, green), 1.0);
-        return;
-    }
-    if (surface > 2.5) {
-        float lane_hint = smoothstep(.46, .50,
-            abs(fract(world_position.x * .12 + world_position.z * .08) - .5));
-        vec3 asphalt = mix(
-            vec3(.035, .038, .042), vec3(.32), lane_hint * .22
-        );
-        frag_color = vec4(reflected_radiance(n, asphalt), 1.0);
-        return;
-    }
-    if (surface > 1.5) {
-        frag_color = vec4(
-            reflected_radiance(n, vec3(.22, .24, .26)), 1.0
-        );
-        return;
-    }
+
     if (surface > .5) {
-        vec3 roof = vec3(.12, .13, .14);
+        vec3 roof = material_base_primary[material];
         if (facade_style > 1.5 && facade_style < 2.5) {
             roof = vec3(.30, .18, .055);
         } else if (facade_style > 4.5 && facade_style < 5.5) {
@@ -202,7 +261,7 @@ void main() {
         }
         float roof_variation = hash21(floor(surface_uv * .08)) * .025;
         frag_color = vec4(
-            reflected_radiance(n, roof + roof_variation), 1.0
+            reflected_radiance(n, roof + roof_variation, reflectance), 1.0
         );
         return;
     }
@@ -306,5 +365,7 @@ void main() {
             max(red_column, red_beam) * .92
         );
     }
-    frag_color = vec4(reflected_radiance(n, facade) + emission, 1.0);
+    frag_color = vec4(
+        reflected_radiance(n, facade, reflectance) + emission, 1.0
+    );
 }
