@@ -38,11 +38,18 @@ VACUUM = SurfaceExtinction(
 """No atmosphere at all, so the second render isolates the object radiance."""
 
 
-def _read_rgb(texture) -> np.ndarray:
-    """Linear RGB in OpenGL row order — row 0 is the bottom of the frame."""
+def _read_rgb(texture, level: int = 0) -> np.ndarray:
+    """Linear RGB in OpenGL row order — row 0 is the bottom of the frame.
 
-    width, height = texture.size
-    raw = np.frombuffer(texture.read(), dtype=np.float16)
+    ``level`` reads a generated mip level. Reading the chain back is what lets
+    a CPU reference reproduce ``textureLod`` against the values the GPU
+    actually produced, rather than against a NumPy pyramid that would only
+    resemble them.
+    """
+
+    width = max(1, texture.size[0] >> level)
+    height = max(1, texture.size[1] >> level)
+    raw = np.frombuffer(texture.read(level=level), dtype=np.float16)
     return raw.reshape(height, width, texture.components).astype(np.float64)[
         :, :, :3
     ]

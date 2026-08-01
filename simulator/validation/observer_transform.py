@@ -5,11 +5,14 @@ checks the observer's — pupil gain, local adaptation, chromatic adaptation, th
 mesopic mix, ACES — against the same kind of CPU prediction from the same
 readable buffers.
 
-Two of the observer stages are **excluded and reported as unverified**:
-peripheral acuity samples a per-pixel mip level and the glare tail reads a
-reduced mip of the bloom, so predicting either in NumPy would measure GPU mip
-generation rather than the model. The harness switches both off, which isolates
-the colour path — the part chromatic adaptation changed.
+**Peripheral acuity is the one stage excluded**, and for a measured reason
+rather than an assumed one. Reading the generated mip levels back makes
+``textureLod`` reproducible — the glare tail, which reads a fixed level, is
+reproduced exactly and is gated here. With the per-pixel varying LOD the acuity
+bias uses, a residual of up to 7 display code values remains from a source the
+harness could not identify; more decisively, that noise is large enough to hide
+a 10 percent error in the acuity constant, so a tolerance drawn around it could
+not fail. ``tools.measure_observer_transform`` records what was ruled out.
 """
 
 from __future__ import annotations
@@ -28,6 +31,13 @@ ABSOLUTE_TOLERANCE = 2.0 * DISPLAY_QUANTUM
 
 MINIMUM_LIT_FRACTION = 0.05
 """A black frame would agree trivially, so the frame has to contain an image."""
+
+MINIMUM_VEILING_SHARE = 0.01
+"""Glare must reach a percent of the retinal signal somewhere in the frame.
+
+Verifying a term that is everywhere negligible would be verifying nothing.
+Measured at 19% on the shipped scene.
+"""
 
 LUMINANCE_TOLERANCE = 2.0e-3
 """Half-float storage of a unit-luminance white admits about this much drift."""
@@ -96,8 +106,14 @@ def observer_transform(
     white_luminance = float(
         payload.get("adapting_white_luminance", float("nan"))
     )
+    veiling_share = float(
+        payload.get("veiling_share_of_retinal_max", 0.0)
+    )
 
     exercised = lit_fraction >= MINIMUM_LIT_FRACTION
+    # The glare tail is verified here, so the frame has to contain enough of it
+    # to make that claim mean something.
+    glare_exercised = veiling_share >= MINIMUM_VEILING_SHARE
     # CIECAM02 D is never 0 or 1 in a real viewing condition; either bound
     # means the relation collapsed rather than that the observer is unusual.
     degree_is_partial = 0.0 < degree < 1.0
@@ -110,6 +126,7 @@ def observer_transform(
     passed = (
         error_max <= ABSOLUTE_TOLERANCE
         and exercised
+        and glare_exercised
         and degree_is_partial
         and white_is_global
         and white_is_normalised
@@ -119,6 +136,11 @@ def observer_transform(
         message = (
             f"only {lit_fraction:.1%} of the frame is above the display floor; "
             "the frame does not exercise the transform"
+        )
+    elif not glare_exercised:
+        message = (
+            f"the veiling glare reaches only {veiling_share:.2%} of the "
+            "retinal signal; the frame does not exercise the glare tail"
         )
     elif not degree_is_partial:
         message = (
@@ -167,16 +189,24 @@ def observer_transform(
             ),
             "cone_fraction": float(payload.get("cone_fraction", float("nan"))),
             "adapting_white_luminance": white_luminance,
+            "veiling_share_of_retinal_max": veiling_share,
         },
         detail={
             "adapting_luminance_cd_m2": payload.get("adapting_luminance_cd_m2"),
             "adapting_white": payload.get("adapting_white"),
             "adapting_white_spatial_spread": spread,
             "display_referred": True,
+            "glare_verified": payload.get("glare_verified"),
+            "peripheral_acuity_verified": payload.get(
+                "peripheral_acuity_verified"
+            ),
             "unverified_stages": (
-                "peripheral acuity and the glare tail are switched off for the "
-                "measurement; both are spatial and predicting them would "
-                "measure GPU mip generation rather than the model"
+                "peripheral acuity only. Its per-pixel varying mip bias leaves "
+                "a residual of up to 7 code values from an unidentified "
+                "source, and that noise hides a 10 percent error in the "
+                "acuity constant, so a tolerance around it could not fail. "
+                "The glare tail reads a fixed level, is reproduced exactly, "
+                "and is gated here."
             ),
         },
     )

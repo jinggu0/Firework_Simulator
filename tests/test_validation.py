@@ -711,7 +711,9 @@ def _observer_payload(**overrides) -> str:
         "absolute_error_mean": 0.00102,
         "absolute_error_p999": 0.00236,
         "lit_pixel_fraction": 0.997,
-        "spatial_stages_disabled": True,
+        "veiling_share_of_retinal_max": 2.31,
+        "glare_verified": True,
+        "peripheral_acuity_verified": False,
     }
     payload.update(overrides)
     return json.dumps(payload)
@@ -724,8 +726,24 @@ def test_observer_transform_passes_within_display_quantisation(
     result = observer_transform.observer_transform()
     assert result.status is MetricStatus.PASS
     assert result.residuals["error_in_code_values"] < 1.0
-    # The two stages it cannot predict must travel with the result.
-    assert "peripheral acuity" in result.detail["unverified_stages"]
+    # The one stage it cannot predict must travel with the result, and the one
+    # it can must be claimed only when it was actually exercised.
+    assert "peripheral acuity only" in result.detail["unverified_stages"]
+    assert result.detail["glare_verified"] is True
+    assert result.detail["peripheral_acuity_verified"] is False
+
+
+def test_observer_transform_refuses_to_claim_an_unexercised_glare(
+    monkeypatch,
+) -> None:
+    # The glare tail is gated here, so a frame where it is negligible would be
+    # verifying nothing.
+    _stub_subprocess(
+        monkeypatch, _observer_payload(veiling_share_of_retinal_max=0.001)
+    )
+    result = observer_transform.observer_transform()
+    assert result.status is MetricStatus.FAIL
+    assert "glare tail" in result.message
 
 
 def test_observer_transform_fails_on_a_stage_that_disagrees(monkeypatch) -> None:

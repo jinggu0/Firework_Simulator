@@ -10,16 +10,32 @@ The check is the same one V-23 makes of the camera: the linear HDR, bloom, and
 adaptation buffers are the shader's only image inputs, so running the same
 chain in NumPy predicts the frame the GPU should have produced.
 
-**The spatial path is switched off for the measurement.** Peripheral acuity
-samples a per-pixel mip level and the glare tail reads a reduced mip of the
-bloom; reproducing GPU mip generation in NumPy would measure the filter rather
-than the model. Setting the maximum blur to zero and the glare constant to zero
-removes both and isolates the colour path, which is what changed. Those two
-stages remain unverified and are reported as such.
+Both spatial stages read reduced mip levels, which at first looks unpredictable
+without reimplementing GPU mip generation. It is not: ``moderngl`` reads each
+generated level back, so ``textureLod`` can be reproduced by interpolating the
+levels the GPU itself produced.
 
-Prints a JSON payload; ``simulator.validation.display_transform`` and its
-sibling run these harnesses in a subprocess so the rest of the report still
-works without a GPU.
+That works for **the glare tail**, which reads a fixed mip level and is
+reproduced exactly — it contributes nothing to the residual.
+
+It does **not** work for **peripheral acuity**, and the attempt is recorded
+here because the negative result is the useful part. With a per-pixel varying
+LOD the residual reaches 7 display code values, concentrated on the steepest
+bright edges in the far periphery. Ruled out by measurement: the glare term
+(zero contribution), LOD quantisation (snapping to 1/32 or 1/16 changes
+nothing), anisotropic filtering (forcing it to 1 changes nothing), bilinear and
+trilinear sampling themselves (a *constant* LOD of 2.0, 2.5 or 4.0 reproduces
+to 0.63 code values, the same as no mip bias at all), the level contents (read
+back directly), and a systematic LOD bias (zero offset is already optimal).
+
+What settles it is that the noise is large enough to hide a real error: a 10
+percent error in the acuity constant E2 moves the mean from 0.312 to 0.321 code
+values and p99 from 1.62 to 1.80. A gate built on those statistics could not
+fail, so peripheral acuity is left out of the measurement and reported as
+unverified rather than given a tolerance it would always pass.
+
+Prints a JSON payload; ``simulator.validation.observer_transform`` runs this in
+a subprocess so the rest of the report still works without a GPU.
 """
 
 from __future__ import annotations
@@ -27,18 +43,28 @@ from __future__ import annotations
 import argparse
 from dataclasses import replace
 import json
+import math
 
 import numpy as np
 import pygame
 
 from simulator.app import SimulatorApp
+from simulator.camera_optics import vertical_fov_deg
 from simulator.color import chromatic_adaptation_gains
 from simulator.config import SimulationConfig
-from simulator.human_vision import HumanVisionState
+from simulator.human_vision import HumanVisionState, acuity_fraction
 from simulator.passes.post import DisplayMode
 from tools.measure_aerial_perspective import _bilinear, _read_rgb
 
 PHOTOPIC_WEIGHTS = np.array([0.2126, 0.7152, 0.0722])
+
+GLARE_SCALE = 0.01
+"""The shader's conversion from wide-field bloom luminance to a veil.
+
+Not a published constant: the Stiles-Holladay term needs the source
+illuminance at the eye, and a reduced mip of the bloom stands in for it. Kept
+here so the reference and the shader cannot drift.
+"""
 
 ADAPTATION_CONVERGENCE_S = 90.0
 """Simulated seconds run before measuring.
@@ -48,11 +74,13 @@ would be testing the initial condition rather than the model.
 """
 
 
-def _flatten_spatial_stages() -> None:
-    """Remove peripheral blur and glare from the shader's uniforms.
+def _disable_peripheral_blur() -> None:
+    """Flatten the acuity mip bias for the measurement.
 
-    A harness-only override. Both stages are spatial, both need GPU mip
-    generation to predict, and neither is what chromatic adaptation changed.
+    A harness-only override, and the only stage excluded. See the module
+    docstring: with a per-pixel varying LOD the residual is large enough to
+    mask a 10 percent error in E2, so gating on it would assert coverage that
+    does not exist. The glare tail stays on and is verified.
     """
 
     original = HumanVisionState.uniforms
@@ -60,10 +88,53 @@ def _flatten_spatial_stages() -> None:
     def uniforms(self):
         values = original(self)
         values["maximum_blur_lod"] = 0.0
-        values["glare_constant"] = 0.0
         return values
 
     HumanVisionState.uniforms = uniforms
+
+
+def _mip_chain(texture, levels: int) -> list[np.ndarray]:
+    """Read back the generated mip levels the shader will sample."""
+
+    return [_read_rgb(texture, level) for level in range(levels)]
+
+
+def _texture_lod(
+    levels: list[np.ndarray], u: np.ndarray, v: np.ndarray, lod: np.ndarray
+) -> np.ndarray:
+    """Reproduce ``textureLod`` under GL_LINEAR_MIPMAP_LINEAR.
+
+    Bilinear within each of the two bracketing levels, linear between them.
+    The levels are the GPU's own, so this reproduces the sampler rather than
+    the mip filter — which is what makes the spatial stages predictable at all.
+    """
+
+    top = len(levels) - 1
+    clamped = np.clip(lod, 0.0, float(top))
+    low = np.floor(clamped).astype(int)
+    high = np.minimum(low + 1, top)
+    blend = (clamped - low)[..., None]
+    sampled = np.stack([_bilinear(level, u, v) for level in levels])
+    rows = np.arange(u.shape[0])[:, None]
+    columns = np.arange(u.shape[1])[None, :]
+    lower = sampled[low, rows, columns]
+    upper = sampled[high, rows, columns]
+    return lower * (1.0 - blend) + upper * blend
+
+
+def _eccentricity_deg(
+    u: np.ndarray, v: np.ndarray, gaze_uv, tan_half_fov: float, aspect: float
+) -> np.ndarray:
+    """Angle between each pixel's ray and the fixation ray, as the shader does."""
+
+    scale = np.array([aspect * tan_half_fov, tan_half_fov])
+    here = np.stack([u * 2.0 - 1.0, v * 2.0 - 1.0], axis=-1) * scale
+    gaze = (np.asarray(gaze_uv, dtype=np.float64) * 2.0 - 1.0) * scale
+    ray = np.concatenate([here, np.ones(here.shape[:-1] + (1,))], axis=-1)
+    ray /= np.linalg.norm(ray, axis=-1, keepdims=True)
+    fixation = np.append(gaze, 1.0)
+    fixation /= np.linalg.norm(fixation)
+    return np.degrees(np.arccos(np.clip(ray @ fixation, -1.0, 1.0)))
 
 
 def _aces(x: np.ndarray) -> np.ndarray:
@@ -73,23 +144,45 @@ def _aces(x: np.ndarray) -> np.ndarray:
 
 
 def _predict(
-    hdr: np.ndarray,
-    bloom: np.ndarray,
+    hdr_levels: list[np.ndarray],
+    bloom_levels: list[np.ndarray],
     adaptation: np.ndarray,
     vision: HumanVisionState,
     bloom_strength: float,
-) -> np.ndarray:
-    height, width = hdr.shape[:2]
+    tan_half_fov: float,
+    aspect: float,
+) -> tuple[np.ndarray, dict[str, float]]:
+    height, width = hdr_levels[0].shape[:2]
     u = np.broadcast_to((np.arange(width) + 0.5) / width, (height, width))
     v = np.broadcast_to(
         ((np.arange(height) + 0.5) / height)[:, None], (height, width)
     )
-    glare = _bilinear(bloom, u, v) * bloom_strength
+    uniforms = vision.uniforms()
+
+    # Peripheral acuity: cortical magnification gives resolvable frequency
+    # 1 / (1 + e / E2), applied as a mip bias rather than a uniform blur.
+    eccentricity = _eccentricity_deg(
+        u, v, vision.gaze_uv, tan_half_fov, aspect
+    )
+    acuity = acuity_fraction(eccentricity)
+    lod = uniforms["maximum_blur_lod"] * (1.0 - acuity)
+    scene = _texture_lod(hdr_levels, u, v, lod)
+    glare_source = _bilinear(bloom_levels[0], u, v) * bloom_strength
+
+    # Disability glare: the Stiles-Holladay 1/theta^2 tail is far wider than
+    # the bloom kernel, so a heavily reduced mip of the bloom stands in for it.
+    wide_field = _bilinear(bloom_levels[min(5, len(bloom_levels) - 1)], u, v)
+    veiling = (
+        uniforms["glare_constant"]
+        * (wide_field @ PHOTOPIC_WEIGHTS)
+        * GLARE_SCALE
+    )
+
     state = _bilinear(adaptation, u, v)
     adapting_white = state[..., :3]
     local_luminance = state[..., 3]
 
-    retinal = (hdr + glare) * vision.pupil_gain
+    retinal = (scene + glare_source + veiling[..., None]) * vision.pupil_gain
     reference = np.maximum(
         local_luminance * 0.65 + vision.adapting_luminance_cd_m2 * 0.35, 1e-6
     )
@@ -116,11 +209,20 @@ def _predict(
     mesopic = luminance[..., None] + (
         adapted - luminance[..., None]
     ) * vision.cone_fraction
-    return _aces(np.maximum(mesopic, 0.0)) ** (1.0 / 2.2)
+    predicted = _aces(np.maximum(mesopic, 0.0)) ** (1.0 / 2.2)
+    exercised = {
+        "peripheral_lod_max": float(lod.max()),
+        "peripheral_eccentricity_max_deg": float(eccentricity.max()),
+        "veiling_luminance_max": float(veiling.max()),
+        "veiling_share_of_retinal_max": float(
+            (veiling / np.maximum(scene[..., 1] + glare_source[..., 1], 1e-12)).max()
+        ),
+    }
+    return predicted, exercised
 
 
 def measure(convergence_s: float = ADAPTATION_CONVERGENCE_S) -> dict[str, object]:
-    _flatten_spatial_stages()
+    _disable_peripheral_blur()
     base = SimulationConfig()
     config = replace(base, render=replace(base.render, vsync=False, target_fps=0))
     app = SimulatorApp(config)
@@ -136,8 +238,14 @@ def measure(convergence_s: float = ADAPTATION_CONVERGENCE_S) -> dict[str, object
     displayed = np.frombuffer(
         app.ctx.screen.read(components=3), dtype=np.uint8
     ).reshape(height, width, 3).astype(np.float64) / 255.0
-    hdr = _read_rgb(renderer.targets.hdr_texture)
-    bloom = _read_rgb(renderer.targets.bloom_textures[0])
+    vision = renderer.post.vision
+    # One level past the deepest the acuity bias can request, because
+    # trilinear filtering reads the level above the one it lands on.
+    hdr_levels = _mip_chain(
+        renderer.targets.hdr_texture,
+        int(math.floor(vision.uniforms()["maximum_blur_lod"])) + 2,
+    )
+    bloom_levels = _mip_chain(renderer.targets.bloom_textures[0], 6)
     adaptation_texture = renderer.targets.current_adaptation
     adaptation = np.frombuffer(
         adaptation_texture.read(), dtype=np.float16
@@ -146,9 +254,17 @@ def measure(convergence_s: float = ADAPTATION_CONVERGENCE_S) -> dict[str, object
     ).astype(np.float64)
     pygame.display.flip()
 
-    vision = renderer.post.vision
-    predicted = _predict(
-        hdr, bloom, adaptation, vision, config.render.bloom_strength
+    tan_half_fov = math.tan(
+        math.radians(vertical_fov_deg(config.physical_camera)) * 0.5
+    )
+    predicted, exercised = _predict(
+        hdr_levels,
+        bloom_levels,
+        adaptation,
+        vision,
+        config.render.bloom_strength,
+        tan_half_fov,
+        config.render.width / config.render.height,
     )
     error = np.abs(predicted - displayed)
 
@@ -175,7 +291,9 @@ def measure(convergence_s: float = ADAPTATION_CONVERGENCE_S) -> dict[str, object
         "absolute_error_p999": float(np.percentile(error, 99.9)),
         "display_quantum": 1.0 / 255.0,
         "lit_pixel_fraction": float(lit.mean()),
-        "spatial_stages_disabled": True,
+        "glare_verified": True,
+        "peripheral_acuity_verified": False,
+        **exercised,
     }
     app.audio_executor.shutdown(wait=True, cancel_futures=True)
     pygame.quit()

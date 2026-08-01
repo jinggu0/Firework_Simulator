@@ -46,6 +46,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 import math
 
+import numpy as np
+
 # -- mesopic range -----------------------------------------------------------
 
 SCOTOPIC_CEILING_CD_M2 = 0.005
@@ -223,10 +225,14 @@ def mesopic_factor(adapting_luminance_cd_m2: float) -> float:
     return min(max(position, 0.0), 1.0)
 
 
-def acuity_fraction(eccentricity_deg: float) -> float:
-    """Resolvable spatial frequency relative to the fovea."""
+def acuity_fraction(eccentricity_deg):
+    """Resolvable spatial frequency relative to the fovea.
 
-    return 1.0 / (1.0 + max(eccentricity_deg, 0.0) / ACUITY_E2_DEG)
+    Accepts an array as well as a scalar, so a reference implementation can
+    evaluate it over a whole frame rather than reimplementing the relation.
+    """
+
+    return 1.0 / (1.0 + np.maximum(eccentricity_deg, 0.0) / ACUITY_E2_DEG)
 
 
 def veiling_luminance_cd_m2(
