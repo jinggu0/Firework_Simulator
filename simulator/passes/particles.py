@@ -59,6 +59,13 @@ class ParticlePass:
     def set_view_projection(self, matrix_bytes: bytes) -> None:
         self.program["view_projection"].write(matrix_bytes)
 
+    def set_camera_position(self, camera_position) -> None:
+        """Origin of the air path each star's radiance is attenuated over."""
+
+        self.program["camera_position"].value = tuple(
+            float(value) for value in camera_position
+        )
+
     def draw(
         self,
         world: FireworkWorld,

@@ -25,11 +25,54 @@ EXPECTED = {
     # adaptation buffer it reads.
     "human_vision.frag",
     "adaptation.frag",
+    # Aerial perspective: the deferred extinction and airlight composite.
+    "haze.frag",
 }
+
+EXPECTED_INCLUDES = {"air_extinction.glsl"}
 
 
 def test_every_expected_shader_ships() -> None:
     assert set(shaders.available()) == EXPECTED
+
+
+def test_includes_are_not_offered_as_compilable_stages() -> None:
+    # A .glsl fragment has no #version and no main; handing one to the driver
+    # as a stage would fail, so it must not appear in available().
+    assert set(shaders.includes()) == EXPECTED_INCLUDES
+    assert not EXPECTED_INCLUDES & set(shaders.available())
+
+
+def test_air_extinction_reaches_every_stage_that_crosses_air() -> None:
+    # Five stages attenuate light over a path. Before the include existed the
+    # only way to keep them agreeing was to read all five, and a drifted copy
+    # would have been invisible in the output.
+    for name in (
+        "haze.frag",
+        "particle.vert",
+        "smoke.frag",
+        "scene.frag",
+        "water.frag",
+    ):
+        resolved = shaders.source(name)
+        assert "vec3 air_transmittance(" in resolved, name
+        assert "uniform vec3 aerosol_extinction_per_m;" in resolved, name
+        # The include is resolved before the driver sees the text.
+        assert "#include" not in resolved, name
+
+
+def test_the_retired_extinction_uniform_is_gone() -> None:
+    # air_extinction_per_m was a single unsourced scalar implying 32.6 km of
+    # visibility, applied only between a lamp and a surface. The name survives
+    # in a comment recording that; what must not survive is the declaration.
+    for name in shaders.available():
+        code = re.sub(r"//[^\n]*", "", shaders.source(name))
+        assert "air_extinction_per_m" not in code, name
+
+
+def test_a_circular_include_is_reported_rather_than_recursing() -> None:
+    with pytest.raises(shaders.ShaderIncludeError, match="circular"):
+        shaders._resolve("a.glsl", ("b.glsl", "a.glsl"))
 
 
 def test_every_shader_declares_a_version_and_a_main() -> None:

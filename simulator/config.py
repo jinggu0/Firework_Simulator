@@ -141,7 +141,12 @@ class LightingConfig:
     window_emitting_area_m2: float = 8.0
     twilight_spectral_luminous_efficacy_lm_w: float = 100.0
     calibrated_urban_ambient_illuminance_lux: float = 1.2
-    air_extinction_per_m: float = 0.00012
+    # air_extinction_per_m was 0.00012 here with no recorded source. It implied
+    # 32.6 km of visibility, roughly twice what the event's own weather record
+    # supports once the aerosol is grown by the observed humidity, and it was
+    # applied only between a lamp and a surface — never along the view path.
+    # Air extinction is now derived per channel from the same optical depths
+    # that dim the stars; see simulator.atmosphere.SurfaceExtinction.
     dynamic_light_count: int = 8
     street_lamp_input_power_w: float = 72.0
     street_lamp_light_count: int = 4

@@ -13,7 +13,13 @@ from simulator.validation import (
     ValidationReport,
     run_validation,
 )
-from simulator.validation import capture, catalogue, metrics, performance
+from simulator.validation import (
+    aerial_perspective,
+    capture,
+    catalogue,
+    metrics,
+    performance,
+)
 from simulator.validation.report import MetricResult
 from simulator.validation.runner import _guarded
 
@@ -290,6 +296,19 @@ def test_performance_metric_is_absent_unless_requested(report) -> None:
     assert report.result("V-12").status is MetricStatus.NOT_IMPLEMENTED
 
 
+def test_rendering_metric_is_absent_unless_requested(report) -> None:
+    # V-22 also needs OpenGL, and is gated by its own flag because it is not
+    # machine specific the way the frame budget is.
+    assert report.result("V-22").status is MetricStatus.NOT_IMPLEMENTED
+
+
+def test_every_opengl_metric_declares_that_it_needs_a_context() -> None:
+    # A metric that silently required a GPU would report ERROR on a headless
+    # agent, which reads as a regression rather than a missing capability.
+    for metric_id in ("V-12", "V-22"):
+        assert BY_ID[metric_id].requires_opengl, metric_id
+
+
 # --- V-01 external ephemeris ----------------------------------------------
 
 
@@ -458,6 +477,89 @@ def test_frame_budget_reports_unparsable_output_as_error(monkeypatch) -> None:
         lambda *a, **k: SimpleNamespace(returncode=0, stdout="no json here", stderr=""),
     )
     assert performance.frame_budget(frames=8).status is MetricStatus.ERROR
+
+
+# --- V-22 subprocess handling ---------------------------------------------
+
+
+def _haze_payload(**overrides) -> str:
+    payload = {
+        "visibility_km": 17.1,
+        "relative_error_max": 8.3e-4,
+        "relative_error_p99": 1.1e-4,
+        "relative_error_mean": 7.2e-6,
+        "sky_absolute_difference_max": 0.0,
+        "transmittance_min": 0.56,
+        "transmittance_p50": 0.94,
+        "mean_radiance_change": -0.20,
+    }
+    payload.update(overrides)
+    return json.dumps(payload)
+
+
+def _stub_subprocess(monkeypatch, stdout: str, returncode: int = 0) -> None:
+    monkeypatch.setattr(
+        subprocess,
+        "run",
+        lambda *a, **k: SimpleNamespace(
+            returncode=returncode, stdout=stdout, stderr="stderr text"
+        ),
+    )
+
+
+def test_aerial_perspective_passes_within_half_float_precision(monkeypatch) -> None:
+    _stub_subprocess(monkeypatch, "pygame banner\n" + _haze_payload())
+    result = aerial_perspective.aerial_perspective()
+    assert result.status is MetricStatus.PASS
+    assert result.residuals["relative_error_max"] < result.residuals["tolerance"]
+    # The visibility being modelled rather than observed must travel with it.
+    assert result.detail["visibility_is_modelled"] is True
+
+
+def test_aerial_perspective_fails_on_a_formula_difference(monkeypatch) -> None:
+    # Ten times the half-float quantum is not rounding.
+    _stub_subprocess(monkeypatch, _haze_payload(relative_error_max=5e-3))
+    assert (
+        aerial_perspective.aerial_perspective().status is MetricStatus.FAIL
+    )
+
+
+def test_aerial_perspective_fails_when_the_sky_was_touched(monkeypatch) -> None:
+    # Sky pixels already carry the airlight of an infinite path; attenuating
+    # them again is a double count, and the requirement is exact.
+    _stub_subprocess(
+        monkeypatch, _haze_payload(sky_absolute_difference_max=1e-7)
+    )
+    assert (
+        aerial_perspective.aerial_perspective().status is MetricStatus.FAIL
+    )
+
+
+def test_aerial_perspective_refuses_a_vacuous_pass(monkeypatch) -> None:
+    # Nothing far enough away to be hazed means the residual is trivially
+    # small; that must not read as agreement.
+    _stub_subprocess(monkeypatch, _haze_payload(transmittance_min=0.999))
+    result = aerial_perspective.aerial_perspective()
+    assert result.status is MetricStatus.FAIL
+    assert "does not exercise" in result.message
+
+
+def test_aerial_perspective_treats_a_missing_gl_context_as_no_reference(
+    monkeypatch,
+) -> None:
+    _stub_subprocess(monkeypatch, "", returncode=1)
+    result = aerial_perspective.aerial_perspective()
+    assert result.status is MetricStatus.NO_REFERENCE
+    assert "stderr text" in result.detail["stderr_tail"]
+
+
+def test_aerial_perspective_reports_unparsable_output_as_error(
+    monkeypatch,
+) -> None:
+    _stub_subprocess(monkeypatch, "no json here")
+    assert (
+        aerial_perspective.aerial_perspective().status is MetricStatus.ERROR
+    )
 
 
 # --- linear HDR capture ----------------------------------------------------

@@ -13,14 +13,33 @@ uniform vec3 celestial_row_x;
 uniform vec3 celestial_row_y;
 uniform vec3 celestial_row_z;
 uniform float star_optical_depth;
+// 0 renders the sky as seen. 1 renders the airlight source field the haze pass
+// reads: the same radiance model evaluated along the horizontal, because the
+// air on a near-ground path is lit by the horizon sky. That is the radiance
+// Koschmieder's 2% contrast threshold — and therefore the visibility this
+// scene is driven by — is defined against, so using it here makes aerial
+// perspective saturate to exactly the sky an infinitely distant object shows.
+// Point sources are excluded: a star is direct beam, not diffuse airlight.
+uniform float airlight_field;
 const float PI = 3.14159265359;
 void main() {
     vec2 screen = uv * 2.0 - 1.0;
     vec3 ray = normalize(camera_forward
                        + camera_right * screen.x * aspect * tan_half_fov
                        + camera_up * screen.y * tan_half_fov);
+    // Projecting onto the horizontal preserves azimuth exactly, so the
+    // western twilight and the moon still brighten the haze on their own side
+    // of the scene. Straight up has no azimuth and no geometry along it, so
+    // the degenerate case falls back to an arbitrary bearing.
+    vec3 horizontal = length(ray.xz) > 1e-4
+                    ? normalize(vec3(ray.x, 0.0, ray.z))
+                    : vec3(1.0, 0.0, 0.0);
+    ray = airlight_field > .5 ? horizontal : ray;
     float altitude = asin(clamp(ray.y, -1.0, 1.0));
-    float above_horizon = smoothstep(-.025, .06, ray.y);
+    // The horizon fade darkens the lower screen before the land mesh covers
+    // it; it is a compositing mask, not part of the radiance model, so the
+    // airlight field is evaluated without it.
+    float above_horizon = max(smoothstep(-.025, .06, ray.y), airlight_field);
     float zenith = smoothstep(-.02, .75, ray.y);
     vec3 night = mix(vec3(.00034, .00043, .00062),
                      vec3(.000055, .000085, .00018), zenith);
@@ -83,7 +102,8 @@ void main() {
     // Flux is reconstructed over a finite raster footprint; this scale keeps
     // all but the brightest sources below Seoul's urban background.
     float star_radiance = .00035 * magnitude_flux
-                        * atmosphere_transmission * cloud_transmission;
+                        * atmosphere_transmission * cloud_transmission
+                        * (1.0 - airlight_field);
     float background_radiance = max(
         dot(sky, vec3(.2126, .7152, .0722)), 1e-7
     );

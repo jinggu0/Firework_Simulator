@@ -3,6 +3,7 @@
     python -m tools.validate
     python -m tools.validate --summary
     python -m tools.validate --include-performance --frames 240
+    python -m tools.validate --include-rendering
     python -m tools.validate --ephemeris assets/reference_ephemeris_2024-10-05.json
 
 Exit code is non-zero only for FAIL or ERROR. NO_REFERENCE and NOT_IMPLEMENTED
@@ -74,6 +75,14 @@ def main() -> int:
         action="store_true",
         help="Run V-12, which needs an OpenGL context and a separate process.",
     )
+    parser.add_argument(
+        "--include-rendering",
+        action="store_true",
+        help=(
+            "Run V-22, which renders two frames in a separate process and "
+            "needs an OpenGL context."
+        ),
+    )
     parser.add_argument("--frames", type=int, default=240)
     parser.add_argument(
         "--fluid-backend", choices=("3d", "2d", "cpu"), default="3d"
@@ -93,6 +102,7 @@ def main() -> int:
         Scenario.load(args.scenario),
         ephemeris_path=args.ephemeris,
         include_performance=args.include_performance,
+        include_rendering=args.include_rendering,
         performance_frames=args.frames,
         fluid_backend=args.fluid_backend,
         replay_steps=args.replay_steps,

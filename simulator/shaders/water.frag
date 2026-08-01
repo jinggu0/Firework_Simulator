@@ -10,13 +10,13 @@ uniform float sky_ambient_scale;
 uniform vec4 waves[32];
 uniform float phases[32];
 uniform float time_s;
-uniform float air_extinction_per_m;
 uniform float wind_speed_mps;
 uniform int dynamic_light_count;
 uniform vec3 dynamic_light_position[8];
 uniform vec3 dynamic_light_color[8];
 uniform float dynamic_light_power_w[8];
 out vec4 frag_color;
+#include "air_extinction.glsl"
 const float PI = 3.14159265359;
 void main() {
     vec2 mask_uv = (world_position.xz - water_mask_bounds.xy)
@@ -105,9 +105,12 @@ void main() {
         vec3 brdf = specular_fresnel * distribution
                   * geometry_v * geometry_l
                   / max(4.0 * n_dot_v * n_dot_l, 1e-5);
-        float irradiance = dynamic_light_power_w[i]
-                         * exp(-air_extinction_per_m * distance_m)
-                         / (4.0 * PI * distance_squared);
+        vec3 irradiance = dynamic_light_power_w[i]
+                        * air_transmittance(
+                              dynamic_light_position[i].y, world_position.y,
+                              distance_m
+                          )
+                        / (4.0 * PI * distance_squared);
         radiance += dynamic_light_color[i] * irradiance * brdf * n_dot_l;
     }
     frag_color = vec4(radiance, 1.0);

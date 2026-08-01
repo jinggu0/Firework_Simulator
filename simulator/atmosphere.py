@@ -37,7 +37,7 @@ Applied Optics 28(22), 1989.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import math
 
 import numpy as np
@@ -306,6 +306,65 @@ def _saturation_vapour_pressure_pa(temperature_k: float) -> float:
     return 611.2 * math.exp(17.67 * celsius / (celsius + 243.5))
 
 
+def surface_extinction_per_m(
+    column_optical_depth: float | np.ndarray, scale_height_m: float
+) -> np.ndarray:
+    """Extinction coefficient at the surface, from a whole-column depth.
+
+    A column depth is the integral of the coefficient over an exponential
+    profile, ``tau = sigma(0) * H``, so the surface value is the depth divided
+    by the scale height of the species that produced it. Aerosol and molecules
+    must be divided separately: they carry very different scale heights, and
+    dividing their sum by either one would misattribute the extinction.
+    """
+
+    return np.maximum(np.asarray(column_optical_depth, dtype=np.float64), 0.0) / max(
+        scale_height_m, 1.0
+    )
+
+
+def slant_optical_depth(
+    surface_extinction: float | np.ndarray,
+    scale_height_m: float,
+    start_height_m: float,
+    end_height_m: float,
+    path_length_m: float,
+) -> np.ndarray:
+    """Optical depth along a straight path through an exponential atmosphere.
+
+    The integral ``∫ sigma(0) exp(-z/H) ds`` over a segment whose height varies
+    linearly from ``start_height_m`` to ``end_height_m`` has a closed form,
+
+    ``sigma(0) * L * H / dz * (exp(-z0/H) - exp(-z1/H))``,
+
+    which degenerates to ``sigma(0) * L * exp(-z0/H)`` for a level path. Using
+    it rather than a constant surface density matters for the fireworks: at a
+    1.5 km range a 300 m break sits behind 12 percent less air than the level
+    approximation claims, and a 600 m break behind 22 percent less.
+
+    Heights are taken as magnitudes so a mirrored reflection path, whose image
+    point sits below the datum, integrates the air it actually crosses.
+    """
+
+    extinction = np.asarray(surface_extinction, dtype=np.float64)
+    height_scale = max(scale_height_m, 1.0)
+    start = abs(start_height_m)
+    end = abs(end_height_m)
+    rise = end - start
+    if abs(rise) < 1e-6:
+        profile = math.exp(-start / height_scale)
+    else:
+        profile = (
+            height_scale
+            / rise
+            * (
+                math.exp(-start / height_scale)
+                - math.exp(-end / height_scale)
+            )
+        )
+    return extinction * max(path_length_m, 0.0) * profile
+
+
 def visibility_m(
     aerosol_optical_depth_550nm: float,
     rayleigh_optical_depth_550nm: float,
@@ -319,12 +378,95 @@ def visibility_m(
     the atmosphere than the molecules do.
     """
 
-    extinction_per_m = (
-        max(aerosol_optical_depth_550nm, 0.0) / max(aerosol_scale_height_m, 1.0)
-        + max(rayleigh_optical_depth_550nm, 0.0)
-        / max(molecular_scale_height_m, 1.0)
+    extinction_per_m = float(
+        surface_extinction_per_m(
+            aerosol_optical_depth_550nm, aerosol_scale_height_m
+        )
+        + surface_extinction_per_m(
+            rayleigh_optical_depth_550nm, molecular_scale_height_m
+        )
     )
     return KOSCHMIEDER_CONSTANT / max(extinction_per_m, 1e-12)
+
+
+@dataclass(frozen=True, slots=True)
+class SurfaceExtinction:
+    """Per-channel extinction at the surface, with each species' scale height.
+
+    This is the quantity the renderer needs and the quantity a visibility
+    observation constrains, so it is the single object the haze, star, smoke,
+    and point-light paths all read. Keeping aerosol and molecules apart rather
+    than summing them lets each keep its own vertical profile: haze thickens
+    toward the horizon roughly seven times faster than Rayleigh scattering
+    does, which is why the two cannot share one exponential.
+    """
+
+    aerosol_per_m: tuple[float, float, float]
+    molecular_per_m: tuple[float, float, float]
+    aerosol_scale_height_m: float = AEROSOL_SCALE_HEIGHT_M
+    molecular_scale_height_m: float = MOLECULAR_SCALE_HEIGHT_M
+
+    @property
+    def total_per_m(self) -> tuple[float, float, float]:
+        return tuple(
+            float(aerosol + molecular)
+            for aerosol, molecular in zip(
+                self.aerosol_per_m, self.molecular_per_m
+            )
+        )
+
+    @property
+    def visibility_m(self) -> float:
+        """Koschmieder range at 550 nm, the green channel this is evaluated at.
+
+        Inverting this relation is how an observed visibility would calibrate
+        the turbidity, which is the direction the project would prefer to run
+        it in once such an observation exists.
+        """
+
+        return KOSCHMIEDER_CONSTANT / max(self.total_per_m[1], 1e-12)
+
+    def transmittance(
+        self,
+        start_height_m: float,
+        end_height_m: float,
+        path_length_m: float,
+    ) -> np.ndarray:
+        """Per-channel transmittance along one straight path.
+
+        The CPU reference for what ``haze.frag``, ``particle.vert``, and
+        ``smoke.frag`` compute on the GPU, so the shader arithmetic has
+        something testable to agree with.
+        """
+
+        depth = slant_optical_depth(
+            np.asarray(self.aerosol_per_m),
+            self.aerosol_scale_height_m,
+            start_height_m,
+            end_height_m,
+            path_length_m,
+        ) + slant_optical_depth(
+            np.asarray(self.molecular_per_m),
+            self.molecular_scale_height_m,
+            start_height_m,
+            end_height_m,
+            path_length_m,
+        )
+        return np.exp(-depth)
+
+    def uniforms(self) -> dict[str, tuple[float, float, float] | float]:
+        """The uniform names every shader that consumes extinction declares.
+
+        One mapping rather than five call sites means a renamed uniform fails
+        to link instead of silently leaving one pass on a stale value.
+        """
+
+        return {
+            "aerosol_extinction_per_m": self.aerosol_per_m,
+            "molecular_extinction_per_m": self.molecular_per_m,
+            "aerosol_scale_height_m": self.aerosol_scale_height_m,
+            "molecular_scale_height_m": self.molecular_scale_height_m,
+        }
 
 
 DRY_AIR_GAS_CONSTANT_J_KG_K = 287.05
@@ -465,6 +607,101 @@ class AtmosphericOptics:
 
         return self.extinction_magnitudes(90.0)
 
+    def surface_extinction(
+        self,
+        aerosol_scale_height_m: float = AEROSOL_SCALE_HEIGHT_M,
+        molecular_scale_height_m: float = MOLECULAR_SCALE_HEIGHT_M,
+    ) -> SurfaceExtinction:
+        """Per-channel extinction at the surface, for the renderer's haze.
+
+        The same optical depths that redden and dim the stars, divided by their
+        scale heights. Aerial perspective and stellar extinction therefore
+        cannot disagree: one weather state produces both.
+        """
+
+        wavelengths = np.asarray(RGB_WAVELENGTHS_NM)
+        aerosol = surface_extinction_per_m(
+            aerosol_optical_depth(
+                wavelengths,
+                self.turbidity_beta,
+                self.angstrom_alpha,
+                self.relative_humidity,
+            ),
+            aerosol_scale_height_m,
+        )
+        molecular = surface_extinction_per_m(
+            rayleigh_optical_depth(wavelengths, self.pressure_pa),
+            molecular_scale_height_m,
+        )
+        return SurfaceExtinction(
+            aerosol_per_m=tuple(float(value) for value in aerosol),
+            molecular_per_m=tuple(float(value) for value in molecular),
+            aerosol_scale_height_m=aerosol_scale_height_m,
+            molecular_scale_height_m=molecular_scale_height_m,
+        )
+
+    def visibility_m(
+        self,
+        aerosol_scale_height_m: float = AEROSOL_SCALE_HEIGHT_M,
+        molecular_scale_height_m: float = MOLECULAR_SCALE_HEIGHT_M,
+    ) -> float:
+        """Koschmieder visibility implied by this atmospheric state.
+
+        **Not a measurement.** The event weather record carries no visibility
+        observation; this is what the aerosol model implies.
+        """
+
+        return visibility_m(
+            float(
+                aerosol_optical_depth(
+                    550.0,
+                    self.turbidity_beta,
+                    self.angstrom_alpha,
+                    self.relative_humidity,
+                )
+            ),
+            float(rayleigh_optical_depth(550.0, self.pressure_pa)),
+            aerosol_scale_height_m,
+            molecular_scale_height_m,
+        )
+
+    def with_visibility_m(
+        self,
+        observed_visibility_m: float,
+        aerosol_scale_height_m: float = AEROSOL_SCALE_HEIGHT_M,
+        molecular_scale_height_m: float = MOLECULAR_SCALE_HEIGHT_M,
+    ) -> "AtmosphericOptics":
+        """Calibrate the dry turbidity against an observed visibility.
+
+        The adapter for a dataset the project does not hold. Everywhere else
+        the turbidity is a documented urban estimate and the visibility is
+        whatever it implies; a reported visibility runs the relation the other
+        way, which is the direction that turns a grade C estimate into a
+        grade A constraint. The molecular term is fixed by the observed
+        pressure and is subtracted first, so only the aerosol absorbs the
+        residual — and the aerosol floors at zero rather than going negative
+        when a reported visibility exceeds the Rayleigh limit.
+
+        Humidity still modulates the result: the calibration sets the *dry*
+        turbidity such that the ambient value at the current humidity matches
+        the observation, so a later hour with different humidity moves as the
+        model says it should.
+        """
+
+        molecular = float(
+            surface_extinction_per_m(
+                rayleigh_optical_depth(550.0, self.pressure_pa),
+                molecular_scale_height_m,
+            )
+        )
+        target = KOSCHMIEDER_CONSTANT / max(observed_visibility_m, 1e-6)
+        aerosol_depth = max(target - molecular, 0.0) * aerosol_scale_height_m
+        growth = hygroscopic_growth_factor(self.relative_humidity)
+        dry_beta = aerosol_depth / (
+            growth * (0.55 ** -self.angstrom_alpha)
+        )
+        return replace(self, turbidity_beta=dry_beta)
+
     def summary(self) -> dict[str, object]:
         rayleigh = float(rayleigh_optical_depth(550.0, self.pressure_pa))
         aerosol = float(
@@ -496,6 +733,10 @@ class AtmosphericOptics:
                 )
             ),
             "zenith_extinction_mag": self.zenith_extinction_magnitudes(),
+            "surface_extinction_550nm_per_m": self.surface_extinction().total_per_m[
+                1
+            ],
+            "visibility_km": self.visibility_m() / 1_000.0,
             "relative_humidity": self.relative_humidity,
             "hygroscopic_growth": hygroscopic_growth_factor(
                 self.relative_humidity

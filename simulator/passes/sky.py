@@ -80,6 +80,7 @@ class SkyPass:
         self.program["star_optical_depth"] = float(
             self.atmospheric_optics.vertical_optical_depth(550.0)
         )
+        self.program["airlight_field"] = 0.0
         self.set_celestial_frame(np.eye(3))
 
     # -- per-frame state ---------------------------------------------------
@@ -135,3 +136,23 @@ class SkyPass:
     def draw(self) -> None:
         self.bind_textures()
         self.vao.render(moderngl.TRIANGLE_STRIP)
+
+    def draw_airlight(self, framebuffer: moderngl.Framebuffer) -> None:
+        """Render the airlight source field the haze pass mixes toward.
+
+        The same shader and the same weather state as the visible sky, with the
+        view ray projected onto the horizontal and stars suppressed. Evaluating
+        the sky model twice rather than reimplementing a horizon colour is what
+        keeps aerial perspective and the sky from drifting apart: a change to
+        twilight, cloud, or the moon reaches both by construction.
+
+        The camera uniforms are whatever the coordinator set last, so this must
+        be called after the main camera is bound and not between the reflection
+        pre-pass's mirrored camera and its restoration.
+        """
+
+        framebuffer.use()
+        self.program["airlight_field"] = 1.0
+        self.bind_textures()
+        self.vao.render(moderngl.TRIANGLE_STRIP)
+        self.program["airlight_field"] = 0.0

@@ -10,6 +10,7 @@ and the uniforms that several passes share (camera, ambient scale, clustered
 lights) are genuinely cross-pass concerns and stay there.
 """
 
+from .haze import HazePass, set_air_extinction
 from .land import LandPass, initialise_static_lights
 from .particles import STRIDE, ParticlePass
 from .post import PostProcessPass
@@ -20,6 +21,7 @@ from .targets import RenderTargets
 from .water import WaterPass, wind_from_bearing_deg
 
 __all__ = [
+    "HazePass",
     "LandPass",
     "ParticlePass",
     "PostProcessPass",
@@ -31,5 +33,6 @@ __all__ = [
     "SmokePass",
     "WaterPass",
     "initialise_static_lights",
+    "set_air_extinction",
     "wind_from_bearing_deg",
 ]

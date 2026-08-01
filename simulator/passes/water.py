@@ -9,7 +9,7 @@ import moderngl
 import numpy as np
 
 from .. import shaders
-from ..config import AtmosphereConfig, LightingConfig
+from ..config import AtmosphereConfig
 from ..water import (
     WaterConfig,
     build_directional_spectrum,
@@ -40,7 +40,6 @@ class WaterPass:
     def __init__(
         self,
         ctx: moderngl.Context,
-        lighting_config: LightingConfig,
         atmosphere: AtmosphereConfig,
         water_mask: np.ndarray,
         water_mask_bounds: np.ndarray,
@@ -73,9 +72,6 @@ class WaterPass:
             self.config.extent_m,
         )
         self.program = shaders.program(ctx, "water.vert", "water.frag")
-        self.program["air_extinction_per_m"] = (
-            lighting_config.air_extinction_per_m
-        )
         self.vaos: list[moderngl.VertexArray] = []
         self.buffers: list[moderngl.Buffer] = []
         for vertices, indices in (

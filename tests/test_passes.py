@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 from simulator import passes
-from simulator.passes import land, particles, post, scene, sky, smoke, water
+from simulator.passes import haze, land, particles, post, scene, sky, smoke, water
 from simulator.renderer import TERRAIN_UNIT, WATER_MASK_UNIT, Renderer
 
 
@@ -26,6 +26,9 @@ def test_texture_units_do_not_collide() -> None:
         "star_catalogue": sky.STAR_CATALOGUE_UNIT,
         "hdr": post.HDR_UNIT,
         "bloom": post.BLOOM_UNIT,
+        "adaptation": post.ADAPTATION_UNIT,
+        "previous_adaptation": post.PREVIOUS_ADAPTATION_UNIT,
+        "airlight": haze.AIRLIGHT_UNIT,
     }
     units = list(assignments.values())
     assert len(units) == len(set(units)), sorted(assignments.items())
@@ -34,12 +37,15 @@ def test_texture_units_do_not_collide() -> None:
 def test_passes_agree_on_the_shared_unit_numbers() -> None:
     assert water.WATER_MASK_UNIT == land.WATER_MASK_UNIT == WATER_MASK_UNIT
     assert land.TERRAIN_UNIT == TERRAIN_UNIT
+    # Same texture, same unit: haze and smoke both terminate against opaque
+    # geometry and never bind it at the same time.
+    assert haze.SCENE_DEPTH_UNIT == smoke.SCENE_DEPTH_UNIT
 
 
 def test_pass_modules_do_not_import_the_renderer() -> None:
     # The dependency runs one way: the coordinator knows the passes, not the
     # other way round. A cycle here would defeat the split.
-    for module in (sky, scene, water, land, particles, post, smoke):
+    for module in (sky, scene, water, land, particles, post, smoke, haze):
         text = inspect.getsource(module)
         assert "from ..renderer" not in text, module.__name__
         assert "import renderer" not in text, module.__name__
@@ -53,6 +59,7 @@ def test_public_pass_surface_is_exported() -> None:
         "LandPass",
         "ParticlePass",
         "SmokePass",
+        "HazePass",
         "PostProcessPass",
         "RenderTargets",
     ):
@@ -92,6 +99,8 @@ def test_renderer_exposes_the_accessors_tools_depend_on() -> None:
         "atmospheric_optics",
         "hdr_texture",
         "frame_index",
+        "visibility_m",
+        "surface_extinction",
     ):
         attribute = getattr(Renderer, name)
         assert isinstance(attribute, property), name

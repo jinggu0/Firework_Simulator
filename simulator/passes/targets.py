@@ -22,11 +22,14 @@ class RenderTargets:
         "hdr_texture",
         "scene_depth_texture",
         "hdr_fbo",
-        "smoke_fbo",
+        "composite_fbo",
         "reflection_texture",
         "reflection_depth",
         "reflection_fbo",
         "reflection_size",
+        "airlight_texture",
+        "airlight_fbo",
+        "airlight_size",
         "bloom_textures",
         "bloom_fbos",
         "bloom_size",
@@ -50,10 +53,10 @@ class RenderTargets:
         self.scene_depth_texture.repeat_x = False
         self.scene_depth_texture.repeat_y = False
         self.hdr_fbo = ctx.framebuffer([self.hdr_texture], self.scene_depth_texture)
-        # The same colour target without the depth attachment. Compositing
-        # smoke needs to sample the depth it would otherwise be bound to,
-        # which would be a texture feedback loop.
-        self.smoke_fbo = ctx.framebuffer([self.hdr_texture])
+        # The same colour target without the depth attachment. The haze and
+        # smoke composites both sample the depth they would otherwise be bound
+        # to, which would be a texture feedback loop.
+        self.composite_fbo = ctx.framebuffer([self.hdr_texture])
 
         self.reflection_size = (
             max(int(config.width * config.reflection_scale), 1),
@@ -68,6 +71,24 @@ class RenderTargets:
         self.reflection_depth = ctx.depth_renderbuffer(self.reflection_size)
         self.reflection_fbo = ctx.framebuffer(
             [self.reflection_texture], self.reflection_depth
+        )
+
+        # Airlight: the sky radiance the haze pass mixes toward. It is the sky
+        # model evaluated along the horizontal, so it varies only with azimuth
+        # and a coarse buffer loses nothing — an eighth of the width is still
+        # about a third of a degree per texel.
+        self.airlight_size = (
+            max(config.width // 8, 16),
+            max(config.height // 8, 16),
+        )
+        self.airlight_texture = ctx.texture(
+            self.airlight_size, components=4, dtype="f2"
+        )
+        self.airlight_texture.filter = moderngl.LINEAR, moderngl.LINEAR
+        self.airlight_texture.repeat_x = False
+        self.airlight_texture.repeat_y = False
+        self.airlight_fbo = ctx.framebuffer(
+            color_attachments=[self.airlight_texture]
         )
 
         self.bloom_size = (

@@ -7,7 +7,6 @@ in float facade_style;
 uniform vec3 camera_position;
 uniform float ambient_irradiance_w_m2;
 uniform float window_radiance_w_m2_sr;
-uniform float air_extinction_per_m;
 uniform float time_s;
 uniform vec2 wind_xz;
 uniform float wind_speed_mps;
@@ -29,6 +28,7 @@ uniform vec4 material_emissive[17];     // rgb, scale
 uniform vec2 material_relief[17];       // normal strength, height scale
 
 out vec4 frag_color;
+#include "air_extinction.glsl"
 const float PI = 3.14159265359;
 
 const int PATTERN_UNIFORM = 0;
@@ -112,9 +112,12 @@ vec3 reflected_radiance(vec3 n, vec3 albedo, vec4 reflectance) {
         float distance_m = sqrt(distance_squared);
         vec3 light_direction = displacement / distance_m;
         float down_lobe = pow(max(light_direction.y, 0.0), 3.0);
-        float irradiance = static_light_power_w * 2.0 * down_lobe
-                         * exp(-air_extinction_per_m * distance_m)
-                         / (PI * distance_squared);
+        vec3 irradiance = static_light_power_w * 2.0 * down_lobe
+                        * air_transmittance(
+                              static_light_position[i].y, world_position.y,
+                              distance_m
+                          )
+                        / (PI * distance_squared);
         float n_dot_l = max(dot(n, light_direction), 0.0);
         vec3 brdf = diffuse_albedo / PI
             + specular_brdf(
@@ -129,9 +132,12 @@ vec3 reflected_radiance(vec3 n, vec3 albedo, vec4 reflectance) {
         float distance_squared = max(dot(displacement, displacement), 1.0);
         float distance_m = sqrt(distance_squared);
         vec3 light_direction = displacement / distance_m;
-        float irradiance = dynamic_light_power_w[i]
-                         * exp(-air_extinction_per_m * distance_m)
-                         / (4.0 * PI * distance_squared);
+        vec3 irradiance = dynamic_light_power_w[i]
+                        * air_transmittance(
+                              dynamic_light_position[i].y, world_position.y,
+                              distance_m
+                          )
+                        / (4.0 * PI * distance_squared);
         float n_dot_l = max(dot(n, light_direction), 0.0);
         vec3 brdf = diffuse_albedo / PI
             + specular_brdf(

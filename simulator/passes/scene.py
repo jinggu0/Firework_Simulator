@@ -80,9 +80,6 @@ class ScenePass:
         self.program = shaders.program(ctx, "scene.vert", "scene.frag")
         budget = led_energy_budget(lighting_config)
         self.program["window_radiance_w_m2_sr"] = budget.window_radiance_w_m2_sr
-        self.program["air_extinction_per_m"] = (
-            lighting_config.air_extinction_per_m
-        )
         # Surface appearance is a uniform table rather than a shader branch
         # chain, so adding a material is a row in simulator/materials.py.
         materials.upload(self.program)

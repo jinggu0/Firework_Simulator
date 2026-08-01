@@ -213,23 +213,29 @@ frame-budget measurement. Exit code is non-zero only for `FAIL` or `ERROR`.
 Metrics are declared in `simulator/validation/catalogue.py` with their tolerance
 and the physical reason for that tolerance, and implemented in
 `simulator/validation/metrics.py`. A metric whose reference dataset is absent
-reports `NO_REFERENCE` and never `PASS`; nine of seventeen are in that state
+reports `NO_REFERENCE` and never `PASS`; nine of twenty-two are in that state
 because the firing timeline, launch coordinates, reference footage, and river
 gauge records have not been obtained.
 
-Everything except the frame budget and the frame-difference metric runs without
-an OpenGL context. The frame budget executes `tools.profile_runtime` in a
-separate process, so the harness itself has no GL dependency and records the
-machine, platform, backend, frame count, and date alongside the number — a frame
-time without that context is not comparable across machines.
+Two metrics need an OpenGL context and each runs in a separate process behind
+its own flag, so the harness itself has no GL dependency. V-12, the frame
+budget (`--include-performance`), executes `tools.profile_runtime` and records
+machine, platform, backend, frame count, and date alongside the number — a
+frame time without that context is not comparable across machines. V-22, aerial
+perspective (`--include-rendering`), executes
+`tools.measure_aerial_perspective`; it compares a rendered frame against a
+closed-form prediction of the same frame, so unlike V-12 its tolerance comes
+from the buffer's numeric precision and the result *is* portable.
 
 Currently passing: deterministic replay (clock, ballistics, burst events, and
 acoustic arrival compare bit-exactly), geodetic round trip (2.2e-9 m worst
 residual), blast propagation against the analytic Sedov-Taylor solution
 (exponent 0.40000), combustion and plume conservation (radiated energy closes to
-2.9e-4, pressure projection removes 88% of RMS divergence), and two
-astronomical transform cross-checks. Reported without a gate: the CPU
-simulation-state footprint, 32.9 MiB at the shipped 250,000-particle capacity.
+2.9e-4, pressure projection removes 88% of RMS divergence), two astronomical
+transform cross-checks, and aerial perspective against its CPU reference
+(8.3e-4 residual against a 2e-3 half-float bound, sky pixels bit-identical).
+Reported without a gate: the CPU simulation-state footprint, 32.9 MiB at the
+shipped 250,000-particle capacity.
 
 Colour and brightness comparison reads the linear RGBA16F buffer through
 `simulator/validation/capture.py`, before exposure and tone mapping, and stores
@@ -243,23 +249,31 @@ constants, a 463-line constructor that allocated every program, buffer,
 texture, and framebuffer in the engine, and a 190-line draw method. It is now
 382 lines and does one job — coordinating passes.
 
-GLSL lives in `simulator/shaders/*.glsl`, loaded and cached by
+GLSL lives in `simulator/shaders/`, loaded and cached by
 `simulator/shaders/__init__.py`. `shaders.program()` wraps compilation so a
 driver error names the files involved; a raw error reports a line number
 against an anonymous string, which is not enough to locate the fault among
-sixteen shaders.
+nineteen shaders.
+
+The loader also resolves a `#include "name.glsl"` directive, which GLSL itself
+lacks. `.glsl` files are includes only and never offered as compilable stages;
+a test asserts both, and a circular include is reported with its chain rather
+than recursing. This exists because five stages need the same atmospheric
+extinction integral, and five copies that drift would be invisible in the
+rendered output.
 
 `simulator/passes/` holds one module per pass, each owning its own programs,
 buffers, textures, and draw call:
 
 | Module | Owns |
 |---|---|
-| `targets.py` | HDR colour and sampleable depth, reflection, bloom attachments |
-| `sky.py` | Background program, cloud noise, star catalogue, celestial frame |
+| `targets.py` | HDR colour and sampleable depth, reflection, airlight, bloom attachments |
+| `sky.py` | Background program, cloud noise, star catalogue, celestial frame, airlight field |
 | `scene.py` | Static city batches, reflection subset, luminaire positions |
 | `water.py` | Near/far grids, JONSWAP spectrum, wind relaxation |
 | `land.py` | Terrain-displaced ground plane |
 | `particles.py` | Star trails and the reusable staging buffer |
+| `haze.py` | Deferred extinction and airlight composite |
 | `smoke.py` | Volume proxy box, state texture, active-bounds shrinking |
 | `post.py` | Bloom and the display transform |
 
@@ -474,11 +488,12 @@ Each has a real consumer rather than being interface scaffolding:
   hygroscopically. The dry coefficient is anchored so that at the show's
   observed 56% humidity the extinction is exactly what it was before: the
   change adds a response rather than silently re-tuning a calibration.
-- **Visibility comes out at 17 km** for the show's modelled aerosol. This is
-  what the model implies, **not** an observation — the Meteostat record carries
-  no visibility field. Supplying a measured visibility would invert the
-  relation and calibrate the turbidity instead, which is the more useful
-  direction and is the reason the relation is written this way.
+- **Visibility comes out at 17 km** for the show's modelled aerosol, and it is
+  now what the frame is drawn with — see *Aerial perspective* below. This is
+  what the model implies, **not** an observation: the Meteostat record carries
+  no visibility field. `AtmosphericOptics.with_visibility_m` is the adapter for
+  the day one arrives — it inverts the relation and calibrates the dry
+  turbidity, which turns a grade C estimate into a grade A constraint.
 
 A likely **nocturnal inversion is not modelled**. A clear October night over
 water very probably carried warmer air above cooler, which would refract sound
@@ -491,14 +506,88 @@ Without a solved field it would be an empty class, and the architecture's own
 reason for preferring offline to runtime CFD was that an uncalibrated
 city-scale solve is a grade-C model wearing the costume of a measurement.
 
+## Aerial perspective
+
+The visibility field above had no consumer in the renderer. The only air
+extinction in the frame was `air_extinction_per_m = 0.00012`, an unsourced
+scalar that implied 32.6 km of visibility — about twice what the event's own
+weather supports — and it was applied *only* between a lamp and a surface,
+never along the view path. The far bank of the Han River was rendered as if it
+were in vacuum.
+
+`SurfaceExtinction` now divides the column optical depths of
+`simulator/atmosphere.py` by the scale height of the species that produced
+them, so the air that dims the stars is the same air that hazes the skyline.
+Aerosol and molecules keep separate scale heights, 1,200 m and 8,500 m, because
+haze thickens toward the horizon about seven times faster than Rayleigh
+scattering does. At show conditions the surface coefficients are
+2.0 / 2.3 / 2.9 × 10⁻⁴ m⁻¹ for red, green, and blue: blue is attenuated
+1.51 times as strongly as red, so distant lights redden by the amount the
+Ångström exponent says they should rather than by a chosen tint.
+
+The composite is Koschmieder's own relation,
+`L = L_object · T + L_air · (1 − T)`, and it is applied in five places from one
+shared GLSL include (`shaders/air_extinction.glsl`, resolved by a `#include`
+directive the loader implements — five drifted copies of an integral would be
+undetectable in the output):
+
+- **The opaque scene** gets a deferred full-screen composite over the depth
+  buffer. Blending on the geometry itself would depend on the order the
+  buildings happened to be drawn in. The blend pipeline carries one scalar
+  alpha and the transmittance is per channel, so it runs as two draws:
+  `(ZERO, ONE_MINUS_SRC_COLOR)` multiplies the target by `T`, then
+  `(ONE, ONE)` adds the airlight. The order is not interchangeable.
+- **`L_air` is the sky pass drawn a second time**, at an eighth resolution,
+  with the view ray projected onto the horizontal and stars suppressed. That is
+  the radiance Koschmieder's 2% contrast threshold is defined against, so an
+  object at the visibility range sits at exactly that contrast and one at
+  infinity is exactly the sky. Re-evaluating the sky model rather than
+  authoring a horizon colour is what stops the two from drifting apart. Cost:
+  0.0026 ms.
+- **Stars and the plume** are additive over a composite that already carries
+  the airlight, so they take their own path transmittance and no airlight —
+  folded into the star colour in the vertex stage, and carried as a running
+  per-step product through the smoke march.
+- **Point lights** use the same integral over the source-to-surface path,
+  retiring the scalar literal.
+
+The path integral is exact rather than a constant-density approximation. For a
+straight segment through an exponential profile the optical depth has a closed
+form, `σ₀·L·H/Δz·(e^(−z₀/H) − e^(−z₁/H))`, and it matters: at 1.5 km range a
+300 m break sits behind 12% less air than a level path claims, and a 600 m
+break behind 22% less. Heights are taken as magnitudes so the mirrored water
+reflection integrates the air it actually crosses.
+
+**V-22 checks this rather than trusting it.** The same frame is rendered twice,
+once with the modelled atmosphere and once with it removed, which recovers
+`L_object` per pixel; the depth buffer gives the path; and the composite is
+predicted on the CPU from `SurfaceExtinction.transmittance`. The measured
+residual is 8.3 × 10⁻⁴ of the frame's peak radiance, against a 2 × 10⁻³ bound
+set by the half-float buffer's own 4.9 × 10⁻⁴ quantum. Sky pixels are
+bit-identical between the two renders — they already carry the airlight of an
+infinite path, and that requirement is exact, not approximate.
+
+At show conditions the median lit pixel loses 4.2% of its radiance, the far
+bank at 1.7 km loses 17%, and airlight supplies 20% of what remains there. The
+two haze draws cost 0.0707 ms.
+
+Two limits are worth stating. The airlight veil is only as good as the sky
+model's **horizon radiance, which is grade D** — at night the veil is dim
+against lit facades, so the visible effect is mostly extinction rather than
+milkiness, and that balance would move with a measured night-sky brightness.
+And the **planar reflection pre-pass is not hazed**: its depth attachment is a
+renderbuffer rather than a sampleable texture, and the mirrored camera's path
+lengths would need their own treatment.
+
 ## Render passes
 
-1. Sky radiance and astronomical lighting
+1. Sky radiance and astronomical lighting, plus the horizontal airlight field
 2. Terrain, bridges, buildings, and emissive city lights
 3. Spectral water displacement and reflection
-4. Firework shells, stars, sparks, and trails
-5. Participating-media smoke and light scattering
-6. HDR bloom, camera exposure, sensor response, and tone mapping
+4. Aerial perspective over the opaque scene
+5. Firework shells, stars, sparks, and trails
+6. Participating-media smoke and light scattering
+7. HDR bloom, camera exposure, sensor response, and tone mapping
 
 The water surface uses a 32-component, fetch-limited JONSWAP wind-wave
 spectrum with deep-water dispersion. Wave energy is derived from the stored

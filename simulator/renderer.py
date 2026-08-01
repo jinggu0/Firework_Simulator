@@ -8,6 +8,7 @@ import numpy as np
 
 from .camera import FreeCamera
 from .astronomy import CelestialState
+from .atmosphere import from_atmosphere_config
 from .camera_optics import vertical_fov_deg
 from .config import (
     AtmosphereConfig,
@@ -22,6 +23,7 @@ from .lighting import (
     radiometric_irradiance_from_illuminance,
 )
 from .passes import (
+    HazePass,
     LandPass,
     ParticlePass,
     PostProcessPass,
@@ -31,6 +33,7 @@ from .passes import (
     SmokePass,
     WaterPass,
     initialise_static_lights,
+    set_air_extinction,
 )
 from .physics import FireworkWorld
 
@@ -110,7 +113,6 @@ class Renderer:
         scene_data = self.scene.data
         self.water = WaterPass(
             ctx,
-            self.lighting_config,
             atmosphere,
             scene_data.water_mask,
             scene_data.water_mask_bounds,
@@ -130,7 +132,21 @@ class Renderer:
         self.scene.set_terrain(TERRAIN_UNIT)
         self.particles = ParticlePass(ctx, config, self.camera_config)
         self.smoke = SmokePass(ctx, smoke_config)
+        self.haze = HazePass(ctx, self.quad_buffer)
         self.targets = RenderTargets(ctx, config)
+        # Every path that crosses air reads one extinction: the view path in
+        # the haze composite, the star and plume radiance where they are drawn,
+        # and the source-to-surface path of the point lights.
+        self._air_extinction_programs = (
+            self.haze.program,
+            self.particles.program,
+            self.smoke.program,
+            self.scene.program,
+            self.water.program,
+        )
+        self._air_extinction = None
+        self.air_extinction_override = None
+        self._update_air_extinction(atmosphere)
 
         # The river mask and terrain height are sampled by the water, land, and
         # scene passes, so they are bound once by the coordinator rather than
@@ -188,6 +204,35 @@ class Renderer:
         return self.sky.atmospheric_optics
 
     @property
+    def surface_extinction(self):
+        """Per-channel air extinction the whole frame is currently rendered at."""
+
+        return self._air_extinction
+
+    @property
+    def visibility_m(self) -> float:
+        """Koschmieder range implied by that extinction, in metres.
+
+        Modelled, not observed: the event weather record carries no visibility
+        measurement. It is exposed so the title bar and the validation harness
+        report the range the frame was actually drawn with.
+        """
+
+        return self._air_extinction.visibility_m
+
+    def set_air_extinction_override(self, extinction) -> None:
+        """Pin the air extinction, or pass ``None`` to follow the weather.
+
+        Exists so the validation harness can render the identical frame with
+        the atmosphere removed. The composite is only checkable against its own
+        CPU reference if a vacuum render of the same scene is obtainable, and
+        the weather timeline would otherwise restore the extinction at the top
+        of every frame.
+        """
+
+        self.air_extinction_override = extinction
+
+    @property
     def hdr_texture(self) -> moderngl.Texture:
         return self.targets.hdr_texture
 
@@ -224,6 +269,8 @@ class Renderer:
             np.all(camera.position_m >= self.smoke.bounds[0])
             and np.all(camera.position_m <= self.smoke.bounds[1])
         )
+        self.haze.set_camera(inverse_bytes, camera.position_m)
+        self.particles.set_camera_position(camera.position_m)
         self._set_sky_camera(camera.forward, camera.right)
 
     def _set_sky_camera(self, forward: np.ndarray, right: np.ndarray) -> None:
@@ -246,6 +293,25 @@ class Renderer:
         # bound its fragment cost while detailed objects retain four.
         self.land.program["static_light_count"] = min(count, 2)
         self.land.program["static_light_position"].write(selected.tobytes())
+
+    def _update_air_extinction(self, atmosphere: AtmosphereConfig) -> None:
+        """Track the observed pressure and humidity into every air path.
+
+        Pressure sets the molecular column and humidity grows the aerosol, so
+        as the weather timeline advances the haze, the stars, the plume, and
+        the street lighting all move together instead of one being calibrated
+        against a frozen copy of the others.
+        """
+
+        extinction = (
+            self.air_extinction_override
+            if self.air_extinction_override is not None
+            else from_atmosphere_config(atmosphere).surface_extinction()
+        )
+        if extinction == self._air_extinction:
+            return
+        self._air_extinction = extinction
+        set_air_extinction(self._air_extinction_programs, extinction)
 
     def _update_environment_animation(
         self, atmosphere: AtmosphereConfig
@@ -396,6 +462,7 @@ class Renderer:
         smoke: SmokeFluid2D | None = None,
     ) -> None:
         self.time_s += frame_dt_s
+        self._update_air_extinction(world.atmosphere)
         self._update_environment_animation(world.atmosphere)
         self._update_static_lights(camera)
         self._update_celestial(celestial, world.atmosphere)
@@ -416,9 +483,14 @@ class Renderer:
         self.last_rendered_smoke_revision = smoke_revision
 
         self._update_camera(camera)
-        self.targets.hdr_fbo.use()
+        # The airlight field is the sky model along the horizontal, so it has
+        # to be rendered with the true camera bound rather than the mirrored
+        # one the reflection pre-pass leaves behind.
         self.ctx.disable(moderngl.BLEND)
         self.ctx.disable(moderngl.DEPTH_TEST)
+        self.sky.draw_airlight(self.targets.airlight_fbo)
+
+        self.targets.hdr_fbo.use()
         self.targets.hdr_fbo.clear(0, 0, 0, 1, depth=1)
         self.sky.draw()
         self.ctx.enable(moderngl.DEPTH_TEST)
@@ -427,9 +499,14 @@ class Renderer:
         self.land.draw()
         self.scene.draw()
         self.water.draw(self.time_s, self.targets.reflection_texture)
+        # Aerial perspective closes over the opaque scene before anything
+        # emissive is added: the stars and the plume carry their own path
+        # transmittance and must not receive the airlight a second time.
+        self.haze.draw(self.targets)
+        self.targets.hdr_fbo.use()
         self.particles.draw(world, radiant_power_w, self.time_s)
         if smoke is not None and smoke.has_visible_smoke():
-            self.targets.smoke_fbo.use()
+            self.targets.composite_fbo.use()
             self.smoke.draw(
                 smoke, camera.position_m, self.targets.scene_depth_texture
             )

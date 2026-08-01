@@ -16,6 +16,7 @@ uniform float depth_profile_scale;
 uniform int camera_inside;
 uniform int ray_steps;
 uniform float depth_bias_m;
+#include "air_extinction.glsl"
 float hash12(vec2 p) {
     vec3 p3 = fract(vec3(p.xyx) * .1031);
     p3 += dot(p3, p3.yzx + 33.33);
@@ -52,6 +53,18 @@ void main() {
     float jitter = hash12(gl_FragCoord.xy);
     float transmittance = 1.0;
     vec3 radiance = vec3(0.0);
+    // Haze between the camera and each sample. The plume sits within a few
+    // hundred metres of the datum, so the height profile over the march is
+    // flat to about a percent and the running product of a per-step factor is
+    // both exact for a level path and one multiply per step. Airlight is not
+    // added: the pixel behind the plume already carries it.
+    vec3 air = air_transmittance(
+        camera_position.y, camera_position.y + ray.y * t_near,
+        t_near + jitter * step_m
+    );
+    vec3 air_per_step = air_transmittance(
+        camera_position.y, camera_position.y, step_m
+    );
     for (int i = 0; i < 64; ++i) {
         if (i >= ray_steps) break;
         float distance_m = t_near + (float(i) + jitter) * step_m;
@@ -77,8 +90,9 @@ void main() {
         float warm = clamp(temperature / 850.0, 0.0, 1.0);
         vec3 scattered = mix(vec3(.0010, .00115, .00135),
                              vec3(.018, .0062, .0014), warm);
-        radiance += transmittance * scattered * step_alpha;
+        radiance += transmittance * air * scattered * step_alpha;
         transmittance *= 1.0 - step_alpha;
+        air *= air_per_step;
         if (transmittance < .01) break;
     }
     float alpha = 1.0 - transmittance;

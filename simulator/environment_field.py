@@ -52,18 +52,15 @@ from typing import Protocol, runtime_checkable
 import numpy as np
 
 from .atmosphere import (
-    AEROSOL_SCALE_HEIGHT_M,
     DRY_TURBIDITY_BETA,
-    MOLECULAR_SCALE_HEIGHT_M,
     REFERENCE_WIND_HEIGHT_M,
     STANDARD_LAPSE_RATE_K_PER_M,
     SURFACE_ROUGHNESS_LENGTH_M,
+    AtmosphericOptics,
     aerosol_optical_depth,
     pressure_at_height_pa,
-    rayleigh_optical_depth,
     relative_humidity_at_height,
     temperature_at_height_k,
-    visibility_m,
     wind_scale_at_height,
 )
 from .config import AtmosphereConfig
@@ -172,6 +169,23 @@ class StationTimelineField:
             self.relative_humidity(position_m, timestamp),
         )
 
+    def optics(
+        self, position_m: np.ndarray, timestamp: float
+    ) -> AtmosphericOptics:
+        """Clear-sky optics at a point, driven by the state at that point.
+
+        Building the optics here rather than reimplementing the optical depths
+        keeps one definition of extinction: the renderer's haze, the stellar
+        extinction, and the visibility reported below all read this object.
+        """
+
+        return AtmosphericOptics(
+            pressure_pa=self.pressure_pa(position_m, timestamp),
+            turbidity_beta=self.dry_turbidity_beta,
+            angstrom_alpha=self.angstrom_alpha,
+            relative_humidity=self.relative_humidity(position_m, timestamp),
+        )
+
     def aerosol_optical_depth_550nm(
         self, position_m: np.ndarray, timestamp: float
     ) -> float:
@@ -193,11 +207,7 @@ class StationTimelineField:
         and calibrate the turbidity instead, which is the more useful direction.
         """
 
-        pressure = self.pressure_pa(position_m, timestamp)
-        return visibility_m(
-            self.aerosol_optical_depth_550nm(position_m, timestamp),
-            float(rayleigh_optical_depth(550.0, pressure)),
-        )
+        return self.optics(position_m, timestamp).visibility_m()
 
     def sample(
         self, position_m: np.ndarray, timestamp: float

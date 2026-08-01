@@ -67,6 +67,7 @@ def run_validation(
     ephemeris_path: Path | None = None,
     star_catalogue_path: Path | None = None,
     include_performance: bool = False,
+    include_rendering: bool = False,
     performance_frames: int = 240,
     fluid_backend: str = "3d",
     replay_steps: int = 400,
@@ -100,6 +101,13 @@ def run_validation(
         runnable["V-12"] = lambda: frame_budget(
             performance_frames, fluid_backend
         )
+    if include_rendering:
+        # Separate from performance: V-12 is a machine-specific timing that
+        # must not be compared across hardware, while V-22 compares a rendered
+        # frame against a closed form and is portable.
+        from .aerial_perspective import aerial_perspective
+
+        runnable["V-22"] = aerial_perspective
 
     results: list[MetricResult] = []
     for spec in catalogue.CATALOGUE:

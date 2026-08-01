@@ -346,6 +346,10 @@ class SimulatorApp:
                     f" | {self.world.atmosphere.temperature_k - 273.15:.1f} C"
                     f" | wind {(wind[0] ** 2 + wind[2] ** 2) ** 0.5:.1f} m/s"
                     f" | Hs {self.renderer.significant_wave_height_m * 100:.1f} cm"
+                    # Modelled, not observed: the weather record carries no
+                    # visibility field. Shown because it is what the frame is
+                    # actually drawn with.
+                    f" | vis {self.renderer.visibility_m / 1000.0:.1f} km*"
                 )
             sound_level = (
                 f" | last boom {self.last_sound_level_db:.1f} dB"

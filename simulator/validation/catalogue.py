@@ -317,9 +317,32 @@ V21 = MetricSpec(
 )
 
 
+V22 = MetricSpec(
+    metric_id="V-22",
+    title="Rendered aerial perspective against its CPU reference",
+    tolerance=(
+        "rendered frame within 2e-3 of the predicted composite, relative to "
+        "the frame's own peak radiance; sky pixels unchanged exactly"
+    ),
+    physical_basis=(
+        "The composite claims L = L_object * T + L_air * (1 - T) with T the "
+        "per-channel transmittance through an exponential atmosphere. "
+        "Rendering the same frame with the atmosphere removed recovers "
+        "L_object, so the claim can be predicted on the CPU and subtracted "
+        "rather than judged by eye. The bound is set by the linear buffer's "
+        "half-float storage: 2^-11 is 4.9e-4 per stored value and the "
+        "prediction combines three of them, so 2e-3 is quantisation and "
+        "anything larger is a formula difference. Sky pixels carry the "
+        "airlight of an infinite path already and must be untouched, which is "
+        "an exact rather than approximate requirement."
+    ),
+    requires_opengl=True,
+)
+
+
 CATALOGUE: tuple[MetricSpec, ...] = (
     V01, V02, V03, V04, V05, V06, V07, V08,
-    V09, V10, V11, V12, V13, V14, V15, V16, V17, V18, V19, V20, V21,
+    V09, V10, V11, V12, V13, V14, V15, V16, V17, V18, V19, V20, V21, V22,
 )
 
 BY_ID: dict[str, MetricSpec] = {spec.metric_id: spec for spec in CATALOGUE}
