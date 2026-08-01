@@ -15,7 +15,12 @@ import math
 import moderngl
 
 from .. import shaders
-from ..camera_optics import analog_gain, photon_to_electron_scale
+from ..camera_optics import (
+    LensDistortion,
+    analog_gain,
+    photon_to_electron_scale,
+    white_balance_gains,
+)
 from ..config import PhysicalCameraConfig, RenderConfig
 from ..human_vision import (
     DARK_ADAPTATION_TIME_S,
@@ -67,6 +72,17 @@ class PostProcessPass:
         self.tonemap_program["photon_to_electron"].value = tuple(
             photon_to_electron_scale(camera_config)
         )
+        # The sensor's spectral response was applied and never balanced out.
+        # These gains are the von Kries correction for it, referenced to a
+        # Planckian at the configured temperature.
+        self.tonemap_program["white_balance_gain"].value = tuple(
+            float(value) for value in white_balance_gains(camera_config)
+        )
+        # Identity unless a measured lens calibration has been loaded into the
+        # config; the shader's inversion is exact in that case.
+        self.distortion = LensDistortion.from_config(camera_config)
+        for name, value in self.distortion.uniforms().items():
+            self.tonemap_program[name].value = value
         self.tonemap_program["analog_gain"] = analog_gain(camera_config)
         self.tonemap_program["full_well_electrons"] = (
             camera_config.full_well_electrons

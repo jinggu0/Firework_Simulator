@@ -76,6 +76,66 @@ def wavelength_rgb(wavelength_nm: float) -> np.ndarray:
     return (linear / peak).astype(np.float32)
 
 
+PLANCK_CONSTANT_J_S = 6.626_070_15e-34
+BOLTZMANN_CONSTANT_J_K = 1.380_649e-23
+SPEED_OF_LIGHT_M_S = 299_792_458.0
+
+VISIBLE_BAND_NM = (360.0, 830.0)
+"""Integration limits of the CIE 1931 observer."""
+
+
+def planckian_spectral_radiance(
+    wavelength_nm: float | np.ndarray, temperature_k: float
+) -> np.ndarray:
+    """Planck's law, in W/(m^3 sr).
+
+    The absolute scale cancels in every use here — only the shape of the
+    spectrum matters for a chromaticity — but it is left unnormalised so the
+    function is the law rather than a rescaling of it.
+    """
+
+    metres = np.asarray(wavelength_nm, dtype=np.float64) * 1e-9
+    exponent = PLANCK_CONSTANT_J_S * SPEED_OF_LIGHT_M_S / (
+        metres * BOLTZMANN_CONSTANT_J_K * max(temperature_k, 1.0)
+    )
+    return (
+        2.0 * PLANCK_CONSTANT_J_S * SPEED_OF_LIGHT_M_S**2
+        / metres**5
+        / np.expm1(exponent)
+    )
+
+
+def planckian_linear_srgb(
+    temperature_k: float, step_nm: float = 1.0
+) -> np.ndarray:
+    """Linear sRGB of a Planckian radiator, normalised so the peak is 1.
+
+    Planck's law integrated against the CIE 1931 colour matching functions and
+    converted with the standard sRGB matrix. Both inputs are published
+    standards, which is why this is preferred over :func:`blackbody_rgb` for
+    anything a calibration depends on: that function is a convenient curve fit
+    to the same locus and differs from this integration by a few percent.
+
+    This is the reference the camera's white balance is defined against — the
+    scene colour that a camera balanced at ``temperature_k`` renders neutral.
+    """
+
+    wavelengths = np.arange(
+        VISIBLE_BAND_NM[0], VISIBLE_BAND_NM[1] + step_nm, step_nm
+    )
+    matching = np.array(
+        [cie_xyz_at_wavelength(float(value)) for value in wavelengths]
+    )
+    radiance = planckian_spectral_radiance(wavelengths, temperature_k)
+    xyz = (matching * radiance[:, None]).sum(axis=0)
+    linear = _XYZ_TO_LINEAR_SRGB @ (xyz / max(xyz[1], 1e-30))
+    # Very cool or very warm radiators fall outside the sRGB gamut; clamping
+    # projects onto the nearest reproducible colour rather than inverting a
+    # channel, matching what wavelength_rgb already does.
+    linear = np.clip(linear, 0.0, None)
+    return (linear / max(float(linear.max()), 1e-30)).astype(np.float64)
+
+
 def color_temperature_from_bv(color_index_bv: float | np.ndarray) -> np.ndarray:
     """Stellar effective temperature from a Johnson B-V colour index.
 

@@ -171,6 +171,27 @@ class PhysicalCameraConfig:
     read_noise_electrons: float = 2.2
     enable_sensor_noise: bool = True
 
+    white_balance_temperature_k: float = 6504.0
+    """Planckian reference the balance renders neutral.
+
+    An operator setting, not a measurement. 6504 K is the only value derivable
+    from the pipeline's own colour space — the renderer's radiance carries sRGB
+    primaries, so balancing there makes a neutral scene render neutral and the
+    stage a correction rather than a look. See
+    :func:`simulator.camera_optics.white_balance_gains`.
+    """
+
+    # Brown-Conrady lens distortion, in OpenCV's k1 k2 p1 p2 k3 convention on
+    # normalised image coordinates. **Identity by default**: no calibration of
+    # the lens exists, and invented coefficients would put a fabricated optical
+    # claim into every frame. `camera_optics.load_lens_calibration` reads a
+    # measured set when one is obtained.
+    distortion_k1: float = 0.0
+    distortion_k2: float = 0.0
+    distortion_k3: float = 0.0
+    distortion_p1: float = 0.0
+    distortion_p2: float = 0.0
+
 
 @dataclass(frozen=True, slots=True)
 class RenderConfig:

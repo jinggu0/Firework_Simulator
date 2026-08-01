@@ -45,6 +45,11 @@ class RenderTargets:
         # RGBA16F: the linear scene-referred buffer every colour metric reads
         # before exposure and tone mapping.
         self.hdr_texture = ctx.texture(size, components=4, dtype="f2")
+        # Clamped, not wrapped. Lens distortion makes the display transform
+        # sample outside the frame near the corners, and a wrapped fetch would
+        # paste the opposite edge there instead of the nearest valid pixel.
+        self.hdr_texture.repeat_x = False
+        self.hdr_texture.repeat_y = False
         # A sampleable depth texture rather than a renderbuffer, so the smoke
         # ray marcher can terminate against opaque geometry.
         self.scene_depth_texture = ctx.depth_texture(size)

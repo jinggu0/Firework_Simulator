@@ -213,34 +213,39 @@ frame-budget measurement. Exit code is non-zero only for `FAIL` or `ERROR`.
 Metrics are declared in `simulator/validation/catalogue.py` with their tolerance
 and the physical reason for that tolerance, and implemented in
 `simulator/validation/metrics.py`. A metric whose reference dataset is absent
-reports `NO_REFERENCE` and never `PASS`; nine of twenty-two are in that state
+reports `NO_REFERENCE` and never `PASS`; nine of twenty-three are in that state
 because the firing timeline, launch coordinates, reference footage, and river
 gauge records have not been obtained.
 
-Two metrics need an OpenGL context and each runs in a separate process behind
-its own flag, so the harness itself has no GL dependency. V-12, the frame
-budget (`--include-performance`), executes `tools.profile_runtime` and records
+Three metrics need an OpenGL context and each runs in a separate process, so
+the harness itself has no GL dependency. V-12, the frame budget
+(`--include-performance`), executes `tools.profile_runtime` and records
 machine, platform, backend, frame count, and date alongside the number — a
-frame time without that context is not comparable across machines. V-22, aerial
-perspective (`--include-rendering`), executes
-`tools.measure_aerial_perspective`; it compares a rendered frame against a
-closed-form prediction of the same frame, so unlike V-12 its tolerance comes
-from the buffer's numeric precision and the result *is* portable.
+frame time without that context is not comparable across machines. V-22 and
+V-23 (`--include-rendering`) each render a frame and compare it against a
+closed-form prediction of the same frame, so unlike V-12 their tolerances come
+from numeric precision and their results *are* portable: V-22 checks the aerial
+perspective composite against the linear buffer, V-23 the whole display
+transform against the linear and bloom buffers.
 
 Currently passing: deterministic replay (clock, ballistics, burst events, and
 acoustic arrival compare bit-exactly), geodetic round trip (2.2e-9 m worst
 residual), blast propagation against the analytic Sedov-Taylor solution
 (exponent 0.40000), combustion and plume conservation (radiated energy closes to
 2.9e-4, pressure projection removes 88% of RMS divergence), two astronomical
-transform cross-checks, and aerial perspective against its CPU reference
-(8.3e-4 residual against a 2e-3 half-float bound, sky pixels bit-identical).
-Reported without a gate: the CPU simulation-state footprint, 32.9 MiB at the
-shipped 250,000-particle capacity.
+transform cross-checks, aerial perspective against its CPU reference (8.3e-4
+residual against a 2e-3 half-float bound, sky pixels bit-identical), and the
+display transform against its CPU reference (0.63 display code values against a
+2-code bound). Reported without a gate: the CPU simulation-state footprint,
+32.9 MiB at the shipped 250,000-particle capacity.
 
 Colour and brightness comparison reads the linear RGBA16F buffer through
 `simulator/validation/capture.py`, before exposure and tone mapping, and stores
 frames as `.npy`. A gamma-encoded screenshot has already lost the quantity being
 validated, and an SDR display cannot represent firework luminance in any case.
+V-23 is the sole exception and only because the stage it tests is what produces
+the 8-bit image; every other colour metric stays upstream of it, which is why
+changing the white balance or the tone curve cannot flatter any of them.
 
 ## Renderer structure
 
@@ -983,10 +988,108 @@ the animated river rather than adding a screen-space glow.
 
 The free camera projection is derived from a 36 x 20.25 mm sensor and 24 mm
 focal length (45.75 degree vertical field of view). Linear scene radiance then
-passes through an f/2.8 aperture, 90% lens transmission, 1/60 s shutter, 5.9 um
-pixel area, wavelength-dependent RGB photon energy and quantum efficiency,
-45,000-electron full well, ISO 800 analogue gain, Poisson shot-noise
-approximation, read noise, and cos^4 lens falloff before ACES display mapping.
+passes through Brown-Conrady lens distortion, an f/2.8 aperture, 90% lens
+transmission, 1/60 s shutter, 5.9 um pixel area, wavelength-dependent RGB
+photon energy and quantum efficiency, 45,000-electron full well, ISO 800
+analogue gain, Poisson shot-noise approximation, read noise, cos^4 lens
+falloff, and a von Kries white balance before ACES display mapping.
+
+### White balance
+
+The sensor stage was applying its spectral response and never undoing it.
+Quantum efficiency (0.42 / 0.52 / 0.36) and photon energy — a red photon
+carries less energy than a blue one, so a watt of red light frees more
+electrons — together turn a neutral scene into electrons in the ratio
+0.896 : 1 : 0.579. Every frame therefore left the camera with a yellow-green
+cast that nothing corrected: the rendered frame's mean blue-to-red ratio was
+**0.906**, blue *below* red on a night scene whose sky and lighting are not
+yellow.
+
+The balance is the reciprocal of the sensor's response to a reference
+illuminant, a Planckian radiator at `white_balance_temperature_k`, with green
+normalised to unity because exposure is set on the luminance-carrying channel.
+The reference is computed by integrating Planck's law against the CIE 1931
+colour matching functions — both published standards — rather than by the
+`blackbody_rgb` curve fit, which is convenient for star hue but differs from
+the integration by a few percent.
+
+At the shipped 6504 K the gains are **(1.055, 1, 1.642)**. They are not simply
+the reciprocal of the quantum efficiency because a 6504 K black body is not the
+D65 *illuminant*: D65 carries solar and atmospheric line structure a Planckian
+does not, a 5% difference the model keeps rather than rounds away. The frame's
+mean blue rises by 3.7 display code values and its worst pixel by 35; the mean
+blue-to-red ratio becomes 1.165.
+
+6504 K is the default because it is the only value derivable from the
+pipeline's own colour space: the renderer's radiance carries sRGB primaries, so
+balancing there makes an sRGB-neutral scene render neutral and the stage a
+correction rather than a look. The temperature is an **operator setting, not a
+measurement** — a videographer shooting a warm-lit night city might plausibly
+have set 3200-4000 K, which the config allows and which turns the whole frame
+distinctly blue.
+
+The balance sits **after** the full-well clamp, where a raw pipeline applies
+it. A channel that saturates clips before the gains, which is why a clipped
+burst shifts hue instead of staying neutral — the behaviour that produces
+magenta suns in real footage.
+
+### Lens distortion
+
+Brown-Conrady radial and tangential distortion, in OpenCV's `k1 k2 p1 p2 k3`
+convention on normalised image coordinates, because that is what any
+calibration this project could obtain would report; adopting a private
+convention would mean silently reinterpreting someone else's measurement.
+
+**The shipped default is identity, and exactly so.** No calibration of the lens
+exists and invented coefficients would put a fabricated optical claim into
+every frame. With zero coefficients the shader's first inversion step is exact,
+so the default camera path is bit-unperturbed rather than merely close.
+
+The frame is rendered through an ideal pinhole, so forming the lens's image
+means inverting the polynomial — which has no closed form. Five fixed-point
+steps, matching OpenCV's `undistortPoints` and asserted equal between the
+shader and `camera_optics.py`. Two properties are measured rather than assumed,
+because a loaded calibration can break either:
+
+- **Inverse residual.** The iteration converges for ordinary lenses (5e-8 at
+  k1 = +0.08, 7e-6 at k1 = −0.12) but **not for a strong barrel**: k1 = −0.25
+  leaves 3.1e-2, which would warp the image with nothing to signal it. V-23
+  gates on the residual.
+- **Frame coverage.** Barrel distortion pulls the image inward, so the output
+  corners ask for scene an ideal render does not contain. k1 = −0.12 covers
+  only 88% of the output; the remainder is clamped, not correct, and the fix is
+  to render with overscan. V-23 gates on coverage too.
+
+The effect is not a formality when calibrated: k1 = −0.18 moves the frame
+corner by 75 px horizontally at 1280 x 720.
+
+`load_lens_calibration` requires source, licence, capture time, image size,
+principal point, and coefficients, and **refuses a calibration whose principal
+point is not the image centre** — an off-centre principal point displaces the
+projection as well as the distortion, and applying half of a decentred
+calibration would be worse than refusing it.
+
+### What is deliberately not modelled
+
+- **A camera colour matrix.** One converts a sensor's native spectral basis to
+  a standard colour space. This renderer's values are *already* linear sRGB:
+  `wavelength_rgb` and `blackbody_rgb` both emit sRGB, so every authored and
+  derived colour is expressed there. A matrix built from the three channel
+  wavelengths and the CIE observer has diagonal 2.47 / 1.45 / 1.77 — far from
+  identity precisely because it would be a second conversion of colour already
+  converted once. Closing this properly needs a spectral renderer and measured
+  sensor sensitivities; neither is held, so the gap is recorded rather than
+  filled with a plausible-looking matrix.
+- **Defocus.** Derivable, and negligible here: at 24 mm f/2.8 with a 5.9 um
+  circle of confusion the hyperfocal distance is 34.9 m, so everything beyond
+  17.4 m is acceptably sharp and the whole scene is past 200 m.
+- **Diffraction.** Also derivable, also negligible: the Airy radius at f/2.8
+  and 550 nm is 1.9 um on the sensor, well inside one 5.9 um pixel.
+- **Lateral chromatic aberration**, which is lens-specific and needs the same
+  calibration the distortion does.
+- **Distortion and white balance in Human Vision Mode.** Neither describes an
+  eye. The observer path has no lens and no white-balance control; human
+  chromatic adaptation is a real omission and is recorded as one.
 Bloom is evaluated before the sensor stage as a compact optical point-spread
 approximation.
 

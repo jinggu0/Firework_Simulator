@@ -106,8 +106,10 @@ def run_validation(
         # must not be compared across hardware, while V-22 compares a rendered
         # frame against a closed form and is portable.
         from .aerial_perspective import aerial_perspective
+        from .display_transform import display_transform
 
         runnable["V-22"] = aerial_perspective
+        runnable["V-23"] = display_transform
 
     results: list[MetricResult] = []
     for spec in catalogue.CATALOGUE:

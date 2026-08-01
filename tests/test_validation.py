@@ -17,6 +17,7 @@ from simulator.validation import (
     aerial_perspective,
     capture,
     catalogue,
+    display_transform,
     metrics,
     performance,
 )
@@ -296,16 +297,17 @@ def test_performance_metric_is_absent_unless_requested(report) -> None:
     assert report.result("V-12").status is MetricStatus.NOT_IMPLEMENTED
 
 
-def test_rendering_metric_is_absent_unless_requested(report) -> None:
-    # V-22 also needs OpenGL, and is gated by its own flag because it is not
-    # machine specific the way the frame budget is.
-    assert report.result("V-22").status is MetricStatus.NOT_IMPLEMENTED
+def test_rendering_metrics_are_absent_unless_requested(report) -> None:
+    # V-22 and V-23 also need OpenGL, and share a flag separate from the frame
+    # budget's because neither is machine specific the way a timing is.
+    for metric_id in ("V-22", "V-23"):
+        assert report.result(metric_id).status is MetricStatus.NOT_IMPLEMENTED
 
 
 def test_every_opengl_metric_declares_that_it_needs_a_context() -> None:
     # A metric that silently required a GPU would report ERROR on a headless
     # agent, which reads as a regression rather than a missing capability.
-    for metric_id in ("V-12", "V-22"):
+    for metric_id in ("V-12", "V-22", "V-23"):
         assert BY_ID[metric_id].requires_opengl, metric_id
 
 
@@ -559,6 +561,93 @@ def test_aerial_perspective_reports_unparsable_output_as_error(
     _stub_subprocess(monkeypatch, "no json here")
     assert (
         aerial_perspective.aerial_perspective().status is MetricStatus.ERROR
+    )
+
+
+# --- V-23 subprocess handling ---------------------------------------------
+
+
+def _display_payload(**overrides) -> str:
+    payload = {
+        "white_balance_temperature_k": 6504.0,
+        "white_balance_gain": [1.0548, 1.0, 1.6420],
+        "distortion_is_identity": True,
+        "distortion_frame_coverage": 1.0,
+        "distortion_inverse_residual": 0.0,
+        "absolute_error_max": 0.00248,
+        "absolute_error_mean": 0.00102,
+        "absolute_error_p999": 0.00236,
+        "lit_pixel_fraction": 0.998,
+        "sensor_noise_enabled": False,
+    }
+    payload.update(overrides)
+    return json.dumps(payload)
+
+
+def test_display_transform_passes_within_display_quantisation(monkeypatch) -> None:
+    _stub_subprocess(monkeypatch, "pygame banner\n" + _display_payload())
+    result = display_transform.display_transform()
+    assert result.status is MetricStatus.PASS
+    assert result.residuals["error_in_code_values"] < 1.0
+    # The one metric that reads the 8-bit image must say so.
+    assert result.detail["display_referred"] is True
+
+
+def test_display_transform_fails_on_a_stage_that_disagrees(monkeypatch) -> None:
+    # Dropping the blue balance gain would move blue by tens of code values.
+    _stub_subprocess(monkeypatch, _display_payload(absolute_error_max=0.05))
+    assert (
+        display_transform.display_transform().status is MetricStatus.FAIL
+    )
+
+
+def test_display_transform_fails_when_the_lens_inversion_diverges(
+    monkeypatch,
+) -> None:
+    # Five fixed-point steps do not converge for a strong barrel, and the CPU
+    # reference uses the same iteration, so the residual is the only signal.
+    _stub_subprocess(
+        monkeypatch, _display_payload(distortion_inverse_residual=3.1e-2)
+    )
+    result = display_transform.display_transform()
+    assert result.status is MetricStatus.FAIL
+    assert "not converged" in result.message
+
+
+def test_display_transform_fails_when_the_frame_needs_overscan(
+    monkeypatch,
+) -> None:
+    _stub_subprocess(
+        monkeypatch, _display_payload(distortion_frame_coverage=0.88)
+    )
+    result = display_transform.display_transform()
+    assert result.status is MetricStatus.FAIL
+    assert "overscan" in result.message
+
+
+def test_display_transform_refuses_a_vacuous_pass(monkeypatch) -> None:
+    _stub_subprocess(monkeypatch, _display_payload(lit_pixel_fraction=0.01))
+    result = display_transform.display_transform()
+    assert result.status is MetricStatus.FAIL
+    assert "does not exercise" in result.message
+
+
+def test_display_transform_treats_a_missing_gl_context_as_no_reference(
+    monkeypatch,
+) -> None:
+    _stub_subprocess(monkeypatch, "", returncode=1)
+    assert (
+        display_transform.display_transform().status
+        is MetricStatus.NO_REFERENCE
+    )
+
+
+def test_display_transform_reports_unparsable_output_as_error(
+    monkeypatch,
+) -> None:
+    _stub_subprocess(monkeypatch, "no json here")
+    assert (
+        display_transform.display_transform().status is MetricStatus.ERROR
     )
 
 

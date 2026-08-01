@@ -340,9 +340,33 @@ V22 = MetricSpec(
 )
 
 
+V23 = MetricSpec(
+    metric_id="V-23",
+    title="Display transform against its CPU reference",
+    tolerance=(
+        "rendered frame within 2 display code values of the predicted "
+        "transform; lens inversion converged and the frame fully covered"
+    ),
+    physical_basis=(
+        "The linear HDR and bloom buffers are the display shader's only image "
+        "inputs, so running the same chain — lens distortion, cos^4 falloff, "
+        "photon-to-electron conversion, full-well clipping, white balance, "
+        "ACES, gamma — on the CPU predicts the frame the GPU should have "
+        "produced. The bound is 8-bit quantisation: rounding alone gives a "
+        "quarter of a code value on average and about half at worst, so 2 "
+        "code values is three times that margin while sitting far below any "
+        "real defect. Sensor noise is disabled because its distribution is "
+        "the claim, not its per-pixel value. This is the only metric that "
+        "reads the display-referred image, and only because the stage under "
+        "test is what produces it."
+    ),
+    requires_opengl=True,
+)
+
+
 CATALOGUE: tuple[MetricSpec, ...] = (
     V01, V02, V03, V04, V05, V06, V07, V08,
-    V09, V10, V11, V12, V13, V14, V15, V16, V17, V18, V19, V20, V21, V22,
+    V09, V10, V11, V12, V13, V14, V15, V16, V17, V18, V19, V20, V21, V22, V23,
 )
 
 BY_ID: dict[str, MetricSpec] = {spec.metric_id: spec for spec in CATALOGUE}
