@@ -23,6 +23,7 @@ from ..camera_optics import (
 )
 from ..config import PhysicalCameraConfig, RenderConfig
 from ..human_vision import (
+    CHROMATIC_ADAPTATION_TIME_S,
     DARK_ADAPTATION_TIME_S,
     LIGHT_ADAPTATION_TIME_S,
     HumanVisionState,
@@ -137,6 +138,15 @@ class PostProcessPass:
             PREVIOUS_ADAPTATION_UNIT
         )
         self.adaptation_program["pooling_lod"] = ADAPTATION_POOLING_LOD
+        # The adapting white is a property of the whole field, so it is pooled
+        # from the last mip level — the one texel that covers everything.
+        # floor, not ceil: the chain for 1280x720 ends at level 10, and asking
+        # for 11 samples a level that was never allocated. Drivers clamp, so
+        # the mistake is invisible until a readback of that level returns
+        # rubbish, which is how it was found.
+        self.adaptation_program["global_pooling_lod"] = float(
+            math.floor(math.log2(max(config.width, config.height)))
+        )
 
     def set_mode(self, mode: DisplayMode) -> None:
         self.mode = mode
@@ -175,6 +185,9 @@ class PostProcessPass:
         )
         self.adaptation_program["dark_response"] = 1.0 - math.exp(
             -max(frame_dt_s, 0.0) / DARK_ADAPTATION_TIME_S
+        )
+        self.adaptation_program["chromatic_response"] = 1.0 - math.exp(
+            -max(frame_dt_s, 0.0) / CHROMATIC_ADAPTATION_TIME_S
         )
         targets.adaptation_fbos[targets.adaptation_index].use()
         targets.hdr_texture.use(HDR_UNIT)

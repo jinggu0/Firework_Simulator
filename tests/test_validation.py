@@ -19,6 +19,7 @@ from simulator.validation import (
     catalogue,
     display_transform,
     metrics,
+    observer_transform,
     performance,
 )
 from simulator.validation.report import MetricResult
@@ -298,16 +299,16 @@ def test_performance_metric_is_absent_unless_requested(report) -> None:
 
 
 def test_rendering_metrics_are_absent_unless_requested(report) -> None:
-    # V-22 and V-23 also need OpenGL, and share a flag separate from the frame
-    # budget's because neither is machine specific the way a timing is.
-    for metric_id in ("V-22", "V-23"):
+    # V-22, V-23 and V-24 also need OpenGL, and share a flag separate from the
+    # frame budget's because none is machine specific the way a timing is.
+    for metric_id in ("V-22", "V-23", "V-24"):
         assert report.result(metric_id).status is MetricStatus.NOT_IMPLEMENTED
 
 
 def test_every_opengl_metric_declares_that_it_needs_a_context() -> None:
     # A metric that silently required a GPU would report ERROR on a headless
     # agent, which reads as a regression rather than a missing capability.
-    for metric_id in ("V-12", "V-22", "V-23"):
+    for metric_id in ("V-12", "V-22", "V-23", "V-24"):
         assert BY_ID[metric_id].requires_opengl, metric_id
 
 
@@ -689,6 +690,109 @@ def test_display_transform_reports_unparsable_output_as_error(
     _stub_subprocess(monkeypatch, "no json here")
     assert (
         display_transform.display_transform().status is MetricStatus.ERROR
+    )
+
+
+# --- V-24 subprocess handling ---------------------------------------------
+
+
+def _observer_payload(**overrides) -> str:
+    payload = {
+        "adapting_luminance_cd_m2": 0.383,
+        "cone_fraction": 0.628,
+        "chromatic_degree": 0.660,
+        "adapting_white": [1.141, 0.955, 0.984],
+        "adapting_white_spatial_spread": 0.0,
+        "adapting_white_luminance": 1.0,
+        "chromatic_gains": [0.978, 1.020, 1.008],
+        "chromatic_gain_spread": 1.043,
+        "effective_chromatic_shift": 0.027,
+        "absolute_error_max": 0.00285,
+        "absolute_error_mean": 0.00102,
+        "absolute_error_p999": 0.00236,
+        "lit_pixel_fraction": 0.997,
+        "spatial_stages_disabled": True,
+    }
+    payload.update(overrides)
+    return json.dumps(payload)
+
+
+def test_observer_transform_passes_within_display_quantisation(
+    monkeypatch,
+) -> None:
+    _stub_subprocess(monkeypatch, "pygame banner\n" + _observer_payload())
+    result = observer_transform.observer_transform()
+    assert result.status is MetricStatus.PASS
+    assert result.residuals["error_in_code_values"] < 1.0
+    # The two stages it cannot predict must travel with the result.
+    assert "peripheral acuity" in result.detail["unverified_stages"]
+
+
+def test_observer_transform_fails_on_a_stage_that_disagrees(monkeypatch) -> None:
+    _stub_subprocess(monkeypatch, _observer_payload(absolute_error_max=0.05))
+    assert (
+        observer_transform.observer_transform().status is MetricStatus.FAIL
+    )
+
+
+def test_observer_transform_fails_when_the_white_stops_being_global(
+    monkeypatch,
+) -> None:
+    # Spatial structure means the pooling mip stopped covering the field, so
+    # the von Kries step would be adapting to a patch instead of the illuminant.
+    _stub_subprocess(
+        monkeypatch, _observer_payload(adapting_white_spatial_spread=0.02)
+    )
+    result = observer_transform.observer_transform()
+    assert result.status is MetricStatus.FAIL
+    assert "must be global" in result.message
+
+
+def test_observer_transform_fails_when_the_white_is_not_normalised(
+    monkeypatch,
+) -> None:
+    # A white off unit luminance makes the adaptation change brightness, which
+    # is another stage's job.
+    _stub_subprocess(
+        monkeypatch, _observer_payload(adapting_white_luminance=1.08)
+    )
+    result = observer_transform.observer_transform()
+    assert result.status is MetricStatus.FAIL
+    assert "luminance preserving" in result.message
+
+
+def test_observer_transform_fails_on_a_degenerate_degree(monkeypatch) -> None:
+    # CIECAM02 D is never 0 or 1 in a real viewing condition.
+    for degree in (0.0, 1.0):
+        _stub_subprocess(monkeypatch, _observer_payload(chromatic_degree=degree))
+        result = observer_transform.observer_transform()
+        assert result.status is MetricStatus.FAIL, degree
+        assert "collapsed" in result.message
+
+
+def test_observer_transform_refuses_a_vacuous_pass(monkeypatch) -> None:
+    _stub_subprocess(monkeypatch, _observer_payload(lit_pixel_fraction=0.01))
+    result = observer_transform.observer_transform()
+    assert result.status is MetricStatus.FAIL
+    assert "does not exercise" in result.message
+
+
+def test_observer_transform_treats_a_missing_gl_context_as_no_reference(
+    monkeypatch,
+) -> None:
+    _stub_subprocess(monkeypatch, "", returncode=1)
+    assert (
+        observer_transform.observer_transform().status
+        is MetricStatus.NO_REFERENCE
+    )
+
+
+def test_observer_transform_reports_unparsable_output_as_error(
+    monkeypatch,
+) -> None:
+    _stub_subprocess(monkeypatch, "no json here")
+    assert (
+        observer_transform.observer_transform().status is MetricStatus.ERROR
     )
 
 

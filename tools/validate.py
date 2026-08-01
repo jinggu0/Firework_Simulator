@@ -79,8 +79,8 @@ def main() -> int:
         "--include-rendering",
         action="store_true",
         help=(
-            "Run V-22 and V-23, which render frames in separate processes and "
-            "need an OpenGL context."
+            "Run V-22, V-23, and V-24, which render frames in separate "
+            "processes and need an OpenGL context."
         ),
     )
     parser.add_argument("--frames", type=int, default=240)

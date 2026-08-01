@@ -372,9 +372,36 @@ V23 = MetricSpec(
 )
 
 
+V24 = MetricSpec(
+    metric_id="V-24",
+    title="Observer transform against its CPU reference",
+    tolerance=(
+        "rendered frame within 2 display code values of the predicted "
+        "transform; the adapting white global and at unit luminance; the "
+        "degree of adaptation strictly between 0 and 1"
+    ),
+    physical_basis=(
+        "The sibling of V-23 for Human Vision Mode. The linear HDR, bloom, and "
+        "adaptation buffers are the shader's only image inputs, so running the "
+        "same chain — pupil gain, local adaptation, CAT02 chromatic "
+        "adaptation, the mesopic mix, ACES, gamma — on the CPU predicts the "
+        "frame the GPU should have produced. The bound is 8-bit quantisation, "
+        "on the same reasoning as V-23. The structural checks are what a "
+        "plausible-looking error would evade: a transposed cone matrix, an "
+        "adapting white that stopped being global, or one that stopped "
+        "carrying unit luminance and so silently changed brightness. "
+        "Peripheral acuity and the glare tail are switched off for the "
+        "measurement and remain unverified: both are spatial and predicting "
+        "them would measure GPU mip generation rather than the model."
+    ),
+    requires_opengl=True,
+)
+
+
 CATALOGUE: tuple[MetricSpec, ...] = (
     V01, V02, V03, V04, V05, V06, V07, V08,
     V09, V10, V11, V12, V13, V14, V15, V16, V17, V18, V19, V20, V21, V22, V23,
+    V24,
 )
 
 BY_ID: dict[str, MetricSpec] = {spec.metric_id: spec for spec in CATALOGUE}

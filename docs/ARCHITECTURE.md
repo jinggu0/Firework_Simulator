@@ -213,20 +213,20 @@ frame-budget measurement. Exit code is non-zero only for `FAIL` or `ERROR`.
 Metrics are declared in `simulator/validation/catalogue.py` with their tolerance
 and the physical reason for that tolerance, and implemented in
 `simulator/validation/metrics.py`. A metric whose reference dataset is absent
-reports `NO_REFERENCE` and never `PASS`; nine of twenty-three are in that state
+reports `NO_REFERENCE` and never `PASS`; nine of twenty-four are in that state
 because the firing timeline, launch coordinates, reference footage, and river
 gauge records have not been obtained.
 
-Three metrics need an OpenGL context and each runs in a separate process, so
-the harness itself has no GL dependency. V-12, the frame budget
+Four metrics need an OpenGL context and each runs in a separate process, so the
+harness itself has no GL dependency. V-12, the frame budget
 (`--include-performance`), executes `tools.profile_runtime` and records
 machine, platform, backend, frame count, and date alongside the number — a
-frame time without that context is not comparable across machines. V-22 and
-V-23 (`--include-rendering`) each render a frame and compare it against a
+frame time without that context is not comparable across machines. V-22, V-23
+and V-24 (`--include-rendering`) each render a frame and compare it against a
 closed-form prediction of the same frame, so unlike V-12 their tolerances come
 from numeric precision and their results *are* portable: V-22 checks the aerial
-perspective composite against the linear buffer, V-23 the whole display
-transform against the linear and bloom buffers.
+perspective composite against the linear buffer, V-23 the camera's display
+transform, and V-24 the observer's.
 
 Currently passing: deterministic replay (clock, ballistics, burst events, and
 acoustic arrival compare bit-exactly), geodetic round trip (2.2e-9 m worst
@@ -235,9 +235,9 @@ residual), blast propagation against the analytic Sedov-Taylor solution
 2.9e-4, pressure projection removes 88% of RMS divergence), two astronomical
 transform cross-checks, aerial perspective against its CPU reference (8.3e-4
 residual against a 2e-3 half-float bound, sky pixels bit-identical), and the
-display transform against its CPU reference (0.63 display code values against a
-2-code bound). Reported without a gate: the CPU simulation-state footprint,
-32.9 MiB at the shipped 250,000-particle capacity.
+display and observer transforms against their CPU references (0.63 display code
+values each, against a 2-code bound). Reported without a gate: the CPU
+simulation-state footprint, 32.9 MiB at the shipped 250,000-particle capacity.
 
 Colour and brightness comparison reads the linear RGBA16F buffer through
 `simulator/validation/capture.py`, before exposure and tone mapping, and stores
@@ -423,9 +423,14 @@ observer state computed in `simulator/human_vision.py`:
   would stall the frame.
 - **Mesopic mixing** across the CIE 191:2010 range, 0.005 to 5 cd/m². There is
   one rod photopigment, so rod vision carries no hue and the image collapses
-  toward luminance as the cone contribution falls. **At the show's ambient
-  illuminance the observer sits at a cone fraction near 0.5 — squarely mesopic**,
-  which is the regime the mode exists to represent.
+  toward luminance as the cone contribution falls. **At the show's converged
+  ambient — 0.383 cd/m², the 1.2 lux urban ambient over π — the observer sits
+  at a cone fraction of 0.628: squarely mesopic**, which is the regime the mode
+  exists to represent. Better than a third of the image is rod signal and
+  therefore already achromatic.
+- **Chromatic adaptation** by von Kries gain control in the CAT02 cone
+  channels, taking the field's own average chromaticity to the display white.
+  See *Discounting the illuminant* below.
 - **Disability glare** from the Stiles-Holladay inverse-square term of the CIE
   glare equation. Scatter in the ocular media veils the retinal image, which is
   why a burst washes out its surroundings rather than merely looking bright.
@@ -449,6 +454,74 @@ the eye moves into rod vision. Applying that needs the tabulated scotopic
 luminous efficiency V′(λ), which this project does not hold; only the achromatic
 collapse is applied, and the colour shift is a known omission rather than an
 approximated one.
+
+### Discounting the illuminant
+
+An observer does not see a warm-lit scene as uniformly orange. The cone
+channels rescale until the dominant light reads closer to neutral, and that
+gain control — von Kries adaptation — is what the camera's white balance
+imitates. The observer path had none of it.
+
+It is performed in the CAT02 cone space of CIECAM02 rather than in display
+primaries, because adaptation is a change of cone gains and CAT02 is the space
+the degree-of-adaptation relation is defined against. Both matrices live in
+`simulator/color.py` and a test extracts the GLSL literals and compares them:
+GLSL `mat3` is column-major, so a matrix written row-wise compiles, runs, and
+produces a plausible image.
+
+Three things make the effect smaller than the machinery suggests, and each is a
+measurement rather than a choice:
+
+- **Adaptation is never complete.** CIECAM02's `D = F[1 − (1/3.6)e^((−L_A−42)/92)]`
+  caps at the surround factor, 0.8 for the dark surround a night show is. Over
+  the luminance band this show occupies D stays near **0.660** — the observer
+  discounts about two thirds of the illuminant's colour. The relation is fitted
+  in photopic conditions and is being extrapolated into the mesopic; that is
+  flagged, and bounded by the next point.
+- **A third of the image is rod signal.** Adaptation acts on cones, so it is
+  applied to the cone path and the rod path keeps the unadapted luminance —
+  rods have one photopigment and no gain control that could discount a hue they
+  cannot see. At cone fraction 0.628 the mesopic mix passes only that much of
+  the effect through.
+- **The field is only mildly warm.** The adapting white converges to
+  (1.141, 0.955, 0.984) — the city lighting dominating a dark sky. The
+  resulting gains are **(0.978, 1.020, 1.008)**, a 4.4% spread, which after the
+  mesopic mix is a **2.7%** shift in the linear signal and about 4 code values
+  in the 8-bit image.
+
+**The time course is the substantive part.** Fairchild & Reniff (1995) measured
+chromatic adaptation as roughly 90% complete after 60 s, so the constant here is
+60/ln(10) = 26.06 s. That slowness is why a two-second break is **not**
+discounted: the adapting white moves 7.4% of the way toward a green shell's
+chromaticity while it burns, so the observer sees it as green. A fast constant
+would desaturate every break, which would be a modelling error rather than a
+subtle one. The fast receptoral component Fairchild & Reniff also report is not
+modelled, so a step change here begins slower and finishes faster than the
+measurement.
+
+The adapting white is tracked on the GPU, in the same ping-pong buffer as the
+local adapting luminance — `rgb` the white, `alpha` the luminance — because it
+is a per-frame image statistic and reading it back would stall the frame for a
+value the shader is about to use. It is **global**: sampled from the last mip
+level at a fixed point, so every texel arrives at the same value rather than
+happening to. It is stored normalised to unit luminance, which is what makes
+the von Kries step luminance-preserving; brightness adaptation is the other
+channel's job.
+
+Two defects found by V-24 rather than by looking at the image, both recorded
+here because neither would have been visible: the pooling level was computed
+with `ceil` rather than `floor` and asked for a mip that was never allocated
+(drivers clamp, so it worked by accident); and storing a normalised white as
+half floats let a systematic rounding of a few 1e-4 be amplified by
+1/response ≈ 18, drifting the white 3.7e-3 off unit luminance. It is now
+renormalised on both write and read.
+
+**Not modelled**: local chromatic adaptation, and with it coloured afterimages.
+The local *luminance* adaptation above does produce achromatic afterimages, but
+a coloured one comes from photopigment bleaching rather than from von Kries
+gain control, and CAT02's degree of adaptation is defined for a global adapting
+field. Extending it per-pixel would be using the model outside what it is
+calibrated for.
 
 ### The display limit both modes hit
 
@@ -1134,8 +1207,9 @@ calibration would be worse than refusing it.
 - **Lateral chromatic aberration**, which is lens-specific and needs the same
   calibration the distortion does.
 - **Distortion and white balance in Human Vision Mode.** Neither describes an
-  eye. The observer path has no lens and no white-balance control; human
-  chromatic adaptation is a real omission and is recorded as one.
+  eye. The observer path has no lens, and its equivalent of a white balance is
+  chromatic adaptation, which is modelled on its own terms — see *Discounting
+  the illuminant*.
 Bloom is evaluated before the sensor stage as a compact optical point-spread
 approximation.
 

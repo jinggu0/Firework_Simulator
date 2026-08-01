@@ -32,6 +32,13 @@ performance" — the 0.005 to 5 cd/m2 mesopic transition range.
 Vos J.J., van den Berg T.J.T.P., CIE 135/1-1999 — disability glare; the
 Stiles-Holladay inverse-square term is the dominant contribution for a young
 eye at the angles that matter here.
+
+CIE 159:2004, "A colour appearance model for colour management systems:
+CIECAM02" — the CAT02 cone response and the degree-of-adaptation relation.
+
+Fairchild M.D., Reniff L., "Time course of chromatic adaptation for
+colour-appearance judgments", Journal of the Optical Society of America A
+12(5), 1995 — chromatic adaptation roughly 90 percent complete after 60 s.
 """
 
 from __future__ import annotations
@@ -75,6 +82,53 @@ minutes. One cone-scale constant is used because the show is seventy minutes
 long and the observer never leaves the mesopic range, so the rod branch would
 not complete either way.
 """
+
+# -- chromatic adaptation ----------------------------------------------------
+
+CHROMATIC_ADAPTATION_TIME_S = 26.06
+"""Time constant for the adapting white to follow the field's chromaticity.
+
+Fairchild and Reniff (1995) measured chromatic adaptation as roughly 90 percent
+complete after 60 s, which for a single exponential is ``60 / ln(10)``. They
+also report a fast receptoral component within the first second; that two-phase
+structure is **not** modelled, so a step change here is slower to begin and
+faster to finish than the measurement.
+
+The slowness is the point rather than a limitation. It is why a two-second
+burst is *not* discounted: the observer sees a green shell as green because the
+adapting white barely moves in two seconds. A fast constant would desaturate
+every break, which would be a modelling error rather than a subtle one.
+"""
+
+DARK_SURROUND_FACTOR = 0.8
+"""CIECAM02 ``F`` for a dark surround, which is what a night show is.
+
+The other tabulated values are 1.0 for an average surround and 0.9 for dim.
+``F`` caps the degree of adaptation: an observer in the dark discounts the
+illuminant less completely than one in a lit room.
+"""
+
+
+def degree_of_adaptation(
+    adapting_luminance_cd_m2: float,
+    surround_factor: float = DARK_SURROUND_FACTOR,
+) -> float:
+    """CIECAM02 degree of adaptation ``D``.
+
+    ``D = F [1 - (1/3.6) exp((-L_A - 42) / 92)]``. Adaptation is never complete:
+    even in bright light ``D`` reaches only ``F``, and in the dark it falls
+    further. Over the luminance range this show spans it stays near 0.66, so
+    the observer discounts about two thirds of the illuminant's colour.
+
+    **Extrapolated below its calibration range.** The relation was fitted in
+    photopic conditions and this observer is mesopic. The mesopic mix
+    independently suppresses the whole chromatic path as the cone contribution
+    falls, so the extrapolation is bounded in effect as well as flagged here.
+    """
+
+    exponent = (-max(adapting_luminance_cd_m2, 0.0) - 42.0) / 92.0
+    degree = surround_factor * (1.0 - math.exp(exponent) / 3.6)
+    return min(max(degree, 0.0), 1.0)
 
 # -- optics of the eye -------------------------------------------------------
 
@@ -253,6 +307,18 @@ class HumanVisionState:
         return mesopic_factor(self.adapting_luminance_cd_m2)
 
     @property
+    def chromatic_degree(self) -> float:
+        """How completely the illuminant's colour is discounted.
+
+        The adapting *white* itself is tracked on the GPU, in the same buffer
+        as the local luminance: it is the field's own average chromaticity, and
+        reading it back to the CPU would stall the frame for a value the shader
+        is about to use anyway.
+        """
+
+        return degree_of_adaptation(self.adapting_luminance_cd_m2)
+
+    @property
     def pupil_gain(self) -> float:
         """Retinal illuminance relative to a 3 mm photopic reference pupil.
 
@@ -271,6 +337,7 @@ class HumanVisionState:
             "adapting_luminance_cd_m2": self.adapting_luminance_cd_m2,
             "pupil_gain": self.pupil_gain,
             "cone_fraction": self.cone_fraction,
+            "chromatic_degree": self.chromatic_degree,
             "glare_constant": GLARE_CONSTANT,
             "acuity_e2_deg": ACUITY_E2_DEG,
             "maximum_blur_lod": MAXIMUM_PERIPHERAL_BLUR_LOD,
@@ -284,6 +351,7 @@ class HumanVisionState:
             "pupil_diameter_mm": self.pupil_diameter_mm,
             "retinal_illuminance_td": self.retinal_illuminance_td,
             "cone_fraction": self.cone_fraction,
+            "chromatic_degree": self.chromatic_degree,
             "regime": (
                 "scotopic"
                 if self.cone_fraction <= 0.0

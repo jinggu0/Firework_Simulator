@@ -107,9 +107,11 @@ def run_validation(
         # frame against a closed form and is portable.
         from .aerial_perspective import aerial_perspective
         from .display_transform import display_transform
+        from .observer_transform import observer_transform
 
         runnable["V-22"] = aerial_perspective
         runnable["V-23"] = display_transform
+        runnable["V-24"] = observer_transform
 
     results: list[MetricResult] = []
     for spec in catalogue.CATALOGUE:

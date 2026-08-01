@@ -12,6 +12,92 @@ _XYZ_TO_LINEAR_SRGB = np.array(
     dtype=np.float64,
 )
 
+LINEAR_SRGB_TO_XYZ = np.array(
+    [
+        [0.4124, 0.3576, 0.1805],
+        [0.2126, 0.7152, 0.0722],
+        [0.0193, 0.1192, 0.9505],
+    ],
+    dtype=np.float64,
+)
+"""The published forward matrix, not a numerical inverse of the one above.
+
+Its middle row is the Rec.709 luminance weighting the display shaders already
+use, which is what makes luminance and chromaticity consistent between them.
+"""
+
+XYZ_TO_CAT02_LMS = np.array(
+    [
+        [0.7328, 0.4296, -0.1624],
+        [-0.7036, 1.6975, 0.0061],
+        [0.0030, 0.0136, 0.9834],
+    ],
+    dtype=np.float64,
+)
+"""CAT02 cone response, from CIECAM02.
+
+Chromatic adaptation is a gain change in the cone channels, so it has to be
+performed in a cone space rather than in display primaries. CAT02 is the space
+the CIECAM02 degree-of-adaptation formula is defined against, which is why it
+is preferred here over Bradford or the Hunt-Pointer-Estevez fundamentals.
+"""
+
+LINEAR_SRGB_TO_CAT02_LMS = XYZ_TO_CAT02_LMS @ LINEAR_SRGB_TO_XYZ
+CAT02_LMS_TO_LINEAR_SRGB = np.linalg.inv(LINEAR_SRGB_TO_CAT02_LMS)
+
+
+def chromatic_adaptation_gains(
+    adapting_white_linear_srgb: np.ndarray, degree: float
+) -> np.ndarray:
+    """Von Kries cone gains taking ``adapting_white`` to the display white.
+
+    The observer discounts the illuminant: a scene lit warm does not look
+    uniformly orange, because the cone channels rescale until the dominant
+    light reads neutral. This returns the CAT02 gains that perform that
+    rescaling toward D65, the white an sRGB display shows.
+
+    ``degree`` is the CIECAM02 ``D``, which is never 1 outside a fully adapting
+    viewing condition — see
+    :func:`simulator.human_vision.degree_of_adaptation`. At ``degree = 0`` the
+    gains are exactly unity, so the stage can be switched off by its own
+    physics rather than by a flag.
+
+    **Luminance is preserved exactly.** Both whites are normalised to unit Y
+    before the ratio is taken, and Y is a linear function of LMS, so the
+    adapted white is a convex combination of two unit-Y whites and keeps unit
+    Y. Brightness adaptation is a separate stage and must not be disturbed here.
+    """
+
+    white = np.asarray(adapting_white_linear_srgb, dtype=np.float64)
+    luminance = float(LINEAR_SRGB_TO_XYZ[1] @ white)
+    if luminance <= 0.0:
+        return np.ones(3, dtype=np.float64)
+    scene_lms = LINEAR_SRGB_TO_CAT02_LMS @ (white / luminance)
+    display_white = np.ones(3, dtype=np.float64) / float(
+        LINEAR_SRGB_TO_XYZ[1].sum()
+    )
+    display_lms = LINEAR_SRGB_TO_CAT02_LMS @ display_white
+    bounded = min(max(degree, 0.0), 1.0)
+    return bounded * (display_lms / np.maximum(scene_lms, 1e-30)) + (
+        1.0 - bounded
+    )
+
+
+def chromatically_adapt(
+    linear_srgb: np.ndarray,
+    adapting_white_linear_srgb: np.ndarray,
+    degree: float,
+) -> np.ndarray:
+    """Apply :func:`chromatic_adaptation_gains` to a colour or an image.
+
+    The CPU reference for what ``human_vision.frag`` computes.
+    """
+
+    gains = chromatic_adaptation_gains(adapting_white_linear_srgb, degree)
+    colour = np.asarray(linear_srgb, dtype=np.float64)
+    cone = colour @ LINEAR_SRGB_TO_CAT02_LMS.T
+    return (cone * gains) @ CAT02_LMS_TO_LINEAR_SRGB.T
+
 
 def _piecewise_gaussian(
     wavelength_nm: float, peak_nm: float, sigma_low: float, sigma_high: float

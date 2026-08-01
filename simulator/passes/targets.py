@@ -124,16 +124,18 @@ class RenderTargets:
             for texture in self.bloom_textures
         ]
 
-        # Local retinal adaptation, ping-ponged so a frame can read the
-        # previous state while writing the next. Quarter resolution: adaptation
-        # pools over about a degree of visual angle, so per-pixel state would
-        # be finer than the process it models.
+        # Retinal adaptation, ping-ponged so a frame can read the previous
+        # state while writing the next. Quarter resolution: adaptation pools
+        # over about a degree of visual angle, so per-pixel state would be
+        # finer than the process it models. Four components: the local
+        # adapting luminance in alpha and the near-global adapting white in
+        # rgb — two mechanisms on different scales sharing one time step.
         self.adaptation_size = (
             max(config.width // 4, 1),
             max(config.height // 4, 1),
         )
         self.adaptation_textures = [
-            ctx.texture(self.adaptation_size, components=1, dtype="f2")
+            ctx.texture(self.adaptation_size, components=4, dtype="f2")
             for _ in range(2)
         ]
         for texture in self.adaptation_textures:
@@ -145,7 +147,10 @@ class RenderTargets:
             for texture in self.adaptation_textures
         ]
         for framebuffer in self.adaptation_fbos:
-            framebuffer.clear(0.0, 0.0, 0.0, 1.0)
+            # An observer who has seen nothing yet is adapted to a neutral
+            # white and to no light at all. Starting the white at zero would
+            # divide by it on the first frame.
+            framebuffer.clear(1.0, 1.0, 1.0, 0.0)
         self.adaptation_index = 0
 
     @property
