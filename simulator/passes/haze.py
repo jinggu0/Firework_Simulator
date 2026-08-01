@@ -20,7 +20,6 @@ import moderngl
 
 from .. import shaders
 from ..atmosphere import SurfaceExtinction
-from .targets import RenderTargets
 
 SCENE_DEPTH_UNIT = 6
 AIRLIGHT_UNIT = 12
@@ -69,12 +68,25 @@ class HazePass:
             float(value) for value in camera_position
         )
 
-    def draw(self, targets: RenderTargets) -> None:
-        """Attenuate, then add airlight. The order is not interchangeable."""
+    def draw(
+        self,
+        framebuffer: moderngl.Framebuffer,
+        depth_texture: moderngl.Texture,
+        airlight_texture: moderngl.Texture,
+        reflected_path: bool = False,
+    ) -> None:
+        """Attenuate, then add airlight. The order is not interchangeable.
 
-        targets.composite_fbo.use()
-        targets.scene_depth_texture.use(SCENE_DEPTH_UNIT)
-        targets.airlight_texture.use(AIRLIGHT_UNIT)
+        ``framebuffer`` must be the colour target *without* its depth
+        attachment: this samples the depth it would otherwise be bound to.
+        ``reflected_path`` marks the planar-reflection pre-pass, whose camera
+        is mirrored below the water datum — see ``haze.frag``.
+        """
+
+        framebuffer.use()
+        depth_texture.use(SCENE_DEPTH_UNIT)
+        airlight_texture.use(AIRLIGHT_UNIT)
+        self.program["reflected_path"] = int(reflected_path)
         self.ctx.enable(moderngl.BLEND)
         self.ctx.disable(moderngl.DEPTH_TEST)
 

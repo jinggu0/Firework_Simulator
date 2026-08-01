@@ -70,6 +70,36 @@ def _bilinear(field: np.ndarray, u: np.ndarray, v: np.ndarray) -> np.ndarray:
     return top * (1.0 - fy) + bottom * fy
 
 
+WATER_SURFACE_BAND_M = 2.0
+"""Height band a water pixel's reconstructed position may occupy.
+
+The river mask is a plan-view footprint, so a bridge deck over the water would
+also fall inside it. Bridges sit near 7 m and the wave surface within a few
+centimetres of the datum, so the band separates them.
+"""
+
+
+def _water_mask_lookup(app, world: np.ndarray) -> np.ndarray:
+    """Classify pixels the water pass drew, the way ``water.frag`` does.
+
+    Reads the shipped river mask rather than adding a renderer output: the
+    shader's own test is ``mask(world.xz) >= 0.5``, so reproducing it here
+    needs nothing new on the GPU.
+    """
+
+    data = app.renderer.scene.data
+    mask = np.asarray(data.water_mask)
+    x0, z0, x1, z1 = (float(value) for value in data.water_mask_bounds)
+    u = (world[..., 0] - x0) / max(x1 - x0, 1e-6)
+    v = (world[..., 2] - z0) / max(z1 - z0, 1e-6)
+    inside = (u >= 0.0) & (u <= 1.0) & (v >= 0.0) & (v <= 1.0)
+    rows, columns = mask.shape[:2]
+    row = np.clip((v * rows).astype(int), 0, rows - 1)
+    column = np.clip((u * columns).astype(int), 0, columns - 1)
+    wet = mask[row, column] >= 128
+    return inside & wet & (np.abs(world[..., 1]) < WATER_SURFACE_BAND_M)
+
+
 def _world_positions(
     depth: np.ndarray, inverse_view_projection: np.ndarray
 ) -> np.ndarray:
@@ -98,16 +128,24 @@ def measure(frames_warmup: int = 4) -> dict[str, object]:
         renderer.render(app.world, app.camera, app.celestial, 1.0 / 60.0)
     # Zero elapsed time from here: the water spectrum and the facade animation
     # are functions of renderer.time_s, and the two renders must differ only in
-    # the atmosphere.
+    # the atmosphere. The planar reflection is cached at 30 Hz and neither the
+    # clock nor the camera moves, so it has to be invalidated explicitly —
+    # otherwise the second render keeps the first render's hazed reflection and
+    # the water comparison silently measures nothing.
+    renderer.reflection_ready = False
     renderer.render(app.world, app.camera, app.celestial, 0.0)
     hazed = _read_rgb(renderer.targets.hdr_texture)
+    hazed_reflection = _read_rgb(renderer.targets.reflection_texture)
+    reflection_depth = _read_depth(renderer.targets.reflection_depth)
     depth = _read_depth(renderer.targets.scene_depth_texture)
     airlight = _read_rgb(renderer.targets.airlight_texture)
     extinction = renderer.surface_extinction
 
     renderer.set_air_extinction_override(VACUUM)
+    renderer.reflection_ready = False
     renderer.render(app.world, app.camera, app.celestial, 0.0)
     clear = _read_rgb(renderer.targets.hdr_texture)
+    clear_reflection = _read_rgb(renderer.targets.reflection_texture)
     renderer.set_air_extinction_override(None)
 
     view_projection = renderer.projection @ _look_at(
@@ -154,13 +192,70 @@ def measure(frames_warmup: int = 4) -> dict[str, object]:
 
     geometry = depth < 1.0
     sky = ~geometry
+    # The river shows a reflected skyline that now carries its own atmospheric
+    # path, so a water pixel's radiance is not the object radiance the vacuum
+    # render recovers: the reflection inside it changed too. The identity this
+    # metric tests is the deferred composite over opaque geometry, so water is
+    # measured as a separate population rather than quietly loosening the gate.
+    water = geometry & _water_mask_lookup(app, world)
+    opaque = geometry & ~water
+
     scale = max(float(np.abs(hazed[geometry]).max()), 1e-12)
-    error = np.abs(predicted - hazed)[geometry] / scale
+    error = np.abs(predicted - hazed)[opaque] / scale
     sky_difference = float(np.abs(hazed[sky] - clear[sky]).max()) if sky.any() else 0.0
+
+    # Signed, because the sign is the claim: where the reflected city is
+    # brighter than the airlight replacing it, hazing the reflection must leave
+    # the water *below* what a direct-path-only prediction gives. A sign error
+    # in the mirrored path would show up here and nowhere else.
+    bright_water = water & (
+        clear[..., 1] > sampled_airlight[..., 1] * 2.0
+    )
+    water_residual = (
+        float(((hazed - predicted)[bright_water] / scale).mean())
+        if bright_water.any()
+        else 0.0
+    )
+
+    # The reflection buffer isolates the new pass exactly: the main composite
+    # writes the HDR target, never this one, so any difference here is the
+    # reflection haze and nothing else. Most of that buffer is reflected sky,
+    # which the composite discards, so the change is measured on the reflected
+    # geometry — the skyline the river actually shows.
+    reflection_geometry = reflection_depth < 1.0
+    reflection_sky = ~reflection_geometry
+    reflection_relative = (
+        hazed_reflection - clear_reflection
+    ) / np.maximum(clear_reflection, 1e-12)
+    reflection_change = (
+        float(reflection_relative[reflection_geometry].mean())
+        if reflection_geometry.any()
+        else 0.0
+    )
+    reflection_worst = (
+        float(reflection_relative[reflection_geometry].min())
+        if reflection_geometry.any()
+        else 0.0
+    )
+    reflection_sky_difference = (
+        float(
+            np.abs(hazed_reflection - clear_reflection)[reflection_sky].max()
+        )
+        if reflection_sky.any()
+        else 0.0
+    )
 
     lit = geometry & (clear.max(axis=-1) > 1e-6)
     green_transmittance = transmittance[..., 1]
     result = {
+        "water_fraction_of_geometry": float(
+            water.sum() / max(geometry.sum(), 1)
+        ),
+        "bright_water_signed_residual": water_residual,
+        "reflection_mean_radiance_change": reflection_change,
+        "reflection_worst_radiance_change": reflection_worst,
+        "reflection_geometry_fraction": float(reflection_geometry.mean()),
+        "reflection_sky_absolute_difference_max": reflection_sky_difference,
         "visibility_km": extinction.visibility_m / 1_000.0,
         "surface_extinction_per_m": list(extinction.total_per_m),
         "geometry_fraction": float(geometry.mean()),

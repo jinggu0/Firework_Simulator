@@ -23,6 +23,13 @@ uniform sampler2D airlight;
 uniform mat4 inverse_view_projection;
 uniform vec3 camera_position;
 uniform float haze_stage;
+// 1 when this is the planar-reflection pre-pass, whose camera is mirrored
+// below the water datum. The mirrored straight line has the length of the real
+// object -> water -> eye path, but its water -> eye half is the water pixel's
+// own path to the camera and the main pass applies that. Counting it here too
+// would attenuate it twice, which for a low building reflected at 800 m is 45%
+// of the optical depth.
+uniform int reflected_path;
 #include "air_extinction.glsl"
 
 void main() {
@@ -35,9 +42,21 @@ void main() {
     vec4 homogeneous = inverse_view_projection
                      * vec4(ndc, depth * 2.0 - 1.0, 1.0);
     vec3 world_position = homogeneous.xyz / homogeneous.w;
-    vec3 offset = world_position - camera_position;
+    float path_m = distance(world_position, camera_position);
+    float start_height_m = camera_position.y;
+    if (reflected_path != 0) {
+        // Keep only the part of the mirrored ray above the datum. Height
+        // varies linearly along that part, so the profile integral over it is
+        // exact rather than approximate.
+        float span = world_position.y - start_height_m;
+        float above = abs(span) < 1e-4
+                    ? step(0.0, world_position.y)
+                    : clamp(world_position.y / span, 0.0, 1.0);
+        path_m *= above;
+        start_height_m = 0.0;
+    }
     vec3 transmittance = air_transmittance(
-        camera_position.y, world_position.y, length(offset)
+        start_height_m, world_position.y, path_m
     );
     vec3 scattered_fraction = 1.0 - transmittance;
     frag_color = vec4(

@@ -323,6 +323,35 @@ def surface_extinction_per_m(
     )
 
 
+LEVEL_PATH_RISE_M = 1e-3
+"""Rise below which a segment is treated as level.
+
+The closed form is singular at zero rise and a level path is its own limit.
+``air_extinction.glsl`` uses the same threshold, so the CPU reference and the
+shader take the same branch on the same inputs.
+"""
+
+
+def _monotonic_profile_mean(
+    scale_height_m: float, low_m: float, high_m: float
+) -> float:
+    """Mean of ``exp(-z/H)`` over a segment climbing from ``low_m`` to ``high_m``.
+
+    Symmetric in its arguments: swapping them flips the sign of both the
+    numerator and the denominator.
+    """
+
+    rise = high_m - low_m
+    at_start = math.exp(-low_m / scale_height_m)
+    if abs(rise) < LEVEL_PATH_RISE_M:
+        return at_start
+    return (
+        scale_height_m
+        * (at_start - math.exp(-high_m / scale_height_m))
+        / rise
+    )
+
+
 def slant_optical_depth(
     surface_extinction: float | np.ndarray,
     scale_height_m: float,
@@ -342,26 +371,28 @@ def slant_optical_depth(
     1.5 km range a 300 m break sits behind 12 percent less air than the level
     approximation claims, and a 600 m break behind 22 percent less.
 
-    Heights are taken as magnitudes so a mirrored reflection path, whose image
-    point sits below the datum, integrates the air it actually crosses.
+    A segment that **crosses the water datum** is split there. The planar
+    reflection draws stars and geometry from a camera mirrored below the datum,
+    so the straight line to the image point has the length of the real
+    two-segment path but its height falls to zero and rises again. Taking the
+    endpoint magnitudes and assuming a monotonic climb is wrong by 1-2 percent
+    of the optical depth over typical firework geometry; splitting at the
+    crossing reproduces numerical quadrature to float precision.
     """
 
     extinction = np.asarray(surface_extinction, dtype=np.float64)
     height_scale = max(scale_height_m, 1.0)
-    start = abs(start_height_m)
-    end = abs(end_height_m)
-    rise = end - start
-    if abs(rise) < 1e-6:
-        profile = math.exp(-start / height_scale)
+    low = abs(start_height_m)
+    high = abs(end_height_m)
+    if start_height_m * end_height_m >= 0.0:
+        profile = _monotonic_profile_mean(height_scale, low, high)
     else:
-        profile = (
-            height_scale
-            / rise
-            * (
-                math.exp(-start / height_scale)
-                - math.exp(-end / height_scale)
-            )
-        )
+        # Weighting by path fraction is exact: each piece contributes its own
+        # mean over its own share of the length.
+        below = low / max(low + high, 1e-6)
+        profile = below * _monotonic_profile_mean(
+            height_scale, 0.0, low
+        ) + (1.0 - below) * _monotonic_profile_mean(height_scale, 0.0, high)
     return extinction * max(path_length_m, 0.0) * profile
 
 

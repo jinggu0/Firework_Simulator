@@ -272,7 +272,7 @@ buffers, textures, and draw call:
 
 | Module | Owns |
 |---|---|
-| `targets.py` | HDR colour and sampleable depth, reflection, airlight, bloom attachments |
+| `targets.py` | HDR colour and sampleable depth, reflection colour and depth, airlight, bloom attachments |
 | `sky.py` | Background program, cloud noise, star catalogue, celestial frame, airlight field |
 | `scene.py` | Static city batches, reflection subset, luminaire positions |
 | `water.py` | Near/far grids, JONSWAP spectrum, wind relaxation |
@@ -576,19 +576,63 @@ At show conditions the median lit pixel loses 4.2% of its radiance, the far
 bank at 1.7 km loses 17%, and airlight supplies 20% of what remains there. The
 two haze draws cost 0.0707 ms.
 
-Two limits are worth stating. The airlight veil is only as good as the sky
-model's **horizon radiance, which is grade D** — at night the veil is dim
-against lit facades, so the visible effect is mostly extinction rather than
-milkiness, and that balance would move with a measured night-sky brightness.
-And the **planar reflection pre-pass is not hazed**: its depth attachment is a
-renderbuffer rather than a sampleable texture, and the mirrored camera's path
-lengths would need their own treatment.
+### The reflected path
+
+The river is 59% of the visible geometry, and it shows a skyline that reaches
+the eye by way of the water: object → surface → camera. That path is longer
+than the direct one, so leaving the planar reflection pre-pass clear made the
+river a window onto a haze-free city.
+
+The mirrored camera already gets the geometry right — the straight line from
+the mirrored eye to an object has exactly the length of the two real segments —
+so the pre-pass now runs the same deferred composite, with two things the
+direct path does not need:
+
+- **The below-datum half is discarded.** The mirrored line's water-to-eye half
+  is the water pixel's own path to the camera, and the main haze pass already
+  applies that to the water fragment. Counting it in both places would
+  attenuate it twice, and it is not a rounding error: for a low building
+  reflected at 800 m, 45% of the mirrored optical depth belongs to that half.
+  Clipping at the datum also makes the remaining integral exact rather than
+  approximate, because height varies linearly along what is left.
+- **The airlight field is re-rendered for the mirrored bearings**, into the
+  same target the main pass uses, immediately before the reflection consumes
+  it. The reflected ray's azimuth is not the direct ray's.
+
+The two path segments then compose correctly by construction:
+`f·R·T_ow·T_wc + f·L_air(1−T_ow)T_wc + L_air(1−T_wc)` — each segment's airlight
+appearing once, attenuated by whatever follows it.
+
+The **path-integral primitive gained an exact datum crossing** to support this,
+which also fixes the mirrored star draw: the water reflection of a burst is
+drawn from the same mirrored position, and folding the endpoints with `abs()`
+understated its optical depth by 1-2%. The split reproduces numerical
+quadrature to float precision and the CPU and GLSL forms are line-for-line the
+same, down to the level-path threshold.
+
+Measured: reflected geometry loses **2.7% on average and 43% at worst**, 31,486
+pixels change by up to 36 display code values, and the reflected sky is
+bit-identical — it already carries an infinite airlight path, the same exact
+requirement the direct sky has. Cost 0.032 ms, and only on the frames that
+refresh the 30 Hz reflection.
+
+V-22 gates this by sign rather than by residual. A water pixel's radiance is no
+longer recovered by the vacuum render — the reflection inside it changed too —
+so water is excluded from the residual gate and checked instead against the one
+thing a mirrored-path sign error would reverse: hazing a longer path must
+remove radiance.
+
+The airlight veil remains only as good as the sky model's **horizon radiance,
+which is grade D**. At night the veil is dim against lit facades, so the visible
+effect is mostly extinction rather than milkiness, and that balance would move
+with a measured night-sky brightness.
 
 ## Render passes
 
 1. Sky radiance and astronomical lighting, plus the horizontal airlight field
 2. Terrain, bridges, buildings, and emissive city lights
-3. Spectral water displacement and reflection
+3. Spectral water displacement and reflection, itself hazed over the reflected
+   path in a mirrored pre-pass
 4. Aerial perspective over the opaque scene
 5. Firework shells, stars, sparks, and trails
 6. Participating-media smoke and light scattering
@@ -618,9 +662,11 @@ fragment normal, avoiding aliased geometry while retaining fine reflected
 highlights.
 
 Water Fresnel reflection samples a half-resolution HDR planar-reflection pass
-containing the astronomical sky, terrain, 2024 building geometry, and bridges.
-The reflection camera is mirrored around the water datum and the projected
-sample is perturbed by the same spectrum-derived normal used for shading.
+containing the astronomical sky, terrain, 2024 building geometry, and bridges,
+with aerial perspective applied over the above-datum half of the reflected path
+(see *The reflected path*). The reflection camera is mirrored around the water
+datum and the projected sample is perturbed by the same spectrum-derived normal
+used for shading.
 This pass is cached at 30 Hz and scheduled away from a newly completed fluid
 step to keep CPU/GPU spikes under the 60 Hz frame budget. Resolution scale and
 update rate are explicit `RenderConfig` quality controls; the fidelity default

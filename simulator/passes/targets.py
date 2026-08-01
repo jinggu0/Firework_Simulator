@@ -26,6 +26,7 @@ class RenderTargets:
         "reflection_texture",
         "reflection_depth",
         "reflection_fbo",
+        "reflection_composite_fbo",
         "reflection_size",
         "airlight_texture",
         "airlight_fbo",
@@ -73,9 +74,19 @@ class RenderTargets:
         self.reflection_texture.filter = moderngl.LINEAR, moderngl.LINEAR
         self.reflection_texture.repeat_x = False
         self.reflection_texture.repeat_y = False
-        self.reflection_depth = ctx.depth_renderbuffer(self.reflection_size)
+        # A sampleable depth texture rather than a renderbuffer, for the same
+        # reason the main pass uses one: the haze composite reconstructs the
+        # world position of whatever the reflection drew.
+        self.reflection_depth = ctx.depth_texture(self.reflection_size)
+        self.reflection_depth.compare_func = ""
+        self.reflection_depth.filter = moderngl.NEAREST, moderngl.NEAREST
+        self.reflection_depth.repeat_x = False
+        self.reflection_depth.repeat_y = False
         self.reflection_fbo = ctx.framebuffer(
             [self.reflection_texture], self.reflection_depth
+        )
+        self.reflection_composite_fbo = ctx.framebuffer(
+            [self.reflection_texture]
         )
 
         # Airlight: the sky radiance the haze pass mixes toward. It is the sky

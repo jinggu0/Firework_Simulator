@@ -21,16 +21,36 @@ uniform float molecular_scale_height_m;
 
 // Mean of exp(-z/H) over a segment whose height runs linearly from start to
 // end, which is the closed form of the integral divided by the path length.
-// Heights are magnitudes so a mirrored reflection path, whose image point sits
-// below the datum, integrates the air it actually crosses.
+float monotonic_profile_mean(float scale_height_m, float low_m, float high_m) {
+    float rise = high_m - low_m;
+    float at_start = exp(-low_m / scale_height_m);
+    // The quotient is singular at zero rise; a level path is its own limit.
+    if (abs(rise) < 1e-3) return at_start;
+    return scale_height_m * (at_start - exp(-high_m / scale_height_m)) / rise;
+}
+
+// The same mean for a segment that may cross the water datum.
+//
+// A planar reflection is drawn from a camera mirrored below the datum, so the
+// straight line to the image point has the same length as the real two-segment
+// path but its height falls to zero and rises again. Taking the endpoint
+// magnitudes and assuming a monotonic climb between them is wrong by 1-2% of
+// the optical depth over typical firework geometry; splitting at the crossing
+// is exact, matches numerical quadrature to float precision, and costs one
+// extra evaluation.
 float height_profile_mean(float scale_height_m, float start_m, float end_m) {
     float low = abs(start_m);
     float high = abs(end_m);
-    float rise = high - low;
-    float at_start = exp(-low / scale_height_m);
-    // The quotient is singular at zero rise; a level path is its own limit.
-    if (abs(rise) < 1e-3) return at_start;
-    return scale_height_m * (at_start - exp(-high / scale_height_m)) / rise;
+    if (start_m * end_m >= 0.0) {
+        // Symmetric in its arguments: swapping them flips the sign of both
+        // the numerator and the denominator.
+        return monotonic_profile_mean(scale_height_m, low, high);
+    }
+    // Weighting by path fraction is exact because each piece contributes its
+    // own mean over its own share of the length.
+    float below = low / max(low + high, 1e-6);
+    return below * monotonic_profile_mean(scale_height_m, 0.0, low)
+         + (1.0 - below) * monotonic_profile_mean(scale_height_m, 0.0, high);
 }
 
 vec3 air_optical_depth(

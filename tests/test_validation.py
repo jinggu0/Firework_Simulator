@@ -491,9 +491,13 @@ def _haze_payload(**overrides) -> str:
         "relative_error_p99": 1.1e-4,
         "relative_error_mean": 7.2e-6,
         "sky_absolute_difference_max": 0.0,
+        "reflection_sky_absolute_difference_max": 0.0,
+        "reflection_mean_radiance_change": -0.027,
+        "reflection_worst_radiance_change": -0.43,
+        "bright_water_signed_residual": -2.9e-3,
         "transmittance_min": 0.56,
         "transmittance_p50": 0.94,
-        "mean_radiance_change": -0.20,
+        "mean_radiance_change": -0.26,
     }
     payload.update(overrides)
     return json.dumps(payload)
@@ -531,6 +535,43 @@ def test_aerial_perspective_fails_when_the_sky_was_touched(monkeypatch) -> None:
     # them again is a double count, and the requirement is exact.
     _stub_subprocess(
         monkeypatch, _haze_payload(sky_absolute_difference_max=1e-7)
+    )
+    assert (
+        aerial_perspective.aerial_perspective().status is MetricStatus.FAIL
+    )
+
+
+def test_aerial_perspective_fails_when_the_reflected_sky_was_touched(
+    monkeypatch,
+) -> None:
+    _stub_subprocess(
+        monkeypatch,
+        _haze_payload(reflection_sky_absolute_difference_max=1e-7),
+    )
+    assert (
+        aerial_perspective.aerial_perspective().status is MetricStatus.FAIL
+    )
+
+
+def test_aerial_perspective_fails_if_the_reflection_brightens(
+    monkeypatch,
+) -> None:
+    # The reflected skyline reaches the eye by way of the water, so its path is
+    # longer and it must lose radiance. A mirrored-path sign error would
+    # reverse this and leave the direct-path residual untouched.
+    _stub_subprocess(
+        monkeypatch, _haze_payload(reflection_mean_radiance_change=+0.03)
+    )
+    result = aerial_perspective.aerial_perspective()
+    assert result.status is MetricStatus.FAIL
+    assert "sign error" in result.message
+
+
+def test_aerial_perspective_fails_if_bright_water_does_not_darken(
+    monkeypatch,
+) -> None:
+    _stub_subprocess(
+        monkeypatch, _haze_payload(bright_water_signed_residual=+1e-3)
     )
     assert (
         aerial_perspective.aerial_perspective().status is MetricStatus.FAIL

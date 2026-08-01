@@ -102,10 +102,19 @@ def test_the_retired_literal_would_have_doubled_the_visible_range(
 def _quadrature(
     extinction: float, scale_height_m: float, start: float, end: float, length: float
 ) -> float:
-    samples = np.linspace(0.0, length, 200_001)
-    heights = abs(start) + (abs(end) - abs(start)) * samples / max(length, 1e-12)
+    """Integrate exp(-|z|/H) numerically along the real segment.
+
+    The magnitude is taken *inside* the integral, not on the endpoints, so a
+    path crossing the water datum is integrated as it actually runs: down to
+    zero and back up.
+    """
+
+    samples = np.linspace(0.0, length, 400_001)
+    heights = start + (end - start) * samples / max(length, 1e-12)
     return float(
-        np.trapezoid(extinction * np.exp(-heights / scale_height_m), samples)
+        np.trapezoid(
+            extinction * np.exp(-np.abs(heights) / scale_height_m), samples
+        )
     )
 
 
@@ -145,15 +154,30 @@ def test_a_level_path_is_the_zero_rise_limit() -> None:
     )
 
 
-def test_a_mirrored_reflection_path_crosses_real_air() -> None:
-    # The water reflection draws stars at negative height. Taking heights as
-    # magnitudes keeps the profile above the datum instead of inflating the
-    # density below it.
-    above = slant_optical_depth(1e-4, AEROSOL_SCALE_HEIGHT_M, 10.0, 200.0, 900.0)
-    mirrored = slant_optical_depth(
-        1e-4, AEROSOL_SCALE_HEIGHT_M, 10.0, -200.0, 900.0
+def test_a_mirrored_path_is_split_at_the_datum_rather_than_folded() -> None:
+    # The reflection draws from a camera mirrored below the datum, so the
+    # straight line to the image point dips to zero and rises again. Folding
+    # the endpoints with abs() and assuming a monotonic climb understates the
+    # optical depth by 1-2% over typical firework geometry.
+    exact = float(
+        slant_optical_depth(1e-4, AEROSOL_SCALE_HEIGHT_M, 24.0, -200.0, 1_500.0)
     )
-    assert float(mirrored) == pytest.approx(float(above))
+    folded = float(
+        slant_optical_depth(1e-4, AEROSOL_SCALE_HEIGHT_M, 24.0, 200.0, 1_500.0)
+    )
+    assert exact > folded
+    assert 0.010 < (exact - folded) / exact < 0.030
+
+
+def test_a_path_touching_the_datum_is_continuous() -> None:
+    # The crossing branch must meet the monotonic one where they share a limit.
+    just_above = float(
+        slant_optical_depth(1e-4, AEROSOL_SCALE_HEIGHT_M, 24.0, 1e-9, 900.0)
+    )
+    just_below = float(
+        slant_optical_depth(1e-4, AEROSOL_SCALE_HEIGHT_M, 24.0, -1e-9, 900.0)
+    )
+    assert just_below == pytest.approx(just_above, rel=1e-6)
 
 
 def test_height_structure_thins_the_path_to_a_high_break(optics) -> None:

@@ -86,22 +86,48 @@ def aerial_perspective(
         payload.get("sky_absolute_difference_max", float("nan"))
     )
     transmittance_min = float(payload.get("transmittance_min", float("nan")))
+    reflection_change = float(
+        payload.get("reflection_mean_radiance_change", float("nan"))
+    )
+    reflection_sky_difference = float(
+        payload.get("reflection_sky_absolute_difference_max", float("nan"))
+    )
+    water_residual = float(
+        payload.get("bright_water_signed_residual", float("nan"))
+    )
     # A vacuous pass is possible if nothing in frame is far enough to be hazed,
     # so the metric requires the frame to actually exercise the composite.
     exercised = transmittance_min < 0.98
+    skies_untouched = sky_difference == 0.0 and reflection_sky_difference == 0.0
+    # The reflected skyline reaches the eye by way of the water, so its path is
+    # longer than the direct one and it must lose radiance. Signs, not
+    # magnitudes: the mirrored path is where a sign error would hide, and it is
+    # invisible in the residual because the CPU prediction models only the
+    # direct path.
+    reflection_dims = reflection_change < 0.0 and water_residual < 0.0
     passed = (
-        error_max <= RELATIVE_TOLERANCE and sky_difference == 0.0 and exercised
+        error_max <= RELATIVE_TOLERANCE
+        and skies_untouched
+        and exercised
+        and reflection_dims
     )
     if not exercised:
         message = (
             f"no geometry beyond {transmittance_min:.3f} transmittance; the "
             "frame does not exercise aerial perspective"
         )
+    elif not reflection_dims:
+        message = (
+            f"the reflected skyline changed by {reflection_change:+.2%} and "
+            f"bright water by {water_residual:+.2e}; hazing a longer path "
+            "must remove radiance, so a non-negative change is a sign error"
+        )
     else:
         message = (
             f"rendered frame within {error_max:.2e} of the predicted "
             f"composite at {payload.get('visibility_km', float('nan')):.1f} km "
-            f"visibility; sky unchanged by {sky_difference:.1e}"
+            f"visibility; reflected skyline {reflection_change:+.2%}; both "
+            f"skies unchanged"
         )
     return MetricResult(
         spec=catalogue.V22,
@@ -117,6 +143,12 @@ def aerial_perspective(
             ),
             "tolerance": RELATIVE_TOLERANCE,
             "sky_absolute_difference_max": sky_difference,
+            "reflection_sky_absolute_difference_max": reflection_sky_difference,
+            "reflection_mean_radiance_change": reflection_change,
+            "reflection_worst_radiance_change": float(
+                payload.get("reflection_worst_radiance_change", float("nan"))
+            ),
+            "bright_water_signed_residual": water_residual,
             "transmittance_min": transmittance_min,
             "transmittance_p50": float(
                 payload.get("transmittance_p50", float("nan"))
@@ -128,6 +160,17 @@ def aerial_perspective(
         },
         detail={
             "geometry_fraction": payload.get("geometry_fraction"),
+            "water_fraction_of_geometry": payload.get(
+                "water_fraction_of_geometry"
+            ),
+            "reflection_geometry_fraction": payload.get(
+                "reflection_geometry_fraction"
+            ),
+            "gated_population": (
+                "opaque non-water pixels; water carries a reflection with its "
+                "own atmospheric path, so the two-render solve does not "
+                "isolate its object radiance and it is checked by sign instead"
+            ),
             "path_p50_m": payload.get("path_p50_m"),
             "path_p95_m": payload.get("path_p95_m"),
             "surface_extinction_per_m": payload.get("surface_extinction_per_m"),

@@ -321,8 +321,9 @@ V22 = MetricSpec(
     metric_id="V-22",
     title="Rendered aerial perspective against its CPU reference",
     tolerance=(
-        "rendered frame within 2e-3 of the predicted composite, relative to "
-        "the frame's own peak radiance; sky pixels unchanged exactly"
+        "opaque non-water pixels within 2e-3 of the predicted composite, "
+        "relative to the frame's own peak radiance; both skies unchanged "
+        "exactly; the reflected skyline and bright water must lose radiance"
     ),
     physical_basis=(
         "The composite claims L = L_object * T + L_air * (1 - T) with T the "
@@ -334,7 +335,14 @@ V22 = MetricSpec(
         "prediction combines three of them, so 2e-3 is quantisation and "
         "anything larger is a formula difference. Sky pixels carry the "
         "airlight of an infinite path already and must be untouched, which is "
-        "an exact rather than approximate requirement."
+        "an exact rather than approximate requirement. "
+        "Water is excluded from that gate and checked by sign instead: it "
+        "shows a reflection that carries its own atmospheric path, so the "
+        "vacuum render does not recover its object radiance. The reflected "
+        "skyline reaches the eye by way of the river and its path is "
+        "therefore longer than the direct one, so it must lose radiance — "
+        "the direction a mirrored-path sign error would reverse, and the one "
+        "thing the direct-path residual cannot see."
     ),
     requires_opengl=True,
 )

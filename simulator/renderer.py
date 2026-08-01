@@ -340,9 +340,16 @@ class Renderer:
         self.water.set_reflection_view_projection(matrix_bytes)
         self._set_sky_camera(reflected_forward, camera.right)
 
-        self.targets.reflection_fbo.use()
+        # The airlight field is shared with the main pass and is written twice
+        # on a frame that refreshes the reflection: once here for the mirrored
+        # bearings, then again for the true camera in `render`. The reflection
+        # consumes it before that overwrite, which is why this draw sits inside
+        # the mirrored-camera section rather than beside the main one.
         self.ctx.disable(moderngl.BLEND)
         self.ctx.disable(moderngl.DEPTH_TEST)
+        self.sky.draw_airlight(self.targets.airlight_fbo)
+
+        self.targets.reflection_fbo.use()
         self.targets.reflection_fbo.clear(0, 0, 0, 1, depth=1)
         self.sky.draw()
         self.ctx.enable(moderngl.DEPTH_TEST)
@@ -350,6 +357,22 @@ class Renderer:
         self.terrain_texture.use(TERRAIN_UNIT)
         self.land.draw()
         self.scene.draw_reflection()
+
+        # Aerial perspective over the reflected skyline. The reflected path is
+        # longer than the direct one — it reaches the eye by way of the water —
+        # so leaving it clear made the river a window onto a haze-free city.
+        self.haze.set_camera(
+            np.linalg.inv(reflection_view_projection)
+            .T.astype(np.float32)
+            .tobytes(),
+            reflected_position,
+        )
+        self.haze.draw(
+            self.targets.reflection_composite_fbo,
+            self.targets.reflection_depth,
+            self.targets.airlight_texture,
+            reflected_path=True,
+        )
 
     def _update_celestial(
         self, celestial: CelestialState, atmosphere: AtmosphereConfig
@@ -502,7 +525,11 @@ class Renderer:
         # Aerial perspective closes over the opaque scene before anything
         # emissive is added: the stars and the plume carry their own path
         # transmittance and must not receive the airlight a second time.
-        self.haze.draw(self.targets)
+        self.haze.draw(
+            self.targets.composite_fbo,
+            self.targets.scene_depth_texture,
+            self.targets.airlight_texture,
+        )
         self.targets.hdr_fbo.use()
         self.particles.draw(world, radiant_power_w, self.time_s)
         if smoke is not None and smoke.has_visible_smoke():
