@@ -1068,6 +1068,23 @@ gradient as their lighting normal. This removes the former half-cell collision
 offset and the flat-plate light response at road/levee joins without adding a
 per-frame CPU terrain mesh pass.
 
+The dated OSM road centrelines are now expanded as continuous strips rather
+than unrelated segment rectangles. Adjacent quads share the same bounded miter
+corners, eliminating cracks and overlaps at ordinary bends while clamping very
+acute joins to 2.5 half-widths. Source spans longer than 12 m are split along
+the unchanged mapped centreline. This caps the distance over which the vertex
+shader interpolates terrain displacement to three typical height-map cells,
+without tessellating the full 5 by 4 km terrain on the CPU.
+
+Road semantics also survive the import: `footway`, `pedestrian`, and `steps`
+use the footway material; `cycleway` uses the cycleway material; and `path` or
+`bridleway` uses the trail material. The 2024-10-05 historical query contains
+49 mapped stair ways and two `embankment=yes` trunk-link ways in the scene
+bounds. Their plan positions are therefore retained, but neither source gives
+a surveyed tread/riser profile or embankment cross-section. The runtime does
+not invent those vertical dimensions; sub-metre reconstruction still needs
+site survey or timestamp-matched photogrammetry.
+
 The view-projection matrix and camera position are refreshed for every render
 pass each frame, keeping terrain, water Fresnel response, buildings, and
 fireworks in one coordinate frame. Adding the dynamic camera path measures
@@ -1549,6 +1566,13 @@ After replacing the 512-grid regional baseline with the official-constraint
 9.641 ms visual p95, and 15.168 ms frame p99. The larger height texture adds no
 draw calls or CPU traversal and remains 3.89 ms inside the 16.67 ms p95 budget
 on the development laptop.
+
+After the continuous dated-planimetry rebuild, the shipped road batch contains
+35,340 six-vertex terrain-following spans (212,040 vertices), with a measured
+maximum span of 12.00 m. A clean 360-frame integrated 3D run measures 14.496 ms
+frame p95, 10.951 ms visual p95, and 15.459 ms frame p99. The additional
+terrain samples and join geometry therefore remain 2.17 ms inside the 16.67 ms
+p95 budget on the development laptop.
 
 The next latency work is ordered as follows: add active sparse-brick dispatch
 beyond the current launch domain, add GPU source-reduction diagnostics, then

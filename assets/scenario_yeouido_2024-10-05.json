@@ -186,7 +186,7 @@
       "units": "degrees, metres",
       "confidence_grade": "A",
       "uncertainty": "Plan geometry is dated and authoritative. Tagged heights are grade A; building:levels x 3.2 m is grade C; the 12 m fallback for untagged buildings is grade D.",
-      "checksum": "sha256:17ca0cb6b15cd4b74ced0c4ed2806703e305795cbf47c37746588cecd3eb185a",
+      "checksum": "sha256:d1e8fcbab81db9bf7f3c8df1409cf3ee7cc8d38ee04b665ad6dbe611b2e07c72",
       "notes": "File assets/yeouido_scene.npz. Overpass attic query fixed to the show-start OSM state within 37.515-37.545 N, 126.910-126.960 E. Han River water is OSM relation 152336. The checksum covers the derived asset including the procedurally placed site detail, so it changes when tools/build_site_details.py is re-run even though the OSM extract behind it does not."
     },
     "scene.terrain": {

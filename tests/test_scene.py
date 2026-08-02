@@ -8,6 +8,7 @@ from simulator.scene import (
     SURFACE_CYCLEWAY,
     SURFACE_FOOTWAY,
     SURFACE_TRAIL,
+    _linear_feature_mesh,
 )
 from simulator.site_details import _lamp, classify_path_surfaces
 
@@ -83,11 +84,60 @@ def test_road_width_and_green_surface_are_meshed() -> None:
         ]
     }
     scene = build_scene(osm, 37.5, 126.9, "2024-10-05T10:20:00Z")
-    assert scene.road_vertices.shape == (6, 10)
+    assert scene.road_vertices.shape[1] == 10
+    assert len(scene.road_vertices) > 6
     assert np.all(scene.road_vertices[:, 6] == 3.0)
     assert scene.vegetation_vertices.shape == (6, 10)
     assert np.all(scene.vegetation_vertices[:, 6] == 4.0)
     assert scene.snapshot_utc == "2024-10-05T10:20:00Z"
+
+
+def test_linear_feature_uses_shared_bounded_corners_at_bends() -> None:
+    points = np.array([[0.0, 0.0], [10.0, 0.0], [10.0, 10.0]])
+    vertices = np.asarray(_linear_feature_mesh(points, 4.0, 0.1, 3.0))
+    assert vertices.shape == (12, 10)
+    # First quad's two end corners exactly match the next quad's start pair.
+    assert np.allclose(vertices[2, [0, 2]], vertices[7, [0, 2]])
+    assert np.allclose(vertices[5, [0, 2]], vertices[6, [0, 2]])
+    join = vertices[[2, 5], :][:, [0, 2]]
+    assert np.max(np.linalg.norm(join - points[1], axis=1)) <= 5.0
+
+
+def test_linear_feature_subdivision_limits_terrain_sampling_span() -> None:
+    vertices = np.asarray(
+        _linear_feature_mesh(
+            np.array([[0.0, 0.0], [30.0, 0.0]]),
+            4.0,
+            0.1,
+            3.0,
+            maximum_segment_length_m=8.0,
+        )
+    )
+    centres_start = 0.5 * (
+        vertices[::6, [0, 2]] + vertices[1::6, [0, 2]]
+    )
+    centres_end = 0.5 * (vertices[2::6, [0, 2]] + vertices[5::6, [0, 2]])
+    assert len(vertices) == 24
+    assert np.max(np.linalg.norm(centres_end - centres_start, axis=1)) <= 8.0
+
+
+def test_osm_path_classes_are_preserved_before_width_fallback() -> None:
+    elements = []
+    for index, highway in enumerate(("steps", "cycleway", "path")):
+        longitude = 126.9 + index * 0.001
+        elements.append(
+            {
+                "tags": {"highway": highway},
+                "geometry": [
+                    {"lat": 37.5, "lon": longitude},
+                    {"lat": 37.50005, "lon": longitude},
+                ],
+            }
+        )
+    scene = build_scene({"elements": elements}, 37.5, 126.9)
+    assert {SURFACE_FOOTWAY, SURFACE_CYCLEWAY, SURFACE_TRAIL}.issubset(
+        set(np.unique(scene.road_vertices[:, 6]))
+    )
 
 
 def test_shipped_scene_uses_official_contour_grid_and_event_water_datum() -> None:

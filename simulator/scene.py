@@ -640,14 +640,94 @@ def _bridge_mesh(
     elevation_m: float,
     material: float = 2.0,
 ) -> list[list[float]]:
-    vertices: list[list[float]] = []
-    for a, b in zip(points[:-1], points[1:]):
-        edge = b - a
-        length = float(np.linalg.norm(edge))
-        if length < 0.1:
+    return _linear_feature_mesh(points, width_m, elevation_m, material)
+
+
+def _subdivide_polyline(
+    points: np.ndarray, maximum_segment_length_m: float
+) -> np.ndarray:
+    """Split long plan segments without changing the surveyed centreline."""
+
+    if len(points) < 2 or maximum_segment_length_m <= 0.0:
+        return np.asarray(points, dtype=np.float64)
+    samples = [np.asarray(points[0], dtype=np.float64)]
+    for start, end in zip(points[:-1], points[1:]):
+        edge = np.asarray(end - start, dtype=np.float64)
+        divisions = max(
+            1,
+            int(
+                math.ceil(
+                    float(np.linalg.norm(edge)) / maximum_segment_length_m
+                )
+            ),
+        )
+        samples.extend(
+            start + edge * (index / divisions)
+            for index in range(1, divisions + 1)
+        )
+    return np.asarray(samples, dtype=np.float64)
+
+
+def _linear_feature_mesh(
+    points: np.ndarray,
+    width_m: float,
+    elevation_m: float,
+    material: float,
+    maximum_segment_length_m: float = 0.0,
+) -> list[list[float]]:
+    """Create a crack-free strip with bounded miter joins.
+
+    Each segment remains a six-vertex quad for the renderer's longitudinal UV
+    and kerb passes, but adjacent quads use exactly the same join corners.
+    Long road spans can be subdivided so the GPU terrain sampler follows the
+    official height field instead of bridging over it with a single plane.
+    """
+
+    points = _subdivide_polyline(points, maximum_segment_length_m)
+    if len(points) < 2:
+        return []
+    edges = points[1:] - points[:-1]
+    lengths = np.linalg.norm(edges, axis=1)
+    valid = lengths >= 0.1
+    if not np.all(valid):
+        keep = np.concatenate(([True], valid))
+        points = points[keep]
+        if len(points) < 2:
+            return []
+        edges = points[1:] - points[:-1]
+        lengths = np.linalg.norm(edges, axis=1)
+    directions = edges / lengths[:, None]
+    normals = np.column_stack((-directions[:, 1], directions[:, 0]))
+    half_width = width_m * 0.5
+    offsets = np.empty_like(points)
+    offsets[0] = normals[0] * half_width
+    offsets[-1] = normals[-1] * half_width
+    for index in range(1, len(points) - 1):
+        summed = normals[index - 1] + normals[index]
+        summed_length = float(np.linalg.norm(summed))
+        if summed_length < 1e-6:
+            offsets[index] = normals[index] * half_width
             continue
-        perpendicular = np.array([-edge[1], edge[0]]) / length * width_m * 0.5
-        corners = (a - perpendicular, a + perpendicular, b + perpendicular, b - perpendicular)
+        miter = summed / summed_length
+        denominator = float(np.dot(miter, normals[index]))
+        if abs(denominator) < 1e-4:
+            offsets[index] = normals[index] * half_width
+            continue
+        miter_length = np.clip(
+            half_width / denominator,
+            -half_width * 2.5,
+            half_width * 2.5,
+        )
+        offsets[index] = miter * miter_length
+
+    vertices: list[list[float]] = []
+    for index, (a, b) in enumerate(zip(points[:-1], points[1:])):
+        corners = (
+            a - offsets[index],
+            a + offsets[index],
+            b + offsets[index + 1],
+            b - offsets[index + 1],
+        )
         for indices in ((0, 1, 2), (0, 2, 3)):
             for index in indices:
                 point = corners[index]
@@ -660,6 +740,17 @@ def _bridge_mesh(
                     )
                 )
     return vertices
+
+
+def _road_surface(tags: dict[str, str]) -> float:
+    highway = tags.get("highway", "")
+    if highway == "cycleway":
+        return SURFACE_CYCLEWAY
+    if highway in {"footway", "pedestrian", "steps"}:
+        return SURFACE_FOOTWAY
+    if highway in {"path", "bridleway"}:
+        return SURFACE_TRAIL
+    return SURFACE_ROAD
 
 
 def _surface_mesh(
@@ -701,7 +792,10 @@ def _road_width(tags: dict[str, str]) -> float:
         "service": 4.0,
         "cycleway": 2.5,
         "footway": 2.2,
+        "pedestrian": 4.0,
+        "steps": 2.0,
         "path": 1.5,
+        "bridleway": 2.0,
     }.get(tags.get("highway", ""), 5.0)
 
 
@@ -827,7 +921,13 @@ def build_scene(
             bridges.extend(_bridge_mesh(local, width, 7.0))
         elif "highway" in tags and len(local) >= 2:
             roads.extend(
-                _bridge_mesh(local, _road_width(tags), 0.06, 3.0)
+                _linear_feature_mesh(
+                    local,
+                    _road_width(tags),
+                    0.06,
+                    _road_surface(tags),
+                    maximum_segment_length_m=12.0,
+                )
             )
         is_green = (
             tags.get("leisure") == "park"

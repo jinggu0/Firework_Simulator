@@ -39,6 +39,6 @@
     "p95_absolute_error_m": 4.0327072745635375,
     "median_error_m": 3.814697180359872e-08
   },
-  "derived_asset_sha256": "17ca0cb6b15cd4b74ced0c4ed2806703e305795cbf47c37746588cecd3eb185a",
+  "derived_asset_sha256": "d1e8fcbab81db9bf7f3c8df1409cf3ee7cc8d38ee04b665ad6dbe611b2e07c72",
   "uncertainty": "The dense grid is piecewise-linear interpolation of mapped contours and spot heights, not a 1 m/5 m surveyed DEM. Narrow levees, stairs and kerb profiles still require survey or photogrammetry."
 }

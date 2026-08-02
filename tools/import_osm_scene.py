@@ -43,6 +43,8 @@ def download(snapshot_utc: str = SNAPSHOT_UTC) -> dict:
   way["building:part"]({south},{west},{north},{east});
   way["bridge"]({south},{west},{north},{east});
   way["highway"]({south},{west},{north},{east});
+  way["man_made"="embankment"]({south},{west},{north},{east});
+  way["embankment"]({south},{west},{north},{east});
   way["leisure"~"^(park|playground|pitch|track|garden)$"]({south},{west},{north},{east});
   way["landuse"~"^(grass|meadow|flowerbed|forest|recreation_ground)$"]({south},{west},{north},{east});
   way["natural"~"^(wood|grassland|scrub)$"]({south},{west},{north},{east});
@@ -79,6 +81,15 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--planimetry-only",
+        action="store_true",
+        help=(
+            "Rebuild dated buildings, bridges, roads and green-space geometry "
+            "while preserving the official terrain, event water level/mask "
+            "and authored site details."
+        ),
+    )
+    parser.add_argument(
         "--details-output",
         type=Path,
         default=Path("assets/yeouido_detail_osm_2024-10-05.json"),
@@ -86,22 +97,29 @@ def main() -> None:
     args = parser.parse_args()
     osm = download(args.snapshot)
     scene = build_scene(osm, *ORIGIN, snapshot_utc=args.snapshot)
-    if args.buildings_only:
+    if args.buildings_only or args.planimetry_only:
         if not args.output.exists():
             raise FileNotFoundError(
-                "--buildings-only requires an existing scene asset"
+                "partial rebuild requires an existing scene asset"
             )
         previous = load_scene(args.output)
-        rebuilt = replace(
-            previous,
-            building_vertices=scene.building_vertices,
-            snapshot_utc=args.snapshot,
-        )
+        replacements = {
+            "building_vertices": scene.building_vertices,
+            "snapshot_utc": args.snapshot,
+        }
+        if args.planimetry_only:
+            replacements.update(
+                bridge_vertices=scene.bridge_vertices,
+                road_vertices=scene.road_vertices,
+                vegetation_vertices=scene.vegetation_vertices,
+            )
+        rebuilt = replace(previous, **replacements)
         save_scene(rebuilt, args.output)
+        scope = "planimetry" if args.planimetry_only else "building"
         print(
             f"saved {args.output}: "
-            f"{len(rebuilt.building_vertices):,} landmark-aware building "
-            "vertices; preserved non-building scene arrays"
+            f"rebuilt dated {scope} arrays; preserved official terrain, "
+            "event water and authored details"
         )
         return
     detail_elements = [

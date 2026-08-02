@@ -360,6 +360,10 @@ def classify_path_surfaces(road_vertices: np.ndarray) -> np.ndarray:
 
     result = np.asarray(road_vertices, dtype=np.float32).copy()
     for start in range(0, len(result) - 5, 6):
+        if not np.isclose(result[start, 6], 3.0):
+            # New imports retain the authoritative OSM highway class.  Width
+            # inference remains only as compatibility for older scene assets.
+            continue
         width = float(np.linalg.norm(result[start, :3] - result[start + 1, :3]))
         if width <= 1.8:
             surface = SURFACE_TRAIL
