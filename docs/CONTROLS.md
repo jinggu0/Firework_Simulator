@@ -4,6 +4,7 @@
 - Mouse: look around
 - `Left Shift`: move faster while held
 - `Q`, `E`: move down and up
+- `G`: switch between free-flight and terrain-following camera-operator mode
 - `Space`: launch the currently selected shell profile by hand
 - `[`, `]`: step backwards and forwards through the shell library
 - `V`: switch between Human Vision Mode (default) and Physical Camera Mode
@@ -11,8 +12,12 @@
 - `Escape`: release the captured mouse; press again to exit
 - Left click: recapture the mouse after it has been released
 
-Movement velocity accelerates and decelerates smoothly. The current position in
-local East-Up-South metres is displayed in the window title.
+Movement velocity accelerates and decelerates smoothly. Free-flight resolves
+the camera body against the rendered terrain and water datum, so the lens can
+no longer pass underground. Camera-operator mode uses a 1.68 m optical-centre
+height, rejects non-walkable upward steps/slopes, and will not walk onto the
+river. `Q`/`E` remain free-flight controls. The active mode and current position
+in local East-Up-South metres are displayed in the window title.
 
 When the loaded scenario carries a firing timeline, shells launch automatically
 on the absolute event clock and the title shows the shot count. The shipped

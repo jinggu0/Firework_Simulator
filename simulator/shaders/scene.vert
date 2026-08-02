@@ -22,8 +22,17 @@ out float surface;
 out vec2 surface_uv;
 out float facade_style;
 void main() {
-    vec2 terrain_uv = (in_position.xz - terrain_bounds.xy)
-                    / (terrain_bounds.zw - terrain_bounds.xy);
+    ivec2 terrain_dimensions = textureSize(terrain_height, 0);
+    vec2 terrain_dimension_f = vec2(terrain_dimensions);
+    vec2 terrain_grid_size = max(terrain_dimension_f - 1.0, vec2(1.0));
+    vec2 geographic_uv = clamp(
+        (in_position.xz - terrain_bounds.xy)
+        / (terrain_bounds.zw - terrain_bounds.xy),
+        0.0, 1.0
+    );
+    vec2 terrain_uv = (
+        geographic_uv * terrain_grid_size + 0.5
+    ) / terrain_dimension_f;
     float base_height = texture(terrain_height, terrain_uv).r;
     vec3 animated_position = in_position;
     vec3 animated_normal = in_normal;
@@ -81,6 +90,38 @@ void main() {
                       * min(wind_speed_mps * .018, .13) * gust;
             animated_position.xz += sway * sway_detail;
         }
+    }
+    bool follows_terrain = (
+        (in_surface > 2.5 && in_surface < 7.5)
+        || (in_surface > 13.5 && in_surface < 15.5)
+    );
+    if (follows_terrain) {
+        // Roads, paths and planted ground share the DEM tangent. Without this
+        // the vertices touch the hill but their light response remains a flat
+        // horizontal plate, exposing every road/levee seam at night.
+        vec2 terrain_metres_per_texel = (
+            terrain_bounds.zw - terrain_bounds.xy
+        ) / terrain_grid_size;
+        float terrain_left = textureOffset(
+            terrain_height, terrain_uv, ivec2(-1, 0)
+        ).r;
+        float terrain_right = textureOffset(
+            terrain_height, terrain_uv, ivec2(1, 0)
+        ).r;
+        float terrain_back = textureOffset(
+            terrain_height, terrain_uv, ivec2(0, -1)
+        ).r;
+        float terrain_front = textureOffset(
+            terrain_height, terrain_uv, ivec2(0, 1)
+        ).r;
+        vec3 terrain_normal = normalize(vec3(
+            -(terrain_right - terrain_left)
+                / (2.0 * terrain_metres_per_texel.x),
+            1.0,
+            -(terrain_front - terrain_back)
+                / (2.0 * terrain_metres_per_texel.y)
+        ));
+        animated_normal = terrain_normal;
     }
     world_position = animated_position + vec3(0.0, base_height, 0.0);
     world_normal = animated_normal;

@@ -109,6 +109,14 @@ def test_no_shader_source_remains_embedded_in_python() -> None:
     assert "gl_Position" not in renderer
 
 
+def test_cpu_and_gpu_terrain_address_the_same_texel_centres() -> None:
+    for name in ("land.vert", "scene.vert"):
+        source = shaders.source(name)
+        assert "grid_size + 0.5" in source, name
+    scene = shaders.source("scene.vert")
+    assert "animated_normal = terrain_normal" in scene
+
+
 def test_uniform_names_are_unique_within_each_stage() -> None:
     # A duplicated uniform declaration compiles on some drivers and fails on
     # others, so it is worth catching before a GPU sees it.

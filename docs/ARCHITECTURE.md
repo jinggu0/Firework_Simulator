@@ -1018,10 +1018,22 @@ uncapped FPS headline—is retained for later regression comparisons.
 
 ## Camera
 
-The runtime camera is a six-degree-position, yaw/pitch free camera. Horizontal
-movement follows camera heading while elevation remains independently
-controllable. Input velocity uses frame-rate-independent exponential
-acceleration and damping; diagonal input is normalized.
+The runtime camera provides both six-degree free flight and a physical
+camera-operator mode. Horizontal movement follows camera heading; free-flight
+elevation remains independently controllable. Input velocity uses
+frame-rate-independent exponential acceleration and damping, and diagonal input
+is normalized. In both modes the optical centre is resolved against the same
+bilinearly sampled height field as the GPU. Operator mode holds it 1.68 m above
+solid terrain, rejects water and rises beyond a 0.35 m step/38 degree slope,
+while free flight retains a 0.12 m lens-body clearance.
+
+The height texture's geographic bounds identify its first and last samples,
+not its outer texel edges. Both terrain vertex shaders therefore address
+`(uv * (dimensions - 1) + 0.5) / dimensions`, exactly matching the CPU
+interpolator. Roads, footways and planted surfaces also use the height-field
+gradient as their lighting normal. This removes the former half-cell collision
+offset and the flat-plate light response at road/levee joins without adding a
+per-frame CPU terrain mesh pass.
 
 The view-projection matrix and camera position are refreshed for every render
 pass each frame, keeping terrain, water Fresnel response, buildings, and
@@ -1490,6 +1502,14 @@ the isolated visual budget but does not claim a universal 60 Hz guarantee
 under host load or forced CPU/GPU serialization. The next latency priority is
 physics-step spike reduction and real frame-pacing telemetry rather than
 removing the new radiative terms.
+
+The terrain/camera contact stage adds no CPU mesh traversal: camera height is
+an O(1) four-texel interpolation, and the four extra GPU gradient samples run
+only for draped road/ground vertices. A clean 360-frame integrated 3D run
+measures 13.694 ms frame p95 and 10.164 ms visual p95, leaving 2.98 ms at the
+60 Hz p95 boundary. Its p99 is 19.544 ms, so rare host/driver spikes still miss
+one refresh and remain a frame-pacing target rather than being hidden by the
+mean.
 
 The next latency work is ordered as follows: add active sparse-brick dispatch
 beyond the current launch domain, add GPU source-reduction diagnostics, then

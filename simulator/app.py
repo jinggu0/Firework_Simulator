@@ -21,6 +21,7 @@ from .renderer import Renderer
 from .scenario import DEFAULT_SCENARIO_PATH, Scenario
 from .shells import SHELL_LIBRARY
 from .show import ShowScheduler
+from .terrain import TerrainSurface
 
 
 class SimulatorApp:
@@ -88,6 +89,13 @@ class SimulatorApp:
         )
         self.smoke_accumulator_s = 0.0
         self.camera = FreeCamera(config=self.config.camera)
+        scene_data = self.renderer.scene.data
+        self.terrain_surface = TerrainSurface(
+            scene_data.terrain_height_m,
+            scene_data.terrain_bounds,
+            scene_data.water_mask,
+            scene_data.water_mask_bounds,
+        )
         self.acoustics = FireworkAcoustics(
             self.config.acoustics, self.scenario.seeds.derive("acoustics")
         )
@@ -271,6 +279,10 @@ class SimulatorApp:
                     self.world.launch(profile=self.manual_profile())
                 elif event.key == pygame.K_v:
                     self.renderer.toggle_display_mode()
+                elif event.key == pygame.K_g:
+                    self.camera.set_walking(
+                        not self.camera.walking, self.terrain_surface
+                    )
                 elif event.key in (pygame.K_LEFTBRACKET, pygame.K_RIGHTBRACKET):
                     step = 1 if event.key == pygame.K_RIGHTBRACKET else -1
                     self.manual_profile_index = (
@@ -333,7 +345,7 @@ class SimulatorApp:
             float(keys[pygame.K_w]) - float(keys[pygame.K_s]),
         )
         sprint = bool(keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT])
-        self.camera.update(dt_s, local_input, sprint)
+        self.camera.update(dt_s, local_input, sprint, self.terrain_surface)
 
     def _title(self, dt_s: float) -> None:
         self.title_timer_s += dt_s
@@ -371,6 +383,7 @@ class SimulatorApp:
                 f"{sound_level}"
                 f"{event_time}"
                 f"{weather}"
+                f" | camera {'walk' if self.camera.walking else 'free'}"
                 f" | XYZ {self.camera.position_m[0]:.0f},"
                 f"{self.camera.position_m[1]:.0f},"
                 f"{self.camera.position_m[2]:.0f} m"

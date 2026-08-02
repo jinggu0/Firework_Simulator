@@ -6,10 +6,19 @@ uniform vec4 terrain_bounds;
 out vec3 world_position;
 out vec3 world_normal;
 void main() {
-    vec2 uv = (in_xz - terrain_bounds.xy) / (terrain_bounds.zw - terrain_bounds.xy);
     ivec2 dimensions = textureSize(terrain_height, 0);
+    vec2 dimension_f = vec2(dimensions);
+    vec2 grid_size = max(dimension_f - 1.0, vec2(1.0));
+    vec2 geographic_uv = clamp(
+        (in_xz - terrain_bounds.xy) / (terrain_bounds.zw - terrain_bounds.xy),
+        0.0, 1.0
+    );
+    // The CPU height field includes both geographic bounds as texel centres.
+    // Half-texel addressing keeps navigation collision and rendering on the
+    // same bilinear surface instead of shifting the GPU by half a DEM cell.
+    vec2 uv = (geographic_uv * grid_size + 0.5) / dimension_f;
     vec2 metres_per_texel = (terrain_bounds.zw - terrain_bounds.xy)
-                          / vec2(dimensions);
+                          / grid_size;
     float height = texture(terrain_height, uv).r;
     float left = textureOffset(terrain_height, uv, ivec2(-1, 0)).r;
     float right = textureOffset(terrain_height, uv, ivec2(1, 0)).r;

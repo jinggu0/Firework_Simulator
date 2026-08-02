@@ -3,11 +3,122 @@ from __future__ import annotations
 import io
 import math
 import urllib.request
+from dataclasses import dataclass
 
 import numpy as np
 from PIL import Image
 
 EARTH_RADIUS_M = 6_378_137.0
+
+
+@dataclass(frozen=True, slots=True)
+class TerrainSurface:
+    """CPU view of the exact height field rendered by the GPU.
+
+    The navigation camera, acoustics and future physics queries must not each
+    invent their own interpretation of the terrain texture.  Samples are
+    bilinear over the georeferenced texel centres used by ``land.vert`` and
+    ``scene.vert``.  The optional river mask distinguishes solid ground from
+    the water surface, whose rendered elevation is the simulator datum.
+    """
+
+    height_m: np.ndarray
+    bounds: np.ndarray
+    water_mask: np.ndarray | None = None
+    water_bounds: np.ndarray | None = None
+
+    def __post_init__(self) -> None:
+        height = np.asarray(self.height_m, dtype=np.float32)
+        bounds = np.asarray(self.bounds, dtype=np.float32)
+        if height.ndim != 2 or min(height.shape) < 1:
+            raise ValueError("terrain height field must be a non-empty 2D array")
+        if bounds.shape != (4,) or not np.all(bounds[2:] > bounds[:2]):
+            raise ValueError("terrain bounds must be [min_x, min_z, max_x, max_z]")
+        if not np.isfinite(height).all() or not np.isfinite(bounds).all():
+            raise ValueError("terrain contains non-finite values")
+        object.__setattr__(self, "height_m", height)
+        object.__setattr__(self, "bounds", bounds)
+        if self.water_mask is None:
+            return
+        mask = np.asarray(self.water_mask, dtype=np.uint8)
+        mask_bounds = np.asarray(
+            self.water_bounds if self.water_bounds is not None else bounds,
+            dtype=np.float32,
+        )
+        if mask.ndim != 2 or min(mask.shape) < 1:
+            raise ValueError("water mask must be a non-empty 2D array")
+        if mask_bounds.shape != (4,) or not np.all(mask_bounds[2:] > mask_bounds[:2]):
+            raise ValueError("water bounds must be [min_x, min_z, max_x, max_z]")
+        object.__setattr__(self, "water_mask", mask)
+        object.__setattr__(self, "water_bounds", mask_bounds)
+
+    @staticmethod
+    def _grid_coordinate(
+        value: float, minimum: float, maximum: float, count: int
+    ) -> float:
+        if count == 1:
+            return 0.0
+        unit = (float(value) - minimum) / (maximum - minimum)
+        return float(np.clip(unit, 0.0, 1.0)) * (count - 1)
+
+    def height_at(self, x_m: float, z_m: float) -> float:
+        """Return bilinearly interpolated terrain height in local EUS metres."""
+
+        rows, columns = self.height_m.shape
+        x = self._grid_coordinate(
+            x_m, float(self.bounds[0]), float(self.bounds[2]), columns
+        )
+        z = self._grid_coordinate(
+            z_m, float(self.bounds[1]), float(self.bounds[3]), rows
+        )
+        x0, z0 = int(math.floor(x)), int(math.floor(z))
+        x1, z1 = min(x0 + 1, columns - 1), min(z0 + 1, rows - 1)
+        tx, tz = x - x0, z - z0
+        lower = self.height_m[z0, x0] * (1.0 - tx) + self.height_m[z0, x1] * tx
+        upper = self.height_m[z1, x0] * (1.0 - tx) + self.height_m[z1, x1] * tx
+        return float(lower * (1.0 - tz) + upper * tz)
+
+    def normal_at(self, x_m: float, z_m: float) -> np.ndarray:
+        """Return the central-difference normal used for draped surfaces."""
+
+        rows, columns = self.height_m.shape
+        step_x = float(self.bounds[2] - self.bounds[0]) / max(columns - 1, 1)
+        step_z = float(self.bounds[3] - self.bounds[1]) / max(rows - 1, 1)
+        dh_dx = (
+            self.height_at(x_m + step_x, z_m)
+            - self.height_at(x_m - step_x, z_m)
+        ) / (2.0 * step_x)
+        dh_dz = (
+            self.height_at(x_m, z_m + step_z)
+            - self.height_at(x_m, z_m - step_z)
+        ) / (2.0 * step_z)
+        normal = np.array([-dh_dx, 1.0, -dh_dz], dtype=np.float32)
+        return normal / np.linalg.norm(normal)
+
+    def is_water(self, x_m: float, z_m: float) -> bool:
+        """Nearest-sample classification matching the geographic river mask."""
+
+        if self.water_mask is None or self.water_bounds is None:
+            return False
+        rows, columns = self.water_mask.shape
+        x = self._grid_coordinate(
+            x_m,
+            float(self.water_bounds[0]),
+            float(self.water_bounds[2]),
+            columns,
+        )
+        z = self._grid_coordinate(
+            z_m,
+            float(self.water_bounds[1]),
+            float(self.water_bounds[3]),
+            rows,
+        )
+        return bool(self.water_mask[int(round(z)), int(round(x))] >= 128)
+
+    def collision_height_at(self, x_m: float, z_m: float) -> float:
+        """Height of the opaque ground or water boundary seen by the camera."""
+
+        return 0.0 if self.is_water(x_m, z_m) else self.height_at(x_m, z_m)
 
 
 def _mercator_pixel(
