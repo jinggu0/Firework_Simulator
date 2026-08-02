@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 import math
 from pathlib import Path
 
@@ -9,7 +10,11 @@ import numpy as np
 from .camera import FreeCamera
 from .astronomy import CelestialState
 from .atmosphere import from_atmosphere_config
-from .camera_optics import vertical_fov_deg
+from .camera_optics import (
+    LensDistortion,
+    frame_half_extent,
+    vertical_fov_deg,
+)
 from .config import (
     AtmosphereConfig,
     LightingConfig,
@@ -50,13 +55,35 @@ TWILIGHT_FLOOR_LUX = 0.0002
 TWILIGHT_CEILING_LUX = 3.4
 
 
-def _perspective(fov_deg: float, aspect: float, near: float, far: float) -> np.ndarray:
-    f = 1.0 / math.tan(math.radians(fov_deg) * 0.5)
+def _perspective_from_tangent(
+    tan_half_fov: float, aspect: float, near: float, far: float
+) -> np.ndarray:
+    """Projection from the tangent of the half field.
+
+    Overscan scales that tangent directly, so widening the field is exactly
+    ``tan_half_fov * overscan`` with no round trip through ``atan`` that would
+    perturb the matrix when the overscan is one.
+    """
+
+    f = 1.0 / tan_half_fov
     return np.array(
         [[f / aspect, 0, 0, 0], [0, f, 0, 0],
          [0, 0, (far + near) / (near - far), 2 * far * near / (near - far)],
          [0, 0, -1, 0]],
         dtype=np.float32,
+    )
+
+
+def _perspective(fov_deg: float, aspect: float, near: float, far: float) -> np.ndarray:
+    """Projection from a vertical field of view in degrees.
+
+    Kept as the named entry point because its argument is unambiguous: a bare
+    float handed to the tangent form would build a wrong matrix silently rather
+    than fail.
+    """
+
+    return _perspective_from_tangent(
+        math.tan(math.radians(fov_deg) * 0.5), aspect, near, far
     )
 
 
@@ -97,15 +124,43 @@ class Renderer:
 
         physical_fov_deg = vertical_fov_deg(self.camera_config)
         tan_half_fov = math.tan(math.radians(physical_fov_deg) * 0.5)
+        # Barrel distortion makes the output corners ask for directions past
+        # the edge of an ideal render, so the scene is drawn over a wider field
+        # and at proportionally more pixels — widening the field alone would
+        # hand the sensor a coarser image than its photosites sample. Exactly
+        # 1.0 for the shipped identity lens, which leaves everything below
+        # bit-identical; only a loaded calibration widens it.
+        self.overscan = LensDistortion.from_config(
+            self.camera_config
+        ).required_overscan(frame_half_extent(self.camera_config))
+        render_config = (
+            config
+            if self.overscan == 1.0
+            else replace(
+                config,
+                width=max(round(config.width * self.overscan), 1),
+                height=max(round(config.height * self.overscan), 1),
+            )
+        )
+        self.render_config = render_config
+        render_tan_half_fov = tan_half_fov * self.overscan
         ctx.enable(moderngl.PROGRAM_POINT_SIZE)
         quad = np.array([-1, -1, 1, -1, -1, 1, 1, 1], dtype=np.float32)
         self.quad_buffer = ctx.buffer(quad.tobytes())
 
         self.sky = SkyPass(
-            ctx, config, self.quad_buffer, atmosphere, tan_half_fov
+            ctx, render_config, self.quad_buffer, atmosphere, render_tan_half_fov
         )
+        # The display transform maps *output* pixels to field angles, so it
+        # keeps the sensor's own field and undoes the overscan when it samples.
         self.post = PostProcessPass(
-            ctx, config, self.camera_config, self.quad_buffer, tan_half_fov
+            ctx,
+            config,
+            self.camera_config,
+            self.quad_buffer,
+            tan_half_fov,
+            self.overscan,
+            render_config,
         )
         self.scene = ScenePass(
             ctx, self.lighting_config, SCENE_ASSET, config, self.camera_config
@@ -130,10 +185,10 @@ class Renderer:
             self.land.static_light_power_w,
         )
         self.scene.set_terrain(TERRAIN_UNIT)
-        self.particles = ParticlePass(ctx, config, self.camera_config)
+        self.particles = ParticlePass(ctx, render_config, self.camera_config)
         self.smoke = SmokePass(ctx, smoke_config)
         self.haze = HazePass(ctx, self.quad_buffer)
-        self.targets = RenderTargets(ctx, config)
+        self.targets = RenderTargets(ctx, render_config)
         # Every path that crosses air reads one extinction: the view path in
         # the haze composite, the star and plume radiance where they are drawn,
         # and the source-to-surface path of the point lights.
@@ -184,8 +239,11 @@ class Renderer:
         self.reflection_camera_forward = np.zeros(3, dtype=np.float32)
         self.last_rendered_smoke_revision = -1
         self.scene_illuminance_lux = 0.0
-        self.projection = _perspective(
-            physical_fov_deg, config.width / config.height, .1, 2500
+        self.projection = _perspective_from_tangent(
+            render_tan_half_fov,
+            render_config.width / render_config.height,
+            .1,
+            2500,
         )
 
     # -- compatibility accessors -------------------------------------------

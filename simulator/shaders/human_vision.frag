@@ -28,6 +28,11 @@ uniform float gaze_v;
 
 uniform float tan_half_fov;
 uniform float aspect;
+// The scene may be rendered over a wider field than the observer's, to give
+// the camera path room for lens distortion. The eye has no lens distortion to
+// undo, but it still has to be shown its own field rather than the wider one,
+// so this is a centred crop. One when no calibration is loaded.
+uniform float overscan;
 
 in vec2 uv;
 out vec4 frag_color;
@@ -86,6 +91,9 @@ float eccentricity_deg() {
 
 void main() {
     float eccentricity = eccentricity_deg();
+    // Eccentricity is an angle in the observer's own field, so it uses uv.
+    // Everything that samples a rendered buffer uses the cropped coordinate.
+    vec2 source_uv = (uv * 2.0 - 1.0) / overscan * .5 + .5;
 
     // Peripheral acuity. Cortical magnification gives resolvable frequency
     // 1 / (1 + e / E2), so detail is dropped by sampling a coarser mip rather
@@ -103,10 +111,10 @@ void main() {
     // hardware blend weight is zero and the fetch is exact, so two taps and a
     // mix put the interpolation somewhere portable and predictable.
     float level = floor(lod);
-    vec3 scene = mix(textureLod(hdr_texture, uv, level).rgb,
-                     textureLod(hdr_texture, uv, level + 1.0).rgb,
+    vec3 scene = mix(textureLod(hdr_texture, source_uv, level).rgb,
+                     textureLod(hdr_texture, source_uv, level + 1.0).rgb,
                      lod - level);
-    vec3 bloom = texture(bloom_texture, uv).rgb * bloom_strength;
+    vec3 bloom = texture(bloom_texture, source_uv).rgb * bloom_strength;
 
     // Disability glare. Light scattered in the ocular media veils the retinal
     // image, which is why a burst washes out its surroundings rather than
@@ -114,7 +122,7 @@ void main() {
     // which is far wider than the bloom kernel, so a heavily reduced mip of
     // the bloom stands in for that wide tail. This is an approximation to the
     // CIE glare equation, not an evaluation of it.
-    vec3 wide_field = textureLod(bloom_texture, uv, 5.0).rgb;
+    vec3 wide_field = textureLod(bloom_texture, source_uv, 5.0).rgb;
     float veiling = glare_constant * dot(wide_field, PHOTOPIC_WEIGHTS) * .01;
 
     // The pupil is the eye's aperture control and replaces the camera's
@@ -124,7 +132,7 @@ void main() {
     // Local adaptation. Dividing by the locally adapted level rather than by a
     // single global exposure is what produces an afterimage: where a burst has
     // just faded, the local level is still high and the region reads dark.
-    vec4 adaptation = texture(adaptation_texture, uv);
+    vec4 adaptation = texture(adaptation_texture, source_uv);
     float reference = max(
         mix(adaptation.a, adapting_luminance_cd_m2, .35), 1e-6
     );

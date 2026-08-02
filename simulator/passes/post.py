@@ -59,9 +59,18 @@ class PostProcessPass:
         camera_config: PhysicalCameraConfig,
         quad_buffer: moderngl.Buffer,
         tan_half_fov: float,
+        overscan: float = 1.0,
+        render_config: RenderConfig | None = None,
     ) -> None:
         self.ctx = ctx
         self.frame_index = 0
+        # The scene may be drawn over a wider field than the sensor covers, so
+        # a lens that pulls the image inward still has something to sample at
+        # the corners. Both display shaders map an output pixel to a field
+        # angle with the *sensor's* extent and then divide by this to reach the
+        # rendered frame. One when no calibration is loaded.
+        self.overscan = overscan
+        render_config = render_config or config
 
         self.tonemap_program = shaders.program(ctx, "quad.vert", "tonemap.frag")
         self.tonemap_vao = ctx.simple_vertex_array(
@@ -93,6 +102,7 @@ class PostProcessPass:
         )
         self.tonemap_program["tan_half_fov"] = tan_half_fov
         self.tonemap_program["aspect"] = config.width / config.height
+        self.tonemap_program["overscan"] = overscan
         self.tonemap_program["sensor_noise_enabled"] = int(
             camera_config.enable_sensor_noise
         )
@@ -126,6 +136,7 @@ class PostProcessPass:
         self.vision_program["bloom_strength"] = config.bloom_strength
         self.vision_program["tan_half_fov"] = tan_half_fov
         self.vision_program["aspect"] = config.width / config.height
+        self.vision_program["overscan"] = overscan
 
         self.adaptation_program = shaders.program(
             ctx, "quad.vert", "adaptation.frag"
@@ -144,8 +155,11 @@ class PostProcessPass:
         # for 11 samples a level that was never allocated. Drivers clamp, so
         # the mistake is invisible until a readback of that level returns
         # rubbish, which is how it was found.
+        # Pooled from the rendered buffer, whose size is the overscanned one.
         self.adaptation_program["global_pooling_lod"] = float(
-            math.floor(math.log2(max(config.width, config.height)))
+            math.floor(
+                math.log2(max(render_config.width, render_config.height))
+            )
         )
 
     def set_mode(self, mode: DisplayMode) -> None:

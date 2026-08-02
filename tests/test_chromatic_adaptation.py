@@ -295,8 +295,8 @@ def test_no_shader_relies_on_hardware_trilinear_filtering() -> None:
 def test_peripheral_blur_interpolates_two_explicit_levels() -> None:
     source = shaders.source("human_vision.frag")
     assert "float level = floor(lod);" in source
-    assert "textureLod(hdr_texture, uv, level)" in source
-    assert "textureLod(hdr_texture, uv, level + 1.0)" in source
+    assert "textureLod(hdr_texture, source_uv, level)" in source
+    assert "textureLod(hdr_texture, source_uv, level + 1.0)" in source
     assert "lod - level" in source
 
 

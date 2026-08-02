@@ -195,6 +195,36 @@ def test_barrel_distortion_needs_overscan_and_pincushion_does_not() -> None:
     assert LensDistortion(k1=0.08).frame_coverage(HALF_EXTENT) == 1.0
 
 
+def test_the_shipped_lens_asks_for_no_overscan_at_all() -> None:
+    # Exactly 1.0, not merely close: any other value would resize every render
+    # target and stop the camera path being bit-identical.
+    assert LensDistortion().required_overscan(HALF_EXTENT) == 1.0
+    assert LensDistortion(k1=0.08).required_overscan(HALF_EXTENT) == 1.0
+
+
+def test_overscan_is_derived_from_the_lens_and_restores_full_coverage() -> None:
+    # The whole point: widen the rendered field until every output pixel has
+    # something real to sample.
+    for lens in (
+        LensDistortion(k1=-0.12, k2=0.03),
+        LensDistortion(k1=-0.18, k2=0.03),
+        LensDistortion(k1=-0.12, k2=0.03, p1=1e-4, p2=-2e-4),
+    ):
+        overscan = lens.required_overscan(HALF_EXTENT)
+        assert overscan > 1.0
+        widened = (HALF_EXTENT[0] * overscan, HALF_EXTENT[1] * overscan)
+        assert lens.frame_coverage(HALF_EXTENT) < 0.9
+        assert lens.frame_coverage(HALF_EXTENT, widened) == 1.0
+
+
+def test_overscan_costs_area_not_just_width() -> None:
+    # Recording the price: the render is widened on both axes, so a 9 percent
+    # wider field is a 19 percent larger frame.
+    overscan = LensDistortion(k1=-0.12, k2=0.03).required_overscan(HALF_EXTENT)
+    assert overscan == pytest.approx(1.0897, abs=1e-3)
+    assert overscan**2 == pytest.approx(1.187, abs=1e-3)
+
+
 def test_distortion_is_a_visible_effect_when_calibrated() -> None:
     # Recording the scale: a mild barrel moves the frame corner by tens of
     # pixels, which is why leaving the stage out was a real gap rather than a

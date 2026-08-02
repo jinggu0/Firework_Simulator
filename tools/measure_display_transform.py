@@ -50,11 +50,21 @@ def _aces(x: np.ndarray) -> np.ndarray:
 
 
 def _predict(
-    hdr: np.ndarray, bloom: np.ndarray, camera_config, bloom_strength: float
+    hdr: np.ndarray,
+    bloom: np.ndarray,
+    camera_config,
+    bloom_strength: float,
+    overscan: float = 1.0,
+    output_size: tuple[int, int] | None = None,
 ) -> np.ndarray:
-    """Run the same chain tonemap.frag runs, on the same two buffers."""
+    """Run the same chain tonemap.frag runs, on the same two buffers.
 
-    height, width = hdr.shape[:2]
+    The grid is the *output* one. With a lens calibration loaded the scene is
+    rendered over a wider field and at more pixels, so the buffers are larger
+    than the frame they are sampled into.
+    """
+
+    width, height = output_size or (hdr.shape[1], hdr.shape[0])
     half_extent = np.asarray(frame_half_extent(camera_config))
     # Pixel centres in OpenGL row order, matching the buffers as read.
     u = (np.arange(width) + 0.5) / width
@@ -66,7 +76,7 @@ def _predict(
     sensor_position = LensDistortion.from_config(camera_config).undistort(
         distorted
     )
-    source = sensor_position / half_extent * 0.5 + 0.5
+    source = sensor_position / (half_extent * overscan) * 0.5 + 0.5
     source_u = np.clip(source[..., 0], 0.0, 1.0)
     source_v = np.clip(source[..., 1], 0.0, 1.0)
 
@@ -115,18 +125,37 @@ def measure(frames_warmup: int = 4) -> dict[str, object]:
     bloom = _read_rgb(renderer.targets.bloom_textures[0])
     pygame.display.flip()
 
-    predicted = _predict(hdr, bloom, camera_config, config.render.bloom_strength)
+    overscan = renderer.overscan
+    predicted = _predict(
+        hdr,
+        bloom,
+        camera_config,
+        config.render.bloom_strength,
+        overscan,
+        (width, height),
+    )
     error = np.abs(predicted - displayed)
     gains = white_balance_gains(camera_config)
     distortion = LensDistortion.from_config(camera_config)
     half_extent = frame_half_extent(camera_config)
+    rendered_extent = (half_extent[0] * overscan, half_extent[1] * overscan)
     lit = displayed.max(axis=-1) > 4.0 / 255.0
     result = {
         "white_balance_temperature_k": camera_config.white_balance_temperature_k,
         "white_balance_gain": [float(value) for value in gains],
         "distortion_is_identity": distortion.is_identity,
-        "distortion_frame_coverage": distortion.frame_coverage(half_extent),
+        # Coverage is measured against the *rendered* field, which is what the
+        # display transform actually samples. Without overscan this is the
+        # sensor's field and a barrel lens falls short of 1.
+        "distortion_frame_coverage": distortion.frame_coverage(
+            half_extent, rendered_extent
+        ),
+        "coverage_without_overscan": distortion.frame_coverage(half_extent),
         "distortion_inverse_residual": distortion.inverse_residual(half_extent),
+        "overscan": overscan,
+        "required_overscan": distortion.required_overscan(half_extent),
+        "render_size": [renderer.render_config.width, renderer.render_config.height],
+        "output_size": [width, height],
         "absolute_error_max": float(error.max()),
         "absolute_error_mean": float(error.mean()),
         "absolute_error_p999": float(np.percentile(error, 99.9)),

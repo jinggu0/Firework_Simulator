@@ -1254,8 +1254,46 @@ because a loaded calibration can break either:
   gates on the residual.
 - **Frame coverage.** Barrel distortion pulls the image inward, so the output
   corners ask for scene an ideal render does not contain. k1 = −0.12 covers
-  only 88% of the output; the remainder is clamped, not correct, and the fix is
-  to render with overscan. V-23 gates on coverage too.
+  only 88% of the output without overscan. V-23 gates on coverage.
+
+### Overscan
+
+The renderer draws the scene over a wider field than the sensor covers, so a
+lens that pulls the image inward still has something real to sample at the
+corners. The factor is **derived from the loaded calibration**, not configured:
+`LensDistortion.required_overscan` undistorts the output frame and returns how
+far past the sensor's field those directions run. It is **exactly 1.0** for an
+identity or pincushion lens, which is what keeps the shipped camera path
+bit-identical — V-23 and V-24 hold their 0.63 and 0.62 code-value residuals
+unchanged.
+
+The field is widened **and the pixel count with it**. Widening the field alone
+would hand the sensor a coarser image than its photosites sample, which is a
+fidelity loss rather than a saving. The price is area, not width: k1 = −0.12
+needs 1.090× the field and therefore **1.19× the pixels**; k1 = −0.18 needs
+1.182× and **1.40×**. Every scene-resolution target follows, because the
+renderer builds them from a `replace`d config; the display transform keeps the
+sensor's own field and divides by the overscan when it samples. Human Vision
+Mode has no lens distortion to undo but still gets a centred crop, so the
+observer is shown their own field rather than the wider one.
+
+Measured end to end with a synthetic calibration: coverage **0.888 → 1.000**
+for k1 = −0.12, with the renderer's applied overscan matching the lens's
+requirement exactly — V-23 gates that too, since a coverage of 1.0 means
+nothing if measured against a render that never happened.
+
+**A distorted lens costs sampling precision, and the tolerance says so.** With
+an identity lens the source coordinate equals the output coordinate, every
+fetch lands on a texel centre, and the GPU's bilinear filter degenerates to an
+exact read — hence the 0.63 floor. Any distortion turns it into a real
+interpolation and the CPU reference and the texture unit diverge by up to a
+measured **2.26 code values**. That is filtering precision, not a model
+difference: a **pincushion** lens, which needs no overscan and no change of
+resolution at all, shows the same rise. V-23 therefore carries two bounds — 2
+code values when the sampling is texel-aligned, 4 when it is not, at 1.8× the
+measured floor. If a real calibration ever exceeds that, the fix is for the
+display transform to do its own bilinear from four explicit fetches, the way
+the peripheral blur now does its own mip interpolation.
 
 The effect is not a formality when calibrated: k1 = −0.18 moves the frame
 corner by 75 px horizontally at 1280 x 720.

@@ -23,13 +23,29 @@ from .report import MetricResult, MetricStatus
 
 DISPLAY_QUANTUM = 1.0 / 255.0
 ABSOLUTE_TOLERANCE = 2.0 * DISPLAY_QUANTUM
-"""Two 8-bit code values.
+"""Two 8-bit code values, for a texel-aligned sampling.
 
 Rounding alone puts the mean absolute error at a quarter of a code value and
 the maximum near a half. Measured worst case is 0.63, so this bound has about
 three times the margin over rounding while sitting far below any real defect:
 dropping the blue white-balance gain of 1.64 would move blue by tens of code
 values.
+"""
+
+RESAMPLED_TOLERANCE = 4.0 * DISPLAY_QUANTUM
+"""Four code values, once a lens calibration makes the sampling non-aligned.
+
+With an identity lens the source coordinate equals the output coordinate, so
+every fetch lands on a texel centre and the GPU's bilinear filter degenerates
+to an exact read — hence the 0.63 floor. Any distortion turns it into a real
+interpolation, and the CPU reference and the texture unit then disagree by up
+to a measured 2.26 code values. That is filtering precision rather than a model
+difference: a pincushion lens, which needs **no** overscan and no change of
+resolution, shows the same rise. The bound is set at 1.8x the measured floor.
+
+Revisit if a calibration ever exceeds it: the alternative is for the display
+transform to do its own bilinear from four explicit fetches, the way the
+peripheral blur now does its own mip interpolation.
 """
 
 MINIMUM_LIT_FRACTION = 0.05
@@ -94,6 +110,14 @@ def display_transform(
 
     error_max = float(payload.get("absolute_error_max", float("nan")))
     lit_fraction = float(payload.get("lit_pixel_fraction", 0.0))
+    # A distorted lens resamples, and resampling costs filtering precision.
+    tolerance = (
+        ABSOLUTE_TOLERANCE
+        if payload.get("distortion_is_identity", True)
+        else RESAMPLED_TOLERANCE
+    )
+    overscan = float(payload.get("overscan", 1.0))
+    required_overscan = float(payload.get("required_overscan", 1.0))
     residual = float(payload.get("distortion_inverse_residual", float("nan")))
     coverage = float(payload.get("distortion_frame_coverage", 0.0))
     gains = [float(value) for value in payload.get("white_balance_gain", [])]
@@ -105,8 +129,13 @@ def display_transform(
     inversion_converged = residual <= 1e-4
     fully_covered = coverage >= 1.0 - 1e-9
     balanced = len(gains) == 3 and all(value > 0.0 for value in gains)
+    # The renderer has to have actually widened the field by what the lens
+    # needs; a coverage of 1.0 means nothing if it was measured against a
+    # render that never happened.
+    overscan_applied = abs(overscan - required_overscan) <= 1e-9
     passed = (
-        error_max <= ABSOLUTE_TOLERANCE
+        error_max <= tolerance
+        and overscan_applied
         and exercised
         and inversion_converged
         and fully_covered
@@ -122,6 +151,11 @@ def display_transform(
         message = (
             f"lens distortion inverse residual {residual:.2e} exceeds 1e-4; "
             "the fixed-point inversion has not converged for these coefficients"
+        )
+    elif not overscan_applied:
+        message = (
+            f"the lens needs {required_overscan:.4f} overscan but the scene "
+            f"was rendered at {overscan:.4f}; the frame edges would be clamped"
         )
     elif not fully_covered:
         message = (
@@ -148,7 +182,12 @@ def display_transform(
             "absolute_error_mean": float(
                 payload.get("absolute_error_mean", float("nan"))
             ),
-            "tolerance": ABSOLUTE_TOLERANCE,
+            "tolerance": tolerance,
+            "overscan": overscan,
+            "required_overscan": required_overscan,
+            "coverage_without_overscan": float(
+                payload.get("coverage_without_overscan", float("nan"))
+            ),
             "error_in_code_values": error_max / DISPLAY_QUANTUM,
             "distortion_inverse_residual": residual,
             "distortion_frame_coverage": coverage,

@@ -21,6 +21,10 @@ uniform float full_well_electrons;
 uniform float read_noise_electrons;
 uniform float tan_half_fov;
 uniform float aspect;
+// How much wider than the sensor the scene was rendered, so a lens that pulls
+// the image inward still has something to sample at the corners. One when no
+// calibration is loaded, which leaves the sampling below unchanged.
+uniform float overscan;
 uniform float frame_index;
 uniform int sensor_noise_enabled;
 in vec2 uv; out vec4 frag_color;
@@ -70,7 +74,9 @@ vec2 undistort(vec2 distorted) {
 void main() {
     vec2 half_extent = vec2(aspect * tan_half_fov, tan_half_fov);
     vec2 sensor_position = undistort((uv * 2.0 - 1.0) * half_extent);
-    vec2 source_uv = sensor_position / half_extent * .5 + .5;
+    // The field angle is the sensor's; the texture coordinate is the rendered
+    // frame's, which spans `overscan` times as much of it.
+    vec2 source_uv = sensor_position / (half_extent * overscan) * .5 + .5;
     vec3 hdr = texture(hdr_texture, source_uv).rgb;
     vec3 bloom = texture(bloom_texture, source_uv).rgb * bloom_strength;
     // Natural falloff is a function of the field angle, so it follows the

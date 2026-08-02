@@ -218,19 +218,57 @@ class LensDistortion:
             np.abs(self.distort(self.undistort(grid)) - grid).max()
         )
 
-    def frame_coverage(self, half_extent: tuple[float, float]) -> float:
+    def required_overscan(self, half_extent: tuple[float, float]) -> float:
+        """How much wider than the sensor the scene must be rendered.
+
+        The frame is formed by asking, for each output pixel, which undistorted
+        direction landed there. Barrel distortion pulls the image inward, so
+        those directions run past the edge of an ideal render and the corners
+        sample scene that was never drawn. Rendering the field this many times
+        wider puts them back inside it.
+
+        Returns exactly 1.0 for an identity or pincushion lens, so the shipped
+        camera path is untouched — the render is widened only when a loaded
+        calibration actually needs it.
+        """
+
+        source = self.undistort(self._frame_grid(half_extent))
+        needed = np.maximum(
+            np.abs(source[..., 0]) / max(half_extent[0], 1e-12),
+            np.abs(source[..., 1]) / max(half_extent[1], 1e-12),
+        )
+        widest = float(needed.max())
+        if widest <= 1.0:
+            return 1.0
+        # A hair beyond the extreme sample. Scaling by exactly the maximum puts
+        # that sample on the boundary, where the containment test loses to
+        # floating point and coverage lands at 0.9998 instead of 1. The margin
+        # is applied only when the lens needs widening at all, so an identity
+        # or pincushion calibration still returns exactly 1.0 and leaves the
+        # render untouched.
+        return widest * (1.0 + 1e-6)
+
+    def frame_coverage(
+        self,
+        half_extent: tuple[float, float],
+        rendered_extent: tuple[float, float] | None = None,
+    ) -> float:
         """Fraction of output pixels whose source lies inside the rendered frame.
 
         Barrel distortion pulls the image inward, so the corners of the output
-        sample beyond what an ideal render contains. Below 1.0 the border is
-        clamped rather than correct, and the fix is to render with overscan.
-        Measuring it means a loaded calibration cannot silently smear the edges.
+        sample beyond what an ideal render of the sensor's own field contains.
+        Below 1.0 the border is clamped rather than correct.
+
+        ``half_extent`` is the sensor's field, which sets the output grid.
+        ``rendered_extent`` is the field actually drawn, wider when the renderer
+        overscans; it defaults to the sensor's, which is the coverage *without*
+        overscan and therefore the size of the problem overscan solves.
         """
 
-        grid = self._frame_grid(half_extent)
-        source = self.undistort(grid)
-        inside = (np.abs(source[..., 0]) <= half_extent[0]) & (
-            np.abs(source[..., 1]) <= half_extent[1]
+        rendered = rendered_extent or half_extent
+        source = self.undistort(self._frame_grid(half_extent))
+        inside = (np.abs(source[..., 0]) <= rendered[0]) & (
+            np.abs(source[..., 1]) <= rendered[1]
         )
         return float(inside.mean())
 
