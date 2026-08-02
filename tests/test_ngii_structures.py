@@ -126,9 +126,11 @@ def test_normalized_asset_keeps_unknown_height_null() -> None:
         scene_path=scene_path,
     )
 
+    assert asset["schema_version"] == 2
     assert asset["summary"]["feature_count"] == 1
     feature = asset["features"][0]
     assert feature["kind"] == "retaining_wall"
+    assert len(feature["feature_id"]) == 24
     assert feature["has_source_elevation"] is False
     assert all(point[1] is None for point in feature["points_eus_m"])
     assert feature["length_m"] == pytest.approx(10.0, abs=0.02)

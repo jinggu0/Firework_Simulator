@@ -166,7 +166,11 @@ platform did not complete an anonymous download, the checked sheet displayed
 no earlier history, and a 2025 production year is later than the target event.
 The importer therefore enforces a temporal gate and records hashes, CRS,
 elevation presence, and source year before any future scene merge. Plan-only
-lines never supply an invented wall height or embankment profile.
+lines never supply an invented wall height or embankment profile. The runtime
+now has an empty dedicated structure batch and a merge path, but it accepts
+only grade-A/B top/crest/toe decisions locked to the exact normalized-asset
+checksum. Consequently the current distributed scene still contains no NGII
+wall or earthwork triangles.
 
 ## Historical weather
 

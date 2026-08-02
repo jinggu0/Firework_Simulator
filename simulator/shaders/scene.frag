@@ -20,12 +20,12 @@ uniform vec3 dynamic_light_color[8];
 uniform float dynamic_light_power_w[8];
 
 // Material table, one row per surface code. See simulator/materials.py.
-uniform vec3 material_base_primary[17];
-uniform vec3 material_base_secondary[17];
-uniform vec4 material_pattern[17];      // kind, scale u, scale v, mix
-uniform vec4 material_reflectance[17];  // roughness, metallic, ao, transmission
-uniform vec4 material_emissive[17];     // rgb, scale
-uniform vec2 material_relief[17];       // normal strength, height scale
+uniform vec3 material_base_primary[19];
+uniform vec3 material_base_secondary[19];
+uniform vec4 material_pattern[19];      // kind, scale u, scale v, mix
+uniform vec4 material_reflectance[19];  // roughness, metallic, ao, transmission
+uniform vec4 material_emissive[19];     // rgb, scale
+uniform vec2 material_relief[19];       // normal strength, height scale
 // Four CC0 photo-scanned PBR sets, packed as diffuse/normal/ARM layers.
 uniform sampler2DArray scanned_material_texture;
 uniform vec3 scanned_diffuse_mean[4];
@@ -114,7 +114,7 @@ int scanned_layer_for_material(int material) {
     if (material == 3) return 0;                 // asphalt
     if (material == 5) return 1;                 // concrete pavers
     if (material == 4 || material == 16) return 2; // grass
-    if (material == 2 || material == 12) return 3; // structural concrete
+    if (material == 2 || material == 12 || material == 17) return 3;
     return -1;
 }
 
@@ -298,7 +298,7 @@ float surface_pattern(int kind, vec2 scale, vec3 n) {
 
 void main() {
     vec3 n = normalize(world_normal);
-    int material = int(clamp(surface + .5, 0.0, 16.0));
+    int material = int(clamp(surface + .5, 0.0, 18.0));
     vec4 pattern = material_pattern[material];
     int kind = int(pattern.x + .5);
     vec4 reflectance = material_reflectance[material];

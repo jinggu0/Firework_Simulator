@@ -615,6 +615,7 @@ class ScenePass:
             road_batch,
             scene.vegetation_vertices,
             non_grass_detail,
+            scene.structure_vertices,
         )
         for index, vertices in enumerate(batches):
             if not len(vertices):
@@ -648,6 +649,11 @@ class ScenePass:
                             len(reflection_vertices),
                         )
                     )
+            elif index == 5:
+                # Survey-qualified riverside walls and slopes are part of the
+                # reflected shoreline silhouette. They remain one batch and
+                # one reflection draw regardless of source feature count.
+                self.reflection_vaos.append((vao, len(vertices)))
         for vertices, centre, radius in grass_detail_chunks(
             scene.detail_vertices
         ):

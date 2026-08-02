@@ -1151,6 +1151,75 @@ is not substituted: its catalogue states that the service ended in 2022 and
 covered urban-expressway installations rather than the complete Yeouido
 riverside inventory.
 
+### Survey-qualified wall and earthwork mesh merge
+
+Normalized plan/elevation data is not rendered directly. The optional
+`tools/merge_ngii_structures.py` stage requires a separate profile document
+whose SHA-256 is locked to one normalized structure asset. Every profile must
+carry a grade-A or grade-B `DataRecord`; grade-C modelled dimensions and
+grade-D visual completion are rejected as geometry. A later-than-event asset
+also meets a second explicit time gate at merge, even if its import was
+previously allowed.
+
+Two evidence-complete cases are implemented:
+
+- `retaining_wall_face` requires the mapped source line to be independently
+  identified as the wall top and the official terrain to be identified as its
+  lower edge. It interpolates the surveyed top at no more than 4 m, samples the
+  official terrain at each foot, and emits both windings because a map line
+  carries no outward-face direction. A segment whose top is less than 0.08 m
+  above the terrain is skipped rather than inverted.
+- `surveyed_slope` requires two elevated lines of the same feature class,
+  independently identified as crest and toe. The two edges are oriented and
+  resampled by normalized station, then joined directly. No default slope
+  angle, shoulder width, or toe depth exists in the code.
+
+Source elevations are absolute relative to the event datum, whereas the static
+renderer stores Y as an offset above its official terrain texture. The merge
+therefore subtracts terrain elevation at every generated vertex; the GPU adds
+the same terrain once during rendering. Lighting normals are computed from the
+absolute surveyed surface, not from those storage offsets. This prevents both
+double elevation and a false normal on sloping ground.
+
+Retaining concrete and mixed turf/exposed earthwork receive dedicated material
+slots. They share one `structure_vertices` batch and therefore add at most one
+main-scene draw and one reflection draw, independent of source feature count.
+The shipped scene currently holds an empty backward-compatible batch: no
+profile can be authored honestly until authenticated source files and the
+top/crest/toe semantics are obtained.
+
+The profile document has this audited shape:
+
+```json
+{
+  "schema_version": 1,
+  "source_asset_sha256": "<exact normalized JSON SHA-256>",
+  "profiles": [{
+    "feature_id": "<stable imported feature id>",
+    "mesh_kind": "retaining_wall_face",
+    "source_edge_role": "top",
+    "lower_edge_source": "official_terrain",
+    "evidence": {
+      "confidence_grade": "A",
+      "source_id": "<identified survey>",
+      "source_url": "<source URL>",
+      "coordinate_reference_system": "<confirmed CRS>",
+      "units": "m",
+      "notes": "<how the line role was established>"
+    }
+  }]
+}
+```
+
+The output path is mandatory, so an experimental merge cannot silently
+overwrite the checked scene:
+
+```powershell
+python -m tools.merge_ngii_structures `
+  --structures <normalized.json> --profiles <audited-profiles.json> `
+  --output <candidate-scene.npz>
+```
+
 The view-projection matrix and camera position are refreshed for every render
 pass each frame, keeping terrain, water Fresnel response, buildings, and
 fireworks in one coordinate frame. Adding the dynamic camera path measures
@@ -1653,6 +1722,16 @@ A clean 360-frame integrated 3D regression run measures 13.157 ms frame p95,
 10.185 ms visual p95, and 14.381 ms frame p99. The frame p95 retains 3.51 ms
 inside the 16.67 ms target; variation from the preceding run is host/driver
 noise because this stage adds no draw, upload, or per-frame work.
+
+The survey-qualified structure merge adds two material-table rows and a
+backward-compatible empty structure batch to the shipped scene path. A clean
+360-frame integrated 3D run measures 12.631 ms frame p95, 9.883 ms visual p95,
+and 13.786 ms frame p99, retaining 4.04 ms at the 60 Hz p95 boundary. Because
+the checked scene contains no unaudited structure vertices, this result proves
+the dormant path and larger shader table do not regress the laptop target; it
+does not predict the cost of a future populated NGII asset. Populated geometry
+remains one main draw and one reflection draw, but must receive its own p95 and
+triangle-count gate before replacing the shipped scene.
 
 The next latency work is ordered as follows: add active sparse-brick dispatch
 beyond the current launch domain, add GPU source-reduction diagnostics, then

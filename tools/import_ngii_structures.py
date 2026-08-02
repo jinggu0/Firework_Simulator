@@ -377,7 +377,8 @@ def build_normalized_asset(
         source_records.append(
             {"label": label, "sha256": sha256(raw).hexdigest(), "bytes": len(raw)}
         )
-        for entity in parse_ascii_dxf(_decode(raw, label)):
+        source_checksum = sha256(raw).hexdigest()
+        for entity_index, entity in enumerate(parse_ascii_dxf(_decode(raw, label))):
             kind = resolve_layer_kind(entity.layer, layer_kinds)
             if kind is None:
                 continue
@@ -403,6 +404,10 @@ def build_normalized_asset(
             total_length_m += length_m
             features.append(
                 {
+                    "feature_id": sha256(
+                        f"{source_checksum}:{entity_index}:{entity.layer}:"
+                        f"{entity.entity_type}".encode("utf-8")
+                    ).hexdigest()[:24],
                     "kind": kind,
                     "source_layer": entity.layer,
                     "source_entity": entity.entity_type,
@@ -416,7 +421,7 @@ def build_normalized_asset(
     for feature in features:
         counts[str(feature["kind"])] += 1
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "target_event_date": EVENT_DATE.isoformat(),
         "source_year": source_year,
         "temporal_relation": temporal_relation,

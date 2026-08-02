@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import math
 from pathlib import Path
 from typing import Any
@@ -26,6 +26,8 @@ SURFACE_PLAYGROUND = 13.0
 SURFACE_GARDEN = 14.0
 SURFACE_TRAIL = 15.0
 SURFACE_GRASS_BLADE = 16.0
+SURFACE_RETAINING_WALL = 17.0
+SURFACE_EARTHWORK = 18.0
 
 # The final vertex channel is facade style for buildings and lightweight
 # source semantics for linear batches.  Keeping the flag in the existing
@@ -63,6 +65,9 @@ class StaticScene:
     origin_latitude_deg: float
     origin_longitude_deg: float
     snapshot_utc: str
+    structure_vertices: np.ndarray = field(
+        default_factory=lambda: np.empty((0, 10), dtype=np.float32)
+    )
 
 
 def _height(tags: dict[str, str]) -> float:
@@ -1074,6 +1079,7 @@ def save_scene(scene: StaticScene, path: Path) -> None:
             dtype=np.float64,
         ),
         snapshot_utc=np.array([scene.snapshot_utc]),
+        structure_vertices=scene.structure_vertices,
     )
 
 
@@ -1115,4 +1121,7 @@ def load_scene(path: Path) -> StaticScene:
             float(origin[1]),
             str(data["snapshot_utc"][0])
             if "snapshot_utc" in data else "",
+            _upgrade_vertex_layout(data["structure_vertices"])
+            if "structure_vertices" in data
+            else np.empty((0, 10), dtype=np.float32),
         )

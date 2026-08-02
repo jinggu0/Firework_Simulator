@@ -1,9 +1,10 @@
+from dataclasses import replace
 from pathlib import Path
 import json
 
 import numpy as np
 
-from simulator.scene import build_scene, build_water_mask, load_scene
+from simulator.scene import build_scene, build_water_mask, load_scene, save_scene
 from simulator.scene import (
     LINEAR_STYLE_STEPS,
     SURFACE_CYCLEWAY,
@@ -151,6 +152,21 @@ def test_shipped_scene_uses_official_contour_grid_and_event_water_datum() -> Non
     )
     assert scene.terrain_height_m.shape == (1024, 1024)
     assert np.isclose(scene.elevation_datum_m, 2.79, atol=1e-6)
+    assert scene.structure_vertices.shape == (0, 10)
+
+
+def test_structure_batch_round_trips_without_changing_other_scene_arrays(
+    tmp_path: Path,
+) -> None:
+    scene = build_scene({"elements": []}, 37.5, 126.9)
+    structure = np.arange(60, dtype=np.float32).reshape(6, 10)
+    path = tmp_path / "scene.npz"
+
+    save_scene(replace(scene, structure_vertices=structure), path)
+    loaded = load_scene(path)
+
+    assert np.array_equal(loaded.structure_vertices, structure)
+    assert np.array_equal(loaded.building_vertices, scene.building_vertices)
 
 
 def test_named_landmarks_receive_distinct_facade_styles() -> None:

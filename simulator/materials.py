@@ -37,6 +37,7 @@ from .scene import (
     SURFACE_BRIDGE,
     SURFACE_CONCRETE,
     SURFACE_CYCLEWAY,
+    SURFACE_EARTHWORK,
     SURFACE_FOLIAGE,
     SURFACE_FOOTWAY,
     SURFACE_GARDEN,
@@ -46,6 +47,7 @@ from .scene import (
     SURFACE_PLAYGROUND,
     SURFACE_ROAD,
     SURFACE_ROOF,
+    SURFACE_RETAINING_WALL,
     SURFACE_SPORT,
     SURFACE_TRAIL,
     SURFACE_VEGETATION,
@@ -53,8 +55,8 @@ from .scene import (
     SURFACE_WOOD,
 )
 
-MATERIAL_SLOTS = 17
-"""One row per surface code, 0 through 16."""
+MATERIAL_SLOTS = 19
+"""One row per surface code, 0 through 18."""
 
 DIELECTRIC_NORMAL_REFLECTANCE = 0.04
 """Normal-incidence reflectance of a typical dielectric.
@@ -372,6 +374,38 @@ _MATERIALS: tuple[MaterialChannels, ...] = (
         # Individual blades are the most translucent surface in the scene.
         transmission=0.35,
         ambient_occlusion=0.80,
+    ),
+    MaterialChannels(
+        name="retaining_wall_concrete",
+        surface_code=SURFACE_RETAINING_WALL,
+        base_color_primary=(0.185, 0.19, 0.185),
+        base_color_secondary=(0.105, 0.115, 0.105),
+        pattern=PatternKind.PANELS,
+        pattern_scale=(0.42, 0.20),
+        pattern_mix=0.18,
+        roughness=0.91,
+        height_scale=0.008,
+        ambient_occlusion=0.86,
+        source_note=(
+            "Weathered retaining-concrete appearance calibration; geometry "
+            "requires separate surveyed evidence."
+        ),
+    ),
+    MaterialChannels(
+        name="earthwork_slope",
+        surface_code=SURFACE_EARTHWORK,
+        base_color_primary=(0.070, 0.105, 0.035),
+        base_color_secondary=(0.20, 0.145, 0.075),
+        pattern=PatternKind.HASH_CELL,
+        pattern_scale=(0.36, 0.36),
+        pattern_mix=0.45,
+        roughness=0.96,
+        height_scale=0.010,
+        ambient_occlusion=0.84,
+        source_note=(
+            "Mixed turf and exposed-soil appearance calibration; surveyed "
+            "crest/toe geometry remains independent."
+        ),
     ),
 )
 

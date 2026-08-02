@@ -42,7 +42,7 @@ void main() {
     float gust = sin(time_s * 1.37 + spatial_phase)
                + .38 * sin(time_s * 2.91 + spatial_phase * 1.83);
     float observation_distance_m = distance(camera_position, in_position);
-    if (in_surface > 15.5) {
+    if (abs(in_surface - 16.0) < 0.1) {
         // A blade narrower than the sample spacing is decided by where the
         // pixel centre falls, so it is collapsed toward its base rather than
         // rasterised. Smoothstep keeps the transition from reading as a seam.

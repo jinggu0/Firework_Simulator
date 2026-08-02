@@ -1276,6 +1276,7 @@ def cpu_state_footprint(
             "building_vertices": int(scene.building_vertices.shape[0]),
             "detail_vertices": int(scene.detail_vertices.shape[0]),
             "road_vertices": int(scene.road_vertices.shape[0]),
+            "structure_vertices": int(scene.structure_vertices.shape[0]),
         }
 
     total_bytes = star_bytes + fluid_bytes + scene_bytes
