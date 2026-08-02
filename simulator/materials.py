@@ -208,10 +208,10 @@ _MATERIALS: tuple[MaterialChannels, ...] = (
         name="asphalt_road",
         surface_code=SURFACE_ROAD,
         base_color_primary=(0.035, 0.038, 0.042),
-        base_color_secondary=(0.32, 0.32, 0.32),
-        pattern=PatternKind.LANE,
-        pattern_scale=(0.12, 0.08),
-        pattern_mix=0.22,
+        base_color_secondary=(0.035, 0.038, 0.042),
+        # Lane geometry follows each road's longitudinal UV in scene.frag;
+        # the old world-axis pattern bent or crossed markings on rotated ways.
+        pattern=PatternKind.UNIFORM,
         roughness=0.88,
         ambient_occlusion=0.94,
     ),

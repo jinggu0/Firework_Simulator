@@ -24,13 +24,13 @@ import math
 from .camera_optics import vertical_fov_deg
 from .config import PhysicalCameraConfig, RenderConfig
 
-BLADE_WIDTH_M = 0.04
-"""Representative grass blade width.
+BLADE_WIDTH_M = 0.035
+"""Representative rendered grass-tuft width.
 
-The builder draws widths of 0.028 to 0.050 m; this is the middle of that range.
-Using one representative width keeps the band a per-frame scalar instead of a
-per-vertex computation, at the cost of the narrowest blades fading slightly
-late and the widest slightly early.
+The builder draws crossed cards 0.024 to 0.050 m across to represent small
+tufts; this is near the middle of that range. Using one representative width
+keeps the band a per-frame scalar instead of a per-vertex computation, at the
+cost of the narrowest tufts fading slightly late and the widest slightly early.
 """
 
 FULL_DETAIL_PIXELS = 1.5

@@ -83,12 +83,17 @@
     "water_reflection_taps": 3,
     "water_streak_radius_px_near_far": [1.25, 5.5],
     "window_emission_scale": 0.72,
-    "grass_candidate_spacing_m": 3.0
+    "grass_candidate_spacing_m": 1.2,
+    "grass_blades_authored": 7659,
+    "bridge_fascia_depth_m": 1.35,
+    "bridge_pier_spacing_m": 85.0
   },
   "limitations": [
     "None of the held photographs publishes a camera position and orientation precise enough for pixel registration.",
     "The press photographs do not publish raw linear data, lens profiles or complete exposure metadata.",
     "Bridge luminaire spacing, window occupancy, vegetation reflectance and water blur widths are appearance calibrations, not surveyed measurements.",
+    "Bridge fascia, piers, rooftop equipment, lane paint, asphalt repairs and micro-surface patterns are deterministic grade-D derived detail, not surveyed placement.",
+    "Facade logos, exact panel textures, road damage, bridge member inventories and botanical species are not yet reconstructed.",
     "No copyrighted photograph is distributed with the project."
   ]
 }

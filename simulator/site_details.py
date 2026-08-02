@@ -496,7 +496,7 @@ def _is_bladed_surface(tags: dict[str, str]) -> bool:
 
 
 def _blade_candidates(
-    polygon: np.ndarray, seed: int, spacing: float = 3.0
+    polygon: np.ndarray, seed: int, spacing: float = 1.2
 ) -> list[tuple[np.ndarray, float, float, float]]:
     """Deterministic blade positions and dimensions inside one polygon.
 
@@ -530,8 +530,10 @@ def _blade_candidates(
             candidates.append(
                 (
                     blade_position,
-                    0.26 + ((hashed >> 16) & 255) / 255.0 * 0.24,
-                    0.028 + ((hashed >> 12) & 15) / 15.0 * 0.022,
+                    # A maintained riverside sward: each crossed card is a
+                    # small tuft, not a 0.5 m ornamental grass blade.
+                    0.09 + ((hashed >> 16) & 255) / 255.0 * 0.09,
+                    0.012 + ((hashed >> 12) & 15) / 15.0 * 0.013,
                     (hashed % 6283) / 1000.0,
                 )
             )
@@ -566,7 +568,10 @@ def build_site_detail_mesh(
         "grass_blades": 0,
     }
     tree_limit = 900
-    grass_blade_limit = 2_500
+    # Individual cards are only retained inside the optics-derived near LOD.
+    # Twelve thousand is still a small static vertex workload, but avoids the
+    # one-blade-every-nine-square-metres look of the previous authoring pass.
+    grass_blade_limit = 12_000
     blade_candidates: list[tuple[np.ndarray, float, float, float]] = []
     # Ground-plane observer positions the blade budget is spent around. With
     # none supplied this falls back to the scene origin, which is what the

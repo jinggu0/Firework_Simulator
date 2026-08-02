@@ -58,6 +58,21 @@ float hash21(vec2 p) {
     p += dot(p, p + 45.32);
     return fract(p.x * p.y);
 }
+float value_noise(vec2 p) {
+    vec2 cell = floor(p);
+    vec2 local = fract(p);
+    local = local * local * (3.0 - 2.0 * local);
+    float a = hash21(cell);
+    float b = hash21(cell + vec2(1.0, 0.0));
+    float c = hash21(cell + vec2(0.0, 1.0));
+    float d = hash21(cell + vec2(1.0, 1.0));
+    return mix(mix(a, b, local.x), mix(c, d, local.x), local.y);
+}
+float fbm2(vec2 p) {
+    float value = value_noise(p) * .68;
+    value += value_noise(p * 2.07 + 19.3) * .32;
+    return value;
+}
 float interval(float value, float lower, float upper, float antialias) {
     return smoothstep(lower - antialias, lower + antialias, value)
          * (1.0 - smoothstep(upper - antialias, upper + antialias, value));
@@ -240,6 +255,74 @@ void main() {
             material_base_secondary[material],
             pattern_value * pattern.w
         );
+        // Metric procedural detail replaces flat colour at close range while
+        // naturally averaging away in the distance. It is deterministic in
+        // world space, so moving the camera never makes the surface swim.
+        float camera_distance_m = length(camera_position - world_position);
+        float micro_detail = 1.0 - smoothstep(90.0, 420.0, camera_distance_m);
+        if (material == 3) {
+            // Asphalt aggregate, repaired patches, edge lines and a dashed
+            // centre line. The upload pass supplies u=metres along the road
+            // and v=-1..1 across it, independent of world orientation.
+            float aggregate = .5;
+            float repair_field = .5;
+            if (micro_detail > .001) {
+                aggregate = fbm2(world_position.xz * 2.6);
+                repair_field = value_noise(world_position.xz * .045);
+            }
+            albedo *= mix(.76, 1.16, aggregate * micro_detail + .5 * (1.0-micro_detail));
+            albedo *= mix(.82, 1.08, smoothstep(
+                .38, .68, mix(.5, repair_field, micro_detail)
+            ));
+            float cross_road = abs(surface_uv.y);
+            float road_aa = max(fwidth(cross_road), .004);
+            float edge_line = interval(cross_road, .78, .87, road_aa);
+            float centre_line = 1.0 - smoothstep(
+                .018, .045 + road_aa, cross_road
+            );
+            float dash = smoothstep(.10, .18, fract(surface_uv.x / 6.0))
+                       * (1.0 - smoothstep(.58, .68, fract(surface_uv.x / 6.0)));
+            float marking = max(edge_line, centre_line * dash);
+            vec3 aged_paint = vec3(.52, .52, .46) * mix(.72, 1.0, aggregate);
+            albedo = mix(albedo, aged_paint, marking * .82);
+        } else if (material == 4 || material == 16) {
+            float clumps = .5;
+            float dry_tips = 0.0;
+            if (micro_detail > .001) {
+                clumps = fbm2(world_position.xz * .72);
+                dry_tips = value_noise(world_position.xz * 3.8 + 41.0);
+            }
+            albedo *= mix(.72, 1.28, mix(.5, clumps, micro_detail));
+            albedo = mix(albedo, vec3(.16, .13, .035),
+                         smoothstep(.80, .96, dry_tips) * .24 * micro_detail);
+        } else if (material == 5 || material == 12) {
+            float pores = .5;
+            float stains = .5;
+            if (micro_detail > .001) {
+                pores = fbm2(world_position.xz * 3.1);
+                stains = value_noise(world_position.xz * .11 + 8.0);
+            }
+            albedo *= mix(.82, 1.14, pores * micro_detail + .5 * (1.0-micro_detail));
+            albedo *= mix(.78, 1.03, smoothstep(
+                .28, .72, mix(.5, stains, micro_detail)
+            ));
+        } else if (material == 14 || material == 15) {
+            // Exposed soil and compacted trail: broad moisture variation with
+            // fine gravel/leaf litter, rather than a uniformly coloured mat.
+            float moisture = fbm2(world_position.xz * .075);
+            float grit = micro_detail > .001
+                       ? value_noise(world_position.xz * 5.7) : 0.0;
+            vec3 soil = mix(vec3(.055, .033, .018),
+                            vec3(.19, .12, .055), moisture);
+            albedo = mix(albedo, soil, material == 14 ? .72 : .46);
+            albedo += vec3(.08, .055, .018)
+                    * smoothstep(.91, .98, grit) * micro_detail;
+        } else if (material == 2) {
+            float runoff = micro_detail > .001 ? value_noise(
+                vec2(surface_uv.x * .028, world_position.y * .31)
+            ) : .5;
+            albedo *= mix(.70, 1.08, runoff);
+        }
         vec3 radiance = reflected_radiance(n, albedo, reflectance);
         if (material == 2) {
             // OSM supplies the bridge decks but not a reliable 2024 fixture
@@ -358,6 +441,19 @@ void main() {
         vec3(1.0, .42, .12), vec3(.55, .72, 1.0), temperature
     );
     vec3 view_direction = normalize(camera_position - world_position);
+    vec3 facade_tangent = normalize(cross(vec3(0.0, 1.0, 0.0), n));
+    float view_facing = max(dot(n, view_direction), .18);
+    vec2 room_parallax = vec2(
+        dot(view_direction, facade_tangent), view_direction.y
+    ) / view_facing * vec2(.045, .032);
+    vec2 room_within = fract(grid + room_parallax);
+    // Venetian blinds, curtains and a darker reveal give the luminous plane
+    // depth. The parallax is bounded to a few centimetres of normalized room
+    // space, so it reads as an interior behind glass rather than sliding UVs.
+    float blind_phase = fract(room_within.y * 11.0 + temperature * .37);
+    float blinds = mix(.52, 1.0, smoothstep(.16, .31, blind_phase));
+    float curtain_split = abs(room_within.x - .5);
+    float curtains = mix(.58, 1.0, smoothstep(.16, .28, curtain_split));
     float fresnel = pow(1.0 - max(dot(n, view_direction), 0.0), 4.0);
     vec3 facade = mix(wall, glass, pane * glass_amount);
     facade += glass * fresnel * glass_amount * .35;
@@ -370,11 +466,18 @@ void main() {
                         abs(within.y-pane_bounds.w))
     );
     facade = mix(facade, vec3(.035, .040, .045), clamp(mullion, 0.0, 1.0));
+    float pane_edge_distance = min(
+        min(abs(within.x - pane_bounds.x), abs(within.x - pane_bounds.y)),
+        min(abs(within.y - pane_bounds.z), abs(within.y - pane_bounds.w))
+    );
+    float reveal_shadow = (1.0 - smoothstep(.018, .085, pane_edge_distance))
+                        * pane;
+    facade *= 1.0 - reveal_shadow * .34;
     float weathering = hash21(
         floor(surface_uv / vec2(18.0, 26.0)) + facade_style * 7.3
     );
     facade *= mix(.94, 1.035, weathering);
-    vec3 emission = window_color * pane * occupied
+    vec3 emission = window_color * pane * occupied * blinds * curtains
                   * window_radiance_w_m2_sr * .72;
 
     if (facade_style > 2.5 && facade_style < 3.5) {

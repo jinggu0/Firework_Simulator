@@ -25,6 +25,7 @@ void main() {
         || any(greaterThan(mask_uv, vec2(1.0)))
         || texture(water_mask, mask_uv).r < 0.5) discard;
     vec2 fine_gradient = vec2(0.0);
+    float unresolved_slope_variance = 0.0;
     for (int i = 0; i < 32; ++i) {
         vec2 direction = waves[i].xy;
         float k = waves[i].z;
@@ -44,6 +45,8 @@ void main() {
         float resolved = 1.0 - smoothstep(.35, 1.35, phase_footprint);
         fine_gradient += amplitude * k * direction * cos(theta)
                        * fine_weight * resolved;
+        float rejected_slope = amplitude * k * fine_weight * (1.0 - resolved);
+        unresolved_slope_variance += .5 * rejected_slope * rejected_slope;
     }
     vec3 n = normalize(
         world_normal + vec3(-fine_gradient.x, 0.0, -fine_gradient.y)
@@ -68,7 +71,9 @@ void main() {
     if (reflection_valid) {
         vec2 texel = 1.0 / vec2(textureSize(reflection_texture, 0));
         float distance_m = length(camera_position - world_position);
-        float streak_px = mix(1.25, 5.5, smoothstep(120.0, 1800.0, distance_m));
+        float unresolved_roughness = sqrt(unresolved_slope_variance);
+        float streak_px = mix(1.25, 5.5, smoothstep(120.0, 1800.0, distance_m))
+                        + min(unresolved_roughness * 18.0, 2.5);
         vec2 streak = vec2(0.0, texel.y * streak_px);
         reflected_radiance =
               texture(reflection_texture, reflection_uv).rgb * .50
@@ -76,11 +81,14 @@ void main() {
             + texture(reflection_texture, reflection_uv - streak).rgb * .25;
     }
     float optical_path_m = .42 / max(n_dot_v, .08);
-    vec3 absorption_per_m = vec3(.62, .22, .095);
+    // Turbid Han River water absorbs red strongly and carries suspended
+    // sediment/organic scatter. This subdued olive-grey body replaces the
+    // clear cyan water more appropriate to an ocean render.
+    vec3 absorption_per_m = vec3(.68, .27, .13);
     vec3 water_transmission = exp(-absorption_per_m * optical_path_m);
-    vec3 subsurface_scatter = vec3(.000055, .00024, .00031)
+    vec3 subsurface_scatter = vec3(.00012, .00021, .00017)
                             * (vec3(1.0) - water_transmission);
-    vec3 water_body = vec3(.000035, .00011, .00015)
+    vec3 water_body = vec3(.000050, .000095, .000080)
                     * water_transmission + subsurface_scatter;
     float grazing_haze = pow(1.0 - n_dot_v, 3.0) * .0007;
     vec3 radiance = mix(water_body, reflected_radiance, fresnel)
@@ -96,9 +104,13 @@ void main() {
     float crest_foam = smoothstep(.34, .62, slope)
                      * clamp(wind_speed_mps / 9.0, 0.0, 1.0);
     float foam = clamp(shore_gradient * .78 + crest_foam * .24, 0.0, 1.0);
+    vec3 suspended_sediment = vec3(.00042, .00034, .00020)
+                            * min(shore_gradient * .45, 1.0);
+    radiance += suspended_sediment * (1.0 - fresnel);
     radiance = mix(radiance, vec3(.010, .012, .013), foam);
     // Fixed-cost GGX reflection from energy-conserving firework clusters.
-    float roughness = clamp(.075 + slope * .11 + wind_speed_mps * .004,
+    float roughness = clamp(.075 + slope * .11 + wind_speed_mps * .004
+                            + sqrt(unresolved_slope_variance) * .45,
                             .075, .24);
     float alpha = roughness * roughness;
     float alpha_squared = alpha * alpha;

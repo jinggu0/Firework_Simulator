@@ -211,6 +211,27 @@ colours remain grade D appearance calibrations. Re-run display-referred crop
 measurements on locally obtained images with
 `python -m tools.analyze_appearance_reference --image SOURCE_KEY=PATH`.
 
+The second appearance pass adds only derived, bounded detail around the same
+historical geometry:
+
+- road longitudinal/cross coordinates, markings, asphalt aggregate and repair
+  variation are procedural; OSM does not provide 2024 lane-paint condition,
+- bridge fascia depth (1.35 m) and pier interval (85 m) are generic grade-D
+  structure used where the stored OSM deck was previously an infinitesimal
+  sheet; they are not surveyed Wonhyo Bridge dimensions,
+- rooftop mechanical penthouses are placed only on roof triangles above 500
+  m2 to break perfectly flat silhouettes; their locations are not observations,
+- grass cards are 7,659 low maintained-turf clumps selected inside mapped grass
+  polygons. Their placement is deterministic but not a botanical survey,
+- Han River body colour, suspended sediment near the mask edge, and unresolved
+  wave-slope roughness are physical-form appearance calibrations without a
+  measured event-night turbidity or river-stage sample.
+
+No photographic texture has been baked into these materials. That avoids
+inventing copyrighted or incorrectly registered surface detail, but it also
+means facade logos, exact stone panels, road damage, individual bridge members,
+and botanical species remain unresolved rather than verified.
+
 ## Atmospheric optics
 
 Molecular scattering optical depth follows Bodhaine B.A., Wood N.B., Dutton
