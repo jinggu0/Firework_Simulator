@@ -94,7 +94,7 @@ void main() {
     bool follows_terrain = (
         (in_surface > 2.5 && in_surface < 7.5)
         || (in_surface > 13.5 && in_surface < 15.5)
-    );
+    ) && abs(in_facade_style - 1.0) > 0.1;
     if (follows_terrain) {
         // Roads, paths and planted ground share the DEM tangent. Without this
         // the vertices touch the hill but their light response remains a flat

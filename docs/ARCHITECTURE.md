@@ -1080,10 +1080,27 @@ Road semantics also survive the import: `footway`, `pedestrian`, and `steps`
 use the footway material; `cycleway` uses the cycleway material; and `path` or
 `bridleway` uses the trail material. The 2024-10-05 historical query contains
 49 mapped stair ways and two `embankment=yes` trunk-link ways in the scene
-bounds. Their plan positions are therefore retained, but neither source gives
-a surveyed tread/riser profile or embankment cross-section. The runtime does
-not invent those vertical dimensions; sub-metre reconstruction still needs
-site survey or timestamp-matched photogrammetry.
+bounds. Their plan positions are therefore retained.
+
+At static-batch upload, the 49 ways comprise 108 terrain-sampling spans. The
+official terrain resolves at least 0.12 m endpoint rise on 62 of them. Those
+spans are terraced between their evidence-backed endpoint heights; per-corner
+terrain compensation makes each rendered tread horizontal even though the
+common vertex shader still adds the height map. The generated count targets
+`2 * riser + tread = 0.63 m`, then enforces tread >= 0.28 m and riser <= 0.18 m
+from the Korean accessibility guidance and regulation:
+[CODIL mobility-facility guidance](https://www.codil.or.kr/filebank/construction/EI/CIGCEI710019/CIGCEI710019.pdf)
+and [the enforcement-rule detail standard](https://www.law.go.kr/LSW/flDownload.do?flNm=%5B%EB%B3%84%ED%91%9C+1%5D+%ED%8E%B8%EC%9D%98%EC%8B%9C%EC%84%A4%EC%9D%98+%EA%B5%AC%EC%A1%B0%C2%B7%EC%9E%AC%EC%A7%88%EB%93%B1%EC%97%90+%EA%B4%80%ED%95%9C+%EC%84%B8%EB%B6%80%EA%B8%B0%EC%A4%80%28%EC%A0%9C2%EC%A1%B0%EC%A0%9C1%ED%95%AD%EA%B4%80%EB%A0%A8%29&flSeq=46489157&gubun=).
+This produces 1,068 tread/riser pairs (13,092 vertices). The remaining 46
+spans stay as their original draped decks because the height field does not
+resolve a defensible rise. These are design-standard-constrained
+reconstructions, not a claim that every 2024 tread was measured.
+
+The OSM embankment tag marks a road carried on earthwork, not its cross-section.
+The two tagged roads therefore follow official terrain and retain their mapped
+width, but no shoulder height or slope is invented. Exact embankment and
+unresolved stair profiles still require site survey or timestamp-matched
+photogrammetry.
 
 The view-projection matrix and camera position are refreshed for every render
 pass each frame, keeping terrain, water Fresnel response, buildings, and
@@ -1573,6 +1590,13 @@ maximum span of 12.00 m. A clean 360-frame integrated 3D run measures 14.496 ms
 frame p95, 10.951 ms visual p95, and 15.459 ms frame p99. The additional
 terrain samples and join geometry therefore remain 2.17 ms inside the 16.67 ms
 p95 budget on the development laptop.
+
+The evidence-gated stair expansion adds only 13,092 runtime vertices and no
+draw call: its triangles are appended once to the existing road batch. A clean
+360-frame integrated 3D run after this stage measures 10.833 ms frame p95,
+8.378 ms visual p95, and 11.960 ms frame p99. The lower absolute values than
+the prior run reflect normal host/driver variance; the relevant result is that
+the extra stair geometry introduces no observed 60 FPS regression.
 
 The next latency work is ordered as follows: add active sparse-brick dispatch
 beyond the current launch domain, add GPU source-reduction diagnostics, then

@@ -8,10 +8,16 @@ from simulator.passes.scene import (
     bridge_lighting_uv,
     bridge_structure_vertices,
     grass_detail_chunks,
+    linear_feature_uv,
     road_edge_detail_vertices,
     rooftop_detail_vertices,
+    stair_structure_vertices,
 )
-from simulator.scene import SURFACE_GRASS_BLADE, load_scene
+from simulator.scene import (
+    LINEAR_STYLE_STEPS,
+    SURFACE_GRASS_BLADE,
+    load_scene,
+)
 from simulator.site_details import GRASS_VERTICES_PER_TUFT
 from tools.analyze_appearance_reference import crop_statistics
 
@@ -94,6 +100,55 @@ def test_asphalt_edges_derive_a_raised_concrete_kerb() -> None:
     assert kerbs.shape == (24, 10)
     assert np.all(kerbs[:, 6] == 12.0)
     assert kerbs[:, 1].max() - vertices[:, 1].max() == pytest.approx(0.14)
+
+
+def test_resolved_stair_rise_becomes_level_treads_and_bounded_risers() -> None:
+    vertices = np.zeros((6, 10), dtype=np.float32)
+    vertices[:, :3] = np.array(
+        [[0, .06, -1], [0, .06, 1], [1.2, .06, 1],
+         [0, .06, -1], [1.2, .06, 1], [1.2, .06, -1]], dtype=np.float32
+    )
+    vertices[:, 6] = 5.0
+    vertices[:, 9] = 1.0
+    terrain = np.array([[0.0, 0.6], [0.0, 0.6]], dtype=np.float32)
+    stairs = stair_structure_vertices(
+        vertices, terrain, np.array([0.0, -1.0, 1.2, 1.0])
+    )
+    # Four 0.30 m treads and four <= 0.18 m risers, two triangles each.
+    assert stairs.shape == (48, 10)
+    assert np.all(stairs[:, 9] == 1.0)
+    world_y = stairs[:, 1] + np.interp(stairs[:, 0], [0.0, 1.2], [0.0, 0.6])
+    for offset in range(0, len(stairs), 12):
+        assert np.ptp(world_y[offset : offset + 6]) < 1e-6
+        assert np.ptp(world_y[offset + 6 : offset + 12]) <= 0.15 + 1e-6
+
+
+def test_unresolved_stair_rise_keeps_the_draped_source_deck() -> None:
+    vertices = np.zeros((6, 10), dtype=np.float32)
+    vertices[:, :3] = np.array(
+        [[0, .06, -1], [0, .06, 1], [2, .06, 1],
+         [0, .06, -1], [2, .06, 1], [2, .06, -1]], dtype=np.float32
+    )
+    vertices[:, 6] = 5.0
+    vertices[:, 9] = 1.0
+    stairs = stair_structure_vertices(
+        vertices, np.zeros((2, 2), dtype=np.float32),
+        np.array([0.0, -1.0, 2.0, 1.0]),
+    )
+    assert np.array_equal(stairs[:, :9], vertices[:, :9])
+    assert np.all(stairs[:, 9] == 0.0)
+
+
+def test_shipped_historical_steps_expand_against_official_terrain() -> None:
+    scene = load_scene(ROOT / "assets" / "yeouido_scene.npz")
+    roads = linear_feature_uv(scene.road_vertices)
+    source = roads[np.isclose(roads[:, 9], LINEAR_STYLE_STEPS)]
+    stairs = stair_structure_vertices(
+        source, scene.terrain_height_m, scene.terrain_bounds
+    )
+    assert source.shape == (648, 10)
+    assert stairs.shape == (13_092, 10)
+    assert np.isfinite(stairs).all()
 
 
 def test_large_flat_roof_gets_a_bounded_mechanical_penthouse() -> None:

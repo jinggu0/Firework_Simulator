@@ -5,6 +5,7 @@ import numpy as np
 
 from simulator.scene import build_scene, build_water_mask, load_scene
 from simulator.scene import (
+    LINEAR_STYLE_STEPS,
     SURFACE_CYCLEWAY,
     SURFACE_FOOTWAY,
     SURFACE_TRAIL,
@@ -138,6 +139,10 @@ def test_osm_path_classes_are_preserved_before_width_fallback() -> None:
     assert {SURFACE_FOOTWAY, SURFACE_CYCLEWAY, SURFACE_TRAIL}.issubset(
         set(np.unique(scene.road_vertices[:, 6]))
     )
+    step_vertices = scene.road_vertices[
+        np.isclose(scene.road_vertices[:, 9], LINEAR_STYLE_STEPS)
+    ]
+    assert len(step_vertices) > 0
 
 
 def test_shipped_scene_uses_official_contour_grid_and_event_water_datum() -> None:

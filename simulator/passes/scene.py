@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import math
 from pathlib import Path
 
 import moderngl
@@ -17,8 +18,9 @@ from ..material_textures import (
     texture_widths_m,
 )
 from ..materials import MATERIAL_LIBRARY, MaterialLibrary
-from ..scene import SURFACE_GRASS_BLADE, load_scene
+from ..scene import LINEAR_STYLE_STEPS, SURFACE_GRASS_BLADE, load_scene
 from ..site_details import GRASS_VERTICES_PER_TUFT
+from ..terrain import sample_heightmap_array
 from ..vegetation import VegetationLod
 
 VERTEX_LAYOUT = (
@@ -176,29 +178,162 @@ def grass_detail_chunks(
 def _mesh_vertex(
     position: np.ndarray, normal: np.ndarray, surface: float,
     uv: tuple[float, float] = (0.0, 0.0),
+    linear_style: float = 0.0,
 ) -> list[float]:
     return [
         float(position[0]), float(position[1]), float(position[2]),
         float(normal[0]), float(normal[1]), float(normal[2]),
-        surface, uv[0], uv[1], 0.0,
+        surface, uv[0], uv[1], linear_style,
     ]
 
 
 def _append_quad(
     output: list[list[float]], points: tuple[np.ndarray, ...], surface: float,
     uv: tuple[tuple[float, float], ...] | None = None,
+    normal: np.ndarray | None = None,
+    linear_style: float = 0.0,
 ) -> None:
     a, b, c, d = points
-    normal = np.cross(b - a, c - a)
-    length = float(np.linalg.norm(normal))
+    resolved_normal = (
+        np.asarray(normal, dtype=np.float64)
+        if normal is not None
+        else np.cross(b - a, c - a)
+    )
+    length = float(np.linalg.norm(resolved_normal))
     if length < 1e-6:
         return
-    normal /= length
+    resolved_normal /= length
     coordinates = uv or ((0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0))
     for index in (0, 1, 2, 0, 2, 3):
         output.append(
-            _mesh_vertex(points[index], normal, surface, coordinates[index])
+            _mesh_vertex(
+                points[index],
+                resolved_normal,
+                surface,
+                coordinates[index],
+                linear_style,
+            )
         )
+
+
+def stair_structure_vertices(
+    step_vertices: np.ndarray,
+    terrain_height_m: np.ndarray,
+    terrain_bounds: np.ndarray,
+) -> np.ndarray:
+    """Terrace mapped stair ways only where the official terrain resolves rise.
+
+    The dated OSM line fixes plan position and width while the official height
+    field fixes both endpoint elevations. Tread count targets the documented
+    ``2 * riser + tread = 0.63 m`` relation and is bounded by the Korean
+    accessibility dimensions (tread >= 0.28 m, riser <= 0.18 m). A rise below
+    0.12 m is beneath the terrain evidence used here, so that segment retains
+    its original draped deck rather than receiving invented vertical geometry.
+    """
+
+    vertices = np.asarray(step_vertices, dtype=np.float32)
+    if not len(vertices) or len(vertices) % 6:
+        return np.empty((0, 10), dtype=np.float32)
+    output: list[list[float]] = []
+    minimum_resolved_rise_m = 0.12
+    minimum_tread_m = 0.28
+    maximum_riser_m = 0.18
+    preferred_stride_m = 0.63
+
+    def terrain_at(points: np.ndarray) -> np.ndarray:
+        return sample_heightmap_array(
+            terrain_height_m, terrain_bounds, points[:, [0, 2]]
+        )
+
+    for offset in range(0, len(vertices), 6):
+        quad = vertices[offset : offset + 6].astype(np.float64)
+        left_start, right_start = quad[0, :3], quad[1, :3]
+        right_end, left_end = quad[2, :3], quad[5, :3]
+        centre_start = 0.5 * (left_start + right_start)
+        centre_end = 0.5 * (left_end + right_end)
+        plan_edge = centre_end[[0, 2]] - centre_start[[0, 2]]
+        length_m = float(np.linalg.norm(plan_edge))
+        centre_terrain = sample_heightmap_array(
+            terrain_height_m,
+            terrain_bounds,
+            np.vstack((centre_start[[0, 2]], centre_end[[0, 2]])),
+        )
+        start_world_y = float(centre_terrain[0] + centre_start[1])
+        end_world_y = float(centre_terrain[1] + centre_end[1])
+        signed_rise_m = end_world_y - start_world_y
+        rise_m = abs(signed_rise_m)
+        minimum_steps = max(1, int(math.ceil(rise_m / maximum_riser_m)))
+        maximum_steps = int(math.floor(length_m / minimum_tread_m))
+        if (
+            length_m < minimum_tread_m
+            or rise_m < minimum_resolved_rise_m
+            or minimum_steps > maximum_steps
+        ):
+            fallback = quad.copy()
+            fallback[:, 9] = 0.0
+            output.extend(fallback.tolist())
+            continue
+
+        preferred_steps = max(
+            1, int(round((length_m + 2.0 * rise_m) / preferred_stride_m))
+        )
+        step_count = min(max(preferred_steps, minimum_steps), maximum_steps)
+        if signed_rise_m >= 0.0:
+            low_left, low_right = left_start, right_start
+            high_left, high_right = left_end, right_end
+            low_world_y = start_world_y
+            u_origin = float(quad[0, 7])
+        else:
+            low_left, low_right = right_end, left_end
+            high_left, high_right = right_start, left_start
+            low_world_y = end_world_y
+            u_origin = float(quad[5, 7])
+        direction = np.array(
+            [plan_edge[0], 0.0, plan_edge[1]], dtype=np.float64
+        )
+        if signed_rise_m < 0.0:
+            direction *= -1.0
+        direction /= max(float(np.linalg.norm(direction)), 1e-9)
+        riser_normal = -direction
+        surface = float(quad[0, 6])
+        style = LINEAR_STYLE_STEPS
+
+        for index in range(step_count):
+            fraction0 = index / step_count
+            fraction1 = (index + 1) / step_count
+            left0 = low_left * (1.0 - fraction0) + high_left * fraction0
+            right0 = low_right * (1.0 - fraction0) + high_right * fraction0
+            left1 = low_left * (1.0 - fraction1) + high_left * fraction1
+            right1 = low_right * (1.0 - fraction1) + high_right * fraction1
+            bottom_world_y = low_world_y + rise_m * fraction0
+            top_world_y = low_world_y + rise_m * fraction1
+
+            tread = np.vstack((left0, right0, right1, left1))
+            tread[:, 1] = top_world_y - terrain_at(tread)
+            u0 = u_origin + length_m * fraction0
+            u1 = u_origin + length_m * fraction1
+            _append_quad(
+                output,
+                tuple(tread),
+                surface,
+                ((u0, -1.0), (u0, 1.0), (u1, 1.0), (u1, -1.0)),
+                normal=np.array([0.0, 1.0, 0.0]),
+                linear_style=style,
+            )
+
+            riser = np.vstack((left0, right0, right0, left0))
+            riser[:2, 1] = bottom_world_y - terrain_at(riser[:2])
+            riser[2:, 1] = top_world_y - terrain_at(riser[2:])
+            _append_quad(
+                output,
+                tuple(riser),
+                surface,
+                ((-1.0, bottom_world_y), (1.0, bottom_world_y),
+                 (1.0, top_world_y), (-1.0, top_world_y)),
+                normal=riser_normal,
+                linear_style=style,
+            )
+    return np.asarray(output, dtype=np.float32).reshape(-1, 10)
 
 
 def bridge_structure_vertices(deck_vertices: np.ndarray) -> np.ndarray:
@@ -457,11 +592,20 @@ class ScenePass:
             if len(bridge_structure) else bridge_deck
         )
         road_deck = linear_feature_uv(scene.road_vertices)
-        road_edges = road_edge_detail_vertices(road_deck)
-        road_batch = (
-            np.concatenate((road_deck, road_edges), axis=0)
-            if len(road_edges) else road_deck
+        stair_mask = np.isclose(road_deck[:, 9], LINEAR_STYLE_STEPS)
+        ordinary_road = road_deck[~stair_mask]
+        stair_geometry = stair_structure_vertices(
+            road_deck[stair_mask],
+            scene.terrain_height_m,
+            scene.terrain_bounds,
         )
+        road_edges = road_edge_detail_vertices(ordinary_road)
+        road_parts = [ordinary_road]
+        if len(stair_geometry):
+            road_parts.append(stair_geometry)
+        if len(road_edges):
+            road_parts.append(road_edges)
+        road_batch = np.concatenate(road_parts, axis=0)
         non_grass_detail = scene.detail_vertices[
             ~np.isclose(scene.detail_vertices[:, 6], SURFACE_GRASS_BLADE)
         ]

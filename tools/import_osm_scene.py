@@ -20,6 +20,7 @@ def _overpass(query: str) -> dict:
     for endpoint in (
         "https://overpass-api.de/api/interpreter",
         "https://overpass.private.coffee/api/interpreter",
+        "https://overpass.kumi.systems/api/interpreter",
     ):
         request = urllib.request.Request(
             endpoint,

@@ -27,6 +27,13 @@ SURFACE_GARDEN = 14.0
 SURFACE_TRAIL = 15.0
 SURFACE_GRASS_BLADE = 16.0
 
+# The final vertex channel is facade style for buildings and lightweight
+# source semantics for linear batches.  Keeping the flag in the existing
+# layout avoids another per-vertex attribute and draw call.
+LINEAR_STYLE_DEFAULT = 0.0
+LINEAR_STYLE_STEPS = 1.0
+LINEAR_STYLE_EMBANKMENT = 2.0
+
 FACADE_GENERIC = 0.0
 FACADE_GLASS_BLUE = 1.0
 FACADE_GOLD_63 = 2.0
@@ -674,6 +681,7 @@ def _linear_feature_mesh(
     elevation_m: float,
     material: float,
     maximum_segment_length_m: float = 0.0,
+    linear_style: float = LINEAR_STYLE_DEFAULT,
 ) -> list[list[float]]:
     """Create a crack-free strip with bounded miter joins.
 
@@ -737,6 +745,7 @@ def _linear_feature_mesh(
                         (0.0, 1.0, 0.0),
                         material,
                         (point[0], point[1]),
+                        linear_style,
                     )
                 )
     return vertices
@@ -744,6 +753,8 @@ def _linear_feature_mesh(
 
 def _road_surface(tags: dict[str, str]) -> float:
     highway = tags.get("highway", "")
+    if highway == "steps" and tags.get("surface") == "asphalt":
+        return SURFACE_ROAD
     if highway == "cycleway":
         return SURFACE_CYCLEWAY
     if highway in {"footway", "pedestrian", "steps"}:
@@ -751,6 +762,14 @@ def _road_surface(tags: dict[str, str]) -> float:
     if highway in {"path", "bridleway"}:
         return SURFACE_TRAIL
     return SURFACE_ROAD
+
+
+def _linear_style(tags: dict[str, str]) -> float:
+    if tags.get("highway") == "steps":
+        return LINEAR_STYLE_STEPS
+    if tags.get("embankment") == "yes" or tags.get("man_made") == "embankment":
+        return LINEAR_STYLE_EMBANKMENT
+    return LINEAR_STYLE_DEFAULT
 
 
 def _surface_mesh(
@@ -927,6 +946,7 @@ def build_scene(
                     0.06,
                     _road_surface(tags),
                     maximum_segment_length_m=12.0,
+                    linear_style=_linear_style(tags),
                 )
             )
         is_green = (
