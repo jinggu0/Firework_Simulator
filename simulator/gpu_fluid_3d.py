@@ -83,43 +83,52 @@ void main() {
 )
 
 
-def _velocity_advection(component: int) -> str:
-    offsets = (
-        "vec3(0.0, 0.5, 0.5)",
-        "vec3(0.5, 0.0, 0.5)",
-        "vec3(0.5, 0.5, 0.0)",
-    )
-    size_offsets = (
-        "ivec3(1, 0, 0)",
-        "ivec3(0, 1, 0)",
-        "ivec3(0, 0, 1)",
-    )
-    return (
-        """
+VELOCITY_ADVECTION_FUSED = (
+    """
 #version 430
 layout(local_size_x=8, local_size_y=4, local_size_z=4) in;
-layout(r32f, binding=0) writeonly uniform image3D output_field;
-uniform sampler3D source_field;
+layout(r32f, binding=0) writeonly uniform image3D output_u;
+layout(r32f, binding=1) writeonly uniform image3D output_v;
+layout(r32f, binding=2) writeonly uniform image3D output_w;
 uniform float dt_s;
 """
-        + COMMON_GLSL
-        + f"""
-void main() {{
-    ivec3 field_size = cell_count + {size_offsets[component]};
+    + COMMON_GLSL
+    + """
+void main() {
     ivec3 face = ivec3(gl_GlobalInvocationID);
-    if (any(greaterThanEqual(face, field_size))) return;
-    vec3 offset = {offsets[component]};
-    vec3 world = domain_min + (vec3(face) + offset) * cell_size;
-    vec3 previous = midpoint_backtrace(world, dt_s);
-    float value = texture(
-        source_field, field_uv(previous, offset, field_size)
-    ).r;
-    imageStore(output_field, face, vec4(value, 0, 0, 0));
-}}
+    ivec3 u_size = cell_count + ivec3(1,0,0);
+    ivec3 v_size = cell_count + ivec3(0,1,0);
+    ivec3 w_size = cell_count + ivec3(0,0,1);
+    if (all(lessThan(face, u_size))) {
+        vec3 offset = vec3(0.0,0.5,0.5);
+        vec3 world = domain_min + (vec3(face)+offset)*cell_size;
+        vec3 previous = midpoint_backtrace(world,dt_s);
+        float value = texture(
+            velocity_u, field_uv(previous,offset,u_size)
+        ).r;
+        imageStore(output_u,face,vec4(value,0,0,0));
+    }
+    if (all(lessThan(face, v_size))) {
+        vec3 offset = vec3(0.5,0.0,0.5);
+        vec3 world = domain_min + (vec3(face)+offset)*cell_size;
+        vec3 previous = midpoint_backtrace(world,dt_s);
+        float value = texture(
+            velocity_v, field_uv(previous,offset,v_size)
+        ).r;
+        imageStore(output_v,face,vec4(value,0,0,0));
+    }
+    if (all(lessThan(face, w_size))) {
+        vec3 offset = vec3(0.5,0.5,0.0);
+        vec3 world = domain_min + (vec3(face)+offset)*cell_size;
+        vec3 previous = midpoint_backtrace(world,dt_s);
+        float value = texture(
+            velocity_w, field_uv(previous,offset,w_size)
+        ).r;
+        imageStore(output_w,face,vec4(value,0,0,0));
+    }
+}
 """
-    )
-
-
+)
 STATE_EVOLUTION = """
 #version 430
 layout(local_size_x=8, local_size_y=4, local_size_z=4) in;
@@ -182,9 +191,13 @@ void main() {
 )
 
 
-FORCE_COMMON = (
+VELOCITY_FORCE_FUSED = (
     """
-uniform sampler3D source_field;
+#version 430
+layout(local_size_x=8, local_size_y=4, local_size_z=4) in;
+layout(r32f, binding=0) writeonly uniform image3D output_u;
+layout(r32f, binding=1) writeonly uniform image3D output_v;
+layout(r32f, binding=2) writeonly uniform image3D output_w;
 uniform sampler3D smoke_state;
 uniform sampler3D vorticity_field;
 uniform float dt_s;
@@ -198,110 +211,94 @@ uniform vec2 background_wind_xz;
     + """
 vec4 sample_vorticity(vec3 world) {
     return texture(
-        vorticity_field,
-        field_uv(world, vec3(0.5), cell_count)
+        vorticity_field,field_uv(world,vec3(0.5),cell_count)
     );
 }
 vec3 confinement_force(vec3 world) {
-    vec3 gradient = vec3(
-        sample_vorticity(world + vec3(cell_size.x,0,0)).a
-          - sample_vorticity(world - vec3(cell_size.x,0,0)).a,
-        sample_vorticity(world + vec3(0,cell_size.y,0)).a
-          - sample_vorticity(world - vec3(0,cell_size.y,0)).a,
-        sample_vorticity(world + vec3(0,0,cell_size.z)).a
-          - sample_vorticity(world - vec3(0,0,cell_size.z)).a
-    ) / (2.0 * cell_size);
-    float gradient_length = length(gradient);
-    if (gradient_length < 1e-7) return vec3(0.0);
-    vec3 normal = gradient / gradient_length;
-    vec3 omega = sample_vorticity(world).xyz;
-    return vorticity_confinement * min(min(cell_size.x, cell_size.y), cell_size.z)
-         * cross(normal, omega);
+    vec3 gradient=vec3(
+        sample_vorticity(world+vec3(cell_size.x,0,0)).a
+          -sample_vorticity(world-vec3(cell_size.x,0,0)).a,
+        sample_vorticity(world+vec3(0,cell_size.y,0)).a
+          -sample_vorticity(world-vec3(0,cell_size.y,0)).a,
+        sample_vorticity(world+vec3(0,0,cell_size.z)).a
+          -sample_vorticity(world-vec3(0,0,cell_size.z)).a
+    )/(2.0*cell_size);
+    float gradient_length=length(gradient);
+    if(gradient_length<1e-7)return vec3(0.0);
+    vec3 normal=gradient/gradient_length;
+    vec3 omega=sample_vorticity(world).xyz;
+    return vorticity_confinement
+         * min(min(cell_size.x,cell_size.y),cell_size.z)
+         * cross(normal,omega);
 }
-float field_at(ivec3 p, ivec3 size) {
-    return texelFetch(source_field, clamp(p, ivec3(0), size-1), 0).r;
+float field_at(sampler3D field,ivec3 p,ivec3 size) {
+    return texelFetch(field,clamp(p,ivec3(0),size-1),0).r;
 }
-float field_laplacian(ivec3 p, ivec3 size) {
-    float c = field_at(p, size);
+float field_laplacian(sampler3D field,ivec3 p,ivec3 size) {
+    float c=field_at(field,p,size);
     return
-          (field_at(p-ivec3(1,0,0),size)-2.0*c
-           +field_at(p+ivec3(1,0,0),size))/(cell_size.x*cell_size.x)
-        + (field_at(p-ivec3(0,1,0),size)-2.0*c
-           +field_at(p+ivec3(0,1,0),size))/(cell_size.y*cell_size.y)
-        + (field_at(p-ivec3(0,0,1),size)-2.0*c
-           +field_at(p+ivec3(0,0,1),size))/(cell_size.z*cell_size.z);
+       (field_at(field,p-ivec3(1,0,0),size)-2.0*c
+        +field_at(field,p+ivec3(1,0,0),size))/(cell_size.x*cell_size.x)
+      +(field_at(field,p-ivec3(0,1,0),size)-2.0*c
+        +field_at(field,p+ivec3(0,1,0),size))/(cell_size.y*cell_size.y)
+      +(field_at(field,p-ivec3(0,0,1),size)-2.0*c
+        +field_at(field,p+ivec3(0,0,1),size))/(cell_size.z*cell_size.z);
+}
+void main() {
+    ivec3 face=ivec3(gl_GlobalInvocationID);
+    ivec3 u_size=cell_count+ivec3(1,0,0);
+    ivec3 v_size=cell_count+ivec3(0,1,0);
+    ivec3 w_size=cell_count+ivec3(0,0,1);
+    if(all(lessThan(face,u_size))) {
+        float result;
+        if(face.x==0) result=background_wind_xz.x;
+        else if(face.x==cell_count.x)
+            result=field_at(velocity_u,face-ivec3(1,0,0),u_size);
+        else {
+            vec3 world=domain_min+(vec3(face)+vec3(0,.5,.5))*cell_size;
+            float force=confinement_force(world).x;
+            result=field_at(velocity_u,face,u_size)+dt_s*(
+                force+viscosity*field_laplacian(velocity_u,face,u_size)
+            );
+        }
+        imageStore(output_u,face,vec4(result,0,0,0));
+    }
+    if(all(lessThan(face,v_size))) {
+        float result;
+        if(face.y==0) result=0.0;
+        else if(face.y==cell_count.y)
+            result=field_at(velocity_v,face-ivec3(0,1,0),v_size);
+        else {
+            vec3 world=domain_min+(vec3(face)+vec3(.5,0,.5))*cell_size;
+            vec2 state=texture(
+                smoke_state,field_uv(world,vec3(.5),cell_count)
+            ).rg;
+            float force=confinement_force(world).y+9.80665*(
+                state.g/ambient_temperature_k-state.r/air_density_kg_m3
+            );
+            result=field_at(velocity_v,face,v_size)+dt_s*(
+                force+viscosity*field_laplacian(velocity_v,face,v_size)
+            );
+        }
+        imageStore(output_v,face,vec4(result,0,0,0));
+    }
+    if(all(lessThan(face,w_size))) {
+        float result;
+        if(face.z==0) result=background_wind_xz.y;
+        else if(face.z==cell_count.z)
+            result=field_at(velocity_w,face-ivec3(0,0,1),w_size);
+        else {
+            vec3 world=domain_min+(vec3(face)+vec3(.5,.5,0))*cell_size;
+            float force=confinement_force(world).z;
+            result=field_at(velocity_w,face,w_size)+dt_s*(
+                force+viscosity*field_laplacian(velocity_w,face,w_size)
+            );
+        }
+        imageStore(output_w,face,vec4(result,0,0,0));
+    }
 }
 """
 )
-
-
-def _force_shader(component: int) -> str:
-    offsets = (
-        "vec3(0.0,0.5,0.5)",
-        "vec3(0.5,0.0,0.5)",
-        "vec3(0.5,0.5,0.0)",
-    )
-    additions = (
-        "ivec3(1,0,0)", "ivec3(0,1,0)", "ivec3(0,0,1)"
-    )
-    boundary = (
-        """
-    if (face.x == 0) { result = background_wind_xz.x; }
-    else if (face.x == cell_count.x) {
-        result = field_at(face-ivec3(1,0,0), field_size);
-    }
-""",
-        """
-    if (face.y == 0) { result = 0.0; }
-    else if (face.y == cell_count.y) {
-        result = field_at(face-ivec3(0,1,0), field_size);
-    }
-""",
-        """
-    if (face.z == 0) { result = background_wind_xz.y; }
-    else if (face.z == cell_count.z) {
-        result = field_at(face-ivec3(0,0,1), field_size);
-    }
-""",
-    )
-    buoyancy = (
-        "",
-        """
-        vec3 state_uv = field_uv(world, vec3(0.5), cell_count);
-        vec2 state = texture(smoke_state, state_uv).rg;
-        force += 9.80665 * (
-            state.g/ambient_temperature_k - state.r/air_density_kg_m3
-        );
-""",
-        "",
-    )
-    return (
-        """
-#version 430
-layout(local_size_x=8, local_size_y=4, local_size_z=4) in;
-layout(r32f, binding=0) writeonly uniform image3D output_field;
-"""
-        + FORCE_COMMON
-        + f"""
-void main() {{
-    ivec3 field_size = cell_count + {additions[component]};
-    ivec3 face = ivec3(gl_GlobalInvocationID);
-    if (any(greaterThanEqual(face, field_size))) return;
-    vec3 world = domain_min + (vec3(face)+{offsets[component]})*cell_size;
-    float result = field_at(face, field_size);
-    bool boundary = false;
-{boundary[component]}
-    else {{
-        float force = confinement_force(world)[{component}];
-{buoyancy[component]}
-        result += dt_s * (force + viscosity*field_laplacian(face,field_size));
-    }}
-    imageStore(output_field, face, vec4(result,0,0,0));
-}}
-"""
-    )
-
-
 DIVERGENCE = """
 #version 430
 layout(local_size_x=8, local_size_y=4, local_size_z=4) in;
@@ -369,41 +366,69 @@ void main() {
 """
 
 
-def _project_shader(component: int) -> str:
-    additions = (
-        "ivec3(1,0,0)", "ivec3(0,1,0)", "ivec3(0,0,1)"
-    )
-    axis = "xyz"[component]
-    bg = ("background_wind_xz.x", "0.0", "background_wind_xz.y")
-    return f"""
+VELOCITY_PROJECT_FUSED = """
 #version 430
 layout(local_size_x=8, local_size_y=4, local_size_z=4) in;
-layout(r32f, binding=0) writeonly uniform image3D output_velocity;
-uniform sampler3D source_velocity;
+layout(r32f,binding=0) writeonly uniform image3D output_u;
+layout(r32f,binding=1) writeonly uniform image3D output_v;
+layout(r32f,binding=2) writeonly uniform image3D output_w;
+uniform sampler3D velocity_u;
+uniform sampler3D velocity_v;
+uniform sampler3D velocity_w;
 uniform sampler3D pressure;
 uniform ivec3 cell_count;
 uniform vec3 cell_size;
 uniform float dt_s;
 uniform float air_density_kg_m3;
 uniform vec2 background_wind_xz;
-void main() {{
-    ivec3 size=cell_count+{additions[component]};
+void main() {
     ivec3 face=ivec3(gl_GlobalInvocationID);
-    if(any(greaterThanEqual(face,size))) return;
-    float result;
-    if(face.{axis}==0) result={bg[component]};
-    else if(face.{axis}==cell_count.{axis}) {{
-        ivec3 previous=face; previous.{axis}-=1;
-        result=texelFetch(source_velocity,previous,0).r;
-    }} else {{
-        ivec3 lower=face; lower.{axis}-=1;
-        float gradient=(texelFetch(pressure,face,0).r
-                       -texelFetch(pressure,lower,0).r)/cell_size.{axis};
-        result=texelFetch(source_velocity,face,0).r
-              -dt_s*gradient/air_density_kg_m3;
-    }}
-    imageStore(output_velocity,face,vec4(result,0,0,0));
-}}
+    ivec3 u_size=cell_count+ivec3(1,0,0);
+    ivec3 v_size=cell_count+ivec3(0,1,0);
+    ivec3 w_size=cell_count+ivec3(0,0,1);
+    if(all(lessThan(face,u_size))) {
+        float result;
+        if(face.x==0) result=background_wind_xz.x;
+        else if(face.x==cell_count.x)
+            result=texelFetch(velocity_u,face-ivec3(1,0,0),0).r;
+        else {
+            ivec3 lower=face-ivec3(1,0,0);
+            float gradient=(texelFetch(pressure,face,0).r
+                           -texelFetch(pressure,lower,0).r)/cell_size.x;
+            result=texelFetch(velocity_u,face,0).r
+                  -dt_s*gradient/air_density_kg_m3;
+        }
+        imageStore(output_u,face,vec4(result,0,0,0));
+    }
+    if(all(lessThan(face,v_size))) {
+        float result;
+        if(face.y==0) result=0.0;
+        else if(face.y==cell_count.y)
+            result=texelFetch(velocity_v,face-ivec3(0,1,0),0).r;
+        else {
+            ivec3 lower=face-ivec3(0,1,0);
+            float gradient=(texelFetch(pressure,face,0).r
+                           -texelFetch(pressure,lower,0).r)/cell_size.y;
+            result=texelFetch(velocity_v,face,0).r
+                  -dt_s*gradient/air_density_kg_m3;
+        }
+        imageStore(output_v,face,vec4(result,0,0,0));
+    }
+    if(all(lessThan(face,w_size))) {
+        float result;
+        if(face.z==0) result=background_wind_xz.y;
+        else if(face.z==cell_count.z)
+            result=texelFetch(velocity_w,face-ivec3(0,0,1),0).r;
+        else {
+            ivec3 lower=face-ivec3(0,0,1);
+            float gradient=(texelFetch(pressure,face,0).r
+                           -texelFetch(pressure,lower,0).r)/cell_size.z;
+            result=texelFetch(velocity_w,face,0).r
+                  -dt_s*gradient/air_density_kg_m3;
+        }
+        imageStore(output_w,face,vec4(result,0,0,0));
+    }
+}
 """
 
 
@@ -431,6 +456,8 @@ class GpuSmokeFluid3D:
         self.dx = (self.x_max-self.x_min)/self.nx
         self.dy = (self.y_max-self.y_min)/self.ny
         self.dz = (self.z_max-self.z_min)/self.nz
+        self.cell_volume_m3 = self.dx * self.dy * self.dz
+        self.cell_total = self.nx * self.ny * self.nz
         self.update_hz = config.gpu_3d_update_hz
         self.pressure_iterations_per_step = max(
             round(config.pressure_iterations*config.update_hz/self.update_hz), 1
@@ -465,19 +492,13 @@ class GpuSmokeFluid3D:
         self.diagnostic_velocity_dirty = False
         self.programs = {
             "state_advect": ctx.compute_shader(STATE_ADVECTION),
-            "u_advect": ctx.compute_shader(_velocity_advection(0)),
-            "v_advect": ctx.compute_shader(_velocity_advection(1)),
-            "w_advect": ctx.compute_shader(_velocity_advection(2)),
+            "velocity_advect": ctx.compute_shader(VELOCITY_ADVECTION_FUSED),
             "state_evolve": ctx.compute_shader(STATE_EVOLUTION),
             "vorticity": ctx.compute_shader(VORTICITY),
-            "u_force": ctx.compute_shader(_force_shader(0)),
-            "v_force": ctx.compute_shader(_force_shader(1)),
-            "w_force": ctx.compute_shader(_force_shader(2)),
+            "velocity_force": ctx.compute_shader(VELOCITY_FORCE_FUSED),
             "divergence": ctx.compute_shader(DIVERGENCE),
             "pressure": ctx.compute_shader(PRESSURE),
-            "project_u": ctx.compute_shader(_project_shader(0)),
-            "project_v": ctx.compute_shader(_project_shader(1)),
-            "project_w": ctx.compute_shader(_project_shader(2)),
+            "velocity_project": ctx.compute_shader(VELOCITY_PROJECT_FUSED),
         }
         self._configure()
         zero_state = np.zeros_like(self.source_state)
@@ -517,8 +538,7 @@ class GpuSmokeFluid3D:
             if name in program:
                 program[name].value = value
 
-        common=("state_advect","u_advect","v_advect","w_advect",
-                "vorticity","u_force","v_force","w_force")
+        common=("state_advect","velocity_advect","vorticity","velocity_force")
         for name in common:
             p=self.programs[name]
             uniform(p,"velocity_u",1);uniform(p,"velocity_v",2)
@@ -533,18 +553,15 @@ class GpuSmokeFluid3D:
             "max_temperature_excess_k",
             self.config.max_temperature_excess_k,
         )
-        for name in ("u_advect","v_advect","w_advect"):
-            uniform(self.programs[name],"source_field",0)
         e=self.programs["state_evolve"];uniform(e,"source_state",0)
         uniform(e,"cell_count",self.cell_count)
         uniform(e,"cell_size",(self.dx,self.dy,self.dz))
         uniform(e,"diffusivity",(self.config.smoke_diffusivity_m2_s,self.config.thermal_diffusivity_m2_s))
         uniform(e,"half_life_s",(self.config.smoke_half_life_s,self.config.thermal_half_life_s))
-        for name in ("u_force","v_force","w_force"):
-            p=self.programs[name];uniform(p,"source_field",0)
-            uniform(p,"smoke_state",4);uniform(p,"vorticity_field",7)
-            uniform(p,"viscosity",self.config.kinematic_viscosity_m2_s)
-            uniform(p,"vorticity_confinement",self.config.vorticity_confinement)
+        force=self.programs["velocity_force"]
+        uniform(force,"smoke_state",4);uniform(force,"vorticity_field",7)
+        uniform(force,"viscosity",self.config.kinematic_viscosity_m2_s)
+        uniform(force,"vorticity_confinement",self.config.vorticity_confinement)
         d=self.programs["divergence"];uniform(d,"velocity_u",1)
         uniform(d,"velocity_v",2);uniform(d,"velocity_w",3)
         uniform(d,"cell_count",self.cell_count)
@@ -552,16 +569,24 @@ class GpuSmokeFluid3D:
         p=self.programs["pressure"];uniform(p,"source_pressure",5)
         uniform(p,"divergence",6);uniform(p,"cell_count",self.cell_count)
         uniform(p,"cell_size",(self.dx,self.dy,self.dz))
-        for name in ("project_u","project_v","project_w"):
-            q=self.programs[name];uniform(q,"source_velocity",0)
-            uniform(q,"pressure",5);uniform(q,"cell_count",self.cell_count)
-            uniform(q,"cell_size",(self.dx,self.dy,self.dz))
+        project=self.programs["velocity_project"]
+        uniform(project,"velocity_u",1);uniform(project,"velocity_v",2)
+        uniform(project,"velocity_w",3);uniform(project,"pressure",5)
+        uniform(project,"cell_count",self.cell_count)
+        uniform(project,"cell_size",(self.dx,self.dy,self.dz))
 
     def _groups(self,size):
         return (math.ceil(size[0]/8),math.ceil(size[1]/4),math.ceil(size[2]/4))
 
     def _run(self,name,size,output):
         output.bind_to_image(0,read=False,write=True)
+        self.programs[name].run(*self._groups(size))
+        self.ctx.memory_barrier()
+
+    def _run_velocity_triplet(self, name, outputs):
+        for binding, output in enumerate(outputs):
+            output.bind_to_image(binding, read=False, write=True)
+        size = (self.nx + 1, self.ny + 1, self.nz + 1)
         self.programs[name].run(*self._groups(size))
         self.ctx.memory_barrier()
 
@@ -601,29 +626,75 @@ class GpuSmokeFluid3D:
         self._extend_bounds(np.asarray(position_m).reshape(1,3),3*self.config.source_radius_m)
         self.revision+=1
 
-    def inject_particles(self,positions_m,smoke_mass_kg,thermal_energy_j):
-        if not len(positions_m):return 0.0,0.0
-        p=np.asarray(positions_m)
-        ix=np.floor((p[:,0]-self.x_min)/self.dx).astype(np.int32)
-        iy=np.floor((p[:,1]-self.y_min)/self.dy).astype(np.int32)
-        iz=np.floor((p[:,2]-self.z_min)/self.dz).astype(np.int32)
-        inside=(ix>=0)&(ix<self.nx)&(iy>=0)&(iy<self.ny)&(iz>=0)&(iz<self.nz)
-        if not np.any(inside):return 0.0,0.0
-        indices=(iz[inside]*self.ny+iy[inside])*self.nx+ix[inside]
-        volume=self.dx*self.dy*self.dz
-        self.source_state[:,:,:,0].ravel()[:]+=(
-            np.bincount(indices,weights=np.asarray(smoke_mass_kg)[inside],
-                        minlength=self.nx*self.ny*self.nz)/volume).astype(np.float32)
-        self.source_state[:,:,:,1].ravel()[:]+=(
-            np.bincount(indices,weights=np.asarray(thermal_energy_j)[inside],
-                        minlength=self.nx*self.ny*self.nz)/
-            (self.air_density_kg_m3*volume*AIR_HEAT_CAPACITY_J_KG_K)).astype(np.float32)
-        mass=float(np.asarray(smoke_mass_kg)[inside].sum(dtype=np.float64))
-        energy=float(np.asarray(thermal_energy_j)[inside].sum(dtype=np.float64))
-        self.total_smoke_mass_kg+=mass
-        self._extend_bounds(p[inside],max(self.dx,self.dy,self.dz))
-        self.revision+=1
-        return mass,energy
+    def inject_particles(self, positions_m, smoke_mass_kg, thermal_energy_j):
+        if not len(positions_m):
+            return 0.0, 0.0
+        positions = np.asarray(positions_m)
+        smoke_mass = np.asarray(smoke_mass_kg)
+        thermal_energy = np.asarray(thermal_energy_j)
+        ix = np.floor((positions[:, 0] - self.x_min) / self.dx).astype(
+            np.int32
+        )
+        iy = np.floor((positions[:, 1] - self.y_min) / self.dy).astype(
+            np.int32
+        )
+        iz = np.floor((positions[:, 2] - self.z_min) / self.dz).astype(
+            np.int32
+        )
+        inside = (
+            (ix >= 0)
+            & (ix < self.nx)
+            & (iy >= 0)
+            & (iy < self.ny)
+            & (iz >= 0)
+            & (iz < self.nz)
+        )
+        if not np.any(inside):
+            return 0.0, 0.0
+
+        # Most live stars remain within the plume domain. Avoid allocating five
+        # boolean-indexed copies on that hot path while retaining exact clipping
+        # for particles that have left the simulated volume.
+        if np.all(inside):
+            selected_positions = positions
+            selected_mass = smoke_mass
+            selected_energy = thermal_energy
+            indices = (iz * self.ny + iy) * self.nx + ix
+        else:
+            selected_positions = positions[inside]
+            selected_mass = smoke_mass[inside]
+            selected_energy = thermal_energy[inside]
+            indices = (
+                (iz[inside] * self.ny + iy[inside]) * self.nx + ix[inside]
+            )
+
+        smoke_density = np.bincount(
+            indices, weights=selected_mass, minlength=self.cell_total
+        ) / self.cell_volume_m3
+        temperature_excess = np.bincount(
+            indices, weights=selected_energy, minlength=self.cell_total
+        ) / (
+            self.air_density_kg_m3
+            * self.cell_volume_m3
+            * AIR_HEAT_CAPACITY_J_KG_K
+        )
+        grid_shape = (self.nz, self.ny, self.nx)
+        # Write through the strided channel views. Raveling these interleaved
+        # views would create detached copies and silently discard the source.
+        self.source_state[..., 0] += smoke_density.astype(
+            np.float32
+        ).reshape(grid_shape)
+        self.source_state[..., 1] += temperature_excess.astype(
+            np.float32
+        ).reshape(grid_shape)
+        mass = float(selected_mass.sum(dtype=np.float64))
+        energy = float(selected_energy.sum(dtype=np.float64))
+        self.total_smoke_mass_kg += mass
+        self._extend_bounds(
+            selected_positions, max(self.dx, self.dy, self.dz)
+        )
+        self.revision += 1
+        return mass, energy
 
     def has_visible_smoke(self): return self.total_smoke_mass_kg>1e-9
 
@@ -648,31 +719,25 @@ class GpuSmokeFluid3D:
         c=self.velocity_index;o=1-c
         self.state[0].use(0);self.u[c].use(1);self.v[c].use(2);self.w[c].use(3);self.source_texture.use(6)
         self._run("state_advect",self.cell_count,self.state[1])
-        for name,fields,size in (
-            ("u_advect",self.u,(self.nx+1,self.ny,self.nz)),
-            ("v_advect",self.v,(self.nx,self.ny+1,self.nz)),
-            ("w_advect",self.w,(self.nx,self.ny,self.nz+1))):
-            fields[c].use(0);self._run(name,size,fields[o])
+        self._run_velocity_triplet(
+            "velocity_advect", (self.u[o], self.v[o], self.w[o])
+        )
         self.state[1].use(0);self._run("state_evolve",self.cell_count,self.state[0])
         self.u[o].use(1);self.v[o].use(2);self.w[o].use(3)
         self._run("vorticity",self.cell_count,self.vorticity_texture)
         self.state[0].use(4);self.vorticity_texture.use(7)
-        for name,fields,size in (
-            ("u_force",self.u,(self.nx+1,self.ny,self.nz)),
-            ("v_force",self.v,(self.nx,self.ny+1,self.nz)),
-            ("w_force",self.w,(self.nx,self.ny,self.nz+1))):
-            fields[o].use(0);self._run(name,size,fields[c])
+        self._run_velocity_triplet(
+            "velocity_force", (self.u[c], self.v[c], self.w[c])
+        )
         self.u[c].use(1);self.v[c].use(2);self.w[c].use(3)
         self._run("divergence",self.cell_count,self.divergence_texture)
         pi=self.last_pressure_index;self.divergence_texture.use(6)
         for _ in range(math.ceil(self.pressure_iterations_per_step/2)):
             po=1-pi;self.pressure[pi].use(5);self._run("pressure",self.cell_count,self.pressure[po]);pi=po
         self.pressure[pi].use(5)
-        for name,fields,size in (
-            ("project_u",self.u,(self.nx+1,self.ny,self.nz)),
-            ("project_v",self.v,(self.nx,self.ny+1,self.nz)),
-            ("project_w",self.w,(self.nx,self.ny,self.nz+1))):
-            fields[c].use(0);self._run(name,size,fields[o])
+        self._run_velocity_triplet(
+            "velocity_project", (self.u[o], self.v[o], self.w[o])
+        )
         self.velocity_index=o;self.last_pressure_index=pi
         self.diagnostic_velocity_dirty = False
         self.total_smoke_mass_kg*=math.exp(-math.log(2)*dt_s/self.config.smoke_half_life_s)

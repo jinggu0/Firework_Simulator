@@ -1800,11 +1800,37 @@ load/thermal state. This result is retained rather than replaced by the faster
 preceding measurement; reducing physics-step p95 remains required before a
 universal 60 Hz claim.
 
-The next latency work is ordered as follows: add active sparse-brick dispatch
-beyond the current launch domain, add GPU source-reduction diagnostics, then
-calibrate smoke lighting and multiple scattering. Dynamic resolution, if
-required, applies only to volumetric radiance and reflection, never to
-trajectory, terrain, building geometry, or the fixed physics clocks.
+The following physics-p95 stage adds per-frame timings for world integration,
+combustion-emission construction, grid injection, compute submission, and a
+separate GL timestamp around the smoke solve. It does not change the 120 Hz
+ballistic clock, 30 Hz plume clock, 32 x 24 x 10 MAC grid, or 24 pressure
+iterations. The independent U/V/W advection, force, and pressure-projection
+programs are instead fused into one compute dispatch per stage. This reduces a
+default plume step from 25 to 19 dispatches without changing the equations or
+their sampling locations.
+
+Particle source reduction now writes the two interleaved grid channels through
+their strided views. The previous channel `ravel()` calls produced detached
+copies, so continuous star combustion was counted in diagnostics but not added
+to the GPU source texture. A mass-and-thermal-energy conservation regression
+now covers this path. The common all-inside case also avoids repeated boolean
+copies before the two conservative `bincount` reductions.
+
+Before these changes, the detailed 360-frame run measured 5.981 ms physics p95,
+1.444 ms active smoke-submit p95, and 0.520 ms smoke GPU p95. Two final
+360-frame runs measure physics p95 values of 5.096 and 5.498 ms, active submit
+p95 values of 1.249 and 1.252 ms, and GPU p95 values of 0.469 and 0.465 ms. The
+physics reduction is repeatable, but total frame p95 is 16.000 and 18.516 ms
+because visual p95 varies from 11.713 to 14.173 ms under host/driver load. The
+second run still misses 60 Hz, so the project does not yet claim a robust laptop
+60 FPS guarantee.
+
+The next latency work is ordered as follows: reduce allocation variance in the
+world/star update, add real frame-pacing telemetry, then add active sparse-brick
+dispatch beyond the current launch domain and calibrate smoke multiple
+scattering. Dynamic resolution, if required, applies only to volumetric
+radiance and reflection, never to trajectory, terrain, building geometry, or
+the fixed physics clocks.
 
 ## Delayed blast acoustics
 

@@ -6,6 +6,7 @@ import pygame
 import pytest
 
 from simulator.config import AtmosphereConfig, SmokeConfig
+from simulator.fluid import AIR_HEAT_CAPACITY_J_KG_K
 from simulator.gpu_fluid_3d import GpuSmokeFluid3D
 
 
@@ -44,6 +45,32 @@ def _divergence(
         + (v[:, 1:, :] - v[:, :-1, :]) / fluid.dy
         + (w[1:, :, :] - w[:-1, :, :]) / fluid.dz
     )
+
+
+def test_3d_velocity_stages_use_fused_compute_programs(
+    compute_context: moderngl.Context,
+) -> None:
+    fluid = GpuSmokeFluid3D(
+        compute_context,
+        SmokeConfig(gpu_3d_grid_size=(24, 16, 10)),
+        AtmosphereConfig(),
+    )
+    assert {
+        "velocity_advect",
+        "velocity_force",
+        "velocity_project",
+    }.issubset(fluid.programs)
+    assert not {
+        "u_advect",
+        "v_advect",
+        "w_advect",
+        "u_force",
+        "v_force",
+        "w_force",
+        "project_u",
+        "project_v",
+        "project_w",
+    }.intersection(fluid.programs)
 
 
 def test_3d_mac_projection_reduces_divergence(
@@ -91,6 +118,41 @@ def test_3d_burst_source_conserves_mass(
         -np.log(2.0) / fluid.update_hz / config.smoke_half_life_s
     )
     assert np.isclose(represented_mass_kg, expected, rtol=4e-3)
+
+
+def test_3d_particle_source_conserves_mass_and_thermal_energy(
+    compute_context: moderngl.Context,
+) -> None:
+    atmosphere = AtmosphereConfig()
+    fluid = GpuSmokeFluid3D(
+        compute_context,
+        SmokeConfig(gpu_3d_grid_size=(24, 16, 10)),
+        atmosphere,
+    )
+    positions = np.array(
+        [[0.0, 120.0, 0.0], [1.0, 121.0, 0.5]], dtype=np.float32
+    )
+    smoke_mass = np.array([0.003, 0.007], dtype=np.float32)
+    thermal_energy = np.array([20_000.0, 35_000.0], dtype=np.float32)
+
+    represented_mass, represented_energy = fluid.inject_particles(
+        positions, smoke_mass, thermal_energy
+    )
+
+    grid_mass = (
+        float(fluid.source_state[..., 0].sum(dtype=np.float64))
+        * fluid.cell_volume_m3
+    )
+    grid_energy = (
+        float(fluid.source_state[..., 1].sum(dtype=np.float64))
+        * atmosphere.air_density_kg_m3
+        * fluid.cell_volume_m3
+        * AIR_HEAT_CAPACITY_J_KG_K
+    )
+    assert represented_mass == pytest.approx(float(smoke_mass.sum()))
+    assert represented_energy == pytest.approx(float(thermal_energy.sum()))
+    assert grid_mass == pytest.approx(represented_mass, rel=1e-6)
+    assert grid_energy == pytest.approx(represented_energy, rel=1e-6)
 
 
 def test_3d_plume_moves_up_and_crosswind(

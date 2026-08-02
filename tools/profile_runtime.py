@@ -105,7 +105,7 @@ def _profile_case(
 
 def _profile_integrated(
     frames: int, fluid_backend: str = "3d"
-) -> dict[str, float | str]:
+) -> dict[str, object]:
     """Measure the coupled fixed-step simulation and blocking visual path."""
 
     app = _prepare_populated_app(fluid_backend)
@@ -114,17 +114,30 @@ def _profile_integrated(
     physics_ms: list[float] = []
     visual_ms: list[float] = []
     frame_ms: list[float] = []
+    physics_breakdown_ms = {
+        "world_update": [],
+        "emission_build": [],
+        "emission_inject": [],
+        "smoke_step_submit": [],
+    }
+    smoke_gpu_queries = []
     for _ in range(frames):
         frame_started = time.perf_counter()
         app.camera.yaw_deg += 0.12
         physics_started = time.perf_counter()
+        world_update_s = 0.0
+        emission_build_s = 0.0
+        emission_inject_s = 0.0
+        smoke_step_s = 0.0
         for _ in range(2):
+            world_started = time.perf_counter()
             if app.environment is not None:
                 app.world.atmosphere = app.environment.sample(
                     app.event_timestamp
                 )
                 app.event_timestamp += physics_dt_s
             app.world.update(physics_dt_s)
+            world_update_s += time.perf_counter() - world_started
             for burst in app.world.consume_burst_events():
                 app.smoke.inject_burst(
                     burst.position_m,
@@ -134,14 +147,24 @@ def _profile_integrated(
             app.smoke_accumulator_s += physics_dt_s
             smoke_dt_s = 1.0 / app.smoke.update_hz
             while app.smoke_accumulator_s >= smoke_dt_s:
-                for emission in app.world.consume_combustion_emissions():
+                emission_started = time.perf_counter()
+                emissions = app.world.consume_combustion_emissions()
+                emission_build_s += time.perf_counter() - emission_started
+                inject_started = time.perf_counter()
+                for emission in emissions:
                     app.smoke.inject_particles(
                         emission.position_m,
                         emission.smoke_mass_kg,
                         emission.thermal_energy_j,
                     )
+                emission_inject_s += time.perf_counter() - inject_started
                 app.smoke.set_atmosphere(app.world.atmosphere)
-                app.smoke.step(smoke_dt_s)
+                smoke_started = time.perf_counter()
+                smoke_query = app.ctx.query(time=True)
+                with smoke_query:
+                    app.smoke.step(smoke_dt_s)
+                smoke_gpu_queries.append(smoke_query)
+                smoke_step_s += time.perf_counter() - smoke_started
                 app.smoke_accumulator_s -= smoke_dt_s
         physics_finished = time.perf_counter()
         app.renderer.render(
@@ -150,9 +173,17 @@ def _profile_integrated(
         app.ctx.finish()
         frame_finished = time.perf_counter()
         physics_ms.append((physics_finished - physics_started) * 1000.0)
+        physics_breakdown_ms["world_update"].append(world_update_s * 1000.0)
+        physics_breakdown_ms["emission_build"].append(
+            emission_build_s * 1000.0
+        )
+        physics_breakdown_ms["emission_inject"].append(
+            emission_inject_s * 1000.0
+        )
+        physics_breakdown_ms["smoke_step_submit"].append(smoke_step_s * 1000.0)
         visual_ms.append((frame_finished - physics_finished) * 1000.0)
         frame_ms.append((frame_finished - frame_started) * 1000.0)
-    result: dict[str, float | str] = {
+    result: dict[str, object] = {
         "case": "integrated_blocking",
         "fluid_backend": getattr(app.smoke, "backend_name", "cpu"),
     }
@@ -165,6 +196,31 @@ def _profile_integrated(
         result[f"{name}_mean_ms"] = float(samples.mean())
         result[f"{name}_p95_ms"] = float(np.percentile(samples, 95))
         result[f"{name}_p99_ms"] = float(np.percentile(samples, 99))
+    breakdown = {}
+    for name, values in physics_breakdown_ms.items():
+        samples = np.asarray(values, dtype=np.float64)
+        active = samples[samples > 0.0]
+        breakdown[name] = {
+            "mean_all_frames_ms": float(samples.mean()),
+            "p95_all_frames_ms": float(np.percentile(samples, 95)),
+            "active_frames": int(len(active)),
+            "mean_active_ms": float(active.mean()) if len(active) else 0.0,
+            "p95_active_ms": (
+                float(np.percentile(active, 95)) if len(active) else 0.0
+            ),
+        }
+    smoke_gpu = np.asarray(
+        [query.elapsed / 1_000_000.0 for query in smoke_gpu_queries],
+        dtype=np.float64,
+    )
+    breakdown["smoke_step_gpu"] = {
+        "active_frames": int(len(smoke_gpu)),
+        "mean_active_ms": float(smoke_gpu.mean()) if len(smoke_gpu) else 0.0,
+        "p95_active_ms": (
+            float(np.percentile(smoke_gpu, 95)) if len(smoke_gpu) else 0.0
+        ),
+    }
+    result["physics_breakdown"] = breakdown
     _close(app)
     return result
 
