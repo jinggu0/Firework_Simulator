@@ -9,7 +9,16 @@ from simulator.scene import (
     SURFACE_FOOTWAY,
     SURFACE_TRAIL,
 )
-from simulator.site_details import classify_path_surfaces
+from simulator.site_details import _lamp, classify_path_surfaces
+
+
+def test_park_lamp_has_a_separate_base_arm_housing_and_lens() -> None:
+    vertices = np.asarray(_lamp(np.array([2.0, 3.0]), 0.0))
+    assert vertices.shape[1] == 10
+    assert len(vertices) > 180
+    assert np.count_nonzero(np.isclose(vertices[:, 6], 10.0)) == 36
+    assert vertices[:, 1].max() > 7.0
+    assert vertices[:, 0].max() - vertices[:, 0].min() > 1.2
 
 
 def test_building_footprint_becomes_walls_and_roof() -> None:

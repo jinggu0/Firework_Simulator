@@ -26,6 +26,10 @@ uniform vec4 material_pattern[17];      // kind, scale u, scale v, mix
 uniform vec4 material_reflectance[17];  // roughness, metallic, ao, transmission
 uniform vec4 material_emissive[17];     // rgb, scale
 uniform vec2 material_relief[17];       // normal strength, height scale
+// Four CC0 photo-scanned PBR sets, packed as diffuse/normal/ARM layers.
+uniform sampler2DArray scanned_material_texture;
+uniform vec3 scanned_diffuse_mean[4];
+uniform float scanned_texture_width_m[4];
 
 out vec4 frag_color;
 #include "air_extinction.glsl"
@@ -77,6 +81,80 @@ float interval(float value, float lower, float upper, float antialias) {
     return smoothstep(lower - antialias, lower + antialias, value)
          * (1.0 - smoothstep(upper - antialias, upper + antialias, value));
 }
+
+// Derivative cotangent frame: works on roads, horizontal park surfaces and
+// vertical facility walls without storing tangent vectors in the city mesh.
+mat3 cotangent_frame(vec3 n, vec3 position, vec2 texture_uv) {
+    vec3 dp1 = dFdx(position);
+    vec3 dp2 = dFdy(position);
+    vec2 duv1 = dFdx(texture_uv);
+    vec2 duv2 = dFdy(texture_uv);
+    vec3 dp2_perpendicular = cross(dp2, n);
+    vec3 dp1_perpendicular = cross(n, dp1);
+    vec3 tangent = dp2_perpendicular * duv1.x
+                 + dp1_perpendicular * duv2.x;
+    vec3 bitangent = dp2_perpendicular * duv1.y
+                   + dp1_perpendicular * duv2.y;
+    float inverse_scale = inversesqrt(max(
+        max(dot(tangent, tangent), dot(bitangent, bitangent)), 1e-8
+    ));
+    return mat3(
+        tangent * inverse_scale, bitangent * inverse_scale, n
+    );
+}
+
+vec2 metric_material_uv(vec3 n) {
+    vec3 axis = abs(n);
+    if (axis.y >= max(axis.x, axis.z)) return world_position.xz;
+    if (axis.x >= axis.z) return world_position.zy;
+    return world_position.xy;
+}
+
+int scanned_layer_for_material(int material) {
+    if (material == 3) return 0;                 // asphalt
+    if (material == 5) return 1;                 // concrete pavers
+    if (material == 4 || material == 16) return 2; // grass
+    if (material == 2 || material == 12) return 3; // structural concrete
+    return -1;
+}
+
+void apply_scanned_material(
+    int layer, float detail, float colour_strength,
+    inout vec3 n, inout vec3 albedo, inout vec4 reflectance
+) {
+    if (layer < 0 || detail <= .001) return;
+    vec2 map_uv = metric_material_uv(n) / scanned_texture_width_m[layer];
+    float base_layer = float(layer * 3);
+    vec3 scanned_albedo = pow(texture(
+        scanned_material_texture, vec3(map_uv, base_layer)
+    ).rgb, vec3(2.2));
+    // Preserve the event-photo colour calibration; only the scan's relative
+    // surface variation is transferred to this site.
+    vec3 relative_albedo = clamp(
+        scanned_albedo / max(scanned_diffuse_mean[layer], vec3(.015)),
+        vec3(.38), vec3(2.25)
+    );
+    albedo *= mix(
+        vec3(1.0), relative_albedo,
+        min(detail * colour_strength, 1.0)
+    );
+
+    vec3 tangent_normal = texture(
+        scanned_material_texture, vec3(map_uv, base_layer + 1.0)
+    ).xyz * 2.0 - 1.0;
+    tangent_normal.xy *= mix(.48, .92, colour_strength);
+    vec3 mapped_normal = normalize(
+        cotangent_frame(n, world_position, map_uv) * tangent_normal
+    );
+    n = normalize(mix(n, mapped_normal, detail));
+
+    // Poly Haven ARM maps are ambient occlusion, roughness, metallic.
+    vec3 arm = texture(
+        scanned_material_texture, vec3(map_uv, base_layer + 2.0)
+    ).rgb;
+    reflectance.x = mix(reflectance.x, arm.g, detail * .78);
+    reflectance.z *= mix(1.0, arm.r, detail * .42);
+}
 // Trowbridge-Reitz GGX with the Smith height-correlated visibility and a
 // Schlick Fresnel, matching the formulation the water pass already uses so the
 // river and the city respond to a burst the same way.
@@ -120,6 +198,15 @@ vec3 reflected_radiance(vec3 n, vec3 albedo, vec4 reflectance) {
     // whole hemisphere, so a recessed surface receives less of it.
     vec3 result = diffuse_albedo * ambient_irradiance_w_m2
                 * reflectance.z / PI;
+    // A low-frequency environment-specular term keeps smooth metal and glass
+    // from becoming black cardboard between point lights. It is bounded by
+    // the same measured/modelled ambient irradiance as the diffuse sky term.
+    float n_dot_v = max(dot(n, view_direction), 0.0);
+    vec3 grazing_fresnel = normal_reflectance
+        + (vec3(1.0) - normal_reflectance) * pow(1.0 - n_dot_v, 5.0);
+    float sky_visibility = mix(.18, 1.0, clamp(n.y * .5 + .5, 0.0, 1.0));
+    result += grazing_fresnel * ambient_irradiance_w_m2 / PI
+            * sky_visibility * (1.0 - roughness * .72);
     for (int i = 0; i < 4; ++i) {
         if (i >= static_light_count) break;
         vec3 displacement = static_light_position[i] - world_position;
@@ -260,18 +347,22 @@ void main() {
         // world space, so moving the camera never makes the surface swim.
         float camera_distance_m = length(camera_position - world_position);
         float micro_detail = 1.0 - smoothstep(90.0, 420.0, camera_distance_m);
+        int scanned_layer = scanned_layer_for_material(material);
+        float scanned_colour_strength = material == 4 || material == 16
+                                      ? .56 : .74;
+        apply_scanned_material(
+            scanned_layer, micro_detail, scanned_colour_strength,
+            n, albedo, reflectance
+        );
         if (material == 3) {
             // Asphalt aggregate, repaired patches, edge lines and a dashed
             // centre line. The upload pass supplies u=metres along the road
             // and v=-1..1 across it, independent of world orientation.
-            float aggregate = .5;
             float repair_field = .5;
             if (micro_detail > .001) {
-                aggregate = fbm2(world_position.xz * 2.6);
                 repair_field = value_noise(world_position.xz * .045);
             }
-            albedo *= mix(.76, 1.16, aggregate * micro_detail + .5 * (1.0-micro_detail));
-            albedo *= mix(.82, 1.08, smoothstep(
+            albedo *= mix(.88, 1.06, smoothstep(
                 .38, .68, mix(.5, repair_field, micro_detail)
             ));
             float cross_road = abs(surface_uv.y);
@@ -283,7 +374,9 @@ void main() {
             float dash = smoothstep(.10, .18, fract(surface_uv.x / 6.0))
                        * (1.0 - smoothstep(.58, .68, fract(surface_uv.x / 6.0)));
             float marking = max(edge_line, centre_line * dash);
-            vec3 aged_paint = vec3(.52, .52, .46) * mix(.72, 1.0, aggregate);
+            float paint_wear = value_noise(world_position.xz * 1.7 + 17.0);
+            vec3 aged_paint = vec3(.52, .52, .46)
+                             * mix(.72, 1.0, paint_wear);
             albedo = mix(albedo, aged_paint, marking * .82);
         } else if (material == 4 || material == 16) {
             float clumps = .5;
@@ -499,6 +592,44 @@ void main() {
             max(red_column, red_beam) * .92
         );
     }
+    float facade_detail = 1.0 - smoothstep(
+        120.0, 520.0, length(camera_position - world_position)
+    );
+    float glass_coverage = clamp(pane * glass_amount, 0.0, 1.0);
+    if (facade_detail > .001) {
+        const int WALL_SCAN = 3;
+        vec2 wall_uv = surface_uv / scanned_texture_width_m[WALL_SCAN];
+        float wall_base_layer = float(WALL_SCAN * 3);
+        vec3 wall_scan = pow(texture(
+            scanned_material_texture, vec3(wall_uv, wall_base_layer)
+        ).rgb, vec3(2.2));
+        vec3 wall_variation = clamp(
+            wall_scan / max(scanned_diffuse_mean[WALL_SCAN], vec3(.015)),
+            vec3(.45), vec3(1.9)
+        );
+        facade *= mix(
+            vec3(1.0), wall_variation,
+            facade_detail * (1.0 - glass_coverage) * .48
+        );
+        vec3 wall_tangent_normal = texture(
+            scanned_material_texture,
+            vec3(wall_uv, wall_base_layer + 1.0)
+        ).xyz * 2.0 - 1.0;
+        wall_tangent_normal.xy *= .52;
+        vec3 wall_normal = normalize(
+            cotangent_frame(n, world_position, wall_uv) * wall_tangent_normal
+        );
+        n = normalize(mix(
+            n, wall_normal,
+            facade_detail * (1.0 - glass_coverage)
+        ));
+    }
+    // Glass and cladding have different microfacet distributions. Keeping one
+    // roughness for the whole facade made every elevation look printed flat.
+    reflectance.x = mix(
+        max(reflectance.x, .42), .105, glass_coverage
+    );
+    reflectance.z *= mix(.92, 1.0, glass_coverage);
     frag_color = vec4(
         reflected_radiance(n, facade, reflectance) + emission, 1.0
     );

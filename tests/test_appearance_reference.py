@@ -2,13 +2,17 @@ import json
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 from simulator.passes.scene import (
     bridge_lighting_uv,
     bridge_structure_vertices,
+    grass_detail_chunks,
+    road_edge_detail_vertices,
     rooftop_detail_vertices,
 )
 from simulator.scene import SURFACE_GRASS_BLADE, load_scene
+from simulator.site_details import GRASS_VERTICES_PER_TUFT
 from tools.analyze_appearance_reference import crop_statistics
 
 
@@ -31,11 +35,20 @@ def test_appearance_reference_matches_authored_grass_count() -> None:
     grass_vertices = scene.detail_vertices[
         np.isclose(scene.detail_vertices[:, 6], SURFACE_GRASS_BLADE)
     ]
-    # Each tuft is two crossed, double-sided triangles: twelve vertices.
-    assert len(grass_vertices) % 12 == 0
-    assert len(grass_vertices) // 12 == data["implemented_calibration"][
-        "grass_blades_authored"
-    ]
+    # Each mapped sample expands to five narrow double-sided blades.
+    assert len(grass_vertices) % GRASS_VERTICES_PER_TUFT == 0
+    assert (
+        len(grass_vertices) // GRASS_VERTICES_PER_TUFT
+        == data["implemented_calibration"][
+            "grass_blades_authored"
+        ]
+    )
+    chunks = grass_detail_chunks(scene.detail_vertices)
+    assert len(chunks) > 10
+    assert sum(len(vertices) for vertices, _, _ in chunks) == len(
+        grass_vertices
+    )
+    assert all(radius <= 46.0 for _, _, radius in chunks)
 
 
 def test_bridge_uv_tracks_distance_and_edges_across_connected_segments() -> None:
@@ -68,6 +81,19 @@ def test_bridge_deck_derives_visible_fascia_and_underside() -> None:
     assert np.isfinite(structure).all()
     assert structure[:, 1].min() < vertices[:, 1].min()
     assert {2.0, 12.0}.issubset(set(structure[:, 6]))
+
+
+def test_asphalt_edges_derive_a_raised_concrete_kerb() -> None:
+    vertices = np.zeros((6, 10), dtype=np.float32)
+    vertices[:, :3] = np.array(
+        [[0, .06, -3], [0, .06, 3], [12, .06, 3],
+         [0, .06, -3], [12, .06, 3], [12, .06, -3]], dtype=np.float32
+    )
+    vertices[:, 6] = 3.0
+    kerbs = road_edge_detail_vertices(vertices)
+    assert kerbs.shape == (24, 10)
+    assert np.all(kerbs[:, 6] == 12.0)
+    assert kerbs[:, 1].max() - vertices[:, 1].max() == pytest.approx(0.14)
 
 
 def test_large_flat_roof_gets_a_bounded_mechanical_penthouse() -> None:

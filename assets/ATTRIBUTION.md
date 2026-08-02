@@ -221,16 +221,43 @@ historical geometry:
   sheet; they are not surveyed Wonhyo Bridge dimensions,
 - rooftop mechanical penthouses are placed only on roof triangles above 500
   m2 to break perfectly flat silhouettes; their locations are not observations,
-- grass cards are 7,659 low maintained-turf clumps selected inside mapped grass
-  polygons. Their placement is deterministic but not a botanical survey,
+- 28,790 turf samples inside mapped grass polygons each expand to five narrow
+  blades. Their placement is deterministic but not a botanical survey,
 - Han River body colour, suspended sediment near the mask edge, and unresolved
   wave-slope roughness are physical-form appearance calibrations without a
   measured event-night turbidity or river-stage sample.
 
-No photographic texture has been baked into these materials. That avoids
-inventing copyrighted or incorrectly registered surface detail, but it also
-means facade logos, exact stone panels, road damage, individual bridge members,
-and botanical species remain unresolved rather than verified.
+Four generic photo-scanned PBR sets are now baked as 1K diffuse, OpenGL normal,
+and AO/roughness/metallic maps. All are CC0 assets from Poly Haven, retrieved
+2026-08-02:
+
+- Asphalt 04 (4 m tile), Jenelle van Heerden and Sergej Majboroda:
+  https://polyhaven.com/a/asphalt_04
+- Concrete Pavers (1.9 m tile), Amal Kumar:
+  https://polyhaven.com/a/concrete_pavers
+- Leafy Grass (2 m tile), Charlotte Baglioni:
+  https://polyhaven.com/a/leafy_grass
+- Concrete (4 m tile), Rob Tuytel:
+  https://polyhaven.com/a/concrete
+
+These scans are **not samples of Yeouido**. The shader divides their diffuse
+colour by each tile's linear mean before applying it, so event-photo colour
+calibration remains authoritative while the scans contribute relative albedo,
+tangent-space normal, AO and roughness detail. They remain confidence grade D
+for site identity. Facade logos, exact stone panels, road damage, individual
+bridge members, and botanical species are still unresolved rather than
+verified.
+
+The corresponding SHA-256 digests are:
+
+- asphalt_04: diffuse `837a78bb...def2e`, normal `18b91c2a...8f3912`, ARM
+  `35f582fb...ef081`
+- concrete_pavers: diffuse `eea1fb8b...c261d`, normal
+  `761c8332...b17894`, ARM `8375d082...12eb4e`
+- leafy_grass: diffuse `cfa40bc9...c05e4a`, normal
+  `83232821...2ebd6`, ARM `95432451...f089d`
+- concrete: diffuse `046c0e2a...fa8a`, normal `298a0e93...ee428`, ARM
+  `98bd4ffb...582e0`
 
 ## Real-time ambient obscurance references
 

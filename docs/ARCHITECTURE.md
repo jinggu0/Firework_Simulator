@@ -327,14 +327,31 @@ show. Height is read as a screen-space bump from the pattern gradient — it has
 no parallax, and a true displacement needs the per-pixel surface footprint the
 vertex stage does not yet carry.
 
+Asphalt, pavers, maintained ground cover, and structural concrete additionally
+read four 1K CC0 photo-scanned PBR sets through one mipmapped texture array.
+Diffuse colour is normalized by the scan's linear mean before it modulates the
+event-calibrated base colour; this transfers physical variation without
+claiming that a generic scan was sampled at Yeouido. A derivative cotangent
+frame applies OpenGL normal maps on horizontal and vertical faces without
+adding tangents to the 2024 city mesh. ARM channels drive per-pixel ambient
+occlusion and roughness; mipmaps and a 90-420 m detail fade bound aliasing and
+fragment cost.
+
+Mapped asphalt segments inside 1.7 km derive a 140 mm raised concrete kerb and
+180 mm top strip. The road footprint remains the dated OSM width, while the
+vertical profile is explicitly a generic grade-D detail. Park luminaires now
+carry a base collar, twelve-sided pole, outreach arm, metal housing and a
+separate emissive lens instead of a pole-and-box silhouette.
+
 Building elevations keep their dedicated path. A facade is an assembly — slabs,
 mullions, glazing, balconies, expressed structure — not a material, and forcing
 it into one base-colour row would lose that detail. Its PBR channels still come
 from the table, which is what gives curtain wall its glint under a burst.
 
-**Nothing in the table is measured.** No reflectance for any Yeouido surface has
-been obtained, so every material is an appearance calibration at confidence
-grade D, and a test asserts none claims otherwise.
+**Nothing identifies a measured Yeouido reflectance.** No reflectance for any
+site surface has been obtained, so every material remains an appearance
+calibration at confidence grade D. The scans measure their source samples, not
+this site, and a test asserts no table row claims evidence grade.
 
 The move was verified in two steps against `tools/capture_reference.py`. Lifting
 the colours and patterns out of GLSL left **5 components of 3,686,400** changed,
@@ -378,11 +395,19 @@ origin, where a blade subtends 0.03 px. The cause was the builder spending a
 fixed 2,500-blade budget in source-file order inside an origin radius, so the
 budget was exhausted on whichever polygons the extract happened to list first.
 
-Two things changed. Eligibility now includes `leisure=pitch` whose `sport` is
-played on turf, and the budget is spent on the candidates nearest the
-**scenario's observers** rather than in file order. The result went from 133 to
-299 blade clusters, with the nearest moving from 1,049 m to 415 m of the
-observer and from 840 m to 208 m of the default camera.
+Two things changed in the first correction. Eligibility now includes
+`leisure=pitch` whose `sport` is played on turf, and the budget is spent on the
+candidates nearest the **scenario's observers** rather than in file order. The
+current density pass samples those dated polygons on a 0.62 m lattice and keeps
+28,790 tuft anchors from 296,197 candidates. Each anchor expands to five narrow,
+double-sided blades (30 vertices), with the nearest and farthest retained
+anchors 411 m and 1,187 m from the scenario observer respectively.
+
+At upload time the grass is separated into eleven 64 m spatial chunks. The
+scene pass rejects chunks outside the optical blade cutoff before issuing a
+draw, so the default river camera pays no grass raster cost while a camera on a
+mapped field sees only nearby cells. In the near-field regression scene this
+drew four of eleven cells and held visual p95 at 7.96 ms.
 
 No pitch at this site carries a `surface` tag, so the playing surface is
 inferred from the sport and the inference is recorded as such. Soccer, football,
@@ -1361,13 +1386,13 @@ single-scattering term. The expensive noise synthesis is performed once at
 startup; each sky pixel uses one advected texture sample. This retains a
 bounded full-screen cost and avoids temporal boiling.
 
-Historical `landuse=grass` and `natural=grassland` polygons seed 133 crossed
-blade clusters inside 1.2 km of the event origin. Blade bases remain fixed,
-while tip displacement follows a squared cantilever height profile, bounded
-wind response, and two-frequency gust. Distant grass receives the same
-wind-aligned travelling-wave normal field, and tree crowns receive a smaller
-height-weighted sway. These paths share the atmospheric wind used by the
-JONSWAP river forcing.
+Historical `landuse=grass`, `natural=grassland`, and turf-inferred sports
+polygons seed 28,790 tuft anchors inside 1.2 km of the event origin. Each tuft
+contains five narrow double-sided blades. Blade bases remain fixed, while tip
+displacement follows a squared cantilever height profile, bounded wind
+response, and two-frequency gust. Distant grass receives the same wind-aligned
+travelling-wave normal field, and tree crowns receive a smaller height-weighted
+sway. These paths share the atmospheric wind used by the JONSWAP river forcing.
 
 Water now applies wavelength-dependent Beer-Lambert absorption over a
 view-angle path estimate, blue-green subsurface scattering, mask-gradient

@@ -55,6 +55,9 @@ NON_TURF_SURFACES: frozenset[str] = frozenset(
 )
 """Surfaces that override a turf sport inference when the tag is present."""
 
+GRASS_VERTICES_PER_TUFT = 30
+"""Five narrow, double-sided blades authored at each mapped turf sample."""
+
 
 def _box(
     centre: np.ndarray,
@@ -180,24 +183,61 @@ def _beam(
 
 
 def _lamp(position: np.ndarray, yaw: float) -> list[list[float]]:
-    vertices = _cylinder(position, 0.09, 6.8, SURFACE_METAL, sides=8)
-    head = np.array([position[0], 6.88, position[1]])
-    vertices.extend(_box(head, (0.85, 0.18, 0.32), SURFACE_LAMP, yaw))
+    """Twelve-sided park luminaire with base, outreach, housing and lens."""
+
+    direction = np.array([math.cos(yaw), math.sin(yaw)])
+    vertices = _cylinder(
+        position, 0.19, 0.28, SURFACE_METAL, sides=12
+    )
+    vertices.extend(
+        _cylinder(
+            position, 0.082, 6.85, SURFACE_METAL,
+            sides=12, base_y=0.24,
+        )
+    )
+    arm_start = position.copy()
+    arm_end = position + direction * 0.82
+    vertices.extend(
+        _beam(arm_start, arm_end, 7.02, 0.105, SURFACE_METAL)
+    )
+    housing = np.array([
+        arm_end[0] + direction[0] * 0.17,
+        7.02,
+        arm_end[1] + direction[1] * 0.17,
+    ])
+    vertices.extend(
+        _box(housing, (1.02, 0.18, 0.38), SURFACE_METAL, yaw)
+    )
+    lens = housing.copy()
+    lens[1] -= 0.102
+    vertices.extend(
+        _box(lens, (0.84, 0.026, 0.255), SURFACE_LAMP, yaw)
+    )
     return vertices
 
 
 def _grass_blade(
     position: np.ndarray, height_m: float, width_m: float, yaw: float
 ) -> list[list[float]]:
-    """Two crossed tapered cards with tip weights stored in surface UV.y."""
+    """A five-blade tuft with tip weights stored in surface UV.y."""
 
     vertices: list[list[float]] = []
-    for angle in (yaw, yaw + math.pi * 0.5):
+    golden_angle = math.pi * (3.0 - math.sqrt(5.0))
+    for blade_index in range(5):
+        angle = yaw + blade_index * golden_angle
+        radial_offset = 0.035 * blade_index
+        blade_base = position + np.array(
+            [math.cos(angle) * radial_offset, math.sin(angle) * radial_offset]
+        )
         across = np.array([math.cos(angle), 0.0, math.sin(angle)])
         facing = np.array([-math.sin(angle), 0.0, math.cos(angle)])
-        left = np.array([position[0], 0.025, position[1]]) - across * width_m
-        right = np.array([position[0], 0.025, position[1]]) + across * width_m
-        tip = np.array([position[0], height_m, position[1]])
+        width_scale = 0.72 + 0.07 * blade_index
+        blade_height = height_m * (0.76 + 0.055 * blade_index)
+        left = np.array([blade_base[0], 0.025, blade_base[1]])
+        right = left.copy()
+        left -= across * width_m * width_scale
+        right += across * width_m * width_scale
+        tip = np.array([blade_base[0], blade_height, blade_base[1]])
         vertices.extend(
             [
                 _vertex(tuple(left), tuple(facing), SURFACE_GRASS_BLADE, (0.0, 0.0)),
@@ -208,6 +248,8 @@ def _grass_blade(
                 _vertex(tuple(tip), tuple(-facing), SURFACE_GRASS_BLADE, (0.5, 1.0)),
             ]
         )
+    if len(vertices) != GRASS_VERTICES_PER_TUFT:
+        raise AssertionError("grass tuft vertex contract drifted")
     return vertices
 
 
@@ -496,7 +538,7 @@ def _is_bladed_surface(tags: dict[str, str]) -> bool:
 
 
 def _blade_candidates(
-    polygon: np.ndarray, seed: int, spacing: float = 1.2
+    polygon: np.ndarray, seed: int, spacing: float = 0.62
 ) -> list[tuple[np.ndarray, float, float, float]]:
     """Deterministic blade positions and dimensions inside one polygon.
 
@@ -571,7 +613,7 @@ def build_site_detail_mesh(
     # Individual cards are only retained inside the optics-derived near LOD.
     # Twelve thousand is still a small static vertex workload, but avoids the
     # one-blade-every-nine-square-metres look of the previous authoring pass.
-    grass_blade_limit = 12_000
+    grass_blade_limit = 40_000
     blade_candidates: list[tuple[np.ndarray, float, float, float]] = []
     # Ground-plane observer positions the blade budget is spent around. With
     # none supplied this falls back to the scene origin, which is what the

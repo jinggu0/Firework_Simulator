@@ -11,8 +11,14 @@ import numpy as np
 from .. import shaders
 from ..config import LightingConfig, PhysicalCameraConfig, RenderConfig
 from ..lighting import led_energy_budget
+from ..material_textures import (
+    SCANNED_MATERIAL_UNIT,
+    ScannedMaterialTextures,
+    texture_widths_m,
+)
 from ..materials import MATERIAL_LIBRARY, MaterialLibrary
-from ..scene import load_scene
+from ..scene import SURFACE_GRASS_BLADE, load_scene
+from ..site_details import GRASS_VERTICES_PER_TUFT
 from ..vegetation import VegetationLod
 
 VERTEX_LAYOUT = (
@@ -27,6 +33,7 @@ VERTEX_LAYOUT = (
 SURFACE_LAMP = 10.0
 SURFACE_CONCRETE = 12.0
 LAMP_VERTICES_PER_FIXTURE = 36
+GRASS_CHUNK_SIZE_M = 64.0
 
 
 def linear_feature_uv(vertices: np.ndarray) -> np.ndarray:
@@ -72,6 +79,98 @@ def bridge_lighting_uv(vertices: np.ndarray) -> np.ndarray:
     """Compatibility name for the longitudinal bridge coordinate transform."""
 
     return linear_feature_uv(vertices)
+
+
+def road_edge_detail_vertices(road_vertices: np.ndarray) -> np.ndarray:
+    """Give mapped asphalt edges a raised concrete kerb and visible reveal.
+
+    OSM centreline width is authoritative for the plan footprint but carries
+    no vertical kerb profile.  A bounded 140 mm reveal and 180 mm top strip are
+    derived only for mapped asphalt segments inside the central 1.7 km.  Their
+    dimensions are generic urban construction values, not a Yeouido survey.
+    """
+
+    if not len(road_vertices) or len(road_vertices) % 6:
+        return np.empty((0, 10), dtype=np.float32)
+    output: list[list[float]] = []
+    up = np.array([0.0, 0.14, 0.0], dtype=np.float64)
+    kerb_width_m = 0.18
+    for offset in range(0, len(road_vertices), 6):
+        quad = road_vertices[offset : offset + 6]
+        if not np.isclose(quad[0, 6], 3.0):
+            continue
+        left_start = quad[0, :3].astype(np.float64)
+        right_start = quad[1, :3].astype(np.float64)
+        right_end = quad[2, :3].astype(np.float64)
+        left_end = quad[5, :3].astype(np.float64)
+        width_m = float(np.linalg.norm(right_start - left_start))
+        centre_start = 0.5 * (left_start + right_start)
+        centre_end = 0.5 * (left_end + right_end)
+        length_m = float(np.linalg.norm(centre_end - centre_start))
+        if not 3.5 <= width_m <= 32.0 or length_m < 0.35:
+            continue
+        midpoint_xz = 0.5 * (centre_start + centre_end)[[0, 2]]
+        if float(np.linalg.norm(midpoint_xz)) > 1_700.0:
+            continue
+        for edge_start, edge_end in (
+            (left_start, left_end),
+            (right_start, right_end),
+        ):
+            outward = edge_start - centre_start
+            outward[1] = 0.0
+            outward /= max(float(np.linalg.norm(outward)), 1e-6)
+            outer_start = edge_start + outward * kerb_width_m
+            outer_end = edge_end + outward * kerb_width_m
+            # The road-facing vertical reveal catches grazing lamp light.
+            _append_quad(
+                output,
+                (edge_start, edge_end, edge_end + up, edge_start + up),
+                SURFACE_CONCRETE,
+            )
+            top = (
+                edge_start + up,
+                edge_end + up,
+                outer_end + up,
+                outer_start + up,
+            )
+            if np.cross(top[1] - top[0], top[2] - top[0])[1] < 0.0:
+                top = (top[0], top[3], top[2], top[1])
+            _append_quad(output, top, SURFACE_CONCRETE)
+    return np.asarray(output, dtype=np.float32).reshape(-1, 10)
+
+
+def grass_detail_chunks(
+    detail_vertices: np.ndarray,
+    chunk_size_m: float = GRASS_CHUNK_SIZE_M,
+) -> list[tuple[np.ndarray, np.ndarray, float]]:
+    """Partition complete grass tufts into independently cullable cells."""
+
+    grass = detail_vertices[
+        np.isclose(detail_vertices[:, 6], SURFACE_GRASS_BLADE)
+    ]
+    if not len(grass):
+        return []
+    if len(grass) % GRASS_VERTICES_PER_TUFT:
+        raise ValueError("grass detail ends with an incomplete tuft")
+    tufts = grass.reshape(-1, GRASS_VERTICES_PER_TUFT, 10)
+    centres = tufts[:, :, [0, 2]].mean(axis=1)
+    cells = np.floor(centres / chunk_size_m).astype(np.int32)
+    groups: dict[tuple[int, int], list[int]] = {}
+    for index, cell in enumerate(cells):
+        groups.setdefault((int(cell[0]), int(cell[1])), []).append(index)
+
+    chunks: list[tuple[np.ndarray, np.ndarray, float]] = []
+    for key in sorted(groups):
+        indices = np.asarray(groups[key], dtype=np.int32)
+        vertices = np.ascontiguousarray(
+            tufts[indices].reshape(-1, 10), dtype=np.float32
+        )
+        minimum = vertices[:, [0, 2]].min(axis=0)
+        maximum = vertices[:, [0, 2]].max(axis=0)
+        centre = (minimum + maximum) * 0.5
+        radius = float(np.linalg.norm(maximum - minimum) * 0.5)
+        chunks.append((vertices, centre.astype(np.float32), radius))
+    return chunks
 
 
 def _mesh_vertex(
@@ -296,14 +395,26 @@ class ScenePass:
         # Surface appearance is a uniform table rather than a shader branch
         # chain, so adding a material is a row in simulator/materials.py.
         materials.upload(self.program)
+        self.scanned_materials = ScannedMaterialTextures(ctx)
+        self.program["scanned_material_texture"] = SCANNED_MATERIAL_UNIT
+        self.program["scanned_diffuse_mean"].write(
+            self.scanned_materials.diffuse_means.tobytes()
+        )
+        self.program["scanned_texture_width_m"].write(
+            texture_widths_m().tobytes()
+        )
         # Vegetation detail bands follow from the camera optics, so a change of
         # sensor, focal length, or resolution moves them automatically.
         self.program["blade_full_detail_m"] = self.lod.blade_full_detail_m
         self.program["blade_cutoff_m"] = self.lod.blade_cutoff_m
         self.program["tree_sway_cutoff_m"] = self.lod.tree_sway_cutoff_m
         self.vaos: list[tuple[moderngl.VertexArray, int]] = []
+        self.grass_vaos: list[
+            tuple[moderngl.VertexArray, int, np.ndarray, float]
+        ] = []
         self.reflection_vaos: list[tuple[moderngl.VertexArray, int]] = []
         self.buffers: list[moderngl.Buffer] = []
+        self.camera_position_xz = np.zeros(2, dtype=np.float32)
         self.data = SceneData.empty()
         if scene_path.exists():
             self._build(load_scene(scene_path))
@@ -341,12 +452,21 @@ class ScenePass:
             np.concatenate((bridge_deck, bridge_structure), axis=0)
             if len(bridge_structure) else bridge_deck
         )
+        road_deck = linear_feature_uv(scene.road_vertices)
+        road_edges = road_edge_detail_vertices(road_deck)
+        road_batch = (
+            np.concatenate((road_deck, road_edges), axis=0)
+            if len(road_edges) else road_deck
+        )
+        non_grass_detail = scene.detail_vertices[
+            ~np.isclose(scene.detail_vertices[:, 6], SURFACE_GRASS_BLADE)
+        ]
         batches = (
             building_batch,
             bridge_batch,
-            linear_feature_uv(scene.road_vertices),
+            road_batch,
             scene.vegetation_vertices,
-            scene.detail_vertices,
+            non_grass_detail,
         )
         for index, vertices in enumerate(batches):
             if not len(vertices):
@@ -380,6 +500,15 @@ class ScenePass:
                             len(reflection_vertices),
                         )
                     )
+        for vertices, centre, radius in grass_detail_chunks(
+            scene.detail_vertices
+        ):
+            buffer = self.ctx.buffer(vertices.tobytes())
+            self.buffers.append(buffer)
+            vao = self.ctx.vertex_array(
+                self.program, [(buffer, *VERTEX_LAYOUT)]
+            )
+            self.grass_vaos.append((vao, len(vertices), centre, radius))
 
     # -- per-frame state ---------------------------------------------------
 
@@ -392,6 +521,7 @@ class ScenePass:
     ) -> None:
         self.program["view_projection"].write(matrix_bytes)
         self.program["camera_position"].value = tuple(camera_position)
+        self.camera_position_xz[:] = camera_position[[0, 2]]
 
     def set_environment(self, time_s: float, wind_xz, wind_speed_mps: float) -> None:
         self.program["time_s"] = time_s
@@ -404,9 +534,18 @@ class ScenePass:
     # -- drawing -----------------------------------------------------------
 
     def draw(self) -> None:
+        self.scanned_materials.bind()
         for vao, vertex_count in self.vaos:
             vao.render(moderngl.TRIANGLES, vertices=vertex_count)
+        cutoff_m = self.lod.blade_cutoff_m
+        for vao, vertex_count, centre, radius in self.grass_vaos:
+            distance_m = float(
+                np.linalg.norm(centre - self.camera_position_xz)
+            )
+            if distance_m <= cutoff_m + radius:
+                vao.render(moderngl.TRIANGLES, vertices=vertex_count)
 
     def draw_reflection(self) -> None:
+        self.scanned_materials.bind()
         for vao, vertex_count in self.reflection_vaos:
             vao.render(moderngl.TRIANGLES, vertices=vertex_count)

@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "source": "Poly Haven",
+  "license": "CC0 1.0",
+  "retrieved_date": "2026-08-02",
+  "site_identity_confidence": "D",
+  "note": "Generic scanned surfaces; none was sampled at Yeouido.",
+  "assets": {
+    "asphalt_04": {
+      "page_url": "https://polyhaven.com/a/asphalt_04",
+      "tile_width_m": 4.0,
+      "authors": ["Jenelle van Heerden", "Sergej Majboroda"],
+      "sha256": {
+        "diff": "837a78bb1e94864c221f847c85480484e953a9ee958772481dd2c501e18def2e",
+        "nor_gl": "18b91c2a6d83a8fbaa8d7fe84e80a66bd6451e4ec2774a09bf4429498c8f3912",
+        "arm": "35f582fb66d223d242d294616aec5749affdc6ca0a97067311cd6f247f7ef081"
+      }
+    },
+    "concrete_pavers": {
+      "page_url": "https://polyhaven.com/a/concrete_pavers",
+      "tile_width_m": 1.9,
+      "authors": ["Amal Kumar"],
+      "sha256": {
+        "diff": "eea1fb8b498154754f4961ce0792092ef56cadc3d210becbb0dc3bf6c96c261d",
+        "nor_gl": "761c8332b4b53ab06931adf83f5f8f4fa5b7559a1a8267bc7ef865f890b17894",
+        "arm": "8375d082a81e6e8043af5f6ec1c5c71ada9577e50faf60a3c412b8df5612eb4e"
+      }
+    },
+    "leafy_grass": {
+      "page_url": "https://polyhaven.com/a/leafy_grass",
+      "tile_width_m": 2.0,
+      "authors": ["Charlotte Baglioni"],
+      "sha256": {
+        "diff": "cfa40bc9d9417d1852db8753a8d5917f110c40101179f63543c382e39bc05e4a",
+        "nor_gl": "832328216adc0a7e1f70a31d5ee48c9ab7f2152d83816122736cf42ac4b2ebd6",
+        "arm": "95432451cb2693794459fe7ea339ea9ffdb5959c40373740f80a4aa1703f089d"
+      }
+    },
+    "concrete": {
+      "page_url": "https://polyhaven.com/a/concrete",
+      "tile_width_m": 4.0,
+      "authors": ["Rob Tuytel"],
+      "sha256": {
+        "diff": "046c0e2aebe31e6043a6bc074e779f6a345f1d823d0ca1c69446c5cabadefa8a",
+        "nor_gl": "298a0e93040c9d76d239a894bdf28a9787755ea5f22baa068ffa8075369ee428",
+        "arm": "98bd4ffb8ec52620b1053f6f576f1154caf20ee7a8786721724ea169b16582e0"
+      }
+    }
+  }
+}
