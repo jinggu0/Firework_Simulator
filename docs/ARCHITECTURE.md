@@ -7,6 +7,10 @@ values. Artistic constants are permitted only as explicitly identified
 calibration values, so measured weather, shell, terrain, camera, and spectral
 data can replace them without redesigning the engine.
 
+The ordered implementation programme and current completion gates live in
+[`VISUAL_FIDELITY_ROADMAP.md`](VISUAL_FIDELITY_ROADMAP.md). Static Yeouido
+appearance is completed before the historical 2024 performance is integrated.
+
 ## Frame model
 
 - Display: 60 Hz target, 16.67 ms budget.
