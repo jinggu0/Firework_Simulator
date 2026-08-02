@@ -153,6 +153,21 @@ The AWS registry describes Mapzen as a global bare-earth elevation dataset.
 Higher zoom tiles can be resampled from coarser sources, so zoom level is not a
 statement of survey resolution.
 
+## NGII 1:1,000 linear structures (discovered, not ingested)
+
+- Platform: https://map.ngii.go.kr/ms/map/NlipMap.do
+- Seoul download guidance: https://news.seoul.go.kr/gov/archives/528208
+- Event-area sheets: 376082447, 376082448, 376082457, 376082458
+- Platform production year shown on 2026-08-03: 2025 for all four sheets
+- Current asset: `yeouido_ngii_1000_source_manifest.json`
+
+No DXF/NGI geometry from these sheets is shipped in the current scene. The
+platform did not complete an anonymous download, the checked sheet displayed
+no earlier history, and a 2025 production year is later than the target event.
+The importer therefore enforces a temporal gate and records hashes, CRS,
+elevation presence, and source year before any future scene merge. Plan-only
+lines never supply an invented wall height or embankment profile.
+
 ## Historical weather
 
 The event environment snapshot is derived from hourly Seoul station records

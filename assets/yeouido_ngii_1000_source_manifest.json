@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "target_event_date": "2024-10-05",
+  "platform": {
+    "name": "국토정보플랫폼 국토정보맵",
+    "url": "https://map.ngii.go.kr/ms/map/NlipMap.do",
+    "accessed_date": "2026-08-03"
+  },
+  "product": {
+    "name": "1:1,000 수치지형도",
+    "format_candidates": [
+      "DXF",
+      "NGI Ver2.0"
+    ],
+    "coordinate_metadata_shown_by_platform": "GRS80",
+    "projected_crs": null,
+    "projected_crs_policy": "다운로드 파일의 메타데이터를 확인하기 전에는 EPSG 코드를 추정하지 않는다."
+  },
+  "event_area_sheets": [
+    {
+      "sheet_id": "376082447",
+      "sheet_name": "서울2447",
+      "production_year_shown": 2025
+    },
+    {
+      "sheet_id": "376082448",
+      "sheet_name": "서울2448",
+      "production_year_shown": 2025
+    },
+    {
+      "sheet_id": "376082457",
+      "sheet_name": "서울2457",
+      "production_year_shown": 2025
+    },
+    {
+      "sheet_id": "376082458",
+      "sheet_name": "서울2458",
+      "production_year_shown": 2025
+    }
+  ],
+  "feature_codes": {
+    "C0050000": "제방",
+    "F0030000": "성/절토",
+    "F0040000": "옹벽"
+  },
+  "ingestion_status": "blocked_by_authentication_and_temporal_mismatch",
+  "download_observation": "비로그인 상태에서는 선택 도엽 다운로드가 완료되지 않았다.",
+  "history_observation": "플랫폼의 서울2447 도엽 이력 조회에는 이력정보가 표시되지 않았다.",
+  "temporal_policy": "2025 제작본은 2024-10-05 행사 당시와 동일하다고 간주하지 않는다. 후행 자료 사용 시 명시적 허용과 변화 검증이 필요하다.",
+  "runtime_status": "이 명세는 출처 발견 기록이며 현재 배포 장면의 구조물 형상을 변경하지 않는다."
+}

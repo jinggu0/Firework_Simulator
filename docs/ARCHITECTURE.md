@@ -1102,6 +1102,55 @@ width, but no shoulder height or slope is invented. Exact embankment and
 unresolved stair profiles still require site survey or timestamp-matched
 photogrammetry.
 
+### NGII 1:1,000 structure evidence gate
+
+Seoul identifies the NGII National Land Information Platform as the download
+route for its most detailed 1:1,000 digital topographic map, with DXF v1.0 and
+NGI v2.0 products. A platform search around Yeouido Hangang Park on 2026-08-03
+identified four event-area sheets: Seoul2447 (`376082447`), Seoul2448
+(`376082448`), Seoul2457 (`376082457`), and Seoul2458 (`376082458`). Every
+currently listed 1:1,000 candidate was marked as produced in 2025. The checked
+Seoul2447 history view returned no earlier history, and anonymous download did
+not deliver the selected files. These observations and the unresolved
+projected CRS are recorded in
+`assets/yeouido_ngii_1000_source_manifest.json` rather than being hidden in a
+developer note.
+
+`tools/import_ngii_structures.py` is the reproducible boundary for files
+obtained through an authorised platform session. It reads ASCII DXF `LINE`,
+`LWPOLYLINE`, and legacy `POLYLINE/VERTEX` entities, records the SHA-256 of
+every input, preserves closed rings, tessellates bulge arcs at no more than
+five degrees per chord, and selects the published standard feature codes `C0050000`
+(embankment), `F0030000` (cut/fill), and `F0040000` (retaining wall). The
+confirmed projected CRS must be supplied explicitly; a GRS80 datum label is
+not treated as an EPSG projection. The codes are cross-checked against the
+[national-base-map feature-code report](https://www.codil.or.kr/filebank/original/RK/OTKCRK220915/OTKCRK220915.pdf).
+
+The command refuses a source year later than 2024 unless
+`--allow-post-event-source` is stated. Even when explicitly permitted, its
+output remains labelled `official_post_event`. Same-year data is labelled
+date-unverified because a production year alone cannot prove the state on
+October 5. Source elevations are converted to height relative to the 2.79 m
+scene datum; absent elevations remain JSON `null`. No retaining-wall height,
+embankment cross-section, or mesh is inferred from a plan line. A later scene
+merge requires either source top/bottom elevations or a separately cited site
+survey or timestamp-matched photogrammetric measurement.
+
+Example after the files and their CRS have been verified:
+
+```powershell
+python -m tools.import_ngii_structures <download-directory> `
+  --source-crs <confirmed-EPSG-code> --source-year 2024
+```
+
+The source discovery policy follows the
+[Seoul 1:1,000 digital-map notice](https://news.seoul.go.kr/gov/archives/528208)
+and the [NGII platform](https://map.ngii.go.kr/ms/map/NlipMap.do). The former
+[Seoul retaining-wall API](https://data.seoul.go.kr/dataList/OA-20499/S/1/datasetView.do)
+is not substituted: its catalogue states that the service ended in 2022 and
+covered urban-expressway installations rather than the complete Yeouido
+riverside inventory.
+
 The view-projection matrix and camera position are refreshed for every render
 pass each frame, keeping terrain, water Fresnel response, buildings, and
 fireworks in one coordinate frame. Adding the dynamic camera path measures
@@ -1597,6 +1646,13 @@ draw call: its triangles are appended once to the existing road batch. A clean
 8.378 ms visual p95, and 11.960 ms frame p99. The lower absolute values than
 the prior run reflect normal host/driver variance; the relevant result is that
 the extra stair geometry introduces no observed 60 FPS regression.
+
+The NGII 1:1,000 discovery/import stage intentionally changes no runtime
+geometry until authenticated, temporally qualified source data is available.
+A clean 360-frame integrated 3D regression run measures 13.157 ms frame p95,
+10.185 ms visual p95, and 14.381 ms frame p99. The frame p95 retains 3.51 ms
+inside the 16.67 ms target; variation from the preceding run is host/driver
+noise because this stage adds no draw, upload, or per-frame work.
 
 The next latency work is ordered as follows: add active sparse-brick dispatch
 beyond the current launch domain, add GPU source-reduction diagnostics, then
