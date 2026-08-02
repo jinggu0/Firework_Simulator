@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "suite_id": "yeouido-static-appearance-v1",
+  "scenario_id": "yeouido-2024-10-05",
+  "coordinate_system": "local East-Up-South metres",
+  "scene_asset": "assets/yeouido_scene.npz",
+  "scene_asset_sha256": "c8b9d2720f935de3532a9401c74d37a55470d23645c06d32c24ff923c3291518",
+  "display_mode": "human_vision",
+  "source": {
+    "confidence_grade": "C",
+    "source_id": "project-defined-visual-regression-views",
+    "source_url": "",
+    "notes": "These are deterministic engineering views selected to expose terrain, material, facade, bridge and water defects. They are not historical observer or camera positions."
+  },
+  "views": [
+    {
+      "view_id": "terrain_shoreline",
+      "subject": "terrain_shoreline",
+      "position_eus_m": [-120.0, 13.89, 330.0],
+      "target_eus_m": [250.0, 5.0, -80.0],
+      "expected_surface": "land",
+      "minimum_ground_clearance_m": 1.6,
+      "notes": "Ground-height diagonal view across the shoreline, river mask and opposite skyline."
+    },
+    {
+      "view_id": "grass_close",
+      "subject": "grass_close",
+      "position_eus_m": [180.0, 13.0213, 800.0],
+      "target_eus_m": [180.0, 11.3413, 793.0],
+      "expected_surface": "land",
+      "minimum_ground_clearance_m": 1.6,
+      "notes": "Downward near-field view inside the authored grass-blade coverage."
+    },
+    {
+      "view_id": "road_ground",
+      "subject": "road_ground",
+      "position_eus_m": [-500.0, 12.3521, 650.0],
+      "target_eus_m": [-300.0, 9.0, 400.0],
+      "expected_surface": "land",
+      "minimum_ground_clearance_m": 1.6,
+      "notes": "Walking-height view of road, kerb and nearby facade contact."
+    },
+    {
+      "view_id": "facade_landmark",
+      "subject": "facade_landmark",
+      "position_eus_m": [-650.0, 28.8274, 900.0],
+      "target_eus_m": [-200.0, 80.0, -150.0],
+      "expected_surface": "land",
+      "minimum_ground_clearance_m": 17.5,
+      "notes": "Elevated facade view that exposes window, mullion, roof and temporal aliasing."
+    },
+    {
+      "view_id": "bridge_structure",
+      "subject": "bridge_structure",
+      "position_eus_m": [-900.0, 40.4973, 250.0],
+      "target_eus_m": [500.0, 7.0, -100.0],
+      "expected_surface": "land",
+      "minimum_ground_clearance_m": 29.5,
+      "notes": "Elevated long-lens-like diagonal across bridge deck, piers and approaches."
+    },
+    {
+      "view_id": "water_reflection",
+      "subject": "water_reflection",
+      "position_eus_m": [-100.0, 12.3056, 260.0],
+      "target_eus_m": [280.0, 3.0, -120.0],
+      "expected_surface": "land",
+      "minimum_ground_clearance_m": 2.1,
+      "notes": "Low shoreline view that gives the river and reflected skyline most of the frame."
+    }
+  ]
+}

@@ -3,6 +3,7 @@ import subprocess
 from types import SimpleNamespace
 
 import numpy as np
+from PIL import Image
 import pytest
 
 from simulator.scenario import load_default_scenario
@@ -876,3 +877,78 @@ def test_saving_a_linear_frame_round_trips_without_quantisation(tmp_path) -> Non
     # A PNG or JPEG would gamma-encode and quantise the values being compared.
     assert path.suffix == ".npy"
     np.testing.assert_array_equal(np.load(path), frame)
+
+
+def test_display_sdr_capture_flips_opengl_row_order() -> None:
+    height, width = 3, 4
+    rows = np.zeros((height, width, 3), dtype=np.uint8)
+    rows[0] = (17, 31, 63)
+    fake = SimpleNamespace(
+        screen=SimpleNamespace(
+            size=(width, height),
+            read=lambda **_kwargs: rows.tobytes(),
+        )
+    )
+    frame = capture.read_display_sdr(fake)
+    assert frame.shape == (height, width, 3)
+    assert frame.dtype == np.uint8
+    assert np.all(frame[-1] == (17, 31, 63))
+    assert np.all(frame[0] == 0)
+
+
+def test_saving_display_sdr_round_trips_without_loss(tmp_path) -> None:
+    frame = np.random.default_rng(7).integers(
+        0, 256, (5, 7, 3), dtype=np.uint8
+    )
+    path = capture.save_display_sdr(frame, tmp_path / "display.jpg")
+    assert path.suffix == ".png"
+    np.testing.assert_array_equal(np.asarray(Image.open(path)), frame)
+
+
+def test_display_sdr_statistics_report_code_values() -> None:
+    frame = np.array(
+        [[[0, 0, 0], [255, 255, 255]], [[10, 20, 30], [20, 30, 40]]],
+        dtype=np.uint8,
+    )
+    statistics = capture.display_sdr_statistics(frame)
+    assert statistics["width"] == 2
+    assert statistics["height"] == 2
+    assert statistics["clipped_black_fraction"] == 0.25
+    assert statistics["clipped_white_fraction"] == 0.25
+
+
+def test_hdr_regression_gate_allows_only_bounded_edge_noise() -> None:
+    reference = np.zeros((1000, 1000, 4), dtype=np.float32)
+    candidate = reference.copy()
+    candidate[17, 23, :3] = 5.0e-4
+    comparison = capture.compare_linear_hdr(reference, candidate)
+    assert comparison["passed"]
+    assert comparison["metrics"]["changed_pixel_count"] == 1
+
+    candidate[100:200, 100:200, :3] = 5.0e-4
+    assert not capture.compare_linear_hdr(reference, candidate)["passed"]
+
+
+def test_sdr_regression_gate_uses_area_and_integrated_error() -> None:
+    reference = np.zeros((1000, 1000, 3), dtype=np.uint8)
+    candidate = reference.copy()
+    candidate[17, 23] = 18
+    comparison = capture.compare_display_sdr(reference, candidate)
+    assert comparison["passed"]
+    assert comparison["metrics"]["maximum_absolute_error_rgb8"] == 18
+
+    candidate[100:200, 100:200] = 1
+    assert not capture.compare_display_sdr(reference, candidate)["passed"]
+
+
+def test_regression_gates_reject_shape_mismatches() -> None:
+    with pytest.raises(ValueError, match="same"):
+        capture.compare_linear_hdr(
+            np.zeros((2, 2, 4), dtype=np.float32),
+            np.zeros((3, 2, 4), dtype=np.float32),
+        )
+    with pytest.raises(ValueError, match="same"):
+        capture.compare_display_sdr(
+            np.zeros((2, 2, 3), dtype=np.uint8),
+            np.zeros((2, 2, 4), dtype=np.uint8),
+        )
