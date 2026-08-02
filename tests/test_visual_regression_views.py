@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import numpy as np
 import pytest
 
@@ -10,7 +12,10 @@ from simulator.validation.views import (
     VisualViewError,
     load_visual_regression_suite,
 )
-from tools.capture_visual_baselines import select_views
+from tools.capture_visual_baselines import (
+    compare_capture_directories,
+    select_views,
+)
 
 
 def test_canonical_visual_suite_is_tied_to_the_shipped_scene() -> None:
@@ -63,3 +68,27 @@ def test_view_selection_retains_canonical_order() -> None:
     ]
     with pytest.raises(VisualViewError, match="unknown visual-regression"):
         select_views(suite, ["historical_observer"])
+
+
+def test_capture_comparison_rejects_a_changed_view_definition(tmp_path) -> None:
+    directories = [tmp_path / "before", tmp_path / "after"]
+    for directory, digest in zip(directories, ("a" * 64, "b" * 64)):
+        directory.mkdir()
+        (directory / "manifest.json").write_text(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "suite_id": "suite",
+                    "scenario_id": "scenario",
+                    "scene_asset_sha256": "c" * 64,
+                    "views_asset_sha256": digest,
+                    "display_mode": "human_vision",
+                    "frames": 8,
+                    "captures": [],
+                }
+            ),
+            encoding="utf-8",
+        )
+    comparison = compare_capture_directories(*directories)
+    assert not comparison["passed"]
+    assert "views_asset_sha256" in comparison["metadata_mismatches"]

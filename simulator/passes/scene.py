@@ -21,6 +21,11 @@ from ..materials import MATERIAL_LIBRARY, MaterialLibrary
 from ..scene import LINEAR_STYLE_STEPS, SURFACE_GRASS_BLADE, load_scene
 from ..site_details import GRASS_VERTICES_PER_TUFT
 from ..terrain import sample_heightmap_array
+from ..terrain_detail import (
+    AdaptiveTessellationStats,
+    adaptive_terrain_tessellate,
+    load_priority_area_bounds,
+)
 from ..vegetation import VegetationLod
 
 VERTEX_LAYOUT = (
@@ -555,6 +560,8 @@ class ScenePass:
         self.buffers: list[moderngl.Buffer] = []
         self.camera_position_xz = np.zeros(2, dtype=np.float32)
         self.data = SceneData.empty()
+        self.road_tessellation_stats: AdaptiveTessellationStats | None = None
+        self.road_edge_tessellation_stats: AdaptiveTessellationStats | None = None
         if scene_path.exists():
             self._build(load_scene(scene_path))
 
@@ -600,11 +607,30 @@ class ScenePass:
             scene.terrain_bounds,
         )
         road_edges = road_edge_detail_vertices(ordinary_road)
-        road_parts = [ordinary_road]
+        priority_bounds = load_priority_area_bounds()
+        terrain_road, self.road_tessellation_stats = adaptive_terrain_tessellate(
+            ordinary_road,
+            scene.terrain_height_m,
+            scene.terrain_bounds,
+            scene.water_mask,
+            scene.water_mask_bounds,
+            priority_bounds,
+        )
+        terrain_edges, self.road_edge_tessellation_stats = (
+            adaptive_terrain_tessellate(
+                road_edges,
+                scene.terrain_height_m,
+                scene.terrain_bounds,
+                scene.water_mask,
+                scene.water_mask_bounds,
+                priority_bounds,
+            )
+        )
+        road_parts = [terrain_road]
         if len(stair_geometry):
             road_parts.append(stair_geometry)
-        if len(road_edges):
-            road_parts.append(road_edges)
+        if len(terrain_edges):
+            road_parts.append(terrain_edges)
         road_batch = np.concatenate(road_parts, axis=0)
         non_grass_detail = scene.detail_vertices[
             ~np.isclose(scene.detail_vertices[:, 6], SURFACE_GRASS_BLADE)

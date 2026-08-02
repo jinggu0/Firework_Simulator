@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "scene_asset": "assets/yeouido_scene.npz",
+  "scene_asset_sha256": "c8b9d2720f935de3532a9401c74d37a55470d23645c06d32c24ff923c3291518",
+  "priority_area_bounds_xz_m": [
+    -1200.0,
+    -550.0,
+    600.0,
+    950.0
+  ],
+  "geometry": {
+    "road_deck": {
+      "input_triangles": 70464,
+      "output_triangles": 76236,
+      "refined_triangles_by_level": [
+        1001,
+        923
+      ],
+      "maximum_subdivision_level": 2,
+      "warning_deviation_m": 0.05,
+      "area_bounds_xz_m": [
+        -1200.0,
+        -550.0,
+        600.0,
+        950.0
+      ]
+    },
+    "road_edges": {
+      "input_triangles": 81024,
+      "output_triangles": 86553,
+      "refined_triangles_by_level": [
+        858,
+        985
+      ],
+      "maximum_subdivision_level": 2,
+      "warning_deviation_m": 0.05,
+      "area_bounds_xz_m": [
+        -1200.0,
+        -550.0,
+        600.0,
+        950.0
+      ]
+    },
+    "combined_input_vertices": 455112,
+    "combined_output_vertices": 489015,
+    "combined_vertex_multiplier": 1.0744937509887675,
+    "uniform_l2_triangle_multiplier_avoided": 16.0
+  },
+  "ordinary_road_contact": {
+    "sampling_note": "Sample count changes with tessellation; compare thresholds, extrema and the fixed counterfactual report together.",
+    "before": {
+      "sample_count": 45394,
+      "warning_5cm_sample_count": 2320,
+      "priority_20cm_sample_count": 386,
+      "immediate_50cm_sample_count": 125,
+      "warning_5cm_fraction": 0.05110807595717496,
+      "priority_20cm_fraction": 0.008503326430805834,
+      "immediate_50cm_fraction": 0.002753667885623651,
+      "absolute_p95_p99_max_m": [
+        0.05090804606975155,
+        0.17685637051658304,
+        2.0433485971822694
+      ]
+    },
+    "after": {
+      "sample_count": 68142,
+      "warning_5cm_sample_count": 2025,
+      "priority_20cm_sample_count": 256,
+      "immediate_50cm_sample_count": 35,
+      "warning_5cm_fraction": 0.029717354935282204,
+      "priority_20cm_fraction": 0.0037568606732998736,
+      "immediate_50cm_fraction": 0.0005136332951777171,
+      "absolute_p95_p99_max_m": [
+        0.039366001538677364,
+        0.11351065100470316,
+        1.171622798615839
+      ]
+    }
+  },
+  "performance_ab": {
+    "frames_per_run": 360,
+    "fluid_backend": "3d",
+    "frame_budget_ms": 16.666666666666668,
+    "paired_runs": [
+      {
+        "run": 1,
+        "baseline": {
+          "frame_mean_ms": 13.303900554981535,
+          "frame_p95_ms": 16.97455001194612,
+          "frame_p99_ms": 17.889303000265503,
+          "visual_p95_ms": 12.018904992874015,
+          "physics_p95_ms": 5.851655009610114
+        },
+        "candidate": {
+          "frame_mean_ms": 13.629941111341598,
+          "frame_p95_ms": 16.909900002065115,
+          "frame_p99_ms": 17.428989001637095,
+          "visual_p95_ms": 11.859684992668917,
+          "physics_p95_ms": 5.696469994290966
+        },
+        "frame_p95_delta_ms": -0.06465000988100655
+      },
+      {
+        "run": 2,
+        "baseline": {
+          "frame_mean_ms": 13.368690833198748,
+          "frame_p95_ms": 17.45246999489609,
+          "frame_p99_ms": 19.897414998413307,
+          "visual_p95_ms": 12.072620003164047,
+          "physics_p95_ms": 6.117270008689958
+        },
+        "candidate": {
+          "frame_mean_ms": 13.957047777552766,
+          "frame_p95_ms": 17.29012499927194,
+          "frame_p99_ms": 18.813353002187817,
+          "visual_p95_ms": 12.121129991282942,
+          "physics_p95_ms": 5.913334996148479
+        },
+        "frame_p95_delta_ms": -0.16234499562415294
+      },
+      {
+        "run": 3,
+        "baseline": {
+          "frame_mean_ms": 13.75997194397011,
+          "frame_p95_ms": 17.083609988185344,
+          "frame_p99_ms": 17.817854993772936,
+          "visual_p95_ms": 12.106165003206115,
+          "physics_p95_ms": 5.815290005557472
+        },
+        "candidate": {
+          "frame_mean_ms": 13.965966666647647,
+          "frame_p95_ms": 16.991009997582296,
+          "frame_p99_ms": 18.375906006403973,
+          "visual_p95_ms": 11.95422000164399,
+          "physics_p95_ms": 5.996579995553475
+        },
+        "frame_p95_delta_ms": -0.09259999060304835
+      }
+    ],
+    "baseline_all_runs_pass_60fps_p95": false,
+    "candidate_all_runs_pass_60fps_p95": false,
+    "candidate_worst_frame_p95_ms": 17.29012499927194,
+    "interpretation": "Paired alternating processes show no mesh-induced p95 regression, but the strict three-run 16.67 ms gate remains failed."
+  }
+}

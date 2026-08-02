@@ -50,6 +50,9 @@ from simulator.validation.views import (
 )
 
 
+REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+
+
 def select_views(
     suite: VisualRegressionSuite, requested: list[str]
 ) -> tuple[VisualRegressionView, ...]:
@@ -66,6 +69,14 @@ def select_views(
 
 def _file_sha256(path: Path) -> str:
     return sha256(path.read_bytes()).hexdigest()
+
+
+def _portable_path(path: Path) -> str:
+    resolved = path.resolve()
+    try:
+        return resolved.relative_to(REPOSITORY_ROOT).as_posix()
+    except ValueError:
+        return str(resolved)
 
 
 def _validate_camera_surface(app: SimulatorApp, view: VisualRegressionView) -> dict:
@@ -187,6 +198,7 @@ def compare_capture_directories(reference_dir: Path, candidate_dir: Path) -> dic
         "suite_id",
         "scenario_id",
         "scene_asset_sha256",
+        "views_asset_sha256",
         "display_mode",
         "frames",
     )
@@ -285,6 +297,8 @@ def main() -> int:
         "scenario_id": suite.scenario_id,
         "scene_asset": suite.scene_asset,
         "scene_asset_sha256": suite.scene_asset_sha256,
+        "views_asset": _portable_path(arguments.views),
+        "views_asset_sha256": _file_sha256(arguments.views),
         "display_mode": display_mode,
         "frames": arguments.frames,
         "source": suite.source,
