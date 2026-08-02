@@ -1,0 +1,155 @@
+{
+  "schema_version": 1,
+  "classification": "counterfactual rendering-geometry test; does not alter or validate surveyed elevations",
+  "priority_area": {
+    "area_id": "event_park_north_bank",
+    "bounds_xz_m": [
+      -1200.0,
+      -550.0,
+      600.0,
+      950.0
+    ],
+    "confidence_grade": "C",
+    "purpose": "Prioritize the Yeouido Hangang Park north-bank terrain visible from the static regression cameras before city-wide correction.",
+    "derivation": {
+      "official_facility_source": "assets/yeouido_official_facilities.json",
+      "facility_codes_enclosed": [
+        "10036",
+        "10037",
+        "10038",
+        "10067",
+        "10068",
+        "10069",
+        "10071",
+        "10102",
+        "10108"
+      ],
+      "visual_view_source": "assets/visual_regression_views.json",
+      "visual_views_enclosed": [
+        "terrain_shoreline",
+        "grass_close",
+        "road_ground",
+        "facade_landmark",
+        "bridge_structure",
+        "water_reflection"
+      ],
+      "notes": "The bounds are a project-defined triage area enclosing official park anchors and all six engineering cameras. They are not an event security perimeter, spectator boundary, or historical camera footprint."
+    }
+  },
+  "road_tessellation_counterfactual": {
+    "method": "recursively split every road triangle at edge midpoints; each new vertex samples the unchanged terrain height field",
+    "levels": [
+      {
+        "subdivision_level": 0,
+        "triangle_multiplier": 1,
+        "whole_scene": {
+          "sample_count": 263717,
+          "warning_fraction": 0.15879522366779542,
+          "priority_fraction": 0.05123295047342416,
+          "immediate_fraction": 0.017829718979057094,
+          "absolute_p95_p99_max_m": [
+            0.20459992810306465,
+            0.7511001585011434,
+            8.211690985565356
+          ]
+        },
+        "priority_area": {
+          "sample_count": 45794,
+          "warning_fraction": 0.051687994060357255,
+          "priority_fraction": 0.008800279512599905,
+          "immediate_fraction": 0.0028387998427741624,
+          "absolute_p95_p99_max_m": [
+            0.05134166233534748,
+            0.1815981969357145,
+            2.0433485971822694
+          ]
+        },
+        "priority_area_road_source_slope": {
+          "priority_sample_count": 403,
+          "moderate_source_slope_sample_count": 403,
+          "steep_source_slope_sample_count": 0
+        }
+      },
+      {
+        "subdivision_level": 1,
+        "triangle_multiplier": 4,
+        "whole_scene": {
+          "sample_count": 1054879,
+          "warning_fraction": 0.060811713950130776,
+          "priority_fraction": 0.014960957607460192,
+          "immediate_fraction": 0.004124643679512058,
+          "absolute_p95_p99_max_m": [
+            0.06238222089450569,
+            0.2754769419772401,
+            3.295955112502361
+          ]
+        },
+        "priority_area": {
+          "sample_count": 183217,
+          "warning_fraction": 0.01236784796170661,
+          "priority_fraction": 0.0026198442284285847,
+          "immediate_fraction": 0.0003602285814089304,
+          "absolute_p95_p99_max_m": [
+            0.01522277968128144,
+            0.05978231937548448,
+            2.3193403826552674
+          ]
+        },
+        "priority_area_road_source_slope": {
+          "priority_sample_count": 480,
+          "moderate_source_slope_sample_count": 480,
+          "steep_source_slope_sample_count": 0
+        }
+      },
+      {
+        "subdivision_level": 2,
+        "triangle_multiplier": 16,
+        "whole_scene": {
+          "sample_count": 4219569,
+          "warning_fraction": 0.01803288440122676,
+          "priority_fraction": 0.003101027616801621,
+          "immediate_fraction": 0.00047777391482400216,
+          "absolute_p95_p99_max_m": [
+            0.0169665331682806,
+            0.08398076140605704,
+            1.937937892410337
+          ]
+        },
+        "priority_area": {
+          "sample_count": 732900,
+          "warning_fraction": 0.002955382726156365,
+          "priority_fraction": 0.00034929731204802835,
+          "immediate_fraction": 4.775549188156638e-05,
+          "absolute_p95_p99_max_m": [
+            0.004143565738491325,
+            0.019018586421513606,
+            1.171604007815128
+          ]
+        },
+        "priority_area_road_source_slope": {
+          "priority_sample_count": 256,
+          "moderate_source_slope_sample_count": 256,
+          "steep_source_slope_sample_count": 0
+        }
+      }
+    ],
+    "priority_fraction_reduction_at_final_level": 0.9603083843475747,
+    "interpretation": "errors removed by subdivision are representation-limited; residual errors on steep slopes or sharp grid curvature require terrain/road evidence review"
+  },
+  "north_shoreline": {
+    "definition": "land texels inside the priority area with a water texel immediately north",
+    "sample_count": 348,
+    "warning_height_sample_count": 0,
+    "height_p50_p95_p99_max_m": [
+      2.2100000381469727,
+      2.360316848754883,
+      2.45580292224884,
+      2.654407501220703
+    ]
+  },
+  "scene_asset": "assets/yeouido_scene.npz",
+  "scene_asset_sha256": "c8b9d2720f935de3532a9401c74d37a55470d23645c06d32c24ff923c3291518",
+  "priority_area_asset": "assets/terrain_priority_areas.json",
+  "priority_area_asset_sha256": "959e132dd4f105d8d035b82c08aec6eb8959f77829aaf1536e1d3574a58bcacd",
+  "map": "terrain_cause_map.png"
+}

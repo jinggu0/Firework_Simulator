@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "scene_asset": "assets/yeouido_scene.npz",
+  "scene_asset_sha256": "c8b9d2720f935de3532a9401c74d37a55470d23645c06d32c24ff923c3291518",
+  "coordinate_system": "local East-Up-South metres",
+  "areas": [
+    {
+      "area_id": "event_park_north_bank",
+      "bounds_xz_m": [-1200.0, -550.0, 600.0, 950.0],
+      "confidence_grade": "C",
+      "purpose": "Prioritize the Yeouido Hangang Park north-bank terrain visible from the static regression cameras before city-wide correction.",
+      "derivation": {
+        "official_facility_source": "assets/yeouido_official_facilities.json",
+        "facility_codes_enclosed": [
+          "10036",
+          "10037",
+          "10038",
+          "10067",
+          "10068",
+          "10069",
+          "10071",
+          "10102",
+          "10108"
+        ],
+        "visual_view_source": "assets/visual_regression_views.json",
+        "visual_views_enclosed": [
+          "terrain_shoreline",
+          "grass_close",
+          "road_ground",
+          "facade_landmark",
+          "bridge_structure",
+          "water_reflection"
+        ],
+        "notes": "The bounds are a project-defined triage area enclosing official park anchors and all six engineering cameras. They are not an event security perimeter, spectator boundary, or historical camera footprint."
+      }
+    }
+  ]
+}
