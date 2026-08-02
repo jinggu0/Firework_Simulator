@@ -878,7 +878,7 @@ measurement confirms substantial GPU/CPU headroom above the 60 FPS workload.
 The reproducible scene snapshot uses the OpenStreetMap historical state at
 2024-10-05 10:20 UTC (19:20 KST) in the 37.515–37.545 N,
 126.910–126.960 E bounding box. WGS84 coordinates are converted to local
-East-Up-South metres before rendering. The shipped asset contains 99,570
+East-Up-South metres before rendering. The shipped asset contains 103,866
 building vertices, 6,330 bridge-deck vertices, 68,244 road vertices, and 5,469
 park/grass/forest vertices. Explicit OSM heights are retained;
 `building:levels` is converted at 3.2 m per level, and features with neither
@@ -943,20 +943,38 @@ balconies, deterministic occupied windows, view-dependent glass Fresnel, and
 night emission in one batched building draw. This retains individual building
 geometry without issuing a material draw call per building.
 
-Named historical features receive targeted treatment. The 252 m 63 City mesh
-uses sixteen tapered vertical bands to reproduce its narrowing upper
-silhouette. IFC and FKI towers use a blue crystalline curtain-wall response.
-The 322 m and 256 m Parc.1 towers expose red vertical columns and beams.
-Residential buildings receive smaller floor spacing and balcony bands.
-`min_height` is preserved for elevated parts, and OSM dome roof parts generate
-curved 3D geometry, including the National Assembly dome data.
+Named historical features now use their contained OSM `building:part` geometry
+instead of drawing a duplicate parent extrusion over it. This exposes the 63
+City main shaft, two single-slope gold-glass side masses and white crown, and
+the stepped crystalline IFC parts. `roof:shape=skillion` plus `roof:height`
+produces a true sloped plane and side silhouette rather than a flat roof.
 
-This is appearance reconstruction, not a claim of photogrammetric identity.
-Facade panel dimensions are family calibrations; deterministic window
-occupancy is not measured room-by-room lighting from October 5, 2024. Exact
-signage, curtain-wall reflectance spectra, rooftop equipment, trees, temporary
-event installations, and sub-metre silhouettes require licensed
-timestamp-matched photography or survey/photogrammetry.
+Architect-published completed heights override stale named OSM totals only
+where the identity is exact: Parc.1 towers are 318 m and 246 m, its Fairmont
+hotel is 101 m, and FKI Tower is 240 m. Parc.1's documented red exterior frame
+is projecting geometry: four corner columns and floor-scale perimeter beams
+now catch light, cast depth, and appear in silhouette instead of being painted
+into the window shader. FKI's facade alternates the documented 30-degree BIPV
+spandrel and 15-degree vision-panel normal response on every floor; its roof
+adds the documented 10-degree photovoltaic canopy.
+
+The National Assembly keeps its OSM mass and 43-61 m curved dome part, colours
+the latter as weathered copper, and places the officially documented twenty-
+four octagonal exterior columns as geometry. Eight columns line each long
+elevation and four line each end; because the named OSM outline includes the
+chamber wings, this colonnade is contracted onto the central block rather than
+the full concave bounds. Residential buildings retain smaller floor spacing
+and balcony bands, while `min_height` remains preserved for every elevated
+part.
+
+This is evidence-bounded architectural reconstruction, not a claim of
+photogrammetric identity. Published heights, part footprints, roof slopes and
+feature counts are retained as stated. Public descriptions do not publish every
+column cross-section, connection plate, facade panel, sign or rooftop plant
+position, so those dimensions remain visible grade-D appearance calibrations.
+Deterministic window occupancy is not measured room-by-room lighting from
+October 5, 2024. Sub-metre identity still requires timestamp-matched survey or
+photogrammetry.
 
 The Han River surface is clipped by a 1024 × 1024 geographic coverage mask
 generated from OSM multipolygon relation 152336. Both outer riverbanks and

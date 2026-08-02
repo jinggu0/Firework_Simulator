@@ -457,11 +457,34 @@ void main() {
         if (facade_style > 1.5 && facade_style < 2.5) {
             roof = vec3(.30, .18, .055);
         } else if (facade_style > 4.5 && facade_style < 5.5) {
-            roof = vec3(.31, .035, .025);
+            roof = vec3(.040, .050, .060);
+        } else if (facade_style > 6.5 && facade_style < 7.5) {
+            roof = vec3(.018, .035, .052);
+        } else if (facade_style > 11.5 && facade_style < 12.5) {
+            // Weathered copper cladding on the National Assembly dome.
+            roof = vec3(.055, .185, .145);
         }
         float roof_variation = hash21(floor(surface_uv * .08)) * .025;
         frag_color = vec4(
             reflected_radiance(n, roof + roof_variation, reflectance), 1.0
+        );
+        return;
+    }
+
+    if (facade_style > 8.5 && facade_style < 9.5) {
+        // Parc.1's external red columns are geometry, not painted window cells.
+        reflectance.x = .27;
+        reflectance.y = .08;
+        frag_color = vec4(
+            reflected_radiance(n, vec3(.34, .012, .006), reflectance), 1.0
+        );
+        return;
+    }
+    if (facade_style > 9.5 && facade_style < 10.5) {
+        // Twenty-four pale octagonal stone columns surround the Assembly.
+        reflectance.x = .68;
+        frag_color = vec4(
+            reflected_radiance(n, vec3(.34, .325, .29), reflectance), 1.0
         );
         return;
     }
@@ -478,13 +501,13 @@ void main() {
         pane_bounds = vec4(.05, .95, .08, .92);
         wall = vec3(.055, .09, .14);
         glass = vec3(.02, .055, .12);
-        glass_amount = .88; occupancy_threshold = .72;
+        glass_amount = .88; occupancy_threshold = .84;
     } else if (facade_style > 1.5 && facade_style < 2.5) {
         bay_width = 3.25; floor_height = 4.0;
         pane_bounds = vec4(.04, .96, .06, .93);
         wall = vec3(.32, .21, .06);
         glass = vec3(.16, .085, .018);
-        glass_amount = .93; occupancy_threshold = .75;
+        glass_amount = .93; occupancy_threshold = .90;
     } else if (facade_style > 2.5 && facade_style < 3.5) {
         bay_width = 3.4; floor_height = 3.05;
         pane_bounds = vec4(.18, .78, .24, .68);
@@ -501,13 +524,39 @@ void main() {
         pane_bounds = vec4(.05, .95, .08, .92);
         wall = vec3(.045, .07, .105);
         glass = vec3(.018, .035, .075);
-        glass_amount = .90; occupancy_threshold = .72;
-    } else if (facade_style > 5.5) {
+        glass_amount = .90; occupancy_threshold = .88;
+    } else if (facade_style > 5.5 && facade_style < 6.5) {
         bay_width = 3.2; floor_height = 3.55;
         pane_bounds = vec4(.12, .86, .16, .78);
         wall = vec3(.19, .18, .17);
         glass = vec3(.025, .038, .055);
         glass_amount = .55; occupancy_threshold = .38;
+    } else if (facade_style > 6.5 && facade_style < 7.5) {
+        bay_width = 3.35; floor_height = 4.8;
+        pane_bounds = vec4(.04, .96, .05, .88);
+        wall = vec3(.025, .055, .072);
+        glass = vec3(.018, .050, .082);
+        glass_amount = .82; occupancy_threshold = .87;
+    } else if (facade_style > 7.5 && facade_style < 8.5) {
+        bay_width = 5.8; floor_height = 3.6;
+        pane_bounds = vec4(.24, .76, .26, .67);
+        wall = vec3(.34, .325, .29);
+        glass = vec3(.022, .035, .045);
+        glass_amount = .07; occupancy_threshold = 1.1;
+    }
+
+    // FKI's architect documents 30-degree photovoltaic spandrels over
+    // 15-degree downward-tilted vision panes. The alternating normal field is
+    // resolved per floor and reproduces the tower's purposeful pleated skin.
+    float fki_panel = 0.0;
+    if (facade_style > 6.5 && facade_style < 7.5) {
+        float panel_phase = fract(surface_uv.y / floor_height);
+        fki_panel = interval(panel_phase, .73, .98, .018);
+        float tilt = mix(-tan(radians(15.0)), tan(radians(30.0)), fki_panel);
+        float fold_detail = 1.0 - smoothstep(
+            260.0, 1100.0, length(camera_position - world_position)
+        );
+        n = normalize(n + vec3(0.0, tilt * fold_detail, 0.0));
     }
 
     vec2 grid = surface_uv / vec2(bay_width, floor_height);
@@ -549,6 +598,9 @@ void main() {
     float curtains = mix(.58, 1.0, smoothstep(.16, .28, curtain_split));
     float fresnel = pow(1.0 - max(dot(n, view_direction), 0.0), 4.0);
     vec3 facade = mix(wall, glass, pane * glass_amount);
+    if (facade_style > 6.5 && facade_style < 7.5) {
+        facade = mix(facade, vec3(.012, .027, .038), fki_panel * .92);
+    }
     facade += glass * fresnel * glass_amount * .35;
     float mullion = 1.0 - smoothstep(
         .018, .055, min(abs(within.x-pane_bounds.x),
@@ -579,19 +631,8 @@ void main() {
         );
         facade += balcony * vec3(.10, .095, .086);
     }
-    if (facade_style > 4.5 && facade_style < 5.5) {
-        float column_mod = mod(surface_uv.x, 18.0);
-        float column_distance = min(column_mod, 18.0 - column_mod);
-        float red_column = 1.0 - smoothstep(.42, .86, column_distance);
-        float beam_mod = mod(surface_uv.y, 32.0);
-        float beam_distance = min(beam_mod, 32.0 - beam_mod);
-        float red_beam = 1.0 - smoothstep(.30, .72, beam_distance);
-        facade = mix(
-            facade,
-            vec3(.38, .018, .009),
-            max(red_column, red_beam) * .92
-        );
-    }
+    // Parc.1's red frame is authored as projecting geometry. Painting a
+    // second grid into the glass made the columns read as a flat texture.
     float facade_detail = 1.0 - smoothstep(
         120.0, 520.0, length(camera_position - world_position)
     );
@@ -630,7 +671,18 @@ void main() {
         max(reflectance.x, .42), .105, glass_coverage
     );
     reflectance.z *= mix(.92, 1.0, glass_coverage);
+    float landmark_emission_scale = 1.0;
+    if (facade_style > 1.5 && facade_style < 2.5) {
+        landmark_emission_scale = .48;
+    } else if (facade_style > 4.5 && facade_style < 5.5) {
+        landmark_emission_scale = .58;
+    } else if (facade_style > 6.5 && facade_style < 7.5) {
+        landmark_emission_scale = .62;
+    } else if (facade_style > 7.5 && facade_style < 8.5) {
+        landmark_emission_scale = .08;
+    }
     frag_color = vec4(
-        reflected_radiance(n, facade, reflectance) + emission, 1.0
+        reflected_radiance(n, facade, reflectance)
+        + emission * landmark_emission_scale, 1.0
     );
 }

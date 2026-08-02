@@ -34,6 +34,11 @@ FACADE_RESIDENTIAL = 3.0
 FACADE_INSTITUTIONAL = 4.0
 FACADE_PARC1 = 5.0
 FACADE_HOTEL = 6.0
+FACADE_FKI = 7.0
+FACADE_NATIONAL_ASSEMBLY = 8.0
+FACADE_PARC1_STRUCTURE = 9.0
+FACADE_ASSEMBLY_COLUMN = 10.0
+FACADE_ASSEMBLY_DOME = 12.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -78,30 +83,68 @@ def _minimum_height(tags: dict[str, str]) -> float:
         return 0.0
 
 
-def _facade_style(tags: dict[str, str]) -> float:
-    names = " ".join(
+def _names(tags: dict[str, str]) -> str:
+    return " ".join(
         tags.get(key, "") for key in ("name", "name:en", "official_name")
-    ).lower()
+    ).casefold()
+
+
+def _landmark_kind(tags: dict[str, str]) -> str:
+    names = _names(tags)
+    if any(
+        value in names
+        for value in ("63시티", "63 city", "63square", "63스퀘어")
+    ):
+        return "63_city"
+    if "parc.1 tower1" in names or "파크원 타워1" in names:
+        return "parc1_tower1"
+    if (
+        ("tower2" in names and ("parc.1" in names or "nh financial" in names))
+        or "nh금융타워" in names
+    ):
+        return "parc1_tower2"
+    if "fairmont ambassador" in names or "페어몬트 앰배서더" in names:
+        return "parc1_hotel"
+    if "fki tow" in names or "전경련회관" in names:
+        return "fki"
+    if "national assembly of korea" in names or "국회의사당" in names:
+        return "national_assembly"
+    for key in ("one_ifc", "two_ifc", "three_ifc"):
+        if key.replace("_", " ") in names:
+            return key
+    if "conrad seoul" in names or "콘래드 서울" in names:
+        return "conrad"
+    return ""
+
+
+def _landmark_height(tags: dict[str, str], fallback_m: float) -> float:
+    """Apply completed heights published by each building's architect."""
+
+    return {
+        "parc1_tower1": 318.0,
+        "parc1_tower2": 246.0,
+        "parc1_hotel": 101.0,
+        "fki": 240.0,
+    }.get(_landmark_kind(tags), fallback_m)
+
+
+def _facade_style(tags: dict[str, str]) -> float:
+    names = _names(tags)
+    landmark = _landmark_kind(tags)
     building = tags.get("building", "").lower()
     material = tags.get("building:material", "").lower()
     colour = tags.get("building:colour", "").lower()
-    if "63시티" in names or "63 city" in names or "63square" in names:
+    if landmark == "63_city":
         return FACADE_GOLD_63
-    if (
-        "parc.1" in names
-        or "파크원" in names
-        or "nh financial tower" in names
-        or "nh금융타워" in names
-    ):
+    if landmark in {"parc1_tower1", "parc1_tower2"}:
         return FACADE_PARC1
-    if (
-        "ifc" in names
-        or "국제금융" in names
-        or "전경련회관" in names
-        or "fki tow" in names
-    ):
+    if landmark == "fki":
+        return FACADE_FKI
+    if landmark == "national_assembly":
+        return FACADE_NATIONAL_ASSEMBLY
+    if landmark in {"one_ifc", "two_ifc", "three_ifc"} or "국제금융" in names:
         return FACADE_GLASS_BLUE
-    if "conrad" in names or building == "hotel":
+    if landmark in {"conrad", "parc1_hotel"} or building == "hotel":
         return FACADE_HOTEL
     if building in {"apartments", "residential", "officetel"}:
         return FACADE_RESIDENTIAL
@@ -253,6 +296,266 @@ def _building_mesh(
                 )
             )
     return vertices
+
+
+def _point_in_polygon(point: np.ndarray, polygon: np.ndarray) -> bool:
+    """Return whether a 2D point lies inside a simple polygon."""
+
+    inside = False
+    x, y = point
+    previous = polygon[-1]
+    for current in polygon:
+        x0, y0 = previous
+        x1, y1 = current
+        if (y0 > y) != (y1 > y):
+            crossing = (x1 - x0) * (y - y0) / (y1 - y0) + x0
+            if x < crossing:
+                inside = not inside
+        previous = current
+    return inside
+
+
+def _principal_footprint(
+    points: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    centre = points.mean(axis=0)
+    covariance = np.cov((points - centre).T)
+    eigenvalues, eigenvectors = np.linalg.eigh(covariance)
+    axis_u = eigenvectors[:, int(np.argmax(eigenvalues))]
+    axis_v = np.array([-axis_u[1], axis_u[0]])
+    projections = np.column_stack(
+        ((points - centre) @ axis_u, (points - centre) @ axis_v)
+    )
+    extents = np.max(np.abs(projections), axis=0)
+    return centre, axis_u, axis_v, extents
+
+
+def _face_vertices(
+    corners: list[np.ndarray], indices: tuple[int, int, int, int],
+    surface: float, style: float,
+) -> list[list[float]]:
+    positions = [corners[index] for index in indices]
+    normal_vector = np.cross(
+        positions[1] - positions[0], positions[2] - positions[0]
+    )
+    length = float(np.linalg.norm(normal_vector))
+    if length < 1e-6:
+        return []
+    normal = tuple(normal_vector / length)
+    result: list[list[float]] = []
+    for index in (0, 1, 2, 0, 2, 3):
+        position = positions[index]
+        result.append(
+            _vertex(
+                tuple(position), normal, surface,
+                (float(position[0]), float(position[1])), style,
+            )
+        )
+    return result
+
+
+def _oriented_box_mesh(
+    centre_xz: np.ndarray, axis_u: np.ndarray, axis_v: np.ndarray,
+    size_u_m: float, size_v_m: float, base_m: float, top_m: float,
+    style: float, surface: float = SURFACE_WALL,
+) -> list[list[float]]:
+    corners: list[np.ndarray] = []
+    for height in (base_m, top_m):
+        for sign_u, sign_v in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
+            xz = (
+                centre_xz
+                + axis_u * sign_u * size_u_m * 0.5
+                + axis_v * sign_v * size_v_m * 0.5
+            )
+            corners.append(np.array([xz[0], height, xz[1]], dtype=np.float64))
+    output: list[list[float]] = []
+    for face in (
+        (0, 4, 5, 1), (1, 5, 6, 2), (2, 6, 7, 3),
+        (3, 7, 4, 0), (4, 7, 6, 5), (0, 1, 2, 3),
+    ):
+        output.extend(_face_vertices(corners, face, surface, style))
+    return output
+
+
+def _column_mesh(
+    centre_xz: np.ndarray, radius_m: float, base_m: float, top_m: float,
+    style: float, sides: int = 8,
+) -> list[list[float]]:
+    output: list[list[float]] = []
+    for side in range(sides):
+        angles = (
+            2.0 * math.pi * side / sides,
+            2.0 * math.pi * (side + 1) / sides,
+        )
+        xz0 = centre_xz + radius_m * np.array(
+            [math.cos(angles[0]), math.sin(angles[0])]
+        )
+        xz1 = centre_xz + radius_m * np.array(
+            [math.cos(angles[1]), math.sin(angles[1])]
+        )
+        corners = [
+            np.array([xz0[0], base_m, xz0[1]]),
+            np.array([xz1[0], base_m, xz1[1]]),
+            np.array([xz1[0], top_m, xz1[1]]),
+            np.array([xz0[0], top_m, xz0[1]]),
+        ]
+        output.extend(_face_vertices(corners, (0, 1, 2, 3), SURFACE_WALL, style))
+    return output
+
+
+def _skillion_mesh(
+    points: np.ndarray, height_m: float, minimum_height_m: float,
+    roof_height_m: float, facade_style: float,
+) -> list[list[float]]:
+    """Build the OSM Simple 3D Buildings single-slope roof profile."""
+
+    if _signed_area(points) < 0.0:
+        points = points[::-1].copy()
+    base = min(max(minimum_height_m, 0.0), height_m - 0.1)
+    eave = max(base, height_m - max(roof_height_m, 0.1))
+    _, slope_axis, _, _ = _principal_footprint(points)
+    projection = points @ slope_axis
+    span = max(float(np.ptp(projection)), 0.1)
+    top_heights = eave + (projection - projection.min()) / span * (height_m - eave)
+    perimeter_u = np.concatenate(
+        (
+            [0.0],
+            np.cumsum(
+                np.linalg.norm(np.roll(points, -1, axis=0) - points, axis=1)
+            ),
+        )
+    )
+    output: list[list[float]] = []
+    for index, point in enumerate(points):
+        following = (index + 1) % len(points)
+        next_point = points[following]
+        corners = [
+            np.array([point[0], base, point[1]]),
+            np.array([next_point[0], base, next_point[1]]),
+            np.array([next_point[0], top_heights[following], next_point[1]]),
+            np.array([point[0], top_heights[index], point[1]]),
+        ]
+        face = _face_vertices(corners, (0, 1, 2, 3), SURFACE_WALL, facade_style)
+        u0 = float(perimeter_u[index])
+        u1 = float(perimeter_u[index + 1])
+        for vertex, u_coordinate in zip(
+            face, (u0, u1, u1, u0, u1, u0)
+        ):
+            vertex[7] = u_coordinate
+            vertex[8] = float(vertex[1] - base)
+        output.extend(face)
+    roof_positions = np.column_stack((points[:, 0], top_heights, points[:, 1]))
+    for a, b, c in _triangulate(points.copy()):
+        triangle = [roof_positions[a], roof_positions[b], roof_positions[c]]
+        normal_vector = np.cross(
+            triangle[1] - triangle[0], triangle[2] - triangle[0]
+        )
+        normal = tuple(
+            normal_vector / max(float(np.linalg.norm(normal_vector)), 1e-6)
+        )
+        for position in triangle:
+            output.append(
+                _vertex(
+                    tuple(position), normal, SURFACE_ROOF,
+                    tuple(position[[0, 2]]), facade_style,
+                )
+            )
+    return output
+
+
+def _landmark_detail_mesh(
+    points: np.ndarray, height_m: float, landmark: str,
+) -> list[list[float]]:
+    """Add only externally documented, silhouette-relevant landmark parts."""
+
+    centre, axis_u, axis_v, extents = _principal_footprint(points)
+    output: list[list[float]] = []
+    if landmark in {"parc1_tower1", "parc1_tower2"}:
+        corners = [
+            centre + axis_u * sign_u * extents[0]
+            + axis_v * sign_v * extents[1]
+            for sign_u, sign_v in ((-1, -1), (1, -1), (1, 1), (-1, 1))
+        ]
+        for corner in corners:
+            output.extend(
+                _oriented_box_mesh(
+                    corner, axis_u, axis_v, 2.45, 2.45, 1.0, height_m - 0.8,
+                    FACADE_PARC1_STRUCTURE,
+                )
+            )
+        beam_heights = list(np.arange(30.0, height_m - 12.0, 32.0))
+        beam_heights.append(height_m - 3.4)
+        for beam_height in beam_heights:
+            for first, second in zip(corners, corners[1:] + corners[:1]):
+                edge = second - first
+                edge_length = float(np.linalg.norm(edge))
+                edge_axis = edge / max(edge_length, 1e-6)
+                edge_normal = np.array([-edge_axis[1], edge_axis[0]])
+                output.extend(
+                    _oriented_box_mesh(
+                        0.5 * (first + second), edge_axis, edge_normal,
+                        edge_length, 1.55, beam_height - 0.72,
+                        beam_height + 0.72, FACADE_PARC1_STRUCTURE,
+                    )
+                )
+    elif landmark == "national_assembly":
+        # The National Assembly's official description specifies 24 exterior
+        # octagonal columns. The named outline includes the chamber wings, so
+        # the colonnade is contracted to the central block rather than placed
+        # around the full concave complex perimeter.
+        column_top = min(height_m * 0.94, 18.0)
+        column_extents = extents * np.array([0.58, 0.60])
+        for sign_v in (-1.0, 1.0):
+            for fraction in np.linspace(-0.78, 0.78, 8):
+                position = (
+                    centre + axis_u * column_extents[0] * fraction
+                    + axis_v * sign_v * column_extents[1]
+                )
+                output.extend(
+                    _column_mesh(
+                        position, 0.82, 0.8, column_top,
+                        FACADE_ASSEMBLY_COLUMN,
+                    )
+                )
+        for sign_u in (-1.0, 1.0):
+            for fraction in np.linspace(-0.58, 0.58, 4):
+                position = (
+                    centre + axis_u * sign_u * column_extents[0]
+                    + axis_v * column_extents[1] * fraction
+                )
+                output.extend(
+                    _column_mesh(
+                        position, 0.82, 0.8, column_top,
+                        FACADE_ASSEMBLY_COLUMN,
+                    )
+                )
+    elif landmark == "fki":
+        # The architect documents a 10-degree photovoltaic rooftop canopy.
+        half_u, half_v = extents * np.array([0.72, 0.66])
+        rise = math.tan(math.radians(10.0)) * half_v
+        xz = [
+            centre - axis_u * half_u - axis_v * half_v,
+            centre + axis_u * half_u - axis_v * half_v,
+            centre + axis_u * half_u + axis_v * half_v,
+            centre - axis_u * half_u + axis_v * half_v,
+        ]
+        top = [
+            np.array(
+                [
+                    point[0],
+                    height_m + 1.5 + (-rise if index < 2 else rise),
+                    point[1],
+                ]
+            )
+            for index, point in enumerate(xz)
+        ]
+        corners = [point - np.array([0.0, 0.55, 0.0]) for point in top] + top
+        for face in (
+            (0, 4, 5, 1), (1, 5, 6, 2), (2, 6, 7, 3),
+            (3, 7, 4, 0), (4, 7, 6, 5),
+        ):
+            output.extend(_face_vertices(corners, face, SURFACE_ROOF, FACADE_FKI))
+    return output
 
 
 def _dome_mesh(
@@ -413,6 +716,31 @@ def build_scene(
     bridges: list[list[float]] = []
     roads: list[list[float]] = []
     vegetation: list[list[float]] = []
+    landmark_parents: list[tuple[np.ndarray, str, float]] = []
+    building_part_centres: list[np.ndarray] = []
+    for element in osm.get("elements", []):
+        geometry = element.get("geometry", [])
+        tags = element.get("tags", {})
+        if len(geometry) < 3:
+            continue
+        local_polygon = np.array(
+            [
+                plane.to_local(node["lat"], node["lon"])[[0, 2]]
+                for node in geometry
+            ],
+            dtype=np.float64,
+        )
+        if np.linalg.norm(local_polygon[0] - local_polygon[-1]) < 0.05:
+            local_polygon = local_polygon[:-1]
+        if len(local_polygon) < 3:
+            continue
+        if "building:part" in tags and tags.get("building:part") != "no":
+            building_part_centres.append(local_polygon.mean(axis=0))
+        landmark = _landmark_kind(tags)
+        if landmark and "building" in tags and tags.get("building") != "roof":
+            landmark_parents.append(
+                (local_polygon, landmark, _facade_style(tags))
+            )
     for element in osm.get("elements", []):
         geometry = element.get("geometry", [])
         tags = element.get("tags", {})
@@ -430,12 +758,62 @@ def build_scene(
         if (
             "building" in tags or "building:part" in tags
         ) and len(local) >= 3:
-            height = _height(tags)
+            height = _landmark_height(tags, _height(tags))
             minimum_height = _minimum_height(tags)
             style = _facade_style(tags)
+            landmark = _landmark_kind(tags)
+            if "building:part" in tags and tags.get("building:part") != "no":
+                for (
+                    parent_polygon,
+                    parent_landmark,
+                    parent_style,
+                ) in landmark_parents:
+                    if _point_in_polygon(local.mean(axis=0), parent_polygon):
+                        landmark = parent_landmark
+                        style = parent_style
+                        break
+                if (
+                    landmark == "national_assembly"
+                    and tags.get("roof:shape") == "dome"
+                ):
+                    style = FACADE_ASSEMBLY_DOME
+            is_named_parent = (
+                bool(_landmark_kind(tags))
+                and "building" in tags
+                and tags.get("building") != "roof"
+            )
+            parent_has_parts = is_named_parent and any(
+                _point_in_polygon(centre, local)
+                for centre in building_part_centres
+            )
+            if is_named_parent:
+                buildings.extend(
+                    _landmark_detail_mesh(local, height, _landmark_kind(tags))
+                )
+            if parent_has_parts:
+                # OSM Simple 3D Buildings parents describe total occupancy;
+                # rendering them together with their parts creates duplicate
+                # coplanar walls and hides the documented stepped silhouette.
+                continue
             if tags.get("roof:shape") == "dome":
                 buildings.extend(
                     _dome_mesh(local, height, minimum_height, style)
+                )
+            elif tags.get("roof:shape") == "skillion":
+                raw_roof_height = (
+                    tags.get("roof:height", "")
+                    .lower()
+                    .replace("m", "")
+                    .strip()
+                )
+                try:
+                    roof_height = float(raw_roof_height)
+                except ValueError:
+                    roof_height = min(height * 0.18, 12.0)
+                buildings.extend(
+                    _skillion_mesh(
+                        local, height, minimum_height, roof_height, style
+                    )
                 )
             else:
                 buildings.extend(

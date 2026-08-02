@@ -94,7 +94,7 @@
     "Bridge luminaire spacing, window occupancy, vegetation reflectance and water blur widths are appearance calibrations, not surveyed measurements.",
     "Bridge fascia, piers, rooftop equipment, kerb profiles, lane paint and inferred street furniture are deterministic grade-D derived detail, not surveyed placement.",
     "Photo-scanned asphalt, paver, grass and concrete PBR maps are generic CC0 material references, not samples collected at Yeouido.",
-    "Facade logos, exact panel textures, road damage, bridge member inventories and botanical species are not yet reconstructed.",
+    "Named 63 City, IFC, Parc.1, FKI and National Assembly geometry uses public architectural evidence, but exact facade logos, connection plates, panel textures, road damage, bridge member inventories and botanical species are not yet reconstructed.",
     "No copyrighted photograph is distributed with the project."
   ]
 }

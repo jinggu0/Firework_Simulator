@@ -7,7 +7,7 @@ from pathlib import Path
 import urllib.parse
 import urllib.request
 
-from simulator.scene import build_scene, build_water_mask, save_scene
+from simulator.scene import build_scene, build_water_mask, load_scene, save_scene
 from simulator.terrain import build_terrain_heightmap
 
 BBOX = (37.515, 126.910, 37.545, 126.960)
@@ -71,12 +71,39 @@ def main() -> None:
     )
     parser.add_argument("--snapshot", default=SNAPSHOT_UTC)
     parser.add_argument(
+        "--buildings-only",
+        action="store_true",
+        help=(
+            "Rebuild dated building geometry while preserving the shipped "
+            "terrain, roads, water mask and authored site details."
+        ),
+    )
+    parser.add_argument(
         "--details-output",
         type=Path,
         default=Path("assets/yeouido_detail_osm_2024-10-05.json"),
     )
     args = parser.parse_args()
     osm = download(args.snapshot)
+    scene = build_scene(osm, *ORIGIN, snapshot_utc=args.snapshot)
+    if args.buildings_only:
+        if not args.output.exists():
+            raise FileNotFoundError(
+                "--buildings-only requires an existing scene asset"
+            )
+        previous = load_scene(args.output)
+        rebuilt = replace(
+            previous,
+            building_vertices=scene.building_vertices,
+            snapshot_utc=args.snapshot,
+        )
+        save_scene(rebuilt, args.output)
+        print(
+            f"saved {args.output}: "
+            f"{len(rebuilt.building_vertices):,} landmark-aware building "
+            "vertices; preserved non-building scene arrays"
+        )
+        return
     detail_elements = [
         element
         for element in osm.get("elements", [])
@@ -100,7 +127,6 @@ def main() -> None:
         ),
         encoding="utf-8",
     )
-    scene = build_scene(osm, *ORIGIN, snapshot_utc=args.snapshot)
     mask, bounds = build_water_mask(
         download_han_river(args.snapshot), *ORIGIN
     )

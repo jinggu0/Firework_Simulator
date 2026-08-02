@@ -80,23 +80,38 @@ objects are not presented as surveyed placements.
 ## Landmark facade references
 
 Historical OSM names, heights, uses, material tags, and colour tags select the
-runtime facade family. The following references constrain distinctive
-landmark treatments:
+runtime facade family. Named parents are not rendered over contained
+`building:part` polygons: this preserves the dated stepped/crystalline parts
+and prevents coplanar duplicate walls. The following owner, architect, and
+government sources constrain distinctive landmark treatments:
 
 - IFC Seoul describes its three office towers and Conrad hotel as a
   crystalline glass composition with reflected light and shadow:
   https://www.ifcseoul.com/en/BD_02_00.asp
-- The Parc.1 architectural report describes the externally expressed red
-  structural columns and their relationship to the Han River and Yeouido
-  Park:
-  https://r.yna.co.kr/www/imazine/202004/232.pdf
-- The historical OSM snapshot identifies 63 City as a 252 m glass tower and
-  tags its building colour as gold.
-
-These sources calibrate procedural material families; no copyrighted facade
-photographs are packaged as textures. Window occupancy is deterministic
-simulation data and is not a record of which rooms were illuminated during
-the 2024 event.
+- RSHP's Parc.1 project record publishes completed heights of 318 m and 246 m
+  for the two office towers and 101 m for the hotel, and identifies the
+  exterior red columns as the complex's defining architectural expression:
+  https://rshp.com/projects/mixed-use/parc-1/
+- Adrian Smith + Gordon Gill's FKI Tower project record publishes a 240 m
+  height, 30-degree photovoltaic spandrels, 15-degree downward vision panels,
+  and a 10-degree photovoltaic rooftop canopy:
+  https://www.smithgill.com/work/fki/
+- The National Assembly Future Institute's building description identifies
+  the weathered copper dome and the twenty-four octagonal exterior columns:
+  https://nafi.re.kr/new/bidding.do?articleNo=5189&attachNo=5682&mode=download
+- Seoul's official visitor guide identifies 63 Square as the Golden Tower;
+  the dated OSM snapshot supplies its 252 m height and separate gold-glass
+  main, skillion side, and white crown parts:
+  https://english.visitseoul.net/area/63-Square/ENP000210
+The sources above now constrain geometry as well as material families. OSM
+single-slope roof parts are emitted as sloped planes, Parc.1 receives projecting
+red corner columns and floor-scale perimeter beams, FKI receives a folded BIPV
+normal field and sloped roof canopy, and the Assembly receives twenty-four
+octagonal columns plus its separate dome mesh. No copyrighted facade photograph
+is packaged as a texture. Cross-sections and exact connection details absent
+from the public documents remain bounded appearance reconstructions, not survey
+claims. Window occupancy is deterministic simulation data and is not a record
+of which rooms were illuminated during the 2024 event.
 
 ## Elevation
 

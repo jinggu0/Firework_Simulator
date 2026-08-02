@@ -109,17 +109,111 @@ def test_named_landmarks_receive_distinct_facade_styles() -> None:
                 building("63시티", 126.9000, height="252"),
                 building("Three IFC", 126.9001, height="283"),
                 building("파크원 타워1", 126.9002, height="322"),
+                building("전경련회관", 126.9003, height="246"),
+                building("국회의사당", 126.9004, building="government"),
                 building(
-                    "101동", 126.9003, height="80", building="apartments"
+                    "101동", 126.9005, height="80", building="apartments"
                 ),
             ]
         },
         37.5,
         126.9,
     )
-    assert {1.0, 2.0, 3.0, 5.0}.issubset(
+    assert {1.0, 2.0, 3.0, 5.0, 7.0, 8.0, 9.0, 10.0}.issubset(
         set(np.unique(scene.building_vertices[:, 9]))
     )
+
+
+def test_architect_published_landmark_heights_override_stale_osm_values() -> None:
+    def maximum_height(name: str, tagged_height: str) -> float:
+        scene = build_scene(
+            {
+                "elements": [
+                    {
+                        "tags": {
+                            "building": "office",
+                            "name": name,
+                            "height": tagged_height,
+                        },
+                        "geometry": [
+                            {"lat": 37.5, "lon": 126.9},
+                            {"lat": 37.5, "lon": 126.9001},
+                            {"lat": 37.5001, "lon": 126.9001},
+                            {"lat": 37.5001, "lon": 126.9},
+                            {"lat": 37.5, "lon": 126.9},
+                        ],
+                    }
+                ]
+            },
+            37.5,
+            126.9,
+        )
+        return float(scene.building_vertices[:, 1].max())
+
+    assert maximum_height("파크원 타워1", "322") == 318.0
+    assert maximum_height("NH금융타워(타워2)", "256") == 246.0
+    assert maximum_height("전경련회관", "246") > 240.0  # 10° PV canopy
+
+
+def test_landmark_parent_is_not_drawn_over_its_building_parts() -> None:
+    def polygon(offset: float, size: float) -> list[dict[str, float]]:
+        return [
+            {"lat": 37.5 + offset, "lon": 126.9 + offset},
+            {"lat": 37.5 + offset, "lon": 126.9 + offset + size},
+            {"lat": 37.5 + offset + size, "lon": 126.9 + offset + size},
+            {"lat": 37.5 + offset + size, "lon": 126.9 + offset},
+            {"lat": 37.5 + offset, "lon": 126.9 + offset},
+        ]
+
+    scene = build_scene(
+        {
+            "elements": [
+                {
+                    "tags": {"building": "office", "name": "One IFC", "height": "185"},
+                    "geometry": polygon(0.0, 0.0002),
+                },
+                {
+                    "tags": {"building:part": "yes", "height": "120"},
+                    "geometry": polygon(0.00004, 0.0001),
+                },
+            ]
+        },
+        37.5,
+        126.9,
+    )
+    assert scene.building_vertices[:, 1].max() == 120.0
+    assert set(np.unique(scene.building_vertices[:, 9])) == {1.0}
+
+
+def test_skillion_roof_is_a_sloped_surface_not_a_flat_extrusion() -> None:
+    scene = build_scene(
+        {
+            "elements": [
+                {
+                    "tags": {
+                        "building:part": "yes",
+                        "height": "60",
+                        "roof:height": "30",
+                        "roof:shape": "skillion",
+                    },
+                    "geometry": [
+                        {"lat": 37.5, "lon": 126.9},
+                        {"lat": 37.5, "lon": 126.9002},
+                        {"lat": 37.5001, "lon": 126.9002},
+                        {"lat": 37.5001, "lon": 126.9},
+                        {"lat": 37.5, "lon": 126.9},
+                    ],
+                }
+            ]
+        },
+        37.5,
+        126.9,
+    )
+    roof = scene.building_vertices[scene.building_vertices[:, 6] == 1.0]
+    walls = scene.building_vertices[scene.building_vertices[:, 6] == 0.0]
+    assert np.ptp(roof[:, 1]) > 29.0
+    assert np.any(np.abs(roof[:, 3]) > 0.01) or np.any(np.abs(roof[:, 5]) > 0.01)
+    assert np.ptp(walls[:, 7]) > 10.0
 
 
 def test_minimum_height_preserves_elevated_building_part() -> None:
@@ -237,7 +331,19 @@ def test_shipped_scene_is_the_event_time_snapshot() -> None:
     assert {1.0, 2.0, 3.0, 4.0, 5.0, 6.0}.issubset(
         set(np.unique(scene.building_vertices[:, 9]))
     )
-    assert np.isclose(scene.building_vertices[:, 1].max(), 322.0)
+    assembly_columns = scene.building_vertices[
+        np.isclose(scene.building_vertices[:, 9], 10.0)
+    ]
+    assert len(assembly_columns) == 24 * 8 * 6
+    assert np.count_nonzero(
+        np.isclose(scene.building_vertices[:, 9], 9.0)
+    ) > 2_000
+    assembly_dome = scene.building_vertices[
+        np.isclose(scene.building_vertices[:, 9], 12.0)
+    ]
+    assert np.isclose(assembly_dome[:, 1].min(), 43.0)
+    assert np.isclose(assembly_dome[:, 1].max(), 61.0)
+    assert np.isclose(scene.building_vertices[:, 1].max(), 318.0)
 
 
 def test_imported_path_widths_select_distinct_surface_materials() -> None:

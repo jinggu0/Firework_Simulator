@@ -320,6 +320,10 @@ def rooftop_detail_vertices(building_vertices: np.ndarray) -> np.ndarray:
         return np.empty((0, 10), dtype=np.float32)
     output: list[list[float]] = []
     for triangle in roof.reshape(-1, 3, 10):
+        # Published landmark silhouettes are reconstructed in scene.py.
+        # Do not place confidence-grade-D HVAC boxes on top of them.
+        if float(triangle[0, 9]) in {2.0, 5.0, 7.0, 8.0, 12.0}:
+            continue
         positions = triangle[:, :3].astype(np.float64)
         area_m2 = 0.5 * float(np.linalg.norm(np.cross(
             positions[1] - positions[0], positions[2] - positions[0]
