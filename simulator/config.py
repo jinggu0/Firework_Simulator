@@ -204,6 +204,11 @@ class RenderConfig:
     reflection_scale: float = 0.5
     reflection_hz: int = 30
     max_particles: int = 250_000
+    ambient_occlusion_scale: float = 0.5
+    ambient_occlusion_radius_m: float = 1.25
+    ambient_occlusion_strength: float = 0.62
+    default_human_vision: bool = True
+    simulate_fixed_gaze_peripheral_acuity: bool = False
 
 
 @dataclass(frozen=True, slots=True)

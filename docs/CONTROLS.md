@@ -6,7 +6,7 @@
 - `Q`, `E`: move down and up
 - `Space`: launch the currently selected shell profile by hand
 - `[`, `]`: step backwards and forwards through the shell library
-- `V`: switch between Physical Camera Mode and Human Vision Mode
+- `V`: switch between Human Vision Mode (default) and Physical Camera Mode
 - `Tab`: release or recapture the mouse
 - `Escape`: release the captured mouse; press again to exit
 - Left click: recapture the mouse after it has been released

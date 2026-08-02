@@ -122,8 +122,16 @@ class PostProcessPass:
         self.blur_program["source_texture"] = BLOOM_UNIT
 
         # -- human vision path ---------------------------------------------
-        self.mode = DisplayMode.PHYSICAL_CAMERA
-        self.vision = HumanVisionState()
+        self.mode = (
+            DisplayMode.HUMAN_VISION
+            if config.default_human_vision
+            else DisplayMode.PHYSICAL_CAMERA
+        )
+        self.vision = HumanVisionState(
+            simulate_fixed_gaze_peripheral_acuity=(
+                config.simulate_fixed_gaze_peripheral_acuity
+            )
+        )
         self.vision_program = shaders.program(
             ctx, "quad.vert", "human_vision.frag"
         )

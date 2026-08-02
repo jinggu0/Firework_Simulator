@@ -28,6 +28,7 @@ from .lighting import (
     radiometric_irradiance_from_illuminance,
 )
 from .passes import (
+    AmbientOcclusionPass,
     HazePass,
     LandPass,
     ParticlePass,
@@ -53,6 +54,8 @@ TERRAIN_UNIT = 2
 # shader receives a log-normalised strength rather than raw lux.
 TWILIGHT_FLOOR_LUX = 0.0002
 TWILIGHT_CEILING_LUX = 3.4
+NEAR_PLANE_M = 0.1
+FAR_PLANE_M = 2_500.0
 
 
 def _perspective_from_tangent(
@@ -189,6 +192,14 @@ class Renderer:
         self.smoke = SmokePass(ctx, smoke_config)
         self.haze = HazePass(ctx, self.quad_buffer)
         self.targets = RenderTargets(ctx, render_config)
+        self.ambient_occlusion = AmbientOcclusionPass(
+            ctx,
+            render_config,
+            self.quad_buffer,
+            render_tan_half_fov,
+            NEAR_PLANE_M,
+            FAR_PLANE_M,
+        )
         # Every path that crosses air reads one extinction: the view path in
         # the haze composite, the star and plume radiance where they are drawn,
         # and the source-to-surface path of the point lights.
@@ -242,8 +253,8 @@ class Renderer:
         self.projection = _perspective_from_tangent(
             render_tan_half_fov,
             render_config.width / render_config.height,
-            .1,
-            2500,
+            NEAR_PLANE_M,
+            FAR_PLANE_M,
         )
 
     # -- compatibility accessors -------------------------------------------
@@ -595,6 +606,7 @@ class Renderer:
         self.land.draw()
         self.scene.draw()
         self.water.draw(self.time_s, self.targets.reflection_texture)
+        self.ambient_occlusion.draw(self.targets)
         # Aerial perspective closes over the opaque scene before anything
         # emissive is added: the stars and the plume carry their own path
         # transmittance and must not receive the airlight a second time.

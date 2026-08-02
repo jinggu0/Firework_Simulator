@@ -273,13 +273,14 @@ buffers, textures, and draw call:
 
 | Module | Owns |
 |---|---|
-| `targets.py` | HDR colour and sampleable depth, reflection colour and depth, airlight, bloom attachments |
+| `targets.py` | HDR colour and sampleable depth, reflection colour and depth, airlight, ambient-obscurance, bloom attachments |
 | `sky.py` | Background program, cloud noise, star catalogue, celestial frame, airlight field |
 | `scene.py` | Static city batches, reflection subset, luminaire positions |
 | `water.py` | Near/far grids, JONSWAP spectrum, wind relaxation |
 | `land.py` | Terrain-displaced ground plane |
 | `particles.py` | Star trails and the reusable staging buffer |
 | `haze.py` | Deferred extinction and airlight composite |
+| `ambient_occlusion.py` | Half-resolution depth-plane contact obscurance and bilateral resolve |
 | `smoke.py` | Volume proxy box, state texture, active-bounds shrinking |
 | `post.py` | Bloom and the display transform |
 
@@ -445,9 +446,14 @@ observer state computed in `simulator/human_vision.py`:
   visual angle, so per-pixel state would be finer than the process it models.
 - **Peripheral acuity** by cortical magnification, `1 / (1 + e / E₂)` with
   E₂ = 2.5°, applied as a mip bias from the fixation point. Gaze is fixed at
-  screen centre: no tracking is available, and a viewer watching a burst does
-  fixate it, so the default is right for the moments that matter and wrong in
-  the gaps.
+  screen centre. This virtual-retina term is enabled by observer validation but
+  disabled in the interactive monitor view: without eye tracking, baking a
+  fixed gaze into the image would blur it once in the shader and a second time
+  in the viewer's real retina. Pupil response, adaptation, mesopic colour,
+  glare, and afterimage remain active.
+
+Human Vision Mode is the default interactive display path. `V` retains the
+physical-camera path for footage matching and sensor validation.
 
 **Not modelled**: the Purkinje spectral shift. Rod vision peaks at 507 nm
 against the photopic 555 nm, so short wavelengths should additionally gain as

@@ -8,7 +8,17 @@ import numpy as np
 import pytest
 
 from simulator import passes, shaders
-from simulator.passes import haze, land, particles, post, scene, sky, smoke, water
+from simulator.passes import (
+    ambient_occlusion,
+    haze,
+    land,
+    particles,
+    post,
+    scene,
+    sky,
+    smoke,
+    water,
+)
 from simulator.renderer import TERRAIN_UNIT, WATER_MASK_UNIT, Renderer
 
 
@@ -29,6 +39,7 @@ def test_texture_units_do_not_collide() -> None:
         "adaptation": post.ADAPTATION_UNIT,
         "previous_adaptation": post.PREVIOUS_ADAPTATION_UNIT,
         "airlight": haze.AIRLIGHT_UNIT,
+        "ambient_occlusion": ambient_occlusion.AMBIENT_OCCLUSION_UNIT,
     }
     units = list(assignments.values())
     assert len(units) == len(set(units)), sorted(assignments.items())
@@ -39,13 +50,27 @@ def test_passes_agree_on_the_shared_unit_numbers() -> None:
     assert land.TERRAIN_UNIT == TERRAIN_UNIT
     # Same texture, same unit: haze and smoke both terminate against opaque
     # geometry and never bind it at the same time.
-    assert haze.SCENE_DEPTH_UNIT == smoke.SCENE_DEPTH_UNIT
+    assert (
+        ambient_occlusion.SCENE_DEPTH_UNIT
+        == haze.SCENE_DEPTH_UNIT
+        == smoke.SCENE_DEPTH_UNIT
+    )
 
 
 def test_pass_modules_do_not_import_the_renderer() -> None:
     # The dependency runs one way: the coordinator knows the passes, not the
     # other way round. A cycle here would defeat the split.
-    for module in (sky, scene, water, land, particles, post, smoke, haze):
+    for module in (
+        sky,
+        scene,
+        water,
+        land,
+        particles,
+        post,
+        smoke,
+        haze,
+        ambient_occlusion,
+    ):
         text = inspect.getsource(module)
         assert "from ..renderer" not in text, module.__name__
         assert "import renderer" not in text, module.__name__
@@ -60,6 +85,7 @@ def test_public_pass_surface_is_exported() -> None:
         "ParticlePass",
         "SmokePass",
         "HazePass",
+        "AmbientOcclusionPass",
         "PostProcessPass",
         "RenderTargets",
     ):
@@ -138,3 +164,17 @@ def test_the_reflected_plume_clips_its_air_path_at_the_datum() -> None:
     source = shaders.source("smoke.frag")
     assert "uniform int reflected_path;" in source
     assert "datum_m" in source and "air_height_m" in source
+
+
+def test_ambient_obscurance_precedes_atmospheric_airlight() -> None:
+    source = inspect.getsource(Renderer.render)
+    assert source.index("self.ambient_occlusion.draw") < source.index(
+        "self.haze.draw"
+    )
+
+
+def test_ambient_obscurance_resolve_is_depth_aware() -> None:
+    generate = shaders.source("ambient_occlusion.frag")
+    resolve = shaders.source("ambient_occlusion_apply.frag")
+    assert "depth_gradient" in generate and "expected_plane" in generate
+    assert "depth_weight" in resolve and "texelFetch" in resolve

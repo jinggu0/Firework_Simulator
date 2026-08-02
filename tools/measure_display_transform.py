@@ -40,6 +40,7 @@ from simulator.camera_optics import (
     white_balance_gains,
 )
 from simulator.config import SimulationConfig
+from simulator.passes.post import DisplayMode
 from tools.measure_aerial_perspective import _bilinear, _read_rgb
 
 
@@ -110,6 +111,7 @@ def measure(frames_warmup: int = 4) -> dict[str, object]:
     )
     app = SimulatorApp(config)
     renderer = app.renderer
+    renderer.post.set_mode(DisplayMode.PHYSICAL_CAMERA)
     for _ in range(frames_warmup):
         renderer.render(app.world, app.camera, app.celestial, 1.0 / 60.0)
 

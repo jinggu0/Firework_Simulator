@@ -232,6 +232,34 @@ inventing copyrighted or incorrectly registered surface detail, but it also
 means facade logos, exact stone panels, road damage, individual bridge members,
 and botanical species remain unresolved rather than verified.
 
+## Real-time ambient obscurance references
+
+The contact-obscurance pass follows the design principles of two published
+real-time techniques:
+
+- AMD FidelityFX Combined Adaptive Compute Ambient Occlusion (CACAO), including
+  its recommended downsampled operating mode:
+  https://gpuopen.com/fidelityfx-cacao/
+- AMD's open-source FidelityFX CACAO reference implementation, MIT licence:
+  https://github.com/GPUOpen-Effects/FidelityFX-CACAO
+- McGuire, Mara and Luebke, "Scalable Ambient Obscurance", High Performance
+  Graphics 2012:
+  https://research.nvidia.com/sites/default/files/pubs/2012-06_Scalable-Ambient-Obscurance/McGuire12SAO.pdf
+
+The simulator does **not** contain or claim a port of CACAO. Its OpenGL 3.3
+shader is an independent fixed-eight-sample implementation: half-resolution
+depth sampling, local depth-plane correction to keep a uniformly sloped road
+clean, and a four-tap joint bilateral full-resolution resolve to prevent dark
+halos across silhouettes. It multiplies only opaque scene radiance before
+atmospheric airlight, so fog is not incorrectly occluded.
+
+This remains screen-space ambient obscurance, not global illumination. It
+cannot see off-screen geometry, infer light hidden behind the first depth
+layer, produce colour bleeding, or separate indirect light from emissive
+facade radiance in the current single HDR target. Those require a materially
+more expensive ray-traced or probe-based transport path and measured surface
+reflectance data.
+
 ## Atmospheric optics
 
 Molecular scattering optical depth follows Bodhaine B.A., Wood N.B., Dutton

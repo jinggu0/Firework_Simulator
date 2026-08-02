@@ -283,6 +283,15 @@ class HumanVisionState:
     that matter and wrong during the gaps.
     """
 
+    simulate_fixed_gaze_peripheral_acuity: bool = False
+    """Apply the virtual observer's eccentricity blur around ``gaze_uv``.
+
+    This is disabled for the interactive monitor view: without eye tracking,
+    a baked fixed-gaze blur is applied once by the shader and again by the
+    user's real retina.  Validation can enable it to exercise the explicit
+    retinal-observer model.
+    """
+
     def update(self, scene_illuminance_lux: float, dt_s: float) -> None:
         """Track the scene's ambient illuminance.
 
@@ -346,7 +355,11 @@ class HumanVisionState:
             "chromatic_degree": self.chromatic_degree,
             "glare_constant": GLARE_CONSTANT,
             "acuity_e2_deg": ACUITY_E2_DEG,
-            "maximum_blur_lod": MAXIMUM_PERIPHERAL_BLUR_LOD,
+            "maximum_blur_lod": (
+                MAXIMUM_PERIPHERAL_BLUR_LOD
+                if self.simulate_fixed_gaze_peripheral_acuity
+                else 0.0
+            ),
             "gaze_u": self.gaze_uv[0],
             "gaze_v": self.gaze_uv[1],
         }

@@ -205,6 +205,10 @@ def measure(convergence_s: float = ADAPTATION_CONVERGENCE_S) -> dict[str, object
     app = SimulatorApp(config)
     renderer = app.renderer
     renderer.post.set_mode(DisplayMode.HUMAN_VISION)
+    # This validation measures the explicit virtual-retina eccentricity model.
+    # Interactive monitor output leaves it off to avoid applying peripheral
+    # acuity once in the shader and again in the viewer's own eye.
+    renderer.post.vision.simulate_fixed_gaze_peripheral_acuity = True
     # Exercise disability glare with the simulator's own radiometric source,
     # not a synthetic post-process patch.  The development shell launched by
     # SimulatorApp is advanced just past burst so its stars occupy enough of

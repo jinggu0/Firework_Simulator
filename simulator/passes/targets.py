@@ -31,6 +31,9 @@ class RenderTargets:
         "airlight_texture",
         "airlight_fbo",
         "airlight_size",
+        "ambient_occlusion_texture",
+        "ambient_occlusion_fbo",
+        "ambient_occlusion_size",
         "bloom_textures",
         "bloom_fbos",
         "bloom_size",
@@ -105,6 +108,26 @@ class RenderTargets:
         self.airlight_texture.repeat_y = False
         self.airlight_fbo = ctx.framebuffer(
             color_attachments=[self.airlight_texture]
+        )
+
+        # Half-resolution ambient obscurance follows CACAO's recommended
+        # downsampled path. It stores one scalar visibility term; the apply
+        # pass reconstructs it with joint bilateral depth weights so a dark
+        # foreground crevice cannot bleed across a silhouette.
+        self.ambient_occlusion_size = (
+            max(int(config.width * config.ambient_occlusion_scale), 1),
+            max(int(config.height * config.ambient_occlusion_scale), 1),
+        )
+        self.ambient_occlusion_texture = ctx.texture(
+            self.ambient_occlusion_size, components=1, dtype="f2"
+        )
+        self.ambient_occlusion_texture.filter = (
+            moderngl.LINEAR, moderngl.LINEAR
+        )
+        self.ambient_occlusion_texture.repeat_x = False
+        self.ambient_occlusion_texture.repeat_y = False
+        self.ambient_occlusion_fbo = ctx.framebuffer(
+            color_attachments=[self.ambient_occlusion_texture]
         )
 
         self.bloom_size = (

@@ -27,6 +27,10 @@ EXPECTED = {
     "adaptation.frag",
     # Aerial perspective: the deferred extinction and airlight composite.
     "haze.frag",
+    # Half-resolution, depth-aware contact obscurance and its full-resolution
+    # multiplicative resolve.
+    "ambient_occlusion.frag",
+    "ambient_occlusion_apply.frag",
 }
 
 EXPECTED_INCLUDES = {"air_extinction.glsl"}

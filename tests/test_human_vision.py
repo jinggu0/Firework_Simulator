@@ -4,6 +4,7 @@ import re
 import pytest
 
 from simulator import shaders
+from simulator.config import RenderConfig
 from simulator.human_vision import (
     ACUITY_E2_DEG,
     DARK_ADAPTATION_TIME_S,
@@ -195,6 +196,17 @@ def test_display_modes_are_distinct_and_switchable() -> None:
         "physical_camera",
         "human_vision",
     }
+
+
+def test_human_vision_is_the_default_observer_path() -> None:
+    assert RenderConfig().default_human_vision is True
+
+
+def test_interactive_view_does_not_bake_a_fixed_gaze_blur() -> None:
+    state = HumanVisionState()
+    assert state.uniforms()["maximum_blur_lod"] == 0.0
+    state.simulate_fixed_gaze_peripheral_acuity = True
+    assert state.uniforms()["maximum_blur_lod"] > 0.0
 
 
 def test_uniform_payload_is_all_scalars() -> None:
