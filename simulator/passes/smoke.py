@@ -120,12 +120,28 @@ class SmokePass:
         self.buffer.write(box_vertices(minimum, maximum).tobytes())
         self.program["volume_min"].value = tuple(minimum)
         self.program["volume_max"].value = tuple(maximum)
+
+    def set_camera_inside(self, camera_position) -> None:
+        """Which face of the proxy box the ray marcher must keep.
+
+        Set per draw rather than per fluid revision. The frame draws this pass
+        twice from two different cameras — the viewer's and the one mirrored
+        below the water datum — and the mirrored one is always outside a plume
+        that sits above the datum.
+        """
+
         self.program["camera_inside"] = int(
-            np.all(camera_position >= minimum)
-            and np.all(camera_position <= maximum)
+            np.all(camera_position >= self.bounds[0])
+            and np.all(camera_position <= self.bounds[1])
         )
 
-    def draw(self, smoke, camera_position: np.ndarray, depth_texture) -> None:
+    def draw(
+        self,
+        smoke,
+        camera_position: np.ndarray,
+        depth_texture,
+        reflected_path: bool = False,
+    ) -> None:
         if smoke.revision != self.revision:
             if getattr(smoke, "render_state_texture", None) is None:
                 # CPU solver: upload the two-channel slice the shader samples.
@@ -157,6 +173,8 @@ class SmokePass:
             )
         state_texture.use(SMOKE_STATE_3D_UNIT if is_3d else SMOKE_STATE_2D_UNIT)
         depth_texture.use(SCENE_DEPTH_UNIT)
+        self.program["reflected_path"] = int(reflected_path)
+        self.set_camera_inside(camera_position)
         self.ctx.enable(moderngl.BLEND)
         self.ctx.disable(moderngl.DEPTH_TEST)
         self.ctx.blend_func = moderngl.ONE, moderngl.ONE_MINUS_SRC_ALPHA

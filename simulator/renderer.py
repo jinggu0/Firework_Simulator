@@ -265,10 +265,6 @@ class Renderer:
         self.smoke.set_view_projection(
             matrix_bytes, inverse_bytes, camera.position_m
         )
-        self.smoke.program["camera_inside"] = int(
-            np.all(camera.position_m >= self.smoke.bounds[0])
-            and np.all(camera.position_m <= self.smoke.bounds[1])
-        )
         self.haze.set_camera(inverse_bytes, camera.position_m)
         self.particles.set_camera_position(camera.position_m)
         self._set_sky_camera(camera.forward, camera.right)
@@ -324,7 +320,9 @@ class Renderer:
         self.scene.set_environment(self.time_s, wind_xz, wind_speed)
         self.water.set_wind_speed(wind_speed)
 
-    def _render_reflection(self, camera: FreeCamera) -> None:
+    def _render_reflection(
+        self, camera: FreeCamera, smoke: SmokeFluid2D | None = None
+    ) -> None:
         reflected_position = camera.position_m.copy()
         reflected_position[1] *= -1.0
         reflected_forward = camera.forward.copy()
@@ -361,18 +359,35 @@ class Renderer:
         # Aerial perspective over the reflected skyline. The reflected path is
         # longer than the direct one — it reaches the eye by way of the water —
         # so leaving it clear made the river a window onto a haze-free city.
-        self.haze.set_camera(
+        inverse_bytes = (
             np.linalg.inv(reflection_view_projection)
             .T.astype(np.float32)
-            .tobytes(),
-            reflected_position,
+            .tobytes()
         )
+        self.haze.set_camera(inverse_bytes, reflected_position)
         self.haze.draw(
             self.targets.reflection_composite_fbo,
             self.targets.reflection_depth,
             self.targets.airlight_texture,
             reflected_path=True,
         )
+
+        # The plume over the river belongs in the river. Its geometry needs no
+        # special case: the volume sits entirely above the water datum, so a
+        # ray from the mirrored camera meets the real plume above the datum and
+        # the march is the reflected image of it. Only the air in front of it
+        # is treated differently, for the same reason the haze pass clips.
+        if smoke is not None and smoke.has_visible_smoke():
+            self.smoke.set_view_projection(
+                matrix_bytes, inverse_bytes, reflected_position
+            )
+            self.targets.reflection_composite_fbo.use()
+            self.smoke.draw(
+                smoke,
+                reflected_position,
+                self.targets.reflection_depth,
+                reflected_path=True,
+            )
 
     def _update_celestial(
         self, celestial: CelestialState, atmosphere: AtmosphereConfig
@@ -497,7 +512,7 @@ class Renderer:
         smoke_revision = smoke.revision if smoke is not None else -1
         fluid_updated = smoke_revision != self.last_rendered_smoke_revision
         if self._reflection_is_stale(camera, fluid_updated):
-            self._render_reflection(camera)
+            self._render_reflection(camera, smoke)
             self.reflection_accumulator_s %= self.reflection_interval_s
             self.reflection_sky_accumulator_s = 0.0
             self.reflection_ready = True

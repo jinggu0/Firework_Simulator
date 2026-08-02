@@ -725,6 +725,35 @@ The two path segments then compose correctly by construction:
 `f·R·T_ow·T_wc + f·L_air(1−T_ow)T_wc + L_air(1−T_wc)` — each segment's airlight
 appearing once, attenuated by whatever follows it.
 
+**The plume is drawn into the reflection as well.** Its geometry needs no
+special case: the volume sits entirely above the water datum, so a ray from the
+mirrored camera meets the real plume above the datum and the march is already
+the reflected image of it. Only the air in front of it is treated differently,
+clipped at the datum for the same reason the haze composite is. The proxy box's
+facing test moved from the fluid-revision path to the draw, because the frame
+now marches the plume from two cameras and only one of them can be inside the
+box.
+
+Two things are worth recording about verifying it, because the first two
+attempts measured nothing and both were viewpoint artifacts rather than
+failures. From the default camera the plume's mirror image falls **outside the
+mirrored frustum** — at 135-183 m altitude and 235 m away, its reflection sits
+below the frame. From a second viewpoint the reflected ray crossed the datum
+over the **bank**, where the land writes depth and correctly occludes the
+plume: you cannot see a reflection where you are looking at the riverbank. A
+valid viewpoint has to be derived from the river mask — the reflection point is
+`0.88 × z_camera` for this plume height, which must land inside the water
+polygon.
+
+Measured from such a viewpoint: 882 reflection texels change, adding 4,243
+pixels to the linear frame at a mean of 2.8e-6 and a peak of 1.2e-4 W/(m² sr).
+Through the display transform that is 453 pixels at one code value — present
+and correct, but subtle, because water reflects only about 22% at the grazing
+incidence a reflection is seen at, the plume is optically thin, and the
+reflection buffer is half resolution. Cost, measured by interleaving the two
+configurations frame by frame so drift cannot bias it: **+0.046 ms** when the
+reflection refreshes every frame, **+0.023 ms** amortised at its 30 Hz cap.
+
 The **path-integral primitive gained an exact datum crossing** to support this,
 which also fixes the mirrored star draw: the water reflection of a burst is
 drawn from the same mirrored position, and folding the endpoints with `abs()`
@@ -753,8 +782,8 @@ with a measured night-sky brightness.
 
 1. Sky radiance and astronomical lighting, plus the horizontal airlight field
 2. Terrain, bridges, buildings, and emissive city lights
-3. Spectral water displacement and reflection, itself hazed over the reflected
-   path in a mirrored pre-pass
+3. Spectral water displacement and reflection — the mirrored pre-pass carries
+   the skyline, the aerial perspective over the reflected path, and the plume
 4. Aerial perspective over the opaque scene
 5. Firework shells, stars, sparks, and trails
 6. Participating-media smoke and light scattering

@@ -16,6 +16,12 @@ uniform float depth_profile_scale;
 uniform int camera_inside;
 uniform int ray_steps;
 uniform float depth_bias_m;
+// 1 when this is the planar-reflection pre-pass, whose camera is mirrored
+// below the water datum. The plume itself sits entirely above the datum, so
+// the march is unaffected; what changes is the air in front of it. The part of
+// the ray below the datum is the water pixel's own path to the eye, which the
+// main haze pass already applies to that pixel.
+uniform int reflected_path;
 #include "air_extinction.glsl"
 float hash12(vec2 p) {
     vec3 p3 = fract(vec3(p.xyx) * .1031);
@@ -58,12 +64,18 @@ void main() {
     // flat to about a percent and the running product of a per-step factor is
     // both exact for a level path and one multiply per step. Airlight is not
     // added: the pixel behind the plume already carries it.
+    // Distance at which a mirrored ray crosses the datum; zero for the direct
+    // view, which leaves the expressions below bit-identical there.
+    float datum_m = reflected_path != 0
+                  ? max(-camera_position.y / max(ray.y, 1e-4), 0.0)
+                  : 0.0;
+    float air_height_m = reflected_path != 0 ? 0.0 : camera_position.y;
     vec3 air = air_transmittance(
-        camera_position.y, camera_position.y + ray.y * t_near,
-        t_near + jitter * step_m
+        air_height_m, camera_position.y + ray.y * t_near,
+        max(t_near - datum_m, 0.0) + jitter * step_m
     );
     vec3 air_per_step = air_transmittance(
-        camera_position.y, camera_position.y, step_m
+        air_height_m, air_height_m, step_m
     );
     for (int i = 0; i < 64; ++i) {
         if (i >= ray_steps) break;

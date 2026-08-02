@@ -7,7 +7,7 @@ import inspect
 import numpy as np
 import pytest
 
-from simulator import passes
+from simulator import passes, shaders
 from simulator.passes import haze, land, particles, post, scene, sky, smoke, water
 from simulator.renderer import TERRAIN_UNIT, WATER_MASK_UNIT, Renderer
 
@@ -109,3 +109,32 @@ def test_renderer_exposes_the_accessors_tools_depend_on() -> None:
 def test_smoke_box_indices_form_twelve_triangles() -> None:
     assert smoke.BOX_INDICES.shape == (36,)
     assert set(smoke.BOX_INDICES.tolist()) == set(range(8))
+
+
+def test_the_plume_is_drawn_for_the_reflection_too() -> None:
+    # The river shows the plume above it. Both draws share one pass, so the
+    # reflected one is a flag rather than a second object.
+    signature = inspect.signature(smoke.SmokePass.draw)
+    assert "reflected_path" in signature.parameters
+    assert signature.parameters["reflected_path"].default is False
+    source = inspect.getsource(smoke)
+    assert 'self.program["reflected_path"]' in source
+
+
+def test_the_facing_test_is_set_per_draw_not_per_fluid_revision() -> None:
+    # The frame draws the plume from two cameras — the viewer's and the one
+    # mirrored below the water datum — and only one of them can be inside the
+    # proxy box. Deciding that when the fluid last changed would carry the
+    # wrong answer into the second draw.
+    assert hasattr(smoke.SmokePass, "set_camera_inside")
+    refresh = inspect.getsource(smoke.SmokePass._refresh_bounds)
+    assert "camera_inside" not in refresh
+    assert "camera_inside" not in inspect.getsource(Renderer._update_camera)
+
+
+def test_the_reflected_plume_clips_its_air_path_at_the_datum() -> None:
+    # The mirrored ray's below-datum half is the water pixel's own path to the
+    # eye, which the main haze pass applies to that pixel.
+    source = shaders.source("smoke.frag")
+    assert "uniform int reflected_path;" in source
+    assert "datum_m" in source and "air_height_m" in source
