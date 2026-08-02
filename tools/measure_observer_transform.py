@@ -12,27 +12,23 @@ chain in NumPy predicts the frame the GPU should have produced.
 
 Both spatial stages read reduced mip levels, which at first looks unpredictable
 without reimplementing GPU mip generation. It is not: ``moderngl`` reads each
-generated level back, so ``textureLod`` can be reproduced by interpolating the
+generated level back, so ``textureLod`` is reproduced by interpolating the
 levels the GPU itself produced.
 
-That works for **the glare tail**, which reads a fixed mip level and is
-reproduced exactly — it contributes nothing to the residual.
+**The whole transform is covered.** Getting peripheral acuity there took
+finding out why it would not reproduce, and the answer turned out to be a
+renderer defect rather than a harness limit: this driver implements
+``GL_LINEAR_MIPMAP_LINEAR`` as *brilinear*, applying a level weight of
+``clamp((frac - 1/6) / (2/3), 0, 1)`` instead of ``frac``. The curve was pinned
+at five points — 0.125 to 0.000, 0.25 to 0.125, 0.5 to 0.5, 0.75 to 0.875, and
+0 and 1 exact — each reproducing to the 0.6 code-value baseline once the
+measured weight was used.
 
-It does **not** work for **peripheral acuity**, and the attempt is recorded
-here because the negative result is the useful part. With a per-pixel varying
-LOD the residual reaches 7 display code values, concentrated on the steepest
-bright edges in the far periphery. Ruled out by measurement: the glare term
-(zero contribution), LOD quantisation (snapping to 1/32 or 1/16 changes
-nothing), anisotropic filtering (forcing it to 1 changes nothing), bilinear and
-trilinear sampling themselves (a *constant* LOD of 2.0, 2.5 or 4.0 reproduces
-to 0.63 code values, the same as no mip bias at all), the level contents (read
-back directly), and a systematic LOD bias (zero offset is already optimal).
-
-What settles it is that the noise is large enough to hide a real error: a 10
-percent error in the acuity constant E2 moves the mean from 0.312 to 0.321 code
-values and p99 from 1.62 to 1.80. A gate built on those statistics could not
-fail, so peripheral acuity is left out of the measurement and reported as
-unverified rather than given a tolerance it would always pass.
+That made the peripheral blur a property of the driver rather than of the eye,
+so ``human_vision.frag`` now blends two explicit integer levels instead. The
+residual fell from 7.2 code values to 0.63, and the gate acquired teeth it did
+not have: a 10 percent error in the acuity constant E2 now fails it, where
+before the fix it moved the statistics by less than the noise.
 
 Prints a JSON payload; ``simulator.validation.observer_transform`` runs this in
 a subprocess so the rest of the report still works without a GPU.
@@ -72,25 +68,6 @@ ADAPTATION_CONVERGENCE_S = 90.0
 Chromatic adaptation has a 26 s time constant, so a frame measured at startup
 would be testing the initial condition rather than the model.
 """
-
-
-def _disable_peripheral_blur() -> None:
-    """Flatten the acuity mip bias for the measurement.
-
-    A harness-only override, and the only stage excluded. See the module
-    docstring: with a per-pixel varying LOD the residual is large enough to
-    mask a 10 percent error in E2, so gating on it would assert coverage that
-    does not exist. The glare tail stays on and is verified.
-    """
-
-    original = HumanVisionState.uniforms
-
-    def uniforms(self):
-        values = original(self)
-        values["maximum_blur_lod"] = 0.0
-        return values
-
-    HumanVisionState.uniforms = uniforms
 
 
 def _mip_chain(texture, levels: int) -> list[np.ndarray]:
@@ -188,15 +165,12 @@ def _predict(
     )
     normalized = retinal / (reference[..., None] * 6.0 + 1e-5)
 
-    # The gains vary per pixel only through the adapting white, which is
-    # global, so this is one 3x3 per frame in practice; it is evaluated per
-    # pixel anyway so a future local white would need no change here.
-    gains = np.stack(
-        [
-            chromatic_adaptation_gains(white, vision.chromatic_degree)
-            for white in adapting_white.reshape(-1, 3)
-        ]
-    ).reshape(adapting_white.shape)
+    # Evaluated over the whole frame at once. The gains vary per pixel only
+    # through the adapting white, which is global today, but keeping this
+    # per-pixel means a future local white needs no change here.
+    gains = chromatic_adaptation_gains(
+        adapting_white, vision.chromatic_degree
+    )
     from simulator.color import (
         CAT02_LMS_TO_LINEAR_SRGB,
         LINEAR_SRGB_TO_CAT02_LMS,
@@ -222,7 +196,6 @@ def _predict(
 
 
 def measure(convergence_s: float = ADAPTATION_CONVERGENCE_S) -> dict[str, object]:
-    _disable_peripheral_blur()
     base = SimulationConfig()
     config = replace(base, render=replace(base.render, vsync=False, target_fps=0))
     app = SimulatorApp(config)
@@ -292,7 +265,7 @@ def measure(convergence_s: float = ADAPTATION_CONVERGENCE_S) -> dict[str, object
         "display_quantum": 1.0 / 255.0,
         "lit_pixel_fraction": float(lit.mean()),
         "glare_verified": True,
-        "peripheral_acuity_verified": False,
+        "peripheral_acuity_verified": True,
         **exercised,
     }
     app.audio_executor.shutdown(wait=True, cancel_futures=True)

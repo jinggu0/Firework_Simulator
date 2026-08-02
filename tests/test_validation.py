@@ -711,9 +711,10 @@ def _observer_payload(**overrides) -> str:
         "absolute_error_mean": 0.00102,
         "absolute_error_p999": 0.00236,
         "lit_pixel_fraction": 0.997,
-        "veiling_share_of_retinal_max": 2.31,
+        "veiling_share_of_retinal_max": 0.194,
+        "peripheral_lod_max": 3.77,
         "glare_verified": True,
-        "peripheral_acuity_verified": False,
+        "peripheral_acuity_verified": True,
     }
     payload.update(overrides)
     return json.dumps(payload)
@@ -726,11 +727,11 @@ def test_observer_transform_passes_within_display_quantisation(
     result = observer_transform.observer_transform()
     assert result.status is MetricStatus.PASS
     assert result.residuals["error_in_code_values"] < 1.0
-    # The one stage it cannot predict must travel with the result, and the one
-    # it can must be claimed only when it was actually exercised.
-    assert "peripheral acuity only" in result.detail["unverified_stages"]
+    # Every stage is covered now, and each spatial one is claimed only when it
+    # was actually exercised.
+    assert result.detail["unverified_stages"] == "none"
     assert result.detail["glare_verified"] is True
-    assert result.detail["peripheral_acuity_verified"] is False
+    assert result.detail["peripheral_acuity_verified"] is True
 
 
 def test_observer_transform_refuses_to_claim_an_unexercised_glare(
@@ -744,6 +745,17 @@ def test_observer_transform_refuses_to_claim_an_unexercised_glare(
     result = observer_transform.observer_transform()
     assert result.status is MetricStatus.FAIL
     assert "glare tail" in result.message
+
+
+def test_observer_transform_refuses_an_unexercised_peripheral_blur(
+    monkeypatch,
+) -> None:
+    # Peripheral acuity is gated too, so a frame whose periphery is never
+    # blurred would verify it vacuously.
+    _stub_subprocess(monkeypatch, _observer_payload(peripheral_lod_max=0.0))
+    result = observer_transform.observer_transform()
+    assert result.status is MetricStatus.FAIL
+    assert "peripheral acuity" in result.message
 
 
 def test_observer_transform_fails_on_a_stage_that_disagrees(monkeypatch) -> None:

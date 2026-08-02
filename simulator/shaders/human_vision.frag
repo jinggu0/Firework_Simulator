@@ -92,7 +92,20 @@ void main() {
     // than by blurring the whole image uniformly.
     float acuity = 1.0 / (1.0 + eccentricity / acuity_e2_deg);
     float lod = maximum_blur_lod * (1.0 - acuity);
-    vec3 scene = textureLod(hdr_texture, uv, lod).rgb;
+    // Blended from two explicit integer levels rather than left to hardware
+    // trilinear. This driver implements GL_LINEAR_MIPMAP_LINEAR as
+    // *brilinear*: the level weight is clamp((frac - 1/6) / (2/3), 0, 1), so
+    // it snaps to the nearer level over the outer sixth of each transition and
+    // a requested 0.75 is actually applied as 0.875. That is measured rather
+    // than assumed — V-24 pinned the curve at five points — and it made the
+    // peripheral blur a property of the driver instead of a property of the
+    // eye, which a reconstruction cannot have. At an integer level the
+    // hardware blend weight is zero and the fetch is exact, so two taps and a
+    // mix put the interpolation somewhere portable and predictable.
+    float level = floor(lod);
+    vec3 scene = mix(textureLod(hdr_texture, uv, level).rgb,
+                     textureLod(hdr_texture, uv, level + 1.0).rgb,
+                     lod - level);
     vec3 bloom = texture(bloom_texture, uv).rgb * bloom_strength;
 
     // Disability glare. Light scattered in the ocular media veils the retinal

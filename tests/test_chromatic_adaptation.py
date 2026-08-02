@@ -249,6 +249,57 @@ def test_the_adaptation_buffer_stores_a_normalised_white() -> None:
     assert "frag_color = vec4(white, luminance);" in adaptation
 
 
+def _texture_lod_levels(source: str) -> list[str]:
+    """The level argument of every ``textureLod`` call in ``source``.
+
+    Parenthesis-balanced rather than a regex, because the coordinate argument
+    is itself a constructor call — ``textureLod(tex, vec2(0.5), lod)``.
+    """
+
+    levels = []
+    for match in re.finditer(r"textureLod\s*\(", source):
+        depth, start, arguments = 0, match.end(), []
+        for index in range(match.end(), len(source)):
+            character = source[index]
+            if character == "(":
+                depth += 1
+            elif character == ")":
+                if depth == 0:
+                    arguments.append(source[start:index])
+                    break
+                depth -= 1
+            elif character == "," and depth == 0:
+                arguments.append(source[start:index])
+                start = index + 1
+        levels.append(arguments[-1].strip())
+    return levels
+
+
+def test_no_shader_relies_on_hardware_trilinear_filtering() -> None:
+    # This driver implements GL_LINEAR_MIPMAP_LINEAR as *brilinear*: the level
+    # weight is clamp((frac - 1/6) / (2/3), 0, 1), so a requested 0.75 is
+    # applied as 0.875. Measured at five points by V-24. Any sample at a
+    # fractional mip level is therefore driver-dependent, which a
+    # reconstruction cannot have — the interpolation belongs in the shader.
+    for name in shaders.available():
+        for level in _texture_lod_levels(shaders.source(name)):
+            # An integer literal, or a variable the caller floors, is exact:
+            # at a whole level the hardware blend weight is zero.
+            assert (
+                re.fullmatch(r"\d+\.0", level)
+                or level in ("level", "level + 1.0")
+                or level.endswith("_lod")
+            ), f"{name} samples a fractional mip level: {level!r}"
+
+
+def test_peripheral_blur_interpolates_two_explicit_levels() -> None:
+    source = shaders.source("human_vision.frag")
+    assert "float level = floor(lod);" in source
+    assert "textureLod(hdr_texture, uv, level)" in source
+    assert "textureLod(hdr_texture, uv, level + 1.0)" in source
+    assert "lod - level" in source
+
+
 def test_the_rod_channel_keeps_the_unadapted_luminance() -> None:
     # Rods have one photopigment and no gain control that could discount a hue
     # they cannot see, so chromatic adaptation must not reach the rod path.

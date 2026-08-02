@@ -226,8 +226,8 @@ and V-24 (`--include-rendering`) each render a frame and compare it against a
 closed-form prediction of the same frame, so unlike V-12 their tolerances come
 from numeric precision and their results *are* portable: V-22 checks the aerial
 perspective composite against the linear buffer, V-23 the camera's display
-transform, and V-24 the observer's — the latter with peripheral acuity excluded
-for a measured reason, see *What V-24 can and cannot check*.
+transform, and V-24 the observer's in full — see *The brilinear filter, and why
+the blur was driver-dependent*.
 
 Currently passing: deterministic replay (clock, ballistics, burst events, and
 acoustic arrival compare bit-exactly), geodetic round trip (2.2e-9 m worst
@@ -517,33 +517,53 @@ half floats let a systematic rounding of a few 1e-4 be amplified by
 1/response ≈ 18, drifting the white 3.7e-3 off unit luminance. It is now
 renormalised on both write and read.
 
-### What V-24 can and cannot check
+### The brilinear filter, and why the blur was driver-dependent
 
 V-24 predicts the observer transform from the buffers the shader reads, so
-every stage it covers is checked against arithmetic rather than against
-appearance. Reading the generated mip levels back — rather than rebuilding a
-pyramid in NumPy — makes `textureLod` reproducible, and that closed the **glare
-tail**: it reads a fixed level, contributes exactly nothing to the residual, and
-is now gated, with a guard that the frame actually contains glare worth
-checking.
+every stage is checked against arithmetic rather than against appearance.
+Reading the generated mip levels back — rather than rebuilding a pyramid in
+NumPy — makes `textureLod` reproducible. The **glare tail** fell out
+immediately: it reads a fixed level and contributes exactly nothing to the
+residual.
 
-**Peripheral acuity resisted the same treatment, and the negative result is
-worth more than a tolerance would have been.** Its mip bias varies per pixel,
-and with it the residual reaches 7 display code values on the steepest bright
-edges of the far periphery. Ruled out by measurement: the glare term (zero
-contribution), LOD quantisation (snapping to 1/32 or 1/16 changes nothing),
-anisotropic filtering (forcing it to 1 changes nothing), the sampling itself
-(a *constant* LOD of 2.0, 2.5 or 4.0 reproduces to 0.63 code values — the same
-as no mip bias at all, so bilinear and trilinear are both exact), the level
-contents (read back directly), and a systematic LOD bias (zero offset is
-already optimal). The source is still unidentified.
+**Peripheral acuity did not, and chasing that turned up a renderer defect.**
+Its mip bias left up to 7 display code values of residual. Eliminated in turn,
+each by measurement: the glare term (zero contribution), LOD quantisation
+(snapping to 1/32 or 1/16 changes nothing), anisotropic filtering (forcing it
+to 1 changes nothing), the level contents (read back directly), a systematic
+LOD bias (zero offset already optimal), and the CPU gather (exact against a
+per-pixel loop). Instrumenting the shader to report its own LOD field showed it
+matched the reference to within the 8-bit readback quantisation, so the LOD was
+right too.
 
-What settles the decision is not the size of the residual but what it can hide:
-a **10% error in the acuity constant E₂ moves the mean from 0.312 to 0.321 code
-values and p99 from 1.62 to 1.80**. A gate drawn around that noise could not
-fail, and a metric that cannot fail is not a metric. Peripheral acuity is
-therefore excluded from the measurement and reported as the single unverified
-stage, rather than given a tolerance it would always pass.
+What remained was the interpolation itself. A *constant* LOD of 2.0, 3.0 or 4.0
+reproduced exactly, and so did 2.5 and 3.5 — but 3.25 and 3.75 did not. Blend 0
+and blend ½ exact, other fractions wrong: solving for the weight the GPU
+actually applied gave **0.875 for a requested 0.75**, and at that weight the
+prediction matched exactly. The curve
+
+```
+weight = clamp((frac − 1/6) / (2/3), 0, 1)
+```
+
+fits five measured points — 0.125→0, 0.25→0.125, 0.5→0.5, 0.75→0.875, and 0
+and 1 exact — with the last two predicted before they were measured. This is
+**brilinear filtering**: a documented driver optimisation that runs true
+trilinear only over the middle third of each transition and snaps to the nearer
+level outside it.
+
+That made the peripheral blur a property of the graphics driver rather than of
+the eye — unacceptable in a reconstruction that has to be reproducible on other
+hardware. `human_vision.frag` now blends two explicit integer levels, where the
+hardware weight is zero and the fetch is exact. It was the project's only
+fractional `textureLod`; the other three sample levels 3, 5 and 10, and a test
+now keeps it that way.
+
+**The residual fell from 7.2 to 0.63 code values, and the gate acquired teeth
+it never had.** Before the fix a 10% error in the acuity constant E₂ moved p99
+from 1.62 to 1.80 — invisible. After it, that same error **fails** the metric
+at 2.65 code values, as does a LOD bias of 0.05. Peripheral acuity is now
+inside the gate, and V-24 has no unverified stages.
 
 **Not modelled**: local chromatic adaptation, and with it coloured afterimages.
 The local *luminance* adaptation above does produce achromatic afterimages, but

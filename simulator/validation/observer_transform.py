@@ -5,14 +5,12 @@ checks the observer's — pupil gain, local adaptation, chromatic adaptation, th
 mesopic mix, ACES — against the same kind of CPU prediction from the same
 readable buffers.
 
-**Peripheral acuity is the one stage excluded**, and for a measured reason
-rather than an assumed one. Reading the generated mip levels back makes
-``textureLod`` reproducible — the glare tail, which reads a fixed level, is
-reproduced exactly and is gated here. With the per-pixel varying LOD the acuity
-bias uses, a residual of up to 7 display code values remains from a source the
-harness could not identify; more decisively, that noise is large enough to hide
-a 10 percent error in the acuity constant, so a tolerance drawn around it could
-not fail. ``tools.measure_observer_transform`` records what was ruled out.
+**Every stage is covered**, including both spatial ones. Reading the generated
+mip levels back makes ``textureLod`` reproducible; getting peripheral acuity
+there meant first finding out why it would not reproduce, which turned out to
+be a renderer defect — the driver's brilinear approximation of trilinear
+filtering made the peripheral blur driver-dependent. See
+``tools.measure_observer_transform``.
 """
 
 from __future__ import annotations
@@ -37,6 +35,14 @@ MINIMUM_VEILING_SHARE = 0.01
 
 Verifying a term that is everywhere negligible would be verifying nothing.
 Measured at 19% on the shipped scene.
+"""
+
+MINIMUM_PERIPHERAL_LOD = 1.0
+"""The acuity bias must span at least one mip level somewhere in the frame.
+
+Same reasoning: a frame whose periphery is never blurred would verify the
+acuity path vacuously. Measured at 3.77 on the shipped scene, whose corner
+sits 40.7 degrees from fixation.
 """
 
 LUMINANCE_TOLERANCE = 2.0e-3
@@ -110,10 +116,13 @@ def observer_transform(
         payload.get("veiling_share_of_retinal_max", 0.0)
     )
 
+    peripheral_lod = float(payload.get("peripheral_lod_max", 0.0))
+
     exercised = lit_fraction >= MINIMUM_LIT_FRACTION
-    # The glare tail is verified here, so the frame has to contain enough of it
-    # to make that claim mean something.
+    # Both spatial stages are verified here, so the frame has to contain enough
+    # of each to make that claim mean something.
     glare_exercised = veiling_share >= MINIMUM_VEILING_SHARE
+    acuity_exercised = peripheral_lod >= MINIMUM_PERIPHERAL_LOD
     # CIECAM02 D is never 0 or 1 in a real viewing condition; either bound
     # means the relation collapsed rather than that the observer is unusual.
     degree_is_partial = 0.0 < degree < 1.0
@@ -127,6 +136,7 @@ def observer_transform(
         error_max <= ABSOLUTE_TOLERANCE
         and exercised
         and glare_exercised
+        and acuity_exercised
         and degree_is_partial
         and white_is_global
         and white_is_normalised
@@ -141,6 +151,11 @@ def observer_transform(
         message = (
             f"the veiling glare reaches only {veiling_share:.2%} of the "
             "retinal signal; the frame does not exercise the glare tail"
+        )
+    elif not acuity_exercised:
+        message = (
+            f"the peripheral mip bias reaches only {peripheral_lod:.2f}; the "
+            "frame does not exercise peripheral acuity"
         )
     elif not degree_is_partial:
         message = (
@@ -190,6 +205,7 @@ def observer_transform(
             "cone_fraction": float(payload.get("cone_fraction", float("nan"))),
             "adapting_white_luminance": white_luminance,
             "veiling_share_of_retinal_max": veiling_share,
+            "peripheral_lod_max": peripheral_lod,
         },
         detail={
             "adapting_luminance_cd_m2": payload.get("adapting_luminance_cd_m2"),
@@ -200,13 +216,13 @@ def observer_transform(
             "peripheral_acuity_verified": payload.get(
                 "peripheral_acuity_verified"
             ),
-            "unverified_stages": (
-                "peripheral acuity only. Its per-pixel varying mip bias leaves "
-                "a residual of up to 7 code values from an unidentified "
-                "source, and that noise hides a 10 percent error in the "
-                "acuity constant, so a tolerance around it could not fail. "
-                "The glare tail reads a fixed level, is reproduced exactly, "
-                "and is gated here."
+            "unverified_stages": "none",
+            "note": (
+                "Peripheral acuity joined the gate once the driver's brilinear "
+                "approximation of trilinear filtering was identified and the "
+                "shader stopped relying on it. The residual fell from 7.2 to "
+                "0.63 code values, and a 10 percent error in the acuity "
+                "constant now fails this metric."
             ),
         },
     )

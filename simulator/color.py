@@ -69,17 +69,24 @@ def chromatic_adaptation_gains(
     """
 
     white = np.asarray(adapting_white_linear_srgb, dtype=np.float64)
-    luminance = float(LINEAR_SRGB_TO_XYZ[1] @ white)
-    if luminance <= 0.0:
-        return np.ones(3, dtype=np.float64)
-    scene_lms = LINEAR_SRGB_TO_CAT02_LMS @ (white / luminance)
+    luminance = white @ LINEAR_SRGB_TO_XYZ[1]
+    # Accepts an ``(..., 3)`` image as well as one colour, so a reference
+    # implementation can evaluate a whole frame without a Python loop over
+    # pixels. A non-positive luminance carries no chromaticity to adapt to.
+    safe = np.where(
+        np.asarray(luminance)[..., None] > 0.0, white, np.ones(3)
+    ) / np.maximum(np.asarray(luminance)[..., None], 1e-30)
+    scene_lms = safe @ LINEAR_SRGB_TO_CAT02_LMS.T
     display_white = np.ones(3, dtype=np.float64) / float(
         LINEAR_SRGB_TO_XYZ[1].sum()
     )
     display_lms = LINEAR_SRGB_TO_CAT02_LMS @ display_white
     bounded = min(max(degree, 0.0), 1.0)
-    return bounded * (display_lms / np.maximum(scene_lms, 1e-30)) + (
+    gains = bounded * (display_lms / np.maximum(scene_lms, 1e-30)) + (
         1.0 - bounded
+    )
+    return np.where(
+        np.asarray(luminance)[..., None] > 0.0, gains, np.ones(3)
     )
 
 
