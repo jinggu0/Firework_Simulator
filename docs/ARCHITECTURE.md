@@ -981,8 +981,8 @@ generated from OSM multipolygon relation 152336. Both outer riverbanks and
 inner land/island rings are preserved. The mask covers a 5 × 4 km local area,
 which gives roughly 4–5 m source-mask resolution before GPU interpolation.
 This removes water from Yeouido park and other land while keeping the wave
-simulation independent of shoreline complexity. The current land pass is a
-flat provisional surface; surveyed terrain elevations remain required.
+simulation independent of shoreline complexity. Land uses the constrained
+terrain surface described below rather than a flat provisional plane.
 
 With this scene, water, and the initial firework active, the uncapped
 development-machine measurement is approximately 1.7 ms per frame. This is a
@@ -993,6 +993,37 @@ After geographic shoreline masking and the provisional land pass, the same
 uncapped workload measures approximately 2.6 ms per frame (about 383 FPS).
 
 ## Terrain elevation
+
+The current height map rasterises the official 2023 NGII-notified Seoul
+1:5,000 contours and spot heights distributed as Seoul Open Data OA-22241.
+EPSG:5174 vectors are transformed through WGS84 into the scene's local
+East-Up-South frame. Contours are sampled no farther apart than 15 m and merged
+with every spot height inside a 100 m scene margin, producing 19,672 unique
+land constraints after water rejection and 0.5 m positional deduplication.
+
+A Delaunay triangulation and piecewise-linear interpolator honour every source
+height without cubic overshoot. The resulting 1024 by 1024 grid spans the
+5 by 4 km scene at approximately 4.89 by 3.91 m per texel. That is only the GPU
+sampling density; it is not represented as a surveyed 5 m DEM. The official
+constraint hull covers 100% of this grid. The former Mapzen/AWS Terrarium
+surface remains a reproducible out-of-hull fallback but supplies no cells in
+the shipped asset.
+
+The vertical datum is no longer inferred from coarse river pixels. WAMIS
+station 1018683 publishes a 2.07 EL.m gauge zero and observed 0.72 m stage at
+both 19:00 and 20:00 KST on the event date. Simulation `y=0` is therefore
+2.79 EL.m at the 19:20 show start. Hourly data records the tidal rise after
+20:00, but animating the reflection plane with it remains future work.
+
+In a common absolute EL.m comparison at all 19,672 constraints, the retired
+512-grid baseline has 9.375 m RMSE and 7.029 m mean absolute error. Bilinear
+sampling of the new runtime raster measures 2.488 m RMSE and 0.782 m mean
+absolute error; median error is effectively zero. The remaining p95 absolute
+error of 4.033 m is concentrated where multiple steep constraints fall inside
+one runtime texel, so increasing texture resolution trades memory/cache cost
+against those local slopes rather than creating new observations.
+
+The following paragraph records the retired baseline for reproducibility:
 
 The initial terrain height map samples Mapzen/AWS Terrarium elevation tiles at
 zoom 12 into a 512 × 512 local grid. The median DEM elevation under the Han
@@ -1005,11 +1036,13 @@ the same texture at their footprint positions, preventing detached or buried
 geometry. Finite differences over the terrain texture provide land normals for
 night-sky shading.
 
-This DEM is a regional bare-earth baseline, not a survey of individual
+That retired DEM is a regional bare-earth baseline, not a survey of individual
 embankments. Its effective source resolution is roughly 30 m in this area and
 cannot resolve narrow levees, stairs, roads, or the exact riverside viewing
 surface. Those features require a higher-resolution Seoul/VWorld dataset or
-manual photogrammetric calibration.
+manual photogrammetric calibration. The constrained surface removes its urban
+spikes and broad floating-road plates, but narrow structures still require the
+restricted NGII 1 m DEM, site survey, or timestamp-matched photogrammetry.
 
 With terrain displacement and terrain-sampled buildings enabled, the uncapped
 development-machine run measures approximately 1.94 ms per frame (about
@@ -1510,6 +1543,12 @@ measures 13.694 ms frame p95 and 10.164 ms visual p95, leaving 2.98 ms at the
 60 Hz p95 boundary. Its p99 is 19.544 ms, so rare host/driver spikes still miss
 one refresh and remain a frame-pacing target rather than being hidden by the
 mean.
+
+After replacing the 512-grid regional baseline with the official-constraint
+1024 grid, a clean 360-frame integrated 3D run measures 12.775 ms frame p95,
+9.641 ms visual p95, and 15.168 ms frame p99. The larger height texture adds no
+draw calls or CPU traversal and remains 3.89 ms inside the 16.67 ms p95 budget
+on the development laptop.
 
 The next latency work is ordered as follows: add active sparse-brick dispatch
 beyond the current launch domain, add GPU source-reduction diagnostics, then

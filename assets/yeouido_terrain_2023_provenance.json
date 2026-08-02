@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "source_id": "seoul-open-data-OA-22241-ngii-2023",
+  "source_page": "https://data.seoul.go.kr/dataList/OA-22241/F/1/datasetView.do",
+  "download_url": "https://datafile.seoul.go.kr/bigfile/iot/inf/nio_download.do?&useCache=false",
+  "source_archive_sha256": "4fbe3c7e061b5974e7403ec116855304ed8ae321eebcc0d12c31ca8fb7be30bf",
+  "source_crs": "EPSG:5174",
+  "source_scale": "1:5,000",
+  "source_description": "2023 NGII-notified Seoul contours and spot heights",
+  "license": "Korea Open Government License Type 1 (attribution)",
+  "water_level_source": {
+    "provider": "국가수자원관리종합정보시스템(WAMIS)",
+    "station_page": "https://www.wamis.go.kr/wkw/wl_obsinfo.do?code=1018683",
+    "hourly_endpoint": "https://www.wamis.go.kr/wkw/wl_hrdata_list.do",
+    "request": {
+      "code": "1018683",
+      "date1": "20241005",
+      "date2": "20241005"
+    },
+    "captured_at": "2026-08-03T00:00:00+09:00"
+  },
+  "water_datum_el_m": 2.79,
+  "contour_feature_count": 196,
+  "spot_feature_count": 1446,
+  "constraint_count_after_filtering": 19672,
+  "contour_resample_spacing_m": 15.0,
+  "output_resolution": [
+    1024,
+    1024
+  ],
+  "output_spacing_m": [
+    4.887585639953613,
+    3.9100685119628906
+  ],
+  "official_support_fraction": 1.0,
+  "constraint_fit": {
+    "rmse_m": 2.4881119638479237,
+    "mean_absolute_error_m": 0.7819264270708929,
+    "p95_absolute_error_m": 4.0327072745635375,
+    "median_error_m": 3.814697180359872e-08
+  },
+  "derived_asset_sha256": "17ca0cb6b15cd4b74ced0c4ed2806703e305795cbf47c37746588cecd3eb185a",
+  "uncertainty": "The dense grid is piecewise-linear interpolation of mapped contours and spot heights, not a 1 m/5 m surveyed DEM. Narrow levees, stairs and kerb profiles still require survey or photogrammetry."
+}

@@ -151,13 +151,16 @@ def test_sourced_fields_carry_evidence_grades(scenario: Scenario) -> None:
     assert scenario.provenance.grade_for("origin") is ConfidenceGrade.MODELLED
 
 
-def test_vertical_datum_is_named_and_flagged_unverified(scenario: Scenario) -> None:
-    # The Terrarium source's own vertical datum is undocumented, so the render
-    # datum is given an honest local name rather than being called MSL.
-    assert scenario.render_vertical_datum == "dem_median_river_2024"
+def test_vertical_datum_names_the_measured_event_water_reference(
+    scenario: Scenario,
+) -> None:
+    assert (
+        scenario.render_vertical_datum
+        == "wamis_hangang_bridge_2024-10-05_19:20"
+    )
     assert (
         scenario.provenance.grade_for("render_vertical_datum")
-        is ConfidenceGrade.UNVERIFIED
+        is ConfidenceGrade.MEASURED
     )
 
 

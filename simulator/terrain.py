@@ -121,6 +121,111 @@ class TerrainSurface:
         return 0.0 if self.is_water(x_m, z_m) else self.height_at(x_m, z_m)
 
 
+def sample_heightmap_array(
+    height_m: np.ndarray,
+    bounds: np.ndarray,
+    positions_xz_m: np.ndarray,
+) -> np.ndarray:
+    """Vectorised bilinear sampling over georeferenced texel centres."""
+
+    height = np.asarray(height_m, dtype=np.float64)
+    extent = np.asarray(bounds, dtype=np.float64)
+    positions = np.asarray(positions_xz_m, dtype=np.float64)
+    if height.ndim != 2 or min(height.shape) < 1:
+        raise ValueError("height field must be a non-empty 2D array")
+    if extent.shape != (4,) or not np.all(extent[2:] > extent[:2]):
+        raise ValueError("bounds must be [min_x, min_z, max_x, max_z]")
+    if positions.ndim != 2 or positions.shape[1] != 2:
+        raise ValueError("sample positions must have shape (n, 2)")
+    rows, columns = height.shape
+    x = np.clip(
+        (positions[:, 0] - extent[0]) / (extent[2] - extent[0]), 0.0, 1.0
+    ) * (columns - 1)
+    z = np.clip(
+        (positions[:, 1] - extent[1]) / (extent[3] - extent[1]), 0.0, 1.0
+    ) * (rows - 1)
+    x0, z0 = np.floor(x).astype(np.int32), np.floor(z).astype(np.int32)
+    x1, z1 = np.minimum(x0 + 1, columns - 1), np.minimum(z0 + 1, rows - 1)
+    tx, tz = x - x0, z - z0
+    lower = height[z0, x0] * (1.0 - tx) + height[z0, x1] * tx
+    upper = height[z1, x0] * (1.0 - tx) + height[z1, x1] * tx
+    return lower * (1.0 - tz) + upper * tz
+
+
+def constrained_heightmap(
+    baseline_height_m: np.ndarray,
+    bounds: np.ndarray,
+    sample_positions_xz_m: np.ndarray,
+    sample_height_m: np.ndarray,
+    water_mask: np.ndarray,
+    resolution: tuple[int, int],
+) -> tuple[np.ndarray, float]:
+    """Rasterise official contour/spot heights without inventing detail.
+
+    A piecewise-linear Delaunay surface honours every source sample and cannot
+    overshoot their elevation range. The older regional DEM is used only
+    outside the convex hull of official data. The returned fraction reports
+    how much of the output grid is supported by the official interpolation.
+
+    SciPy is imported lazily because this path is an offline asset builder;
+    running the simulator requires only the generated NumPy height field.
+    """
+
+    try:
+        from scipy.interpolate import LinearNDInterpolator
+        from scipy.spatial import Delaunay
+    except ImportError as error:  # pragma: no cover - dependency message
+        raise RuntimeError(
+            "terrain refinement requires the optional terrain dependencies"
+        ) from error
+
+    positions = np.asarray(sample_positions_xz_m, dtype=np.float64)
+    values = np.asarray(sample_height_m, dtype=np.float64)
+    if positions.ndim != 2 or positions.shape[1] != 2:
+        raise ValueError("terrain constraints must have shape (n, 2)")
+    if values.shape != (len(positions),):
+        raise ValueError("each terrain constraint needs one elevation")
+    if len(positions) < 3 or not np.isfinite(positions).all() or not np.isfinite(values).all():
+        raise ValueError("at least three finite terrain constraints are required")
+    width, height = (int(value) for value in resolution)
+    if width < 2 or height < 2:
+        raise ValueError("terrain output resolution must be at least 2 x 2")
+
+    triangulation = Delaunay(positions)
+    interpolator = LinearNDInterpolator(
+        triangulation, values, fill_value=np.nan
+    )
+    extent = np.asarray(bounds, dtype=np.float64)
+    grid_x = np.linspace(extent[0], extent[2], width, dtype=np.float64)
+    grid_z = np.linspace(extent[1], extent[3], height, dtype=np.float64)
+    output = np.empty((height, width), dtype=np.float32)
+    supported_count = 0
+    for row_start in range(0, height, 64):
+        rows = grid_z[row_start : row_start + 64]
+        positions_xz = np.column_stack(
+            (np.tile(grid_x, len(rows)), np.repeat(rows, width))
+        )
+        official = np.asarray(interpolator(positions_xz), dtype=np.float64)
+        supported = np.isfinite(official)
+        supported_count += int(np.count_nonzero(supported))
+        if not np.all(supported):
+            fallback = sample_heightmap_array(
+                baseline_height_m, extent, positions_xz
+            )
+            official = np.where(supported, official, fallback)
+        output[row_start : row_start + len(rows)] = official.reshape(
+            len(rows), width
+        )
+
+    river = np.asarray(
+        Image.fromarray(np.asarray(water_mask, dtype=np.uint8)).resize(
+            (width, height), resample=Image.Resampling.NEAREST
+        )
+    ) >= 128
+    output[river] = 0.0
+    return output, supported_count / float(width * height)
+
+
 def _mercator_pixel(
     latitude_deg: np.ndarray, longitude_deg: np.ndarray, zoom: int
 ) -> tuple[np.ndarray, np.ndarray]:

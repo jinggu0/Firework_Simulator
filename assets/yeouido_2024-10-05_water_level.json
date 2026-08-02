@@ -1,0 +1,55 @@
+{
+  "station": {
+    "name": "서울시(한강대교)",
+    "code": "1018683",
+    "zero_elevation_el_m": 2.07,
+    "tidal_influence": true
+  },
+  "date_kst": "2024-10-05",
+  "hourly_stage_m": {
+    "01": 1.20,
+    "02": 1.11,
+    "03": 1.03,
+    "04": 0.96,
+    "05": 0.91,
+    "06": 0.86,
+    "07": 0.81,
+    "08": 0.78,
+    "09": 1.05,
+    "10": 1.38,
+    "11": 1.24,
+    "12": 1.08,
+    "13": 0.96,
+    "14": 0.89,
+    "15": 0.83,
+    "16": 0.80,
+    "17": 0.78,
+    "18": 0.75,
+    "19": 0.72,
+    "20": 0.72,
+    "21": 1.00,
+    "22": 1.45,
+    "23": 1.56,
+    "24": 1.34
+  },
+  "daily_stage_m": {
+    "mean": 1.01,
+    "minimum": 0.72,
+    "maximum": 1.56
+  },
+  "reference_time_kst": "2024-10-05T19:20:00+09:00",
+  "reference_stage_m": 0.72,
+  "reference_surface_elevation_el_m": 2.79,
+  "source": {
+    "provider": "국가수자원관리종합정보시스템(WAMIS)",
+    "station_page": "https://www.wamis.go.kr/wkw/wl_obsinfo.do?code=1018683",
+    "hourly_endpoint": "https://www.wamis.go.kr/wkw/wl_hrdata_list.do",
+    "request": {
+      "code": "1018683",
+      "date1": "20241005",
+      "date2": "20241005"
+    },
+    "captured_at": "2026-08-03T00:00:00+09:00"
+  },
+  "notes": "The terrain datum is the linearly sampled show-start water surface: station zero elevation 2.07 EL.m plus 0.72 m observed stage. Runtime water remains at this reference plane; the later tidal rise is recorded but not yet animated."
+}

@@ -1,3 +1,6 @@
+import json
+from pathlib import Path
+
 import pytest
 
 from simulator.provenance import (
@@ -6,6 +9,8 @@ from simulator.provenance import (
     Provenance,
     require_aware_timestamp,
 )
+
+ROOT = Path(__file__).resolve().parent.parent
 
 
 def test_grade_ordering_places_measurement_above_art() -> None:
@@ -107,3 +112,31 @@ def test_summary_and_grade_listing() -> None:
     )
     assert provenance.summary() == {"A": 1, "B": 0, "C": 1, "D": 0, "U": 1}
     assert provenance.paths_with_grade(ConfidenceGrade.UNVERIFIED) == ["c"]
+
+
+def test_refined_terrain_provenance_matches_the_shipped_asset() -> None:
+    metadata = json.loads(
+        (ROOT / "assets" / "yeouido_terrain_2023_provenance.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    from simulator.provenance import file_checksum
+
+    assert metadata["derived_asset_sha256"] == file_checksum(
+        ROOT / "assets" / "yeouido_scene.npz"
+    ).removeprefix("sha256:")
+    assert metadata["official_support_fraction"] == 1.0
+    assert metadata["constraint_fit"]["rmse_m"] < 2.5
+
+
+def test_event_water_datum_is_gauge_zero_plus_observed_stage() -> None:
+    water = json.loads(
+        (ROOT / "assets" / "yeouido_2024-10-05_water_level.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert water["reference_stage_m"] == water["hourly_stage_m"]["19"]
+    assert water["reference_stage_m"] == water["hourly_stage_m"]["20"]
+    assert water["reference_surface_elevation_el_m"] == pytest.approx(
+        water["station"]["zero_elevation_el_m"] + water["reference_stage_m"]
+    )

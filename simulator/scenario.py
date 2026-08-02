@@ -39,7 +39,8 @@ class GeodeticPosition:
     ``vertical_datum`` is mandatory and free-text on purpose. The project's
     render datum is the median DEM elevation beneath the Han River mask, whose
     own geodetic datum is not documented by the upstream tile source. Naming it
-    ``dem_median_river_2024`` is truthful; calling it "MSL" would not be.
+    ``wamis_hangang_bridge_2024-10-05_19:20`` names the station and instant
+    that define the shipped event-water reference plane.
     """
 
     latitude_deg: float

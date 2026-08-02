@@ -90,6 +90,14 @@ def test_road_width_and_green_surface_are_meshed() -> None:
     assert scene.snapshot_utc == "2024-10-05T10:20:00Z"
 
 
+def test_shipped_scene_uses_official_contour_grid_and_event_water_datum() -> None:
+    scene = load_scene(
+        Path(__file__).resolve().parent.parent / "assets" / "yeouido_scene.npz"
+    )
+    assert scene.terrain_height_m.shape == (1024, 1024)
+    assert np.isclose(scene.elevation_datum_m, 2.79, atol=1e-6)
+
+
 def test_named_landmarks_receive_distinct_facade_styles() -> None:
     def building(name: str, longitude: float, **tags: str) -> dict:
         return {

@@ -16,7 +16,17 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8,<9"]
+dev = [
+    "pytest>=8,<9",
+    "pyproj>=3.7,<4",
+    "pyshp>=2.3,<3",
+    "scipy>=1.14,<2",
+]
+terrain = [
+    "pyproj>=3.7,<4",
+    "pyshp>=2.3,<3",
+    "scipy>=1.14,<2",
+]
 
 [tool.setuptools]
 packages = ["simulator", "simulator.validation"]

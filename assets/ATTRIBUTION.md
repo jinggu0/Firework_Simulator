@@ -115,8 +115,32 @@ of which rooms were illuminated during the 2024 event.
 
 ## Elevation
 
-Terrain elevation is derived from the Mapzen Terrain Tiles dataset hosted in
-the AWS Registry of Open Data.
+The shipped terrain is derived primarily from Seoul Open Data dataset
+OA-22241, the 2023 NGII-notified Seoul 1:5,000 contour and spot-height layers.
+
+- Dataset: https://data.seoul.go.kr/dataList/OA-22241/F/1/datasetView.do
+- Source format: ESRI Shapefile, EPSG:5174, elevations in EL.m
+- Licence: Korea Open Government Licence Type 1 (attribution; modification and
+  commercial use permitted)
+- Source archive SHA-256:
+  `4fbe3c7e061b5974e7403ec116855304ed8ae321eebcc0d12c31ca8fb7be30bf`
+- Snapshot accessed: 2026-08-03
+
+The 1024 x 1024 runtime grid is a piecewise-linear interpolation of 19,672
+land constraints. Its roughly 4.9 x 3.9 m raster spacing is a renderer sampling
+rate, **not** the source survey resolution. It cannot be called the non-public
+NGII 1 m DEM and still cannot resolve every stair, kerb, or narrow levee.
+
+Simulation `y=0` uses the event water level published by WAMIS for station
+1018683, Seoul (Han River Bridge): 2.07 EL.m gauge zero plus 0.72 m observed
+stage at 19:00 and 20:00 KST on 2024-10-05, or 2.79 EL.m at the 19:20 show
+start. The full hourly record and source request are stored in
+`yeouido_2024-10-05_water_level.json`.
+
+Mapzen Terrain Tiles remain only the offline builder's regional fallback
+outside the convex hull of the official vector observations. The shipped scene
+reports 100% official interpolation support, so that fallback supplies no
+runtime grid cells.
 
 - Dataset: https://registry.opendata.aws/terrain-tiles/
 - Tile format: Terrarium PNG, Web Mercator
@@ -125,9 +149,9 @@ the AWS Registry of Open Data.
 - Dataset-specific source licences:
   https://github.com/tilezen/joerd/blob/master/docs/attribution.md
 
-The AWS registry describes this as a global bare-earth elevation dataset.
-Higher zoom tiles can be resampled from coarser sources, so zoom level must not
-be interpreted as source survey resolution.
+The AWS registry describes Mapzen as a global bare-earth elevation dataset.
+Higher zoom tiles can be resampled from coarser sources, so zoom level is not a
+statement of survey resolution.
 
 ## Historical weather
 

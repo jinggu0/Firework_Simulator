@@ -14,7 +14,7 @@
     "altitude_m": 0.0,
     "vertical_datum": "wgs84_ellipsoid"
   },
-  "render_vertical_datum": "dem_median_river_2024",
+  "render_vertical_datum": "wamis_hangang_bridge_2024-10-05_19:20",
   "observers": [
     {
       "observer_id": "scene_origin_reference",
@@ -78,18 +78,18 @@
       "notes": "Local East-Up-South frame origin. Recorded in assets/ATTRIBUTION.md as the scene origin of the 37.515-37.545 N, 126.910-126.960 E OSM extract. Changing this value invalidates the shipped scene asset."
     },
     "render_vertical_datum": {
-      "source_id": "mapzen-terrarium-z12",
-      "source_url": "https://registry.opendata.aws/terrain-tiles/",
-      "license": "See https://github.com/tilezen/joerd/blob/master/docs/attribution.md",
-      "captured_at": "2026-07-29T00:00:00+09:00",
-      "valid_from": "",
-      "valid_to": "",
-      "coordinate_reference_system": "Local vertical datum; horizontal EPSG:3857 source tiles",
+      "source_id": "wamis-1018683-2024-10-05-hourly",
+      "source_url": "https://www.wamis.go.kr/wkw/wl_hrdata_list.do",
+      "license": "Official public hydrologic observation; attribution retained",
+      "captured_at": "2026-08-03T00:00:00+09:00",
+      "valid_from": "2024-10-05T19:00:00+09:00",
+      "valid_to": "2024-10-05T20:00:00+09:00",
+      "coordinate_reference_system": "EL.m national vertical datum at WAMIS station 1018683",
       "units": "metres",
-      "confidence_grade": "U",
-      "uncertainty": "The geodetic vertical datum of the Terrarium elevation source is not documented in this repository",
+      "confidence_grade": "A",
+      "uncertainty": "The Han River Bridge gauge is approximately 2.5 km upstream of the scene origin; the hourly record does not resolve sub-hour tidal variation",
       "checksum": "",
-      "notes": "Simulation y=0 is the median Terrarium DEM elevation beneath the Han River mask (5.01 m in the source model). The datum that 5.01 m is itself expressed in is UNVERIFIED, so absolute-height claims must not be made against MSL or any national datum until resolved. Required dataset #10 in DATA_PROVENANCE.md."
+      "notes": "Simulation y=0 is 2.79 EL.m at show start: the station's published 2.07 EL.m gauge zero plus its observed 0.72 m stage at both 19:00 and 20:00 KST. File assets/yeouido_2024-10-05_water_level.json retains all hourly values."
     },
     "observers": {
       "source_id": "project-defined",
@@ -186,22 +186,22 @@
       "units": "degrees, metres",
       "confidence_grade": "A",
       "uncertainty": "Plan geometry is dated and authoritative. Tagged heights are grade A; building:levels x 3.2 m is grade C; the 12 m fallback for untagged buildings is grade D.",
-      "checksum": "sha256:0954adf0a3a02d7836650ab2245a51c4c339c66d68682d706c04968cf4a256ac",
+      "checksum": "sha256:17ca0cb6b15cd4b74ced0c4ed2806703e305795cbf47c37746588cecd3eb185a",
       "notes": "File assets/yeouido_scene.npz. Overpass attic query fixed to the show-start OSM state within 37.515-37.545 N, 126.910-126.960 E. Han River water is OSM relation 152336. The checksum covers the derived asset including the procedurally placed site detail, so it changes when tools/build_site_details.py is re-run even though the OSM extract behind it does not."
     },
     "scene.terrain": {
-      "source_id": "mapzen-terrarium-z12",
-      "source_url": "https://registry.opendata.aws/terrain-tiles/",
-      "license": "See https://github.com/tilezen/joerd/blob/master/docs/attribution.md",
-      "captured_at": "2026-07-29T00:00:00+09:00",
-      "valid_from": "",
-      "valid_to": "",
-      "coordinate_reference_system": "EPSG:3857 source tiles resampled to local East-Up-South metres",
+      "source_id": "seoul-open-data-OA-22241-ngii-2023",
+      "source_url": "https://data.seoul.go.kr/dataList/OA-22241/F/1/datasetView.do",
+      "license": "Korea Open Government License Type 1 (attribution)",
+      "captured_at": "2026-08-03T00:00:00+09:00",
+      "valid_from": "2023-01-01T00:00:00+09:00",
+      "valid_to": "2024-10-05T19:20:00+09:00",
+      "coordinate_reference_system": "EPSG:5174 source vectors transformed to local East-Up-South metres; EL.m heights relative to the event water datum",
       "units": "metres",
-      "confidence_grade": "C",
-      "uncertainty": "Effective source resolution approximately 30 m at this latitude; cannot resolve levees, stairs, or the riverside viewing surface",
-      "checksum": "",
-      "notes": "Bare-earth regional baseline, not a survey. Higher zoom levels may be resampled from coarser sources, so zoom is not a statement of survey resolution. Replacement is required dataset #8 in DATA_PROVENANCE.md."
+      "confidence_grade": "B",
+      "uncertainty": "The 1024 x 1024 grid is piecewise-linear interpolation of 1:5,000 contours and spot heights, not a 1 m or 5 m surveyed DEM. Narrow levees, stairs and kerbs remain unresolved.",
+      "checksum": "sha256:4fbe3c7e061b5974e7403ec116855304ed8ae321eebcc0d12c31ca8fb7be30bf",
+      "notes": "19,672 land constraints from the official 2023 Seoul contour/spot-height archive cover the full scene interpolation hull. Mapzen Terrarium remains only an out-of-hull fallback, unused by the shipped grid. Processing details and the derived asset checksum are in assets/yeouido_terrain_2023_provenance.json."
     },
     "scene.site_details": {
       "source_id": "hangang-facility-map",

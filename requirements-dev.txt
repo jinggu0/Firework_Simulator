@@ -1,3 +1,4 @@
 -r requirements.txt
+-r requirements-terrain.txt
 pytest>=8,<9
 Pillow>=10,<13

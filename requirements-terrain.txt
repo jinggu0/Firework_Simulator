@@ -1,0 +1,5 @@
+numpy>=2.0,<3
+Pillow>=10,<13
+pyproj>=3.7,<4
+pyshp>=2.3,<3
+scipy>=1.14,<2
