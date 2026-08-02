@@ -40,6 +40,26 @@ def _feature(
     }
 
 
+def _registration() -> dict:
+    report = {
+        "schema_version": 1,
+        "registration_id": "event-view",
+        "target_event_date": "2024-10-05",
+        "passed": True,
+        "metrics": {
+            "converged": True,
+            "control_points": 8,
+            "jacobian_rank": 6,
+            "reprojection_rmse_px": 0.8,
+            "reprojection_p95_px": 1.4,
+            "reprojection_max_px": 2.0,
+            "control_bbox_fraction": 0.12,
+            "minimum_camera_depth_m": 20.0,
+        },
+    }
+    return {"sha256": "abc123", "report": report}
+
+
 def test_wall_converts_absolute_top_to_terrain_relative_offsets() -> None:
     top = np.array([[0.0, 3.0, 2.0], [8.0, 4.0, 2.0]])
 
@@ -102,6 +122,7 @@ def test_slope_normals_use_absolute_survey_geometry_not_stored_offsets() -> None
 def test_mesh_builder_requires_elevations_edge_roles_and_evidence() -> None:
     asset = {
         "schema_version": 2,
+        "target_event_date": "2024-10-05",
         "temporal_relation": "official_same_year_date_unverified",
         "features": [
             _feature("wall", "retaining_wall", [[0.0, 3.0, 2.0], [4.0, 3.0, 2.0]])
@@ -146,6 +167,7 @@ def test_mesh_builder_requires_elevations_edge_roles_and_evidence() -> None:
 def test_mesh_builder_rejects_post_event_data_without_second_gate() -> None:
     asset = {
         "schema_version": 2,
+        "target_event_date": "2024-10-05",
         "temporal_relation": "official_post_event",
         "features": [
             _feature("wall", "retaining_wall", [[0.0, 3.0, 2.0], [4.0, 3.0, 2.0]])
@@ -159,7 +181,7 @@ def test_mesh_builder_rejects_post_event_data_without_second_gate() -> None:
                 "mesh_kind": "retaining_wall_face",
                 "source_edge_role": "top",
                 "lower_edge_source": "official_terrain",
-                "evidence": _evidence("B"),
+                "evidence": _evidence("A"),
             }
         ]
     }
@@ -179,6 +201,7 @@ def test_mesh_builder_rejects_post_event_data_without_second_gate() -> None:
 def test_slope_builder_requires_distinct_same_kind_crest_and_toe() -> None:
     asset = {
         "schema_version": 2,
+        "target_event_date": "2024-10-05",
         "temporal_relation": "official_pre_event",
         "features": [
             _feature("crest", "embankment", [[0, 4, 1], [8, 4, 1]]),
@@ -204,3 +227,47 @@ def test_slope_builder_requires_distinct_same_kind_crest_and_toe() -> None:
     assert result.profiles_built == 1
     assert result.rendered_segments == 2
     assert result.vertices.shape == (12, 10)
+
+
+def test_grade_b_profile_requires_a_passing_checksum_locked_registration() -> None:
+    asset = {
+        "schema_version": 2,
+        "target_event_date": "2024-10-05",
+        "temporal_relation": "official_pre_event",
+        "features": [
+            _feature("wall", "retaining_wall", [[0, 3, 2], [4, 3, 2]])
+        ],
+    }
+    profile = {
+        "feature_id": "wall",
+        "mesh_kind": "retaining_wall_face",
+        "source_edge_role": "top",
+        "lower_edge_source": "official_terrain",
+        "evidence": _evidence("B"),
+    }
+    document = {"schema_version": 1, "profiles": [profile]}
+
+    with pytest.raises(StructureEvidenceError, match="registration_id"):
+        build_structure_mesh(asset, document, FLAT_TERRAIN, TERRAIN_BOUNDS)
+
+    profile.update(
+        registration_id="event-view", registration_report_sha256="abc123"
+    )
+    result = build_structure_mesh(
+        asset,
+        document,
+        FLAT_TERRAIN,
+        TERRAIN_BOUNDS,
+        verified_registrations={"event-view": _registration()},
+    )
+    assert len(result.vertices) == 12
+
+    profile["registration_report_sha256"] = "wrong"
+    with pytest.raises(StructureEvidenceError, match="checksum mismatch"):
+        build_structure_mesh(
+            asset,
+            document,
+            FLAT_TERRAIN,
+            TERRAIN_BOUNDS,
+            verified_registrations={"event-view": _registration()},
+        )

@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://firework-simulator.local/schema/structure-reference-registration-v1.json",
+  "title": "Structure reference photograph registration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "registration_id",
+    "target_event_date",
+    "image",
+    "intrinsics",
+    "initial_pose",
+    "control_points"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "registration_id": {"type": "string", "minLength": 1},
+    "target_event_date": {"const": "2024-10-05"},
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width_px", "height_px", "evidence"],
+      "properties": {
+        "width_px": {"type": "integer", "minimum": 1},
+        "height_px": {"type": "integer", "minimum": 1},
+        "evidence": {"$ref": "#/$defs/evidence"}
+      }
+    },
+    "intrinsics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "focal_length_mm",
+        "sensor_width_mm",
+        "sensor_height_mm",
+        "distortion_coefficients"
+      ],
+      "properties": {
+        "focal_length_mm": {"type": "number", "exclusiveMinimum": 0},
+        "sensor_width_mm": {"type": "number", "exclusiveMinimum": 0},
+        "sensor_height_mm": {"type": "number", "exclusiveMinimum": 0},
+        "principal_point_px": {
+          "type": "array",
+          "prefixItems": [{"type": "number"}, {"type": "number"}],
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "distortion_coefficients": {
+          "description": "OpenCV order k1, k2, p1, p2, k3",
+          "type": "array",
+          "items": {"type": "number"},
+          "minItems": 5,
+          "maxItems": 5
+        }
+      }
+    },
+    "initial_pose": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["position_eus_m", "yaw_deg", "pitch_deg"],
+      "properties": {
+        "position_eus_m": {"$ref": "#/$defs/vector3"},
+        "yaw_deg": {"type": "number"},
+        "pitch_deg": {"type": "number", "exclusiveMinimum": -89, "exclusiveMaximum": 89},
+        "roll_deg": {"type": "number", "minimum": -45, "maximum": 45}
+      }
+    },
+    "position_bounds_eus_m": {
+      "type": "array",
+      "prefixItems": [
+        {"$ref": "#/$defs/vector3"},
+        {"$ref": "#/$defs/vector3"}
+      ],
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "control_points": {
+      "type": "array",
+      "minItems": 6,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["control_id", "world_eus_m", "pixel_xy", "evidence"],
+        "properties": {
+          "control_id": {"type": "string", "minLength": 1},
+          "world_eus_m": {"$ref": "#/$defs/vector3"},
+          "pixel_xy": {
+            "type": "array",
+            "prefixItems": [{"type": "number"}, {"type": "number"}],
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "evidence": {"$ref": "#/$defs/evidence"}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "vector3": {
+      "type": "array",
+      "items": {"type": "number"},
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["confidence_grade"],
+      "properties": {
+        "confidence_grade": {"enum": ["A", "B"]},
+        "source_id": {"type": "string"},
+        "source_url": {"type": "string"},
+        "license": {"type": "string"},
+        "captured_at": {"type": "string"},
+        "valid_from": {"type": "string"},
+        "valid_to": {"type": "string"},
+        "coordinate_reference_system": {"type": "string"},
+        "units": {"type": "string"},
+        "uncertainty": {"type": "string"},
+        "checksum": {"type": "string"},
+        "notes": {"type": "string"}
+      },
+      "anyOf": [
+        {"required": ["source_id"]},
+        {"required": ["source_url"]}
+      ]
+    }
+  }
+}

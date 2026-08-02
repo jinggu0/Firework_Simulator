@@ -32,6 +32,13 @@ def main() -> None:
     parser.add_argument("--profiles", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--report", type=Path)
+    parser.add_argument(
+        "--registration-report",
+        type=Path,
+        action="append",
+        default=[],
+        help="passed camera-registration report required by grade-B profiles",
+    )
     parser.add_argument("--allow-post-event-source", action="store_true")
     arguments = parser.parse_args()
 
@@ -43,6 +50,26 @@ def main() -> None:
             raise StructureEvidenceError(
                 "profile source_asset_sha256 does not match the structure asset"
             )
+        registrations = {}
+        registration_records = []
+        for registration_path in arguments.registration_report:
+            registration, registration_checksum = _read_json(registration_path)
+            registration_id = str(registration.get("registration_id", ""))
+            if not registration_id or registration_id in registrations:
+                raise StructureEvidenceError(
+                    "registration report IDs must be non-empty and unique"
+                )
+            registrations[registration_id] = {
+                "sha256": registration_checksum,
+                "report": registration,
+            }
+            registration_records.append(
+                {
+                    "path": str(registration_path),
+                    "registration_id": registration_id,
+                    "sha256": registration_checksum,
+                }
+            )
         scene_checksum = _file_checksum(arguments.scene)
         scene = load_scene(arguments.scene)
         result = build_structure_mesh(
@@ -51,6 +78,7 @@ def main() -> None:
             scene.terrain_height_m,
             scene.terrain_bounds,
             allow_post_event_source=arguments.allow_post_event_source,
+            verified_registrations=registrations,
         )
     except (OSError, json.JSONDecodeError, StructureEvidenceError) as error:
         parser.error(str(error))
@@ -71,6 +99,7 @@ def main() -> None:
         "structure_asset_sha256": asset_checksum,
         "profile_document": str(arguments.profiles),
         "profile_document_sha256": profile_checksum,
+        "registration_reports": registration_records,
         "target_event_date": asset.get("target_event_date"),
         "temporal_relation": asset.get("temporal_relation"),
         "profiles_built": result.profiles_built,

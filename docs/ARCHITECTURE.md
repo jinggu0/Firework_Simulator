@@ -1220,6 +1220,61 @@ python -m tools.merge_ngii_structures `
   --output <candidate-scene.npz>
 ```
 
+### Structure-reference camera registration
+
+A photograph can identify whether a mapped line is a top, crest, or toe only
+after it is registered to the same 3D frame. `simulator/photogrammetry.py`
+implements that offline registration in the runtime's exact East-Up-South
+camera convention. World points are transformed into an OpenCV-compatible
+camera frame (`X` right, `Y` down, `Z` forward), projected with focal length,
+sensor dimensions and principal point, then passed through the same
+Brown-Conrady `k1,k2,p1,p2,k3` model used by the renderer's camera optics.
+
+The solver fits camera East/Up/South position, yaw, pitch and roll with a robust
+soft-L1 pixel loss. It requires at least six unique, grade-A/B control points
+and an independently sourced grade-A/B image. The physical intrinsics remain
+fixed: silently fitting an unknown focal length at the same time as pose would
+allow geometry and lens errors to compensate for one another. Controls outside
+the image are rejected before optimisation.
+The authoring contract is machine-readable in
+`assets/structure_reference_registration.schema.json`.
+
+`tools/calibrate_structure_reference.py` writes every control-point residual
+and passes a registration only when all of the following hold:
+
+- the six-parameter Jacobian has rank 6 and the optimisation converged;
+- RMSE is at most 2 px, p95 at most 3 px, and the worst point at most 5 px;
+- the control bounding box covers at least 2% of the image, preventing a
+  numerically precise but spatially local cluster from validating the frame;
+- every point remains more than 0.05 m in front of the camera.
+
+```powershell
+python -m tools.calibrate_structure_reference <registration-input.json> `
+  --output <registration-report.json>
+```
+
+A grade-B reconstructed structure profile must now name the registration ID
+and exact report SHA-256. `merge_ngii_structures.py` independently reloads the
+report, recalculates that checksum, repeats every numeric pass condition, and
+requires its target date to match the normalized asset. A grade-A profile whose
+top/crest/toe role is directly encoded by an official survey does not require a
+photograph. A failed or absent registration therefore cannot become geometry
+by merely changing the profile's confidence label.
+
+```json
+{
+  "confidence_grade": "B",
+  "registration_id": "event-view-01",
+  "registration_report_sha256": "<exact report SHA-256>"
+}
+```
+
+The held event photographs still lack published camera poses and physical
+intrinsics sufficient to populate such a report. The stage therefore adds no
+new scene triangles and makes no claim that an existing photograph is now
+metric evidence; it establishes the gate that a future original/EXIF-backed
+image must pass.
+
 The view-projection matrix and camera position are refreshed for every render
 pass each frame, keeping terrain, water Fresnel response, buildings, and
 fireworks in one coordinate frame. Adding the dynamic camera path measures
@@ -1732,6 +1787,18 @@ the dormant path and larger shader table do not regress the laptop target; it
 does not predict the cost of a future populated NGII asset. Populated geometry
 remains one main draw and one reflection draw, but must receive its own p95 and
 triangle-count gate before replacing the shipped scene.
+
+The camera-registration solver and checksum gate are offline-only and are not
+imported by the interactive application. Two consecutive 360-frame integrated
+3D runs after the full test workload measured frame p95 values of 17.131 and
+16.654 ms. Their visual p95 values stayed at 12.419 and 12.327 ms, while
+physics p95 stayed elevated at 5.597 and 5.686 ms. The first run misses the
+16.67 ms target and the repeat retains only 0.016 ms. Because this stage changes
+no runtime path, the measurement is not attributed to camera registration, but
+it does prove the current laptop margin is not robust under the observed host
+load/thermal state. This result is retained rather than replaced by the faster
+preceding measurement; reducing physics-step p95 remains required before a
+universal 60 Hz claim.
 
 The next latency work is ordered as follows: add active sparse-brick dispatch
 beyond the current launch domain, add GPU source-reduction diagnostics, then

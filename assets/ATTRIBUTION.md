@@ -170,7 +170,12 @@ lines never supply an invented wall height or embankment profile. The runtime
 now has an empty dedicated structure batch and a merge path, but it accepts
 only grade-A/B top/crest/toe decisions locked to the exact normalized-asset
 checksum. Consequently the current distributed scene still contains no NGII
-wall or earthwork triangles.
+wall or earthwork triangles. Grade-B decisions additionally require a passing
+camera-registration report locked by checksum: at least six sourced controls,
+full-rank pose, <=2 px RMSE, <=3 px p95, <=5 px maximum error, and at least 2%
+image control coverage. No held event photograph currently supplies both a
+known physical camera and a metric pose, so no report is represented as real
+event evidence.
 
 ## Historical weather
 

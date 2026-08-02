@@ -280,7 +280,11 @@ def surveyed_slope_vertices(
     return np.asarray(output, dtype=np.float32).reshape(-1, 10), divisions
 
 
-def _evidence_record(profile: Mapping[str, Any]) -> DataRecord:
+def _evidence_record(
+    profile: Mapping[str, Any],
+    registrations: Mapping[str, Mapping[str, Any]],
+    target_event_date: str,
+) -> DataRecord:
     raw = profile.get("evidence")
     if not isinstance(raw, Mapping):
         raise StructureEvidenceError("every structure profile requires evidence")
@@ -296,6 +300,42 @@ def _evidence_record(profile: Mapping[str, Any]) -> DataRecord:
             "structure meshes require confidence grade A or B; modelled or "
             "artistic cross-sections remain non-geometric"
         )
+    if record.grade is ConfidenceGrade.RECONSTRUCTED:
+        registration_id = str(profile.get("registration_id", ""))
+        expected_checksum = str(profile.get("registration_report_sha256", ""))
+        if not registration_id or not expected_checksum:
+            raise StructureEvidenceError(
+                "grade-B structure profiles require registration_id and "
+                "registration_report_sha256"
+            )
+        registration = registrations.get(registration_id)
+        if registration is None:
+            raise StructureEvidenceError(
+                f"grade-B profile references unverified registration {registration_id!r}"
+            )
+        if registration.get("sha256") != expected_checksum:
+            raise StructureEvidenceError(
+                f"registration checksum mismatch for {registration_id!r}"
+            )
+        report = registration.get("report", {})
+        metrics = report.get("metrics", {})
+        if (
+            report.get("schema_version") != 1
+            or report.get("registration_id") != registration_id
+            or report.get("target_event_date") != target_event_date
+            or not report.get("passed")
+            or not metrics.get("converged")
+            or int(metrics.get("control_points", 0)) < 6
+            or int(metrics.get("jacobian_rank", 0)) != 6
+            or float(metrics.get("reprojection_rmse_px", float("inf"))) > 2.0
+            or float(metrics.get("reprojection_p95_px", float("inf"))) > 3.0
+            or float(metrics.get("reprojection_max_px", float("inf"))) > 5.0
+            or float(metrics.get("control_bbox_fraction", 0.0)) < 0.02
+            or float(metrics.get("minimum_camera_depth_m", 0.0)) <= 0.05
+        ):
+            raise StructureEvidenceError(
+                f"registration {registration_id!r} does not pass the project gate"
+            )
     return record
 
 
@@ -306,6 +346,7 @@ def build_structure_mesh(
     terrain_bounds: np.ndarray,
     *,
     allow_post_event_source: bool = False,
+    verified_registrations: Mapping[str, Mapping[str, Any]] | None = None,
 ) -> StructureMeshResult:
     """Resolve audited profiles into one static structure vertex batch."""
 
@@ -333,11 +374,13 @@ def build_structure_mesh(
     rendered_segments = 0
     skipped_segments = 0
     used: set[str] = set()
+    registrations = verified_registrations or {}
+    target_event_date = str(asset.get("target_event_date", ""))
 
     for profile in profiles:
         if not isinstance(profile, Mapping):
             raise StructureEvidenceError("profile entries must be objects")
-        _evidence_record(profile)
+        _evidence_record(profile, registrations, target_event_date)
         feature_id = str(profile.get("feature_id", ""))
         if feature_id in used:
             raise StructureEvidenceError(f"feature {feature_id} is profiled more than once")
