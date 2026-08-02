@@ -34,7 +34,8 @@ MINIMUM_VEILING_SHARE = 0.01
 """Glare must reach a percent of the retinal signal somewhere in the frame.
 
 Verifying a term that is everywhere negligible would be verifying nothing.
-Measured at 19% on the shipped scene.
+The harness advances the shipped development shell just past burst so the
+scene contains a radiometric source wide enough to exercise this path.
 """
 
 MINIMUM_PERIPHERAL_LOD = 1.0

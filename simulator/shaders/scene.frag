@@ -241,6 +241,24 @@ void main() {
             pattern_value * pattern.w
         );
         vec3 radiance = reflected_radiance(n, albedo, reflectance);
+        if (material == 2) {
+            // OSM supplies the bridge decks but not a reliable 2024 fixture
+            // inventory.  The upload pass converts their UVs into distance
+            // along deck and signed edge position.  A low continuous edge
+            // glow plus 32 m LED points reproduces the line and elongated
+            // river reflections visible in event photographs without adding
+            // hundreds of point lights or draw calls.
+            float edge = smoothstep(.72, .94, abs(surface_uv.y));
+            float period = 32.0;
+            float phase = abs(fract(surface_uv.x / period + .5) - .5);
+            float footprint = max(fwidth(surface_uv.x / period), .002);
+            float fixture = 1.0 - smoothstep(
+                .018 + footprint, .050 + footprint * 2.0, phase
+            );
+            vec3 led_tint = vec3(1.0, .50, .16);
+            radiance += led_tint * window_radiance_w_m2_sr * edge
+                      * (.025 + fixture * .42);
+        }
         // Thin surfaces lit from behind. The wind direction stands in for the
         // dominant backlight until a directional sky model supplies one.
         if (reflectance.w > 0.0) {
@@ -322,13 +340,20 @@ void main() {
     float pane = interval(within.x, pane_bounds.x, pane_bounds.y, aa.x)
                * interval(within.y, pane_bounds.z, pane_bounds.w, aa.y);
     vec2 cell = floor(grid);
-    float distance_m = length(camera_position - world_position);
-    float occupied = distance_m < 1600.0
-        ? step(occupancy_threshold, hash21(cell + facade_style * 31.7))
-        : .38;
-    float temperature = distance_m < 1600.0
-        ? hash21(cell + facade_style * 17.0 + 11.3)
-        : .55;
+    float occupancy_sample = hash21(cell + facade_style * 31.7);
+    float occupied = step(occupancy_threshold, occupancy_sample);
+    // Offices and apartments do not present identical luminous rectangles.
+    // Keeping the hash beyond 1.6 km removes the uniform white grid that the
+    // previous .38 fallback produced; the floor/cell intensity variation also
+    // survives in the planar reflection.
+    float room_dimmer = mix(
+        .24, 1.0, hash21(cell * vec2(1.31, 2.17) + facade_style * 9.1)
+    );
+    float floor_blackout = step(
+        .12, hash21(vec2(floor(cell.y / 3.0), facade_style * 13.7))
+    );
+    occupied *= room_dimmer * floor_blackout;
+    float temperature = hash21(cell + facade_style * 17.0 + 11.3);
     vec3 window_color = mix(
         vec3(1.0, .42, .12), vec3(.55, .72, 1.0), temperature
     );
@@ -350,7 +375,7 @@ void main() {
     );
     facade *= mix(.94, 1.035, weathering);
     vec3 emission = window_color * pane * occupied
-                  * window_radiance_w_m2_sr;
+                  * window_radiance_w_m2_sr * .72;
 
     if (facade_style > 2.5 && facade_style < 3.5) {
         float balcony = 1.0 - smoothstep(

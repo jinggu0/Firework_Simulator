@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "event": "2024 Seoul International Fireworks Festival",
+  "event_date": "2024-10-05",
+  "scope": "Display-referred appearance calibration only. Unknown camera poses and unknown editorial processing prevent geometric or absolute-radiometric calibration.",
+  "sources": {
+    "commons_mobile_203051": {
+      "page_url": "https://commons.wikimedia.org/wiki/File:20241005_%EC%84%9C%EC%9A%B8%EC%84%B8%EA%B3%84%EB%B6%88%EA%BD%83%EC%B6%95%EC%A0%9C.jpg",
+      "capture_local": "2024-10-05T20:30:51+09:00",
+      "camera": "Samsung Galaxy A34 5G",
+      "focal_length_mm": 4.65,
+      "full_frame_equivalent_mm": 25.0,
+      "f_number": 1.8,
+      "exposure_s": 0.04167,
+      "iso": 3200,
+      "white_balance": "auto",
+      "license": "CC0 1.0",
+      "use": "Exposure and colour-context reference; pose not published."
+    },
+    "commons_mobile_203729": {
+      "page_url": "https://commons.wikimedia.org/wiki/File:20241005_%EC%84%9C%EC%9A%B8%EC%84%B8%EA%B3%84%EB%B6%88%EA%BD%83%EC%B6%95%EC%A0%9C_2.jpg",
+      "capture_local": "2024-10-05T20:37:29+09:00",
+      "camera": "Samsung Galaxy A34 5G",
+      "focal_length_mm": 4.65,
+      "full_frame_equivalent_mm": 25.0,
+      "f_number": 1.8,
+      "exposure_s": 0.033307,
+      "iso": 4000,
+      "white_balance": "auto",
+      "license": "CC0 1.0",
+      "use": "Exposure and colour-context reference; pose not published."
+    },
+    "news1_night_wide": {
+      "page_url": "https://www.news1.kr/society/general-society/5559767",
+      "local_filename_hint": "yeouido_news1_night.jpg",
+      "license": "Copyright News1; do not redistribute",
+      "use": "Temporary local visual comparison only; no source pixels are stored in this repository.",
+      "normalized_crops": {
+        "clear_sky": [0.0, 0.0, 0.3571, 0.2787],
+        "river_and_bridge": [0.0, 0.7717, 0.7143, 0.9861]
+      }
+    },
+    "news1_day_site": {
+      "page_url": "https://www.news1.kr/society/general-society/5559767",
+      "local_filename_hint": "yeouido_news1_day.jpg",
+      "license": "Copyright News1; do not redistribute",
+      "use": "Temporary local check of early-October turf, foliage, shoreline, rail and pavement appearance."
+    },
+    "newsis_night_river": {
+      "page_url": "https://mobile.newsis.com/photo/NISI20241006_0020545554",
+      "local_filename_hint": "yeouido_newsis_night.jpg",
+      "license": "Copyright Newsis; do not redistribute",
+      "use": "Temporary local check of the darkest sky and water-reflection footprint.",
+      "normalized_crops": {
+        "clear_sky": [0.0, 0.0, 0.3472, 0.2708],
+        "river": [0.0, 0.625, 0.7639, 0.9271]
+      }
+    }
+  },
+  "display_referred_observations": {
+    "dark_clear_sky_median_srgb_8bit_envelope": {
+      "minimum": [11, 14, 21],
+      "maximum": [25, 24, 46],
+      "note": "Crops avoid bursts but retain unknown camera exposure, JPEG tone curves and news processing; this is a plausibility envelope, not radiance."
+    },
+    "water": {
+      "shape": "Bright bridge, skyline and burst reflections are vertically elongated, horizontally broken by short waves, and spatially smooth rather than point-like sparkle.",
+      "confidence_grade": "B for repeated morphology; D for shader widths"
+    },
+    "building_lights": {
+      "shape": "Window intensity and colour are irregular, with multi-floor dark groups; distant buildings do not form a uniformly white grid.",
+      "confidence_grade": "B for repeated morphology; D for occupancy parameters"
+    },
+    "vegetation": {
+      "shape": "Daytime site imagery shows subdued maintained turf and a green canopy with localized yellow-olive early-autumn foliage.",
+      "confidence_grade": "C for event-day colour context; mapped placement remains tied to historical OSM"
+    }
+  },
+  "implemented_calibration": {
+    "sky_night_horizon_linear_rgb": [0.0009, 0.0012, 0.0022],
+    "sky_night_zenith_linear_rgb": [0.00014, 0.00022, 0.00062],
+    "bridge_fixture_spacing_m": 32.0,
+    "water_reflection_taps": 3,
+    "water_streak_radius_px_near_far": [1.25, 5.5],
+    "window_emission_scale": 0.72,
+    "grass_candidate_spacing_m": 3.0
+  },
+  "limitations": [
+    "None of the held photographs publishes a camera position and orientation precise enough for pixel registration.",
+    "The press photographs do not publish raw linear data, lens profiles or complete exposure metadata.",
+    "Bridge luminaire spacing, window occupancy, vegetation reflectance and water blur widths are appearance calibrations, not surveyed measurements.",
+    "No copyrighted photograph is distributed with the project."
+  ]
+}

@@ -218,10 +218,15 @@ _MATERIALS: tuple[MaterialChannels, ...] = (
     MaterialChannels(
         name="grass_sward",
         surface_code=SURFACE_VEGETATION,
-        base_color_primary=(0.055, 0.16, 0.045),
-        base_color_secondary=(0.12, 0.25, 0.075),
+        # Early-October event photographs show maintained turf as a subdued
+        # olive green under daylight, not the saturated spring green formerly
+        # used here.  This is photographic appearance calibration (grade D),
+        # not a reflectance measurement.
+        base_color_primary=(0.042, 0.105, 0.026),
+        base_color_secondary=(0.125, 0.175, 0.045),
         pattern=PatternKind.HASH_CELL,
         pattern_scale=(0.15, 0.15),
+        pattern_mix=0.58,
         roughness=0.95,
         # Wind-driven travelling-wave normals; the strength is applied to the
         # existing ripple rather than replacing it.
@@ -300,10 +305,11 @@ _MATERIALS: tuple[MaterialChannels, ...] = (
     MaterialChannels(
         name="tree_foliage",
         surface_code=SURFACE_FOLIAGE,
-        base_color_primary=(0.025, 0.095, 0.018),
-        base_color_secondary=(0.075, 0.19, 0.038),
+        base_color_primary=(0.026, 0.078, 0.015),
+        base_color_secondary=(0.24, 0.155, 0.024),
         pattern=PatternKind.HASH_VOLUME,
         pattern_scale=(0.65, 0.65),
+        pattern_mix=0.42,
         roughness=0.94,
         # Leaves are thin enough to glow when lit from behind.
         transmission=0.22,
@@ -357,10 +363,11 @@ _MATERIALS: tuple[MaterialChannels, ...] = (
     MaterialChannels(
         name="grass_blade",
         surface_code=SURFACE_GRASS_BLADE,
-        base_color_primary=(0.028, 0.105, 0.018),
-        base_color_secondary=(0.11, 0.24, 0.045),
+        base_color_primary=(0.030, 0.086, 0.016),
+        base_color_secondary=(0.12, 0.17, 0.036),
         pattern=PatternKind.HASH_CELL,
         pattern_scale=(9.0, 9.0),
+        pattern_mix=0.62,
         roughness=0.96,
         # Individual blades are the most translucent surface in the scene.
         transmission=0.35,

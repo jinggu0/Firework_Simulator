@@ -99,11 +99,12 @@ def aerial_perspective(
     # so the metric requires the frame to actually exercise the composite.
     exercised = transmittance_min < 0.98
     skies_untouched = sky_difference == 0.0 and reflection_sky_difference == 0.0
-    # The reflected skyline reaches the eye by way of the water, so its path is
-    # longer than the direct one and it must lose radiance. Signs, not
-    # magnitudes: the mirrored path is where a sign error would hide, and it is
-    # invisible in the residual because the CPU prediction models only the
-    # direct path.
+    # The bright reflected skyline reaches the eye by way of the water, so its
+    # path is longer than the direct one and it must lose radiance. Dark walls
+    # may legitimately brighten toward the airlight; the measurement therefore
+    # gates the upper radiance quartile. Signs, not magnitudes: the mirrored
+    # path is where a sign error would hide, and it is invisible in the residual
+    # because the CPU prediction models only the direct path.
     reflection_dims = reflection_change < 0.0 and water_residual < 0.0
     passed = (
         error_max <= RELATIVE_TOLERANCE
@@ -165,6 +166,12 @@ def aerial_perspective(
             ),
             "reflection_geometry_fraction": payload.get(
                 "reflection_geometry_fraction"
+            ),
+            "bright_reflection_geometry_fraction": payload.get(
+                "bright_reflection_geometry_fraction"
+            ),
+            "bright_reflection_threshold_green": payload.get(
+                "bright_reflection_threshold_green"
             ),
             "gated_population": (
                 "opaque non-water pixels; water carries a reflection with its "

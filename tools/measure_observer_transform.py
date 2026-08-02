@@ -184,13 +184,17 @@ def _predict(
         adapted - luminance[..., None]
     ) * vision.cone_fraction
     predicted = _aces(np.maximum(mesopic, 0.0)) ** (1.0 / 2.2)
+    veiling_share = veiling / np.maximum(
+        scene[..., 1] + glare_source[..., 1] + veiling, 1e-12
+    )
     exercised = {
         "peripheral_lod_max": float(lod.max()),
         "peripheral_eccentricity_max_deg": float(eccentricity.max()),
         "veiling_luminance_max": float(veiling.max()),
-        "veiling_share_of_retinal_max": float(
-            (veiling / np.maximum(scene[..., 1] + glare_source[..., 1], 1e-12)).max()
-        ),
+        # A share includes the term itself in the denominator and therefore
+        # remains in [0, 1].  The earlier veil/(scene+bloom) ratio could exceed
+        # 100% in a dark pixel and did not match its own reported name.
+        "veiling_share_of_retinal_max": float(veiling_share.max()),
     }
     return predicted, exercised
 
@@ -201,6 +205,15 @@ def measure(convergence_s: float = ADAPTATION_CONVERGENCE_S) -> dict[str, object
     app = SimulatorApp(config)
     renderer = app.renderer
     renderer.post.set_mode(DisplayMode.HUMAN_VISION)
+    # Exercise disability glare with the simulator's own radiometric source,
+    # not a synthetic post-process patch.  The development shell launched by
+    # SimulatorApp is advanced just past burst so its stars occupy enough of
+    # the field for the wide glare tail to be measurable.  A rocket frozen at
+    # launch exercised the old, darker scene but became negligible after the
+    # event-photo sky calibration raised the real urban background.
+    physics_step_s = 1.0 / config.render.physics_hz
+    for _ in range(round(3.4 / physics_step_s)):
+        app.world.update(physics_step_s)
     step_s = 1.5
     for _ in range(int(convergence_s / step_s)):
         renderer.render(app.world, app.camera, app.celestial, step_s)

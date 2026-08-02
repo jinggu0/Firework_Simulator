@@ -41,8 +41,11 @@ void main() {
     // airlight field is evaluated without it.
     float above_horizon = max(smoothstep(-.025, .06, ray.y), airlight_field);
     float zenith = smoothstep(-.02, .75, ray.y);
-    vec3 night = mix(vec3(.00034, .00043, .00062),
-                     vec3(.000055, .000085, .00018), zenith);
+    // Calibrated against dark, smoke-free crops of three 2024-10-05 event
+    // photographs.  Even the darkest reference retains blue urban airglow;
+    // the former values rendered it almost neutral black through the camera.
+    vec3 night = mix(vec3(.00090, .00120, .00220),
+                     vec3(.000140, .000220, .000620), zenith);
     float sun_alignment = max(dot(ray, sun_direction), 0.0);
     float western_twilight = pow(sun_alignment, 24.0) * twilight_strength;
     vec3 twilight_color = mix(vec3(.0028, .00072, .00020),

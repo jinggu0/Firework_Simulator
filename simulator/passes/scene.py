@@ -29,6 +29,45 @@ SURFACE_CONCRETE = 12.0
 LAMP_VERTICES_PER_FIXTURE = 36
 
 
+def bridge_lighting_uv(vertices: np.ndarray) -> np.ndarray:
+    """Replace legacy bridge world UVs with longitudinal and edge coordinates.
+
+    The historical asset stores one independent six-vertex quad per bridge
+    segment.  Its old UV channel is just world X/Z, which cannot describe the
+    two deck edges or regular luminaire spacing.  This conversion is performed
+    once while uploading the static mesh: ``u`` is accumulated distance along
+    each connected way and ``v`` is -1/+1 at its two edges.
+
+    The source geometry is not changed and no fixture position is presented as
+    surveyed.  The resulting spacing is an appearance calibration against the
+    2024 event photographs, while every lit segment still comes from the
+    2024-10-05 OSM bridge geometry.
+    """
+
+    converted = np.array(vertices, dtype=np.float32, copy=True)
+    if len(converted) % 6:
+        return converted
+    distance_along = 0.0
+    previous_end: np.ndarray | None = None
+    for offset in range(0, len(converted), 6):
+        quad = converted[offset : offset + 6]
+        start = 0.5 * (quad[0, [0, 2]] + quad[1, [0, 2]])
+        end = 0.5 * (quad[2, [0, 2]] + quad[5, [0, 2]])
+        if previous_end is None or np.linalg.norm(start - previous_end) > 0.5:
+            distance_along = 0.0
+        segment_length = float(np.linalg.norm(end - start))
+        quad[:, 7] = distance_along + np.array(
+            [0.0, 0.0, segment_length, 0.0, segment_length, segment_length],
+            dtype=np.float32,
+        )
+        quad[:, 8] = np.array(
+            [-1.0, 1.0, 1.0, -1.0, 1.0, -1.0], dtype=np.float32
+        )
+        distance_along += segment_length
+        previous_end = end
+    return converted
+
+
 @dataclass(frozen=True, slots=True)
 class SceneData:
     """CPU-side scene arrays shared with the water and land passes."""
@@ -119,7 +158,7 @@ class ScenePass:
         )
         batches = (
             scene.building_vertices,
-            scene.bridge_vertices,
+            bridge_lighting_uv(scene.bridge_vertices),
             scene.road_vertices,
             scene.vegetation_vertices,
             scene.detail_vertices,

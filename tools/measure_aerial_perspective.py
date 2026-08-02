@@ -234,9 +234,29 @@ def measure(frames_warmup: int = 4) -> dict[str, object]:
     reflection_relative = (
         hazed_reflection - clear_reflection
     ) / np.maximum(clear_reflection, 1e-12)
-    reflection_change = (
-        float(reflection_relative[reflection_geometry].mean())
+    # Aerial perspective can legitimately brighten a dark facade because the
+    # airlight replacing it is brighter than the object.  The old unweighted
+    # mean over every depth-writing pixel therefore changed sign when the
+    # event-photo calibration raised the blue urban sky.  Gate the upper
+    # radiance quartile instead: those are the windows and bridge luminaires
+    # whose longer mirrored path must dim, which is the physical claim this
+    # sign check was intended to make.
+    reflection_green = clear_reflection[..., 1]
+    airlight_green = float(airlight[..., 1].mean())
+    bright_threshold = (
+        max(
+            float(np.percentile(reflection_green[reflection_geometry], 75.0)),
+            airlight_green * 2.0,
+        )
         if reflection_geometry.any()
+        else float("inf")
+    )
+    bright_reflection_geometry = reflection_geometry & (
+        reflection_green >= bright_threshold
+    )
+    reflection_change = (
+        float(reflection_relative[bright_reflection_geometry].mean())
+        if bright_reflection_geometry.any()
         else 0.0
     )
     reflection_worst = (
@@ -262,6 +282,10 @@ def measure(frames_warmup: int = 4) -> dict[str, object]:
         "reflection_mean_radiance_change": reflection_change,
         "reflection_worst_radiance_change": reflection_worst,
         "reflection_geometry_fraction": float(reflection_geometry.mean()),
+        "bright_reflection_geometry_fraction": float(
+            bright_reflection_geometry.mean()
+        ),
+        "bright_reflection_threshold_green": bright_threshold,
         "reflection_sky_absolute_difference_max": reflection_sky_difference,
         "visibility_km": extinction.visibility_m / 1_000.0,
         "surface_extinction_per_m": list(extinction.total_per_m),

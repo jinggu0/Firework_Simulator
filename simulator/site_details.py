@@ -496,7 +496,7 @@ def _is_bladed_surface(tags: dict[str, str]) -> bool:
 
 
 def _blade_candidates(
-    polygon: np.ndarray, seed: int, spacing: float = 6.0
+    polygon: np.ndarray, seed: int, spacing: float = 3.0
 ) -> list[tuple[np.ndarray, float, float, float]]:
     """Deterministic blade positions and dimensions inside one polygon.
 

@@ -184,6 +184,33 @@ Star colour is derived from the catalogue's Johnson B-V index using the
 temperature relation of Ballesteros F.J., "New insights into black bodies",
 Europhysics Letters 97(3), 2012.
 
+## 2024 event appearance references
+
+`yeouido_2024-10-05_appearance_reference.json` records the photographs used to
+calibrate night-sky colour, irregular window emission, water-reflection shape,
+and early-October vegetation colour. No source photograph is redistributed.
+The two Wikimedia Commons mobile photographs are CC0; News1 and Newsis images
+are copyrighted and were used only as temporary local visual references.
+
+- Wikimedia Commons, Striker9498, 2024-10-05 20:30:51 KST, Samsung Galaxy A34
+  5G, 25 mm equivalent, f/1.8, ISO 3200, 1/24 s, CC0 1.0:
+  https://commons.wikimedia.org/wiki/File:20241005_%EC%84%9C%EC%9A%B8%EC%84%B8%EA%B3%84%EB%B6%88%EA%BD%83%EC%B6%95%EC%A0%9C.jpg
+- Wikimedia Commons, Striker9498, 2024-10-05 20:37:29 KST, Samsung Galaxy A34
+  5G, 25 mm equivalent, f/1.8, ISO 4000, 1/30 s, CC0 1.0:
+  https://commons.wikimedia.org/wiki/File:20241005_%EC%84%9C%EC%9A%B8%EC%84%B8%EA%B3%84%EB%B6%88%EA%BD%83%EC%B6%95%EC%A0%9C_2.jpg
+- News1 event gallery, 2024-10-05:
+  https://www.news1.kr/society/general-society/5559767
+- Newsis event photograph, 2024-10-06:
+  https://mobile.newsis.com/photo/NISI20241006_0020545554
+
+The photographs lack a published camera pose and raw linear sensor data, so
+they do **not** support pixel registration or absolute radiometry. The recorded
+sRGB crop envelope and reflection morphology are plausibility constraints.
+Bridge-light spacing, reflection-kernel width, window occupancy, and material
+colours remain grade D appearance calibrations. Re-run display-referred crop
+measurements on locally obtained images with
+`python -m tools.analyze_appearance_reference --image SOURCE_KEY=PATH`.
+
 ## Atmospheric optics
 
 Molecular scattering optical depth follows Bodhaine B.A., Wood N.B., Dutton

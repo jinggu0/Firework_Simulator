@@ -34,7 +34,16 @@ void main() {
                     - omega * time_s + phases[i];
         float wavelength = 6.28318530718 / k;
         float fine_weight = 1.0 - smoothstep(1.8, 7.0, wavelength);
-        fine_gradient += amplitude * k * direction * cos(theta) * fine_weight;
+        // Waves smaller than a fragment footprint must contribute variance,
+        // not a frame-to-frame normal flip.  This analytic low-pass retains
+        // nearby capillary detail and suppresses the sparkling alias pattern
+        // that previously broke distant reflections into white particles.
+        float phase_footprint = k * (
+            length(dFdx(world_position.xz)) + length(dFdy(world_position.xz))
+        );
+        float resolved = 1.0 - smoothstep(.35, 1.35, phase_footprint);
+        fine_gradient += amplitude * k * direction * cos(theta)
+                       * fine_weight * resolved;
     }
     vec3 n = normalize(
         world_normal + vec3(-fine_gradient.x, 0.0, -fine_gradient.y)
@@ -48,13 +57,24 @@ void main() {
                                  vec3(.00018, .00032, .00072), sky_factor)
                            * sky_ambient_scale;
     vec2 reflection_uv = reflection_clip.xy / reflection_clip.w * .5 + .5;
-    reflection_uv += vec2(n.x, -n.z) * .018;
+    // Han River event photographs show a horizontally broken but vertically
+    // elongated reflection footprint.  The anisotropy follows from the low
+    // viewing angle and the projected wave normals, not a bloom pass.
+    reflection_uv += vec2(n.x * .0045, -n.z * .010);
     bool reflection_valid = reflection_clip.w > 0.0
                          && all(greaterThanEqual(reflection_uv, vec2(0.0)))
                          && all(lessThanEqual(reflection_uv, vec2(1.0)));
-    vec3 reflected_radiance = reflection_valid
-        ? texture(reflection_texture, reflection_uv).rgb
-        : fallback_radiance;
+    vec3 reflected_radiance = fallback_radiance;
+    if (reflection_valid) {
+        vec2 texel = 1.0 / vec2(textureSize(reflection_texture, 0));
+        float distance_m = length(camera_position - world_position);
+        float streak_px = mix(1.25, 5.5, smoothstep(120.0, 1800.0, distance_m));
+        vec2 streak = vec2(0.0, texel.y * streak_px);
+        reflected_radiance =
+              texture(reflection_texture, reflection_uv).rgb * .50
+            + texture(reflection_texture, reflection_uv + streak).rgb * .25
+            + texture(reflection_texture, reflection_uv - streak).rgb * .25;
+    }
     float optical_path_m = .42 / max(n_dot_v, .08);
     vec3 absorption_per_m = vec3(.62, .22, .095);
     vec3 water_transmission = exp(-absorption_per_m * optical_path_m);
