@@ -45,8 +45,10 @@ def test_shipped_request_is_authorized_private_and_not_submitted() -> None:
     )
     assert request["submission"]["credentials_entered_by_agent"] is False
     assert request["submission"]["captcha_present"] is True
-    assert request["submission"]["captcha_completed"] is False
+    assert request["submission"]["captcha_completed"] is True
+    assert request["submission"]["captcha_entered_by_agent"] is False
     assert request["submission"]["application_fields_prepared"] is True
+    assert request["submission"]["applicant_required_fields_completed"] is True
     assert request["submission"]["selected_provider"] == (
         "국토교통부 국토지리정보원"
     )
@@ -68,8 +70,9 @@ def test_committed_report_is_ready_but_never_unlocks_scene() -> None:
     assert report["applicant_completion_pending"]
     assert report["checks"]["credential_handling_safe"]
     assert report["checks"]["captcha_present"]
-    assert not report["checks"]["captcha_completed"]
+    assert report["checks"]["captcha_completed"]
     assert report["checks"]["application_fields_prepared"]
+    assert report["checks"]["applicant_required_fields_completed"]
     assert not report["scene_merge_allowed"]
     assert report["scene_vertices_modified"] == 0
 

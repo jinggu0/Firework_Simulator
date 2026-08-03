@@ -5,7 +5,7 @@
   "receipt_asset": "assets/yeouido_ngii_delivery_receipt.json",
   "receipt_sha256": "03e53924594c7a8469122a1df0d20d31de2fb4cc796d7ab32911c6042c406fd4",
   "source_manifest": "assets/yeouido_ngii_1000_source_manifest.json",
-  "source_manifest_sha256": "1dbd7e59f9406857717d1678db49bc704ae141dbfa7d606ee5a46ab4bb28b90d",
+  "source_manifest_sha256": "8db2df42fd9b169c6814f63b8c067ccd677e4e1bf3e72ba7cfd9c636f307d805",
   "source_manifest_link": {
     "asset": "assets/yeouido_ngii_delivery_receipt.json",
     "expected_sha256": "03e53924594c7a8469122a1df0d20d31de2fb4cc796d7ab32911c6042c406fd4",

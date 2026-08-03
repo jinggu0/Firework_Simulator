@@ -140,7 +140,8 @@ def build_report(
     credential_handling_safe = bool(
         submission.get("credentials_entered_by_agent") is False
         and submission.get("captcha_present") is True
-        and submission.get("captcha_completed") is False
+        and submission.get("captcha_completed") is True
+        and submission.get("captcha_entered_by_agent") is False
     )
     payload_ready = bool(
         request.get("status")
@@ -148,6 +149,7 @@ def build_report(
             "ready_for_manual_submission_not_submitted",
             "submission_authorized_waiting_for_portal_authentication",
             "form_prepared_waiting_for_applicant_fields_and_privacy_consent",
+            "applicant_fields_completed_waiting_for_privacy_consent",
         }
         and official_route_valid
         and preferred_valid
@@ -203,6 +205,10 @@ def build_report(
             "captcha_completed": submission.get("captcha_completed") is True,
             "application_fields_prepared": submission.get(
                 "application_fields_prepared"
+            )
+            is True,
+            "applicant_required_fields_completed": submission.get(
+                "applicant_required_fields_completed"
             )
             is True,
         },

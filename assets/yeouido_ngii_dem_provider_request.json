@@ -2,7 +2,7 @@
   "schema_version": 1,
   "target_event_date": "2024-10-05",
   "prepared_at": "2026-08-03",
-  "status": "form_prepared_waiting_for_applicant_fields_and_privacy_consent",
+  "status": "applicant_fields_completed_waiting_for_privacy_consent",
   "submission": {
     "authorized": true,
     "performed": false,
@@ -11,15 +11,13 @@
     "authentication_method_selected": "public_data_portal_id",
     "credentials_entered_by_agent": false,
     "captcha_present": true,
-    "captcha_completed": false,
+    "captcha_completed": true,
+    "captcha_entered_by_agent": false,
     "application_fields_prepared": true,
+    "applicant_required_fields_completed": true,
     "selected_provider": "국토교통부 국토지리정보원",
     "selected_use_purpose": "학술연구(논문‧과제 등)",
     "applicant_completion_pending": [
-      "date of birth",
-      "postal address",
-      "telephone number",
-      "CAPTCHA",
       "personal information collection consent",
       "third-party personal information provision consent"
     ],
@@ -84,8 +82,7 @@
     "scene_merge_allowed": false,
     "scene_vertices_modified": 0,
     "blocking_reasons": [
-      "required applicant fields and CAPTCHA have not been completed",
-      "10-year personal information collection and third-party provision consent has not been confirmed",
+      "10-year personal information collection and third-party provision consent remain unselected",
       "the request has not been externally submitted",
       "no provider raster package has been delivered",
       "published accuracy is blank for the six fallback sheets",

@@ -94,18 +94,18 @@
   },
   "dem_acquisition_request": {
     "asset": "assets/yeouido_ngii_dem_request.json",
-    "sha256": "ddd5d85498b09c0853d52bbc0050115790e0d0790eec750f9df19c972298e789",
+    "sha256": "ccf4ed3973efc30805ed17eca3f8e258205541a05b943e18af3d4315d8544f3c",
     "sheet_id": "37608",
     "production_year": 2024,
     "status": "blocked_portal_endpoint_not_found_metadata_only"
   },
   "dem_provider_request": {
     "asset": "assets/yeouido_ngii_dem_provider_request.json",
-    "sha256": "7d1cf2a8dcdef5e443e02b4c1585d4e7362256c08e52b9c77d7bf50d91b6eaa8",
+    "sha256": "1f9a2ade5f0b148b32447fbffd0e26d57063d88be4066346f1ce6f384d98bee5",
     "audit_report": "docs/validation/ngii_dem_v1/ngii_dem_provider_request_report.json",
-    "audit_report_sha256": "e5e1383c7b3dbc01f51daf4d98ffd8e108ff1ede367f15b52168ae49f568c0d1",
+    "audit_report_sha256": "6929d5cdc2fc485f30d65a618499b98d7761b49021298608713bc0c134024289",
     "fallback_sheet_count": 6,
-    "status": "form_prepared_waiting_for_applicant_fields_and_privacy_consent"
+    "status": "applicant_fields_completed_waiting_for_privacy_consent"
   },
   "temporal_policy": "프로젝트 소유자가 2025 공식 배포본의 정규화·로컬 파생 사용을 명시적으로 승인했다. 2024-10-05 행사 당시와 동일하다는 주장은 하지 않으며, 당시 상태 검증은 별도 과제로 유지한다.",
   "runtime_status": "이 명세는 출처 발견 기록이며 현재 배포 장면의 구조물 형상을 변경하지 않는다."

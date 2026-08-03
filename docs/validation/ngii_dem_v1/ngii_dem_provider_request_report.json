@@ -2,7 +2,7 @@
   "schema_version": 1,
   "stage": "V1-11e",
   "request_asset": "assets/yeouido_ngii_dem_provider_request.json",
-  "request_sha256": "7d1cf2a8dcdef5e443e02b4c1585d4e7362256c08e52b9c77d7bf50d91b6eaa8",
+  "request_sha256": "1f9a2ade5f0b148b32447fbffd0e26d57063d88be4066346f1ce6f384d98bee5",
   "metadata_audit": "docs/validation/ngii_dem_v1/ngii_dem_metadata_report.json",
   "metadata_audit_sha256": "7c5514af50cf4f5004d9e9b17351a7694f712c2bccba6ee0e169ce19addd4a85",
   "checks": {
@@ -17,8 +17,9 @@
     "credential_handling_safe": true,
     "authentication_method_selected": "public_data_portal_id",
     "captcha_present": true,
-    "captcha_completed": false,
-    "application_fields_prepared": true
+    "captcha_completed": true,
+    "application_fields_prepared": true,
+    "applicant_required_fields_completed": true
   },
   "submission_payload_ready": true,
   "ready_for_manual_submission": true,
@@ -29,8 +30,7 @@
   "scene_merge_allowed": false,
   "scene_vertices_modified": 0,
   "blocking_reasons": [
-    "required applicant fields and CAPTCHA have not been completed",
-    "10-year personal information collection and third-party provision consent has not been confirmed",
+    "10-year personal information collection and third-party provision consent remain unselected",
     "the request has not been externally submitted",
     "no provider raster package has been delivered",
     "published accuracy is blank for the six fallback sheets",

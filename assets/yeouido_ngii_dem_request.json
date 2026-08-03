@@ -62,10 +62,10 @@
     },
     "provider_request": {
       "request_asset": "assets/yeouido_ngii_dem_provider_request.json",
-      "request_sha256": "7d1cf2a8dcdef5e443e02b4c1585d4e7362256c08e52b9c77d7bf50d91b6eaa8",
+      "request_sha256": "1f9a2ade5f0b148b32447fbffd0e26d57063d88be4066346f1ce6f384d98bee5",
       "audit_report": "docs/validation/ngii_dem_v1/ngii_dem_provider_request_report.json",
-      "audit_report_sha256": "e5e1383c7b3dbc01f51daf4d98ffd8e108ff1ede367f15b52168ae49f568c0d1",
-      "status": "form_prepared_waiting_for_applicant_fields_and_privacy_consent",
+      "audit_report_sha256": "6929d5cdc2fc485f30d65a618499b98d7761b49021298608713bc0c134024289",
+      "status": "applicant_fields_completed_waiting_for_privacy_consent",
       "external_submission_performed": false
     },
     "downloaded": false,
