@@ -11,24 +11,36 @@ year and area: `2024 서울 37608`.
 - Portal selection: complete
 - Authentication: confirmed
 - Application: purpose, detail, and terms prepared
-- Submission attempts: 2 complete forms closed without a browser download event
-  or a new file in the configured Downloads folder
-- Download: waiting for the user to re-enter the required date of birth after
-  the portal reset the form during request diagnostics
+- Submission attempts: 4 complete forms across the retained and official
+  `?tabGb=total` entry paths
+- Portal response: HTTP 200 `text/html` page-not-found document from the DEM
+  submission endpoint instead of the JSON `orderDownList` expected by the
+  portal's own `download.js`
+- My page state: public DEM download count remains zero
+- Download: blocked by the provider endpoint; no raster package was delivered
 - Runtime impact: none
 
 The portal also lists 2014, 2021, 2022, 2023, and 2025 versions. The 2024
 version is selected because it matches the target event year without the
 post-event temporal override required by the 2025 structure delivery.
 
-The date of birth is intentionally neither inferred nor stored in the
-repository. The prepared Chrome form is retained for direct user re-entry;
-all non-sensitive application fields and the terms choice are already restored.
+The user authorized reuse of the value they entered for subsequent portal
+attempts. It was reused only inside the active browser session and is neither
+printed nor stored in the repository.
 
-The portal's modal closes when a complete request is submitted, but neither of
-the two observed submissions emitted a browser download event or created a new
-file in the configured Downloads folder. A third diagnostic pass was stopped
-before submission when reopening the modal cleared the user-entered date.
+The portal's modal closes when a complete request is submitted. Network tracing
+shows that the front end posts to `shbtInsertTritVidoDem.do` and expects JSON,
+but the server returns the site's page-not-found HTML with HTTP 200. This is not
+a queued request or a large-file-transfer handoff.
+
+Two official, login-free metadata CSVs were downloaded from the public data
+portal and locked by checksum. The performance snapshot identifies six 2009
+airborne-LiDAR, 1 m ASCII candidates overlapping the full project bbox:
+`서울087`, `서울088`, `서울089`, `서울097`, `서울098`, and `서울099`.
+They use orthometric heights relative to Incheon mean sea level. Their
+published accuracy fields are blank, and the raster files themselves were not
+delivered, so they cannot satisfy the 0.10 m vertical uncertainty gate. See
+`ngii_dem_metadata_report.json` for the machine-readable audit.
 
 ## Intake gate
 
@@ -41,5 +53,5 @@ After login, retain the downloaded package outside version control and record:
 5. provider terms permitting local derived use.
 
 Do not merge the DEM or structure meshes until plan registration RMSE is at
-most 0.25 m and vertical uncertainty is at most 0.10 m. The pending state is
+most 0.25 m and vertical uncertainty is at most 0.10 m. The blocked state is
 machine-readable in `assets/yeouido_ngii_dem_request.json`.

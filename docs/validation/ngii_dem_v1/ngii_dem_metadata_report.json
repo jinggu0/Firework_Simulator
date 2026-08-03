@@ -1,0 +1,191 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-08-03",
+  "sources": {
+    "basic_metadata": {
+      "file_name": "국토교통부 국토지리정보원_항공사진_수치표고기본메타데이터_20231107.csv",
+      "bytes": 5827643,
+      "sha256": "6bacc53084b9e69156ae452f399e0ac7944d4f957082004c96955fee98d7e2a6",
+      "row_count": 23190,
+      "source_url": "https://www.data.go.kr/data/15067632/fileData.do"
+    },
+    "performance_metadata": {
+      "file_name": "국토교통부 국토지리정보원_항공사진_수치표고성과내역_20231107.csv",
+      "bytes": 5751188,
+      "sha256": "10e46e3c749e91c4aa6a9de41dff1d724b09dd355cd9c90e63c7f4181e62fe3e",
+      "row_count": 23190,
+      "source_url": "https://www.data.go.kr/data/15067637/fileData.do"
+    },
+    "raw_files_redistributed": false
+  },
+  "scene_scope": {
+    "bbox_wgs84": [
+      126.91,
+      37.515,
+      126.96,
+      37.545
+    ],
+    "analysis_crs": "EPSG:5186",
+    "bbox_epsg5186": [
+      192043.301,
+      546169.683,
+      196465.106,
+      549502.366
+    ]
+  },
+  "legacy_lidar_candidates": {
+    "count": 6,
+    "sheets": [
+      {
+        "sheet_id": "37608087",
+        "sheet_name": "서울087",
+        "production_year": 2009,
+        "grid_spacing_m": 1.0,
+        "source_method": "항공레이저 측량",
+        "format": "ASCII",
+        "record_order": "Upper-Left",
+        "vertical_datum": "인천항의 평균해수면",
+        "height_type": "정표고",
+        "minimum_elevation_m": -1.26,
+        "maximum_elevation_m": 39.93,
+        "published_accuracy": null,
+        "bounds_epsg5186": [
+          191112.0,
+          547230.0,
+          193421.0,
+          550109.0
+        ]
+      },
+      {
+        "sheet_id": "37608088",
+        "sheet_name": "서울088",
+        "production_year": 2009,
+        "grid_spacing_m": 1.0,
+        "source_method": "항공레이저 측량",
+        "format": "ASCII",
+        "record_order": "Upper-Left",
+        "vertical_datum": "인천항의 평균해수면",
+        "height_type": "정표고",
+        "minimum_elevation_m": 2.79,
+        "maximum_elevation_m": 93.35,
+        "published_accuracy": null,
+        "bounds_epsg5186": [
+          193321.0,
+          547228.0,
+          195631.0,
+          550107.0
+        ]
+      },
+      {
+        "sheet_id": "37608089",
+        "sheet_name": "서울089",
+        "production_year": 2009,
+        "grid_spacing_m": 1.0,
+        "source_method": "항공레이저 측량",
+        "format": "ASCII",
+        "record_order": "Upper-Left",
+        "vertical_datum": "인천항의 평균해수면",
+        "height_type": "정표고",
+        "minimum_elevation_m": 3.04,
+        "maximum_elevation_m": 84.39,
+        "published_accuracy": null,
+        "bounds_epsg5186": [
+          195530.0,
+          547228.0,
+          197841.0,
+          550105.0
+        ]
+      },
+      {
+        "sheet_id": "37608097",
+        "sheet_name": "서울097",
+        "production_year": 2009,
+        "grid_spacing_m": 1.0,
+        "source_method": "항공레이저 측량",
+        "format": "ASCII",
+        "record_order": "Upper-Left",
+        "vertical_datum": "인천항의 평균해수면",
+        "height_type": "정표고",
+        "minimum_elevation_m": -0.94,
+        "maximum_elevation_m": 47.34,
+        "published_accuracy": null,
+        "bounds_epsg5186": [
+          191109.0,
+          544455.0,
+          193419.0,
+          547334.0
+        ]
+      },
+      {
+        "sheet_id": "37608098",
+        "sheet_name": "서울098",
+        "production_year": 2009,
+        "grid_spacing_m": 1.0,
+        "source_method": "항공레이저 측량",
+        "format": "ASCII",
+        "record_order": "Upper-Left",
+        "vertical_datum": "인천항의 평균해수면",
+        "height_type": "정표고",
+        "minimum_elevation_m": 1.72,
+        "maximum_elevation_m": 99.27,
+        "published_accuracy": null,
+        "bounds_epsg5186": [
+          193319.0,
+          544454.0,
+          195629.0,
+          547341.0
+        ]
+      },
+      {
+        "sheet_id": "37608099",
+        "sheet_name": "서울099",
+        "production_year": 2009,
+        "grid_spacing_m": 1.0,
+        "source_method": "항공레이저 측량",
+        "format": "ASCII",
+        "record_order": "Upper-Left",
+        "vertical_datum": "인천항의 평균해수면",
+        "height_type": "정표고",
+        "minimum_elevation_m": 3.02,
+        "maximum_elevation_m": 141.06,
+        "published_accuracy": null,
+        "bounds_epsg5186": [
+          195529.0,
+          544453.0,
+          197840.0,
+          547331.0
+        ]
+      }
+    ],
+    "sampled_scene_coverage": true,
+    "coverage_sample_grid": [
+      21,
+      21
+    ],
+    "crs_interpretation": "EPSG:5186 is used to reconcile the published GRS80 middle-origin bounds; the raster header is still required for final CRS verification."
+  },
+  "portal_delivery": {
+    "requested_product": "2024 서울 37608 공개DEM",
+    "submission_endpoint": "https://map.ngii.go.kr/pd/shbtManage/shbtInsertTritVidoDem.do",
+    "expected_response": "application/json orderDownList",
+    "observed_http_status": 200,
+    "observed_mime_type": "text/html",
+    "observed_page": "요청하신 페이지를 찾을 수 없습니다",
+    "raster_downloaded": false
+  },
+  "validation_gate": {
+    "maximum_plan_registration_rmse_m": 0.25,
+    "maximum_vertical_uncertainty_m": 0.1,
+    "published_accuracy_documented": false,
+    "provider_raster_checksum_available": false,
+    "scene_merge_allowed": false,
+    "scene_vertices_modified": 0,
+    "blocking_reasons": [
+      "the 2024 provider raster was not delivered",
+      "the portal DEM endpoint returned a page-not-found HTML document",
+      "the metadata snapshot documents 2009 legacy LiDAR, not the 2024 package",
+      "published accuracy is blank for all overlapping 1 m candidates",
+      "CRS and NoData are not verified from a delivered raster header"
+    ]
+  }
+}

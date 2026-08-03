@@ -262,6 +262,21 @@ alter scene elevation. Portal `minx/miny` values are treated as
 Easting/Northing for `always_xy=True`; the EPSG-native Northing/Easting axis
 metadata is recorded separately to prevent an axis-order substitution.
 
+## NGII DEM metadata (audited, raster not ingested)
+
+- Basic metadata: https://www.data.go.kr/data/15067632/fileData.do
+- Performance metadata: https://www.data.go.kr/data/15067637/fileData.do
+- Snapshot label: 2023-11-07; downloaded 2026-08-03
+- Raw CSV retention: outside the repository, checksum-locked in
+  `docs/validation/ngii_dem_v1/ngii_dem_metadata_report.json`
+
+The performance metadata identifies six 2009 airborne-LiDAR, 1 m ASCII sheets
+overlapping the project bbox: Seoul087-089 and Seoul097-099. It records
+orthometric heights relative to Incheon mean sea level, but leaves accuracy
+blank. No NGII DEM raster is distributed or merged. The current 2024 portal
+submission endpoint returned the site's page-not-found HTML instead of the JSON
+download order expected by its own front-end code.
+
 ## Historical weather
 
 The event environment snapshot is derived from hourly Seoul station records

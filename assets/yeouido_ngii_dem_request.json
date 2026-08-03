@@ -17,17 +17,49 @@
     "selection_label": "2024 서울 37608"
   },
   "acquisition": {
-    "status": "awaiting_user_date_of_birth_reentry_after_portal_reset",
+    "status": "blocked_portal_endpoint_not_found_metadata_only",
     "selected_in_portal": true,
     "authenticated_session_confirmed": true,
     "application_prepared": true,
     "use_purpose": "제작 및 활용 / 교육, 학술, 연구",
     "use_detail": "2024 여의도 불꽃축제 3D 시뮬레이터의 지형 고도 검증 및 시각화 연구",
     "terms_accepted": true,
-    "date_of_birth_handling": "user_entry_required_not_stored_in_repository",
-    "complete_form_submission_attempts": 2,
-    "last_submission_outcome": "portal_closed_application_modal_without_download_event_or_file",
-    "reentry_reason": "portal_form_fields_reset_when_reopened_for_network_diagnostics",
+    "date_of_birth_handling": "user_authorized_browser_session_reuse_not_stored_in_repository",
+    "complete_form_submission_attempts": 4,
+    "last_submission_outcome": "frontend_expected_json_but_endpoint_returned_page_not_found_html",
+    "submission_endpoint": "https://map.ngii.go.kr/pd/shbtManage/shbtInsertTritVidoDem.do",
+    "observed_http_status": 200,
+    "observed_mime_type": "text/html",
+    "portal_registered_dem_count": 0,
+    "metadata_evidence": {
+      "audit_report": "docs/validation/ngii_dem_v1/ngii_dem_metadata_report.json",
+      "audit_report_sha256": "7c5514af50cf4f5004d9e9b17351a7694f712c2bccba6ee0e169ce19addd4a85",
+      "files": [
+        {
+          "file_name": "국토교통부 국토지리정보원_항공사진_수치표고기본메타데이터_20231107.csv",
+          "bytes": 5827643,
+          "sha256": "6bacc53084b9e69156ae452f399e0ac7944d4f957082004c96955fee98d7e2a6"
+        },
+        {
+          "file_name": "국토교통부 국토지리정보원_항공사진_수치표고성과내역_20231107.csv",
+          "bytes": 5751188,
+          "sha256": "10e46e3c749e91c4aa6a9de41dff1d724b09dd355cd9c90e63c7f4181e62fe3e"
+        }
+      ],
+      "legacy_candidate_year": 2009,
+      "legacy_candidate_sheet_ids": [
+        "37608087",
+        "37608088",
+        "37608089",
+        "37608097",
+        "37608098",
+        "37608099"
+      ],
+      "legacy_candidate_grid_spacing_m": 1.0,
+      "legacy_candidate_vertical_datum": "인천항의 평균해수면",
+      "legacy_candidate_height_type": "정표고",
+      "legacy_candidate_accuracy": null
+    },
     "downloaded": false,
     "package_file_name": null,
     "package_sha256": null,
@@ -50,11 +82,11 @@
     "scene_merge_allowed": false,
     "scene_vertices_modified": 0,
     "blocking_reasons": [
-      "authenticated download not completed",
-      "package checksum not available",
-      "projected CRS not verified from delivery",
-      "vertical datum not verified from delivery",
-      "grid spacing and vertical uncertainty not verified"
+      "2024 DEM submission endpoint returned page-not-found HTML instead of JSON",
+      "2024 raster package and checksum are unavailable",
+      "downloaded metadata describes 2009 legacy LiDAR rather than the 2024 package",
+      "published accuracy is blank for all six overlapping 1 m candidates",
+      "projected CRS and NoData are not verified from a delivered raster header"
     ]
   }
 }
