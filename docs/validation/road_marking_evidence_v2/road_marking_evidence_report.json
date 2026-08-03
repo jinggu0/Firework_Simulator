@@ -1,0 +1,1641 @@
+{
+  "schema_version": 1,
+  "stage": "V2-2d",
+  "event_date": "2024-10-05",
+  "snapshot_utc": "2024-10-05T10:20:00Z",
+  "inputs": {
+    "historical_osm": {
+      "asset": "assets/yeouido_road_osm_2024-10-05.json",
+      "sha256": "1f833afc096b273c163410188f74556bb82cb81c393aabdb2033d2f9655e2c58",
+      "provider": "OpenStreetMap contributors via Overpass API",
+      "licence": "ODbL 1.0"
+    },
+    "rendered_scene": {
+      "asset": "assets/yeouido_scene.npz",
+      "sha256": "c8b9d2720f935de3532a9401c74d37a55470d23645c06d32c24ff923c3291518"
+    },
+    "way_binding": {
+      "asset": "assets/yeouido_road_detail_semantics_2024-10-05.json",
+      "sha256": "bd98ab2ad5ea21b9b18cd85b3045226e529853ed3bef33f23183a7e07bb11728"
+    }
+  },
+  "rendered_inventory": {
+    "rendered_segment_count": 35215,
+    "semantic_filter": {
+      "input_segments": 35340,
+      "output_segments": 35215,
+      "excluded_segments": 125,
+      "excluded_osm_way_ids": [
+        75113082,
+        215670926,
+        331203274,
+        474507375,
+        475190608,
+        480824684,
+        914374379,
+        925101314
+      ]
+    }
+  },
+  "source_capability": {
+    "historical_osm": {
+      "status": "candidate_geometry_only",
+      "supports": [
+        "event-dated way identifiers",
+        "lane-count and directional candidate discovery",
+        "limited cycle-lane candidate discovery"
+      ],
+      "does_not_support": [
+        "way-specific centre-line colour or solid/dashed state",
+        "edge-line placement",
+        "turn-arrow geometry",
+        "bicycle-symbol geometry"
+      ]
+    },
+    "official_marking_rules": {
+      "status": "dimensions_and_classes_only",
+      "road_traffic_act_enforcement_rules_appendix_6_2024_09_20": "https://law.go.kr/LSW/flDownload.do?bylClsCd=110201&flSeq=144234901",
+      "molit_lane_paint_maintenance_manual_2024": "https://www.molit.go.kr/portal/common/download/DownloadMltm2.jsp?FileName=%EC%B0%A8%EC%84%A0%EB%8F%84%EC%83%89+%EC%9C%A0%EC%A7%80%C2%B7%EA%B4%80%EB%A6%AC+%EB%A7%A4%EB%89%B4%EC%96%BC.pdf&FilePath=portal%2FDextUpload%2F202404%2F20240429_133733_839.pdf",
+      "limitation": "The rules define permitted classes and physical dimensions, but do not assign an event-date marking type to each OSM way."
+    },
+    "seoul_smap_2024_background": {
+      "status": "available_not_acquired_or_registered",
+      "service": "https://smap.seoul.go.kr/",
+      "official_guide": "https://smap.seoul.go.kr/guide/guide.html",
+      "supports": "selection of a 2024 background-map year",
+      "unresolved": [
+        "exact imagery acquisition date",
+        "event-date applicability",
+        "capture reuse terms",
+        "pixel-to-world registration residual",
+        "visibility of paint at source resolution"
+      ]
+    },
+    "seoul_bicycle_road_statistics": {
+      "status": "aggregate_classification_only",
+      "source": "https://data.seoul.go.kr/bsp/wgs/dataView/data300View/428.do",
+      "limitation": "Route-type statistics define facility categories but do not provide event-date, way-level paint geometry."
+    }
+  },
+  "historical_osm_tag_inventory": {
+    "lanes": {
+      "way_count": 189,
+      "values": {
+        "0": 1,
+        "1": 58,
+        "2": 35,
+        "3": 11,
+        "4": 39,
+        "5": 22,
+        "6": 17,
+        "7": 1,
+        "8": 4,
+        "9": 1
+      }
+    },
+    "lanes:forward": {
+      "way_count": 6,
+      "values": {
+        "2": 1,
+        "3": 3,
+        "4": 1,
+        "5": 1
+      }
+    },
+    "lanes:backward": {
+      "way_count": 6,
+      "values": {
+        "2": 2,
+        "3": 2,
+        "4": 1,
+        "5": 1
+      }
+    },
+    "oneway": {
+      "way_count": 776,
+      "values": {
+        "no": 138,
+        "yes": 638
+      }
+    },
+    "divider": {
+      "way_count": 0,
+      "values": {}
+    },
+    "shoulder": {
+      "way_count": 0,
+      "values": {}
+    },
+    "turn:lanes": {
+      "way_count": 0,
+      "values": {}
+    },
+    "turn:lanes:forward": {
+      "way_count": 0,
+      "values": {}
+    },
+    "turn:lanes:backward": {
+      "way_count": 0,
+      "values": {}
+    },
+    "cycleway": {
+      "way_count": 3,
+      "values": {
+        "crossing": 1,
+        "opposite_track": 2
+      }
+    },
+    "cycleway:both": {
+      "way_count": 16,
+      "values": {
+        "lane": 10,
+        "no": 4,
+        "track": 2
+      }
+    },
+    "cycleway:both:lane": {
+      "way_count": 10,
+      "values": {
+        "exclusive": 10
+      }
+    },
+    "cycleway:left": {
+      "way_count": 8,
+      "values": {
+        "opposite": 7,
+        "opposite_track": 1
+      }
+    },
+    "cycleway:left:lane": {
+      "way_count": 0,
+      "values": {}
+    },
+    "cycleway:right": {
+      "way_count": 52,
+      "values": {
+        "lane": 10,
+        "no": 23,
+        "opposite_lane": 2,
+        "opposite_track": 5,
+        "shared_lane": 6,
+        "track": 6
+      }
+    },
+    "cycleway:right:lane": {
+      "way_count": 13,
+      "values": {
+        "exclusive": 13
+      }
+    },
+    "crossing:markings": {
+      "way_count": 3,
+      "values": {
+        "yes": 3
+      }
+    },
+    "road_marking": {
+      "way_count": 0,
+      "values": {}
+    },
+    "lane_markings": {
+      "way_count": 0,
+      "values": {}
+    },
+    "centre_line": {
+      "way_count": 0,
+      "values": {}
+    },
+    "center_line": {
+      "way_count": 0,
+      "values": {}
+    }
+  },
+  "candidate_groups": {
+    "already_rendered_oneway_lane_dividers": {
+      "way_count": 66,
+      "rendered_segment_count": 4387,
+      "rendered_centreline_length_m": 48567.02743801018,
+      "records": [
+        {
+          "osm_way_id": 26283546,
+          "tags": {
+            "lanes": "5",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 2,
+          "rendered_centreline_length_m": 14.598134096045374
+        },
+        {
+          "osm_way_id": 37395723,
+          "tags": {
+            "lanes": "4",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 201,
+          "rendered_centreline_length_m": 2174.036493503794
+        },
+        {
+          "osm_way_id": 37400685,
+          "tags": {
+            "cycleway:right": "no",
+            "lanes": "2",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 21,
+          "rendered_centreline_length_m": 229.56042177162874
+        },
+        {
+          "osm_way_id": 65370728,
+          "tags": {
+            "cycleway:left": "opposite",
+            "cycleway:right": "opposite_track",
+            "lanes": "4",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 15,
+          "rendered_centreline_length_m": 159.63978836143679
+        },
+        {
+          "osm_way_id": 65370731,
+          "tags": {
+            "cycleway:left": "opposite",
+            "cycleway:right": "opposite_track",
+            "lanes": "4",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 17,
+          "rendered_centreline_length_m": 163.0182452604861
+        },
+        {
+          "osm_way_id": 204026163,
+          "tags": {
+            "lanes": "2",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 22,
+          "rendered_centreline_length_m": 175.01229992900556
+        },
+        {
+          "osm_way_id": 204683968,
+          "tags": {
+            "cycleway:right": "no",
+            "lanes": "3",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 7,
+          "rendered_centreline_length_m": 66.60463826233939
+        },
+        {
+          "osm_way_id": 219109929,
+          "tags": {
+            "cycleway:both": "no",
+            "lanes": "8",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 2,
+          "rendered_centreline_length_m": 14.450970201166236
+        },
+        {
+          "osm_way_id": 219116633,
+          "tags": {
+            "cycleway:right:lane": "exclusive",
+            "lanes": "2",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 8,
+          "rendered_centreline_length_m": 86.7105237887867
+        },
+        {
+          "osm_way_id": 219137492,
+          "tags": {
+            "cycleway:both": "no",
+            "lanes": "9",
+            "lanes:backward": "5",
+            "lanes:forward": "4",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 19,
+          "rendered_centreline_length_m": 199.60199124632882
+        },
+        {
+          "osm_way_id": 219138999,
+          "tags": {
+            "cycleway:right": "no",
+            "lanes": "8",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 7,
+          "rendered_centreline_length_m": 73.77899293004921
+        },
+        {
+          "osm_way_id": 219141468,
+          "tags": {
+            "lanes": "3",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 27,
+          "rendered_centreline_length_m": 291.0774340492932
+        },
+        {
+          "osm_way_id": 219691697,
+          "tags": {
+            "cycleway:right": "shared_lane",
+            "lanes": "5",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 18,
+          "rendered_centreline_length_m": 182.78821048835388
+        },
+        {
+          "osm_way_id": 219691700,
+          "tags": {
+            "cycleway:right": "shared_lane",
+            "lanes": "5",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 58,
+          "rendered_centreline_length_m": 627.4103521605103
+        },
+        {
+          "osm_way_id": 228476247,
+          "tags": {
+            "lanes": "4",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 146,
+          "rendered_centreline_length_m": 1670.1339805549876
+        },
+        {
+          "osm_way_id": 333552863,
+          "tags": {
+            "cycleway:right": "shared_lane",
+            "lanes": "5",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 14,
+          "rendered_centreline_length_m": 148.3964112522954
+        },
+        {
+          "osm_way_id": 452365406,
+          "tags": {
+            "cycleway:right": "shared_lane",
+            "lanes": "3",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 30,
+          "rendered_centreline_length_m": 272.76904015093226
+        },
+        {
+          "osm_way_id": 452365413,
+          "tags": {
+            "lanes": "2",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 3,
+          "rendered_centreline_length_m": 26.42093990276728
+        },
+        {
+          "osm_way_id": 452365415,
+          "tags": {
+            "lanes": "3",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 9,
+          "rendered_centreline_length_m": 81.08696050513387
+        },
+        {
+          "osm_way_id": 452404529,
+          "tags": {
+            "lanes": "2",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 13,
+          "rendered_centreline_length_m": 112.62554560229597
+        },
+        {
+          "osm_way_id": 452567348,
+          "tags": {
+            "lanes": "2",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 5,
+          "rendered_centreline_length_m": 40.43009595200259
+        },
+        {
+          "osm_way_id": 452574892,
+          "tags": {
+            "cycleway:right": "lane",
+            "cycleway:right:lane": "exclusive",
+            "lanes": "2",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 43,
+          "rendered_centreline_length_m": 468.74614021116804
+        },
+        {
+          "osm_way_id": 452686870,
+          "tags": {
+            "lanes": "6",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 4,
+          "rendered_centreline_length_m": 37.073846572732116
+        },
+        {
+          "osm_way_id": 453455600,
+          "tags": {
+            "lanes": "3",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 49,
+          "rendered_centreline_length_m": 532.8146892245636
+        },
+        {
+          "osm_way_id": 453494428,
+          "tags": {
+            "lanes": "2",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 15,
+          "rendered_centreline_length_m": 177.41995849161228
+        },
+        {
+          "osm_way_id": 453494431,
+          "tags": {
+            "cycleway:right": "shared_lane",
+            "lanes": "3",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 29,
+          "rendered_centreline_length_m": 287.101631911586
+        },
+        {
+          "osm_way_id": 453494432,
+          "tags": {
+            "lanes": "4",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 110,
+          "rendered_centreline_length_m": 1187.452344817073
+        },
+        {
+          "osm_way_id": 455428915,
+          "tags": {
+            "lanes": "3",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 4,
+          "rendered_centreline_length_m": 37.62705754682168
+        },
+        {
+          "osm_way_id": 474954574,
+          "tags": {
+            "lanes": "4",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 342,
+          "rendered_centreline_length_m": 3865.218728336439
+        },
+        {
+          "osm_way_id": 480824679,
+          "tags": {
+            "cycleway:right": "lane",
+            "cycleway:right:lane": "exclusive",
+            "lanes": "2",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 23,
+          "rendered_centreline_length_m": 212.7738982217251
+        },
+        {
+          "osm_way_id": 480824685,
+          "tags": {
+            "cycleway:right": "no",
+            "lanes": "2",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 16,
+          "rendered_centreline_length_m": 170.78471123505193
+        },
+        {
+          "osm_way_id": 480824686,
+          "tags": {
+            "cycleway:right": "no",
+            "lanes": "2",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 16,
+          "rendered_centreline_length_m": 171.90493476970966
+        },
+        {
+          "osm_way_id": 480827565,
+          "tags": {
+            "cycleway:right": "track",
+            "cycleway:right:oneway": "no",
+            "lanes": "3",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 31,
+          "rendered_centreline_length_m": 326.4643381321208
+        },
+        {
+          "osm_way_id": 481488994,
+          "tags": {
+            "cycleway:right:lane": "exclusive",
+            "lanes": "3",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 19,
+          "rendered_centreline_length_m": 202.38572741951816
+        },
+        {
+          "osm_way_id": 515839514,
+          "tags": {
+            "lanes": "5",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 16,
+          "rendered_centreline_length_m": 166.05307660222059
+        },
+        {
+          "osm_way_id": 516417596,
+          "tags": {
+            "lanes": "5",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 18,
+          "rendered_centreline_length_m": 194.54958244511084
+        },
+        {
+          "osm_way_id": 516417606,
+          "tags": {
+            "cycleway:right": "track",
+            "lanes": "5",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 14,
+          "rendered_centreline_length_m": 159.16695868008026
+        },
+        {
+          "osm_way_id": 516948888,
+          "tags": {
+            "cycleway:right": "shared_lane",
+            "lanes": "5",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 60,
+          "rendered_centreline_length_m": 637.4957017116606
+        },
+        {
+          "osm_way_id": 525738552,
+          "tags": {
+            "lanes": "4",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 616,
+          "rendered_centreline_length_m": 6939.5731827868385
+        },
+        {
+          "osm_way_id": 525856592,
+          "tags": {
+            "lanes": "4",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 513,
+          "rendered_centreline_length_m": 5858.3849324210405
+        },
+        {
+          "osm_way_id": 586054433,
+          "tags": {
+            "lanes": "4",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 105,
+          "rendered_centreline_length_m": 1177.161652992701
+        },
+        {
+          "osm_way_id": 623345111,
+          "tags": {
+            "lanes": "2",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 29,
+          "rendered_centreline_length_m": 335.0615049894545
+        },
+        {
+          "osm_way_id": 623345124,
+          "tags": {
+            "lanes": "2",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 24,
+          "rendered_centreline_length_m": 277.59481050815293
+        },
+        {
+          "osm_way_id": 623373660,
+          "tags": {
+            "lanes": "2",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 1,
+          "rendered_centreline_length_m": 11.56295251041387
+        },
+        {
+          "osm_way_id": 623373661,
+          "tags": {
+            "lanes": "2",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 4,
+          "rendered_centreline_length_m": 40.079647690652
+        },
+        {
+          "osm_way_id": 623373664,
+          "tags": {
+            "lanes": "2",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 20,
+          "rendered_centreline_length_m": 221.76889354197692
+        },
+        {
+          "osm_way_id": 650930760,
+          "tags": {
+            "lanes": "5",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 15,
+          "rendered_centreline_length_m": 161.66320270815186
+        },
+        {
+          "osm_way_id": 794621881,
+          "tags": {
+            "cycleway:right": "track",
+            "lanes": "5",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 6,
+          "rendered_centreline_length_m": 58.26508612689194
+        },
+        {
+          "osm_way_id": 801836217,
+          "tags": {
+            "lanes": "5",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 1,
+          "rendered_centreline_length_m": 5.690227488913409
+        },
+        {
+          "osm_way_id": 808280128,
+          "tags": {
+            "lanes": "4",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 60,
+          "rendered_centreline_length_m": 658.7313033608772
+        },
+        {
+          "osm_way_id": 862460944,
+          "tags": {
+            "lanes": "2",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 583,
+          "rendered_centreline_length_m": 6604.233363443105
+        },
+        {
+          "osm_way_id": 862460945,
+          "tags": {
+            "lanes": "2",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 580,
+          "rendered_centreline_length_m": 6592.057317998442
+        },
+        {
+          "osm_way_id": 875703773,
+          "tags": {
+            "lanes": "2",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 18,
+          "rendered_centreline_length_m": 201.11419114703176
+        },
+        {
+          "osm_way_id": 875723637,
+          "tags": {
+            "lanes": "2",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 20,
+          "rendered_centreline_length_m": 200.75186631267854
+        },
+        {
+          "osm_way_id": 875723640,
+          "tags": {
+            "lanes": "2",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 4,
+          "rendered_centreline_length_m": 33.88185906184531
+        },
+        {
+          "osm_way_id": 912297768,
+          "tags": {
+            "lanes": "2",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 22,
+          "rendered_centreline_length_m": 207.7891509519967
+        },
+        {
+          "osm_way_id": 915663098,
+          "tags": {
+            "cycleway:right": "no",
+            "lanes": "3",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 4,
+          "rendered_centreline_length_m": 36.04993571824307
+        },
+        {
+          "osm_way_id": 915663102,
+          "tags": {
+            "cycleway:right": "no",
+            "lanes": "7",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 4,
+          "rendered_centreline_length_m": 38.16571392293248
+        },
+        {
+          "osm_way_id": 931083419,
+          "tags": {
+            "lanes": "2",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 75,
+          "rendered_centreline_length_m": 795.4751678414343
+        },
+        {
+          "osm_way_id": 931083420,
+          "tags": {
+            "lanes": "2",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 83,
+          "rendered_centreline_length_m": 904.9873210409934
+        },
+        {
+          "osm_way_id": 1085006614,
+          "tags": {
+            "lanes": "5",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 5,
+          "rendered_centreline_length_m": 48.182525290532496
+        },
+        {
+          "osm_way_id": 1110178218,
+          "tags": {
+            "lanes": "5",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 2,
+          "rendered_centreline_length_m": 17.470751620417797
+        },
+        {
+          "osm_way_id": 1110178219,
+          "tags": {
+            "lanes": "5",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 2,
+          "rendered_centreline_length_m": 14.405490330765183
+        },
+        {
+          "osm_way_id": 1110178225,
+          "tags": {
+            "lanes": "5",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 1,
+          "rendered_centreline_length_m": 11.22832048916423
+        },
+        {
+          "osm_way_id": 1110178229,
+          "tags": {
+            "lanes": "5",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 56,
+          "rendered_centreline_length_m": 621.4887471267645
+        },
+        {
+          "osm_way_id": 1307413158,
+          "tags": {
+            "lanes": "2",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 81,
+          "rendered_centreline_length_m": 849.0235222889296
+        }
+      ]
+    },
+    "centre_line_candidates_non_oneway_yes_multilane": {
+      "way_count": 37,
+      "rendered_segment_count": 502,
+      "rendered_centreline_length_m": 5137.440902608405,
+      "records": [
+        {
+          "osm_way_id": 37401901,
+          "tags": {
+            "cycleway:both": "lane",
+            "cycleway:both:lane": "exclusive",
+            "lanes": "4"
+          },
+          "rendered_segment_count": 29,
+          "rendered_centreline_length_m": 328.0926784023789
+        },
+        {
+          "osm_way_id": 75087283,
+          "tags": {
+            "lanes": "2"
+          },
+          "rendered_segment_count": 65,
+          "rendered_centreline_length_m": 637.2265626544018
+        },
+        {
+          "osm_way_id": 219140635,
+          "tags": {
+            "cycleway:both": "lane",
+            "cycleway:both:lane": "exclusive",
+            "lanes": "6",
+            "lanes:backward": "3",
+            "lanes:forward": "3"
+          },
+          "rendered_segment_count": 40,
+          "rendered_centreline_length_m": 449.93018230725903
+        },
+        {
+          "osm_way_id": 219141473,
+          "tags": {
+            "cycleway:both": "lane",
+            "cycleway:both:lane": "exclusive",
+            "lanes": "5",
+            "lanes:backward": "2",
+            "lanes:forward": "3"
+          },
+          "rendered_segment_count": 35,
+          "rendered_centreline_length_m": 379.494685417871
+        },
+        {
+          "osm_way_id": 277524632,
+          "tags": {
+            "cycleway:both": "no",
+            "lanes": "4"
+          },
+          "rendered_segment_count": 4,
+          "rendered_centreline_length_m": 45.625398751763285
+        },
+        {
+          "osm_way_id": 384826215,
+          "tags": {
+            "cycleway:both": "track",
+            "lanes": "6"
+          },
+          "rendered_segment_count": 30,
+          "rendered_centreline_length_m": 323.1415541536487
+        },
+        {
+          "osm_way_id": 452379117,
+          "tags": {
+            "lanes": "4"
+          },
+          "rendered_segment_count": 70,
+          "rendered_centreline_length_m": 706.0414225914617
+        },
+        {
+          "osm_way_id": 452379119,
+          "tags": {
+            "lanes": "3",
+            "oneway": "no"
+          },
+          "rendered_segment_count": 5,
+          "rendered_centreline_length_m": 47.5111387753177
+        },
+        {
+          "osm_way_id": 452379120,
+          "tags": {
+            "lanes": "4"
+          },
+          "rendered_segment_count": 14,
+          "rendered_centreline_length_m": 145.62791289321788
+        },
+        {
+          "osm_way_id": 452567360,
+          "tags": {
+            "lanes": "4",
+            "oneway": "no"
+          },
+          "rendered_segment_count": 11,
+          "rendered_centreline_length_m": 82.14951527420898
+        },
+        {
+          "osm_way_id": 453494430,
+          "tags": {
+            "lanes": "4",
+            "oneway": "no"
+          },
+          "rendered_segment_count": 5,
+          "rendered_centreline_length_m": 59.82203932304886
+        },
+        {
+          "osm_way_id": 454115462,
+          "tags": {
+            "lanes": "4",
+            "oneway": "no"
+          },
+          "rendered_segment_count": 4,
+          "rendered_centreline_length_m": 37.498535229249065
+        },
+        {
+          "osm_way_id": 454115465,
+          "tags": {
+            "lanes": "4",
+            "oneway": "no"
+          },
+          "rendered_segment_count": 8,
+          "rendered_centreline_length_m": 75.5346196288562
+        },
+        {
+          "osm_way_id": 456710473,
+          "tags": {
+            "lanes": "8"
+          },
+          "rendered_segment_count": 10,
+          "rendered_centreline_length_m": 101.52517697549568
+        },
+        {
+          "osm_way_id": 469801858,
+          "tags": {
+            "lanes": "4",
+            "oneway": "no"
+          },
+          "rendered_segment_count": 10,
+          "rendered_centreline_length_m": 71.51770384717574
+        },
+        {
+          "osm_way_id": 473295040,
+          "tags": {
+            "lanes": "4",
+            "oneway": "no"
+          },
+          "rendered_segment_count": 4,
+          "rendered_centreline_length_m": 46.29222655203195
+        },
+        {
+          "osm_way_id": 473697354,
+          "tags": {
+            "lanes": "4"
+          },
+          "rendered_segment_count": 3,
+          "rendered_centreline_length_m": 32.512920244110106
+        },
+        {
+          "osm_way_id": 516166427,
+          "tags": {
+            "lanes": "6"
+          },
+          "rendered_segment_count": 44,
+          "rendered_centreline_length_m": 425.8329134756657
+        },
+        {
+          "osm_way_id": 516417594,
+          "tags": {
+            "lanes": "6"
+          },
+          "rendered_segment_count": 4,
+          "rendered_centreline_length_m": 44.88398313355375
+        },
+        {
+          "osm_way_id": 623373662,
+          "tags": {
+            "lanes": "2"
+          },
+          "rendered_segment_count": 4,
+          "rendered_centreline_length_m": 44.697178751243975
+        },
+        {
+          "osm_way_id": 630516988,
+          "tags": {
+            "lanes": "4",
+            "oneway": "no"
+          },
+          "rendered_segment_count": 10,
+          "rendered_centreline_length_m": 107.12725940432796
+        },
+        {
+          "osm_way_id": 630516989,
+          "tags": {
+            "lanes": "4",
+            "oneway": "no"
+          },
+          "rendered_segment_count": 5,
+          "rendered_centreline_length_m": 56.34227193670429
+        },
+        {
+          "osm_way_id": 630516992,
+          "tags": {
+            "lanes": "6",
+            "oneway": "no"
+          },
+          "rendered_segment_count": 6,
+          "rendered_centreline_length_m": 49.25052738068563
+        },
+        {
+          "osm_way_id": 630516994,
+          "tags": {
+            "lanes": "6"
+          },
+          "rendered_segment_count": 12,
+          "rendered_centreline_length_m": 128.34540828963353
+        },
+        {
+          "osm_way_id": 630516995,
+          "tags": {
+            "lanes": "6"
+          },
+          "rendered_segment_count": 4,
+          "rendered_centreline_length_m": 41.2387019701079
+        },
+        {
+          "osm_way_id": 630516996,
+          "tags": {
+            "lanes": "6"
+          },
+          "rendered_segment_count": 7,
+          "rendered_centreline_length_m": 68.21051297989736
+        },
+        {
+          "osm_way_id": 630516997,
+          "tags": {
+            "lanes": "6"
+          },
+          "rendered_segment_count": 4,
+          "rendered_centreline_length_m": 36.5059075009102
+        },
+        {
+          "osm_way_id": 630516998,
+          "tags": {
+            "lanes": "6"
+          },
+          "rendered_segment_count": 6,
+          "rendered_centreline_length_m": 60.66845881808048
+        },
+        {
+          "osm_way_id": 630516999,
+          "tags": {
+            "lanes": "6"
+          },
+          "rendered_segment_count": 4,
+          "rendered_centreline_length_m": 38.2577506524091
+        },
+        {
+          "osm_way_id": 630792105,
+          "tags": {
+            "lanes": "6"
+          },
+          "rendered_segment_count": 14,
+          "rendered_centreline_length_m": 158.84249744705568
+        },
+        {
+          "osm_way_id": 915663099,
+          "tags": {
+            "cycleway:both": "track",
+            "lanes": "5",
+            "lanes:backward": "3",
+            "lanes:forward": "2"
+          },
+          "rendered_segment_count": 4,
+          "rendered_centreline_length_m": 42.55246752564739
+        },
+        {
+          "osm_way_id": 915663101,
+          "tags": {
+            "cycleway:both": "lane",
+            "cycleway:both:lane": "exclusive",
+            "lanes": "5",
+            "lanes:backward": "2",
+            "lanes:forward": "3"
+          },
+          "rendered_segment_count": 5,
+          "rendered_centreline_length_m": 46.63002408814598
+        },
+        {
+          "osm_way_id": 1001334724,
+          "tags": {
+            "cycleway:both": "lane",
+            "cycleway:both:lane": "exclusive",
+            "lanes": "4"
+          },
+          "rendered_segment_count": 3,
+          "rendered_centreline_length_m": 32.768879063158494
+        },
+        {
+          "osm_way_id": 1001334725,
+          "tags": {
+            "cycleway:both": "lane",
+            "cycleway:both:lane": "exclusive",
+            "lanes": "4"
+          },
+          "rendered_segment_count": 2,
+          "rendered_centreline_length_m": 17.086282415706716
+        },
+        {
+          "osm_way_id": 1054064867,
+          "tags": {
+            "lanes": "8"
+          },
+          "rendered_segment_count": 10,
+          "rendered_centreline_length_m": 102.41801530634622
+        },
+        {
+          "osm_way_id": 1270355641,
+          "tags": {
+            "lanes": "6"
+          },
+          "rendered_segment_count": 1,
+          "rendered_centreline_length_m": 2.445128351085965
+        },
+        {
+          "osm_way_id": 1270355644,
+          "tags": {
+            "lanes": "6"
+          },
+          "rendered_segment_count": 6,
+          "rendered_centreline_length_m": 63.79246109654248
+        }
+      ]
+    },
+    "directional_lane_count_candidates": {
+      "way_count": 5,
+      "rendered_segment_count": 103,
+      "rendered_centreline_length_m": 1118.2093505852524,
+      "records": [
+        {
+          "osm_way_id": 219137492,
+          "tags": {
+            "cycleway:both": "no",
+            "lanes": "9",
+            "lanes:backward": "5",
+            "lanes:forward": "4",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 19,
+          "rendered_centreline_length_m": 199.60199124632882
+        },
+        {
+          "osm_way_id": 219140635,
+          "tags": {
+            "cycleway:both": "lane",
+            "cycleway:both:lane": "exclusive",
+            "lanes": "6",
+            "lanes:backward": "3",
+            "lanes:forward": "3"
+          },
+          "rendered_segment_count": 40,
+          "rendered_centreline_length_m": 449.93018230725903
+        },
+        {
+          "osm_way_id": 219141473,
+          "tags": {
+            "cycleway:both": "lane",
+            "cycleway:both:lane": "exclusive",
+            "lanes": "5",
+            "lanes:backward": "2",
+            "lanes:forward": "3"
+          },
+          "rendered_segment_count": 35,
+          "rendered_centreline_length_m": 379.494685417871
+        },
+        {
+          "osm_way_id": 915663099,
+          "tags": {
+            "cycleway:both": "track",
+            "lanes": "5",
+            "lanes:backward": "3",
+            "lanes:forward": "2"
+          },
+          "rendered_segment_count": 4,
+          "rendered_centreline_length_m": 42.55246752564739
+        },
+        {
+          "osm_way_id": 915663101,
+          "tags": {
+            "cycleway:both": "lane",
+            "cycleway:both:lane": "exclusive",
+            "lanes": "5",
+            "lanes:backward": "2",
+            "lanes:forward": "3"
+          },
+          "rendered_segment_count": 5,
+          "rendered_centreline_length_m": 46.63002408814598
+        }
+      ]
+    },
+    "cycle_lane_tag_candidates": {
+      "way_count": 31,
+      "rendered_segment_count": 694,
+      "rendered_centreline_length_m": 7409.04399797242,
+      "records": [
+        {
+          "osm_way_id": 37401901,
+          "tags": {
+            "cycleway:both": "lane",
+            "cycleway:both:lane": "exclusive",
+            "lanes": "4"
+          },
+          "rendered_segment_count": 29,
+          "rendered_centreline_length_m": 328.0926784023789
+        },
+        {
+          "osm_way_id": 219116633,
+          "tags": {
+            "cycleway:right:lane": "exclusive",
+            "lanes": "2",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 8,
+          "rendered_centreline_length_m": 86.7105237887867
+        },
+        {
+          "osm_way_id": 219140634,
+          "tags": {
+            "cycleway:right": "lane",
+            "cycleway:right:lane": "exclusive",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 1,
+          "rendered_centreline_length_m": 7.944962994412216
+        },
+        {
+          "osm_way_id": 219140635,
+          "tags": {
+            "cycleway:both": "lane",
+            "cycleway:both:lane": "exclusive",
+            "lanes": "6",
+            "lanes:backward": "3",
+            "lanes:forward": "3"
+          },
+          "rendered_segment_count": 40,
+          "rendered_centreline_length_m": 449.93018230725903
+        },
+        {
+          "osm_way_id": 219141473,
+          "tags": {
+            "cycleway:both": "lane",
+            "cycleway:both:lane": "exclusive",
+            "lanes": "5",
+            "lanes:backward": "2",
+            "lanes:forward": "3"
+          },
+          "rendered_segment_count": 35,
+          "rendered_centreline_length_m": 379.494685417871
+        },
+        {
+          "osm_way_id": 219141477,
+          "tags": {
+            "cycleway:right": "lane",
+            "cycleway:right:lane": "exclusive",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 34,
+          "rendered_centreline_length_m": 386.2872251296611
+        },
+        {
+          "osm_way_id": 219691697,
+          "tags": {
+            "cycleway:right": "shared_lane",
+            "lanes": "5",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 18,
+          "rendered_centreline_length_m": 182.78821048835388
+        },
+        {
+          "osm_way_id": 219691700,
+          "tags": {
+            "cycleway:right": "shared_lane",
+            "lanes": "5",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 58,
+          "rendered_centreline_length_m": 627.4103521605103
+        },
+        {
+          "osm_way_id": 333552863,
+          "tags": {
+            "cycleway:right": "shared_lane",
+            "lanes": "5",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 14,
+          "rendered_centreline_length_m": 148.3964112522954
+        },
+        {
+          "osm_way_id": 384826213,
+          "tags": {
+            "cycleway:both": "lane",
+            "cycleway:both:lane": "exclusive"
+          },
+          "rendered_segment_count": 1,
+          "rendered_centreline_length_m": 11.665897597586524
+        },
+        {
+          "osm_way_id": 384826214,
+          "tags": {
+            "cycleway:both": "lane",
+            "cycleway:both:lane": "exclusive"
+          },
+          "rendered_segment_count": 47,
+          "rendered_centreline_length_m": 487.1064680011073
+        },
+        {
+          "osm_way_id": 452365406,
+          "tags": {
+            "cycleway:right": "shared_lane",
+            "lanes": "3",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 30,
+          "rendered_centreline_length_m": 272.76904015093226
+        },
+        {
+          "osm_way_id": 452574892,
+          "tags": {
+            "cycleway:right": "lane",
+            "cycleway:right:lane": "exclusive",
+            "lanes": "2",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 43,
+          "rendered_centreline_length_m": 468.74614021116804
+        },
+        {
+          "osm_way_id": 452574893,
+          "tags": {
+            "cycleway:both": "lane",
+            "cycleway:both:lane": "exclusive"
+          },
+          "rendered_segment_count": 2,
+          "rendered_centreline_length_m": 14.535430686736246
+        },
+        {
+          "osm_way_id": 452574895,
+          "tags": {
+            "cycleway:right": "lane",
+            "cycleway:right:lane": "exclusive",
+            "lanes": "1",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 7,
+          "rendered_centreline_length_m": 58.22246395425178
+        },
+        {
+          "osm_way_id": 452574896,
+          "tags": {
+            "cycleway:both": "lane",
+            "cycleway:both:lane": "exclusive"
+          },
+          "rendered_segment_count": 13,
+          "rendered_centreline_length_m": 146.67967193874586
+        },
+        {
+          "osm_way_id": 453494431,
+          "tags": {
+            "cycleway:right": "shared_lane",
+            "lanes": "3",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 29,
+          "rendered_centreline_length_m": 287.101631911586
+        },
+        {
+          "osm_way_id": 474507374,
+          "tags": {
+            "cycleway:left": "opposite",
+            "cycleway:right": "opposite_lane",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 28,
+          "rendered_centreline_length_m": 299.75611475088965
+        },
+        {
+          "osm_way_id": 474507381,
+          "tags": {
+            "cycleway:left": "opposite",
+            "cycleway:right": "opposite_lane",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 29,
+          "rendered_centreline_length_m": 328.8471143100363
+        },
+        {
+          "osm_way_id": 480824679,
+          "tags": {
+            "cycleway:right": "lane",
+            "cycleway:right:lane": "exclusive",
+            "lanes": "2",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 23,
+          "rendered_centreline_length_m": 212.7738982217251
+        },
+        {
+          "osm_way_id": 481488992,
+          "tags": {
+            "cycleway:right": "lane",
+            "cycleway:right:lane": "exclusive",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 11,
+          "rendered_centreline_length_m": 126.05449502852377
+        },
+        {
+          "osm_way_id": 481488994,
+          "tags": {
+            "cycleway:right:lane": "exclusive",
+            "lanes": "3",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 19,
+          "rendered_centreline_length_m": 202.38572741951816
+        },
+        {
+          "osm_way_id": 516948888,
+          "tags": {
+            "cycleway:right": "shared_lane",
+            "lanes": "5",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 60,
+          "rendered_centreline_length_m": 637.4957017116606
+        },
+        {
+          "osm_way_id": 525873165,
+          "tags": {
+            "cycleway:right": "lane",
+            "cycleway:right:lane": "exclusive",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 31,
+          "rendered_centreline_length_m": 338.7039616375143
+        },
+        {
+          "osm_way_id": 623345122,
+          "tags": {
+            "cycleway:right": "lane",
+            "cycleway:right:lane": "exclusive",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 15,
+          "rendered_centreline_length_m": 175.59442088007495
+        },
+        {
+          "osm_way_id": 911286427,
+          "tags": {
+            "cycleway:right": "lane",
+            "cycleway:right:lane": "exclusive",
+            "lanes": "1",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 4,
+          "rendered_centreline_length_m": 38.944613268573505
+        },
+        {
+          "osm_way_id": 911286428,
+          "tags": {
+            "cycleway:right:lane": "exclusive",
+            "lanes": "1",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 7,
+          "rendered_centreline_length_m": 61.27951080386442
+        },
+        {
+          "osm_way_id": 915663101,
+          "tags": {
+            "cycleway:both": "lane",
+            "cycleway:both:lane": "exclusive",
+            "lanes": "5",
+            "lanes:backward": "2",
+            "lanes:forward": "3"
+          },
+          "rendered_segment_count": 5,
+          "rendered_centreline_length_m": 46.63002408814598
+        },
+        {
+          "osm_way_id": 948426675,
+          "tags": {
+            "cycleway:right": "lane",
+            "cycleway:right:lane": "exclusive",
+            "oneway": "yes"
+          },
+          "rendered_segment_count": 48,
+          "rendered_centreline_length_m": 546.8412779793856
+        },
+        {
+          "osm_way_id": 1001334724,
+          "tags": {
+            "cycleway:both": "lane",
+            "cycleway:both:lane": "exclusive",
+            "lanes": "4"
+          },
+          "rendered_segment_count": 3,
+          "rendered_centreline_length_m": 32.768879063158494
+        },
+        {
+          "osm_way_id": 1001334725,
+          "tags": {
+            "cycleway:both": "lane",
+            "cycleway:both:lane": "exclusive",
+            "lanes": "4"
+          },
+          "rendered_segment_count": 2,
+          "rendered_centreline_length_m": 17.086282415706716
+        }
+      ]
+    },
+    "crossing_marking_presence_candidates": {
+      "way_count": 3,
+      "rendered_segment_count": 6,
+      "rendered_centreline_length_m": 43.591527998722135,
+      "records": [
+        {
+          "osm_way_id": 1084565480,
+          "tags": {
+            "crossing:markings": "yes"
+          },
+          "rendered_segment_count": 2,
+          "rendered_centreline_length_m": 16.92994587770649
+        },
+        {
+          "osm_way_id": 1152603794,
+          "tags": {
+            "crossing:markings": "yes"
+          },
+          "rendered_segment_count": 2,
+          "rendered_centreline_length_m": 16.331956564015286
+        },
+        {
+          "osm_way_id": 1154645586,
+          "tags": {
+            "crossing:markings": "yes"
+          },
+          "rendered_segment_count": 2,
+          "rendered_centreline_length_m": 10.329625557000366
+        }
+      ]
+    }
+  },
+  "application_gates": {
+    "existing_same_direction_lane_dividers_remain_allowed": true,
+    "bidirectional_centre_line_application_allowed": false,
+    "centre_line_colour_selection_allowed": false,
+    "centre_line_solid_dash_selection_allowed": false,
+    "edge_line_application_allowed": false,
+    "turn_arrow_application_allowed": false,
+    "bicycle_symbol_application_allowed": false,
+    "crossing_marking_shape_application_allowed": false,
+    "runtime_geometry_changed_by_this_stage": false,
+    "reason": "Candidate topology is not way-specific evidence of marking type, placement, colour, or event-date state."
+  },
+  "next_registration_contract": {
+    "source": "Seoul S-Map 2024 background map",
+    "required_metadata": [
+      "source URL and selected year layer",
+      "imagery acquisition date and publication date",
+      "capture timestamp, viewport, and source checksum",
+      "permitted local validation and redistribution scope"
+    ],
+    "registration": {
+      "minimum_control_points": 4,
+      "minimum_independent_check_points": 2,
+      "project_max_planimetric_residual_m": 1.0,
+      "control_points_must_span_each_registered_crop": true
+    },
+    "marking_acceptance": [
+      "paint must be individually visible at native source resolution",
+      "imagery date must be on or before the event or explicitly historical",
+      "each accepted type must be associated with OSM way IDs",
+      "solid/dashed state, colour, side, and longitudinal extent are recorded"
+    ]
+  },
+  "conclusion": "No new marking type passes the event-date placement gate. The audit narrows imagery review to bound candidate ways without changing runtime.",
+  "diagnostic": {
+    "asset": "docs/validation/road_marking_evidence_v2/road_marking_evidence_map.png",
+    "sha256": "5d79773f18c4359afa65ccdba71bdd405b61fd3caa4aa7f46486b68bf51d2465"
+  }
+}
