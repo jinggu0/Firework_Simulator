@@ -1,0 +1,949 @@
+{
+  "schema_version": 1,
+  "target_event_date": "2024-10-05",
+  "snapshot_utc": "2024-10-05T10:20:00Z",
+  "bridge_id": "seogang_bridge",
+  "scene_asset": "assets/yeouido_scene.npz",
+  "scene_asset_sha256": "c8b9d2720f935de3532a9401c74d37a55470d23645c06d32c24ff923c3291518",
+  "coordinate_system": "local East-Up-South metres; arrays store X/Z",
+  "local_origin_wgs84": [
+    37.529,
+    126.935
+  ],
+  "sources": {
+    "historical_plan": {
+      "provider": "OpenStreetMap contributors via historical Overpass query",
+      "licence": "ODbL 1.0",
+      "confidence_grade": "C",
+      "query": "[out:json][timeout:90][date:\"2024-10-05T10:20:00Z\"];way(id:338588827,620357093,634521303,634521306,875036744,910747602,910747603);out geom tags;",
+      "endpoint": "https://overpass.kumi.systems/api/interpreter",
+      "retrieved_date": "2026-08-03",
+      "selected_payload_sha256": "0c0ed51f120f26eb09f98103229f94ff977633bb6a22b56f734c4581d7eaed2b",
+      "notes": "Dated plan semantics, not a survey or a vertical profile."
+    },
+    "official_2024_paint_contract": {
+      "provider": "서울특별시 건설알림이",
+      "url": "https://cis.seoul.go.kr/TotalAlimi_new/PopInfo.action?cmd=info1&pjt_cd=7182024022199",
+      "confidence_grade": "A",
+      "work_period": [
+        "2024-02-28",
+        "2025-11-27"
+      ],
+      "scope": {
+        "lower_steel_paint_area_m2": 17575.0,
+        "upper_steel_paint_area_m2": 2726.0,
+        "suspended_scaffold_area_m2": 14556.0
+      },
+      "event_day_status": "inside_contract_period_but_progress_location_unpublished"
+    },
+    "official_2024_budget_review": {
+      "provider": "서울특별시의회",
+      "url": "https://ms.smc.seoul.kr/attach/record/SEOUL/appendix/a11/A0062073.pdf?time=20260618031117",
+      "confidence_grade": "A",
+      "attachment_sha256": "64d124d1df186748d6de82cb3ee60a36b1d89b70e9aa7617b521e2574229db95",
+      "reviewed_pdf_page": 22,
+      "fact": "2024 budget 4,350,000 thousand KRW for continuing Seogang Bridge paint repair"
+    }
+  },
+  "way_roles": {
+    "outline": 875036744,
+    "south_carriageways": [
+      910747602,
+      910747603
+    ],
+    "north_carriageways": [
+      338588827,
+      620357093
+    ],
+    "main_sidewalks": [
+      634521303,
+      634521306
+    ]
+  },
+  "deck_outline_xz_m": [
+    [
+      -1132.204,
+      -381.186
+    ],
+    [
+      -1134.255,
+      -382.141
+    ],
+    [
+      -1140.618,
+      -385.105
+    ],
+    [
+      -1152.682,
+      -390.723
+    ],
+    [
+      -1159.647,
+      -393.965
+    ],
+    [
+      -1161.114,
+      -394.653
+    ],
+    [
+      -835.786,
+      -1027.577
+    ],
+    [
+      -602.147,
+      -1477.235
+    ],
+    [
+      -565.925,
+      -1562.105
+    ],
+    [
+      -555.541,
+      -1560.406
+    ],
+    [
+      -507.61,
+      -1643.688
+    ],
+    [
+      -491.719,
+      -1673.121
+    ],
+    [
+      -419.625,
+      -1813.628
+    ],
+    [
+      -414.155,
+      -1810.154
+    ],
+    [
+      -403.815,
+      -1828.655
+    ],
+    [
+      -389.471,
+      -1856.557
+    ],
+    [
+      -378.927,
+      -1881.828
+    ],
+    [
+      -369.505,
+      -1907.055
+    ],
+    [
+      -351.042,
+      -1961.205
+    ],
+    [
+      -346.129,
+      -1959.651
+    ],
+    [
+      -335.976,
+      -1956.421
+    ],
+    [
+      -331.177,
+      -1954.9
+    ],
+    [
+      -348.164,
+      -1900.428
+    ],
+    [
+      -358.469,
+      -1872.16
+    ],
+    [
+      -369.597,
+      -1847.155
+    ],
+    [
+      -382.615,
+      -1819.264
+    ],
+    [
+      -393.441,
+      -1800.819
+    ],
+    [
+      -388.175,
+      -1797.833
+    ],
+    [
+      -406.831,
+      -1768.455
+    ],
+    [
+      -451.12,
+      -1678.435
+    ],
+    [
+      -477.255,
+      -1625.54
+    ],
+    [
+      -526.625,
+      -1545.498
+    ],
+    [
+      -519.741,
+      -1539.349
+    ],
+    [
+      -569.59,
+      -1460.573
+    ],
+    [
+      -806.003,
+      -1014.056
+    ],
+    [
+      -1132.204,
+      -381.186
+    ]
+  ],
+  "replacement_cross_sections": [
+    {
+      "osm_plan_distance_m": 0.0,
+      "side_a_xz_m": [
+        -1161.114,
+        -394.653
+      ],
+      "side_b_xz_m": [
+        -1132.204,
+        -381.186
+      ]
+    },
+    {
+      "osm_plan_distance_m": 27.811,
+      "side_a_xz_m": [
+        -1148.405,
+        -419.378
+      ],
+      "side_b_xz_m": [
+        -1119.458,
+        -405.916
+      ]
+    },
+    {
+      "osm_plan_distance_m": 55.622,
+      "side_a_xz_m": [
+        -1135.696,
+        -444.103
+      ],
+      "side_b_xz_m": [
+        -1106.711,
+        -430.646
+      ]
+    },
+    {
+      "osm_plan_distance_m": 83.433,
+      "side_a_xz_m": [
+        -1122.987,
+        -468.828
+      ],
+      "side_b_xz_m": [
+        -1093.965,
+        -455.376
+      ]
+    },
+    {
+      "osm_plan_distance_m": 111.244,
+      "side_a_xz_m": [
+        -1110.279,
+        -493.553
+      ],
+      "side_b_xz_m": [
+        -1081.218,
+        -480.106
+      ]
+    },
+    {
+      "osm_plan_distance_m": 139.055,
+      "side_a_xz_m": [
+        -1097.57,
+        -518.278
+      ],
+      "side_b_xz_m": [
+        -1068.471,
+        -504.836
+      ]
+    },
+    {
+      "osm_plan_distance_m": 166.865,
+      "side_a_xz_m": [
+        -1084.861,
+        -543.003
+      ],
+      "side_b_xz_m": [
+        -1055.725,
+        -529.566
+      ]
+    },
+    {
+      "osm_plan_distance_m": 194.676,
+      "side_a_xz_m": [
+        -1072.152,
+        -567.729
+      ],
+      "side_b_xz_m": [
+        -1042.978,
+        -554.296
+      ]
+    },
+    {
+      "osm_plan_distance_m": 222.487,
+      "side_a_xz_m": [
+        -1059.443,
+        -592.454
+      ],
+      "side_b_xz_m": [
+        -1030.231,
+        -579.026
+      ]
+    },
+    {
+      "osm_plan_distance_m": 250.298,
+      "side_a_xz_m": [
+        -1046.734,
+        -617.179
+      ],
+      "side_b_xz_m": [
+        -1017.485,
+        -603.757
+      ]
+    },
+    {
+      "osm_plan_distance_m": 278.109,
+      "side_a_xz_m": [
+        -1034.025,
+        -641.904
+      ],
+      "side_b_xz_m": [
+        -1004.738,
+        -628.487
+      ]
+    },
+    {
+      "osm_plan_distance_m": 305.92,
+      "side_a_xz_m": [
+        -1021.316,
+        -666.629
+      ],
+      "side_b_xz_m": [
+        -991.991,
+        -653.217
+      ]
+    },
+    {
+      "osm_plan_distance_m": 333.731,
+      "side_a_xz_m": [
+        -1008.607,
+        -691.354
+      ],
+      "side_b_xz_m": [
+        -979.245,
+        -677.947
+      ]
+    },
+    {
+      "osm_plan_distance_m": 361.542,
+      "side_a_xz_m": [
+        -995.899,
+        -716.079
+      ],
+      "side_b_xz_m": [
+        -966.498,
+        -702.677
+      ]
+    },
+    {
+      "osm_plan_distance_m": 389.353,
+      "side_a_xz_m": [
+        -983.19,
+        -740.804
+      ],
+      "side_b_xz_m": [
+        -953.751,
+        -727.407
+      ]
+    },
+    {
+      "osm_plan_distance_m": 417.164,
+      "side_a_xz_m": [
+        -970.481,
+        -765.529
+      ],
+      "side_b_xz_m": [
+        -941.005,
+        -752.137
+      ]
+    },
+    {
+      "osm_plan_distance_m": 444.975,
+      "side_a_xz_m": [
+        -957.772,
+        -790.254
+      ],
+      "side_b_xz_m": [
+        -928.258,
+        -776.867
+      ]
+    },
+    {
+      "osm_plan_distance_m": 472.786,
+      "side_a_xz_m": [
+        -945.063,
+        -814.979
+      ],
+      "side_b_xz_m": [
+        -915.511,
+        -801.597
+      ]
+    },
+    {
+      "osm_plan_distance_m": 500.596,
+      "side_a_xz_m": [
+        -932.354,
+        -839.704
+      ],
+      "side_b_xz_m": [
+        -902.765,
+        -826.327
+      ]
+    },
+    {
+      "osm_plan_distance_m": 528.407,
+      "side_a_xz_m": [
+        -919.645,
+        -864.429
+      ],
+      "side_b_xz_m": [
+        -890.018,
+        -851.057
+      ]
+    },
+    {
+      "osm_plan_distance_m": 556.218,
+      "side_a_xz_m": [
+        -906.936,
+        -889.154
+      ],
+      "side_b_xz_m": [
+        -877.272,
+        -875.787
+      ]
+    },
+    {
+      "osm_plan_distance_m": 584.029,
+      "side_a_xz_m": [
+        -894.228,
+        -913.879
+      ],
+      "side_b_xz_m": [
+        -864.525,
+        -900.517
+      ]
+    },
+    {
+      "osm_plan_distance_m": 611.84,
+      "side_a_xz_m": [
+        -881.519,
+        -938.604
+      ],
+      "side_b_xz_m": [
+        -851.778,
+        -925.247
+      ]
+    },
+    {
+      "osm_plan_distance_m": 639.651,
+      "side_a_xz_m": [
+        -868.81,
+        -963.329
+      ],
+      "side_b_xz_m": [
+        -839.032,
+        -949.977
+      ]
+    },
+    {
+      "osm_plan_distance_m": 667.462,
+      "side_a_xz_m": [
+        -856.101,
+        -988.055
+      ],
+      "side_b_xz_m": [
+        -826.285,
+        -974.707
+      ]
+    },
+    {
+      "osm_plan_distance_m": 695.273,
+      "side_a_xz_m": [
+        -843.392,
+        -1012.78
+      ],
+      "side_b_xz_m": [
+        -813.538,
+        -999.437
+      ]
+    },
+    {
+      "osm_plan_distance_m": 723.083,
+      "side_a_xz_m": [
+        -830.639,
+        -1037.482
+      ],
+      "side_b_xz_m": [
+        -800.681,
+        -1024.109
+      ]
+    },
+    {
+      "osm_plan_distance_m": 750.894,
+      "side_a_xz_m": [
+        -817.822,
+        -1062.151
+      ],
+      "side_b_xz_m": [
+        -787.662,
+        -1048.697
+      ]
+    },
+    {
+      "osm_plan_distance_m": 778.705,
+      "side_a_xz_m": [
+        -805.004,
+        -1086.82
+      ],
+      "side_b_xz_m": [
+        -774.644,
+        -1073.285
+      ]
+    },
+    {
+      "osm_plan_distance_m": 806.516,
+      "side_a_xz_m": [
+        -792.186,
+        -1111.488
+      ],
+      "side_b_xz_m": [
+        -761.625,
+        -1097.873
+      ]
+    },
+    {
+      "osm_plan_distance_m": 834.326,
+      "side_a_xz_m": [
+        -779.368,
+        -1136.157
+      ],
+      "side_b_xz_m": [
+        -748.607,
+        -1122.461
+      ]
+    },
+    {
+      "osm_plan_distance_m": 862.137,
+      "side_a_xz_m": [
+        -766.551,
+        -1160.826
+      ],
+      "side_b_xz_m": [
+        -735.589,
+        -1147.049
+      ]
+    },
+    {
+      "osm_plan_distance_m": 889.948,
+      "side_a_xz_m": [
+        -753.733,
+        -1185.495
+      ],
+      "side_b_xz_m": [
+        -722.57,
+        -1171.637
+      ]
+    },
+    {
+      "osm_plan_distance_m": 917.758,
+      "side_a_xz_m": [
+        -740.915,
+        -1210.164
+      ],
+      "side_b_xz_m": [
+        -709.552,
+        -1196.225
+      ]
+    },
+    {
+      "osm_plan_distance_m": 945.569,
+      "side_a_xz_m": [
+        -728.097,
+        -1234.832
+      ],
+      "side_b_xz_m": [
+        -696.534,
+        -1220.813
+      ]
+    },
+    {
+      "osm_plan_distance_m": 973.38,
+      "side_a_xz_m": [
+        -715.28,
+        -1259.501
+      ],
+      "side_b_xz_m": [
+        -683.515,
+        -1245.401
+      ]
+    },
+    {
+      "osm_plan_distance_m": 1001.191,
+      "side_a_xz_m": [
+        -702.462,
+        -1284.17
+      ],
+      "side_b_xz_m": [
+        -670.497,
+        -1269.989
+      ]
+    },
+    {
+      "osm_plan_distance_m": 1029.001,
+      "side_a_xz_m": [
+        -689.644,
+        -1308.839
+      ],
+      "side_b_xz_m": [
+        -657.478,
+        -1294.577
+      ]
+    },
+    {
+      "osm_plan_distance_m": 1056.812,
+      "side_a_xz_m": [
+        -676.826,
+        -1333.508
+      ],
+      "side_b_xz_m": [
+        -644.46,
+        -1319.165
+      ]
+    },
+    {
+      "osm_plan_distance_m": 1084.623,
+      "side_a_xz_m": [
+        -664.009,
+        -1358.176
+      ],
+      "side_b_xz_m": [
+        -631.442,
+        -1343.753
+      ]
+    },
+    {
+      "osm_plan_distance_m": 1112.433,
+      "side_a_xz_m": [
+        -651.191,
+        -1382.845
+      ],
+      "side_b_xz_m": [
+        -618.423,
+        -1368.341
+      ]
+    },
+    {
+      "osm_plan_distance_m": 1140.244,
+      "side_a_xz_m": [
+        -638.373,
+        -1407.514
+      ],
+      "side_b_xz_m": [
+        -605.405,
+        -1392.93
+      ]
+    },
+    {
+      "osm_plan_distance_m": 1168.055,
+      "side_a_xz_m": [
+        -625.555,
+        -1432.183
+      ],
+      "side_b_xz_m": [
+        -592.387,
+        -1417.518
+      ]
+    },
+    {
+      "osm_plan_distance_m": 1195.866,
+      "side_a_xz_m": [
+        -612.738,
+        -1456.851
+      ],
+      "side_b_xz_m": [
+        -579.368,
+        -1442.106
+      ]
+    },
+    {
+      "osm_plan_distance_m": 1223.657,
+      "side_a_xz_m": [
+        -600.251,
+        -1481.677
+      ],
+      "side_b_xz_m": [
+        -565.887,
+        -1466.425
+      ]
+    },
+    {
+      "osm_plan_distance_m": 1251.378,
+      "side_a_xz_m": [
+        -589.338,
+        -1507.245
+      ],
+      "side_b_xz_m": [
+        -551.01,
+        -1489.935
+      ]
+    },
+    {
+      "osm_plan_distance_m": 1279.1,
+      "side_a_xz_m": [
+        -578.426,
+        -1532.814
+      ],
+      "side_b_xz_m": [
+        -536.133,
+        -1513.446
+      ]
+    },
+    {
+      "osm_plan_distance_m": 1306.821,
+      "side_a_xz_m": [
+        -567.513,
+        -1558.383
+      ],
+      "side_b_xz_m": [
+        -521.256,
+        -1536.956
+      ]
+    },
+    {
+      "osm_plan_distance_m": 1327.543,
+      "side_a_xz_m": [
+        -548.941,
+        -1571.874
+      ],
+      "side_b_xz_m": [
+        -518.352,
+        -1558.911
+      ]
+    },
+    {
+      "osm_plan_distance_m": 1355.351,
+      "side_a_xz_m": [
+        -535.074,
+        -1595.968
+      ],
+      "side_b_xz_m": [
+        -503.747,
+        -1582.59
+      ]
+    },
+    {
+      "osm_plan_distance_m": 1383.158,
+      "side_a_xz_m": [
+        -521.207,
+        -1620.063
+      ],
+      "side_b_xz_m": [
+        -489.141,
+        -1606.27
+      ]
+    },
+    {
+      "osm_plan_distance_m": 1410.959,
+      "side_a_xz_m": [
+        -507.353,
+        -1644.165
+      ],
+      "side_b_xz_m": [
+        -474.96,
+        -1630.185
+      ]
+    },
+    {
+      "osm_plan_distance_m": 1438.766,
+      "side_a_xz_m": [
+        -494.145,
+        -1668.627
+      ],
+      "side_b_xz_m": [
+        -462.635,
+        -1655.128
+      ]
+    },
+    {
+      "osm_plan_distance_m": 1466.575,
+      "side_a_xz_m": [
+        -481.359,
+        -1693.311
+      ],
+      "side_b_xz_m": [
+        -450.314,
+        -1680.073
+      ]
+    },
+    {
+      "osm_plan_distance_m": 1494.385,
+      "side_a_xz_m": [
+        -468.668,
+        -1718.046
+      ],
+      "side_b_xz_m": [
+        -438.032,
+        -1705.037
+      ]
+    },
+    {
+      "osm_plan_distance_m": 1522.195,
+      "side_a_xz_m": [
+        -455.977,
+        -1742.78
+      ],
+      "side_b_xz_m": [
+        -425.75,
+        -1730.001
+      ]
+    },
+    {
+      "osm_plan_distance_m": 1550.005,
+      "side_a_xz_m": [
+        -443.286,
+        -1767.514
+      ],
+      "side_b_xz_m": [
+        -413.468,
+        -1754.965
+      ]
+    },
+    {
+      "osm_plan_distance_m": 1577.791,
+      "side_a_xz_m": [
+        -430.595,
+        -1792.248
+      ],
+      "side_b_xz_m": [
+        -399.976,
+        -1779.25
+      ]
+    },
+    {
+      "osm_plan_distance_m": 1600.715,
+      "side_a_xz_m": [
+        -416.443,
+        -1811.606
+      ],
+      "side_b_xz_m": [
+        -393.227,
+        -1800.697
+      ]
+    },
+    {
+      "osm_plan_distance_m": 1626.986,
+      "side_a_xz_m": [
+        -402.034,
+        -1832.119
+      ],
+      "side_b_xz_m": [
+        -379.998,
+        -1824.871
+      ]
+    },
+    {
+      "osm_plan_distance_m": 1654.791,
+      "side_a_xz_m": [
+        -389.347,
+        -1856.854
+      ],
+      "side_b_xz_m": [
+        -368.284,
+        -1850.105
+      ]
+    },
+    {
+      "osm_plan_distance_m": 1682.597,
+      "side_a_xz_m": [
+        -378.668,
+        -1882.521
+      ],
+      "side_b_xz_m": [
+        -357.208,
+        -1875.619
+      ]
+    },
+    {
+      "osm_plan_distance_m": 1710.407,
+      "side_a_xz_m": [
+        -368.986,
+        -1908.58
+      ],
+      "side_b_xz_m": [
+        -347.743,
+        -1901.78
+      ]
+    },
+    {
+      "osm_plan_distance_m": 1738.215,
+      "side_a_xz_m": [
+        -360.014,
+        -1934.893
+      ],
+      "side_b_xz_m": [
+        -339.46,
+        -1928.34
+      ]
+    },
+    {
+      "osm_plan_distance_m": 1766.024,
+      "side_a_xz_m": [
+        -351.042,
+        -1961.205
+      ],
+      "side_b_xz_m": [
+        -331.177,
+        -1954.9
+      ]
+    }
+  ],
+  "plan_metrics": {
+    "replacement_centreline_length_m": 1766.0238694214509,
+    "official_main_plus_north_approach_length_m": 1706.0,
+    "length_residual_m": 60.023869421450854,
+    "width_min_p50_p95_max_m": [
+      20.84194426624702,
+      32.66735223416214,
+      37.373440950260864,
+      50.97877678124338
+    ],
+    "station_registration_status": "failed_normalized_length_only",
+    "station_registration_plan_rmse_m": null,
+    "notes": "OSM plan distance cannot be substituted for completion-drawing station."
+  },
+  "render_policy": {
+    "matching_distance_m": 8.0,
+    "minimum_matching_source_segments": 80,
+    "replacement_local_y_m": 7.0,
+    "replacement_surface_code": 2.0,
+    "horizontal_policy": "replace overlapping generic strips inside the dated bridge outline with one cross-section strip",
+    "vertical_policy": "unchanged grade-D terrain-relative offset; V1-6 vertical gate remains closed",
+    "construction_policy": "do not draw scaffolding or fresh-paint boundaries until an event-day progress photo is registered"
+  }
+}

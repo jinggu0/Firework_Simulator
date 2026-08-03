@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "stage": "V1-7",
+  "target_event_date": "2024-10-05",
+  "scene_asset": "assets/yeouido_scene.npz",
+  "scene_asset_sha256": "c8b9d2720f935de3532a9401c74d37a55470d23645c06d32c24ff923c3291518",
+  "semantic_asset": "assets/seogang_bridge_semantics_2024-10-05.json",
+  "semantic_asset_sha256": "d4ff468e2711365c2c785760d18ecd9c5ef011cf078b98c218b607751965d0d6",
+  "replacement": {
+    "input_segments": 1055,
+    "removed_generic_segments": 90,
+    "retained_segments": 965,
+    "replacement_segments": 64,
+    "input_vertices": 6330,
+    "output_vertices": 6174,
+    "removed_plan_area_m2": 119112.64864943456,
+    "replacement_plan_area_m2": 58036.613156650215,
+    "input_local_y_values_m": [
+      7.0
+    ],
+    "output_local_y_values_m": [
+      7.0
+    ],
+    "vertical_coordinates_changed": false
+  },
+  "evidence_gates": {
+    "historical_plan_snapshot_registered": true,
+    "minimum_matching_source_segments": 80,
+    "station_registration_passed": false,
+    "station_length_residual_m": 60.023869421450854,
+    "event_inside_paint_contract": true,
+    "event_day_construction_visual_state_known": false,
+    "scaffolding_or_fresh_paint_drawn": false,
+    "vertical_profile_application_allowed": false
+  },
+  "performance": {
+    "frames_per_run": 360,
+    "fluid_backend": "3d",
+    "frame_budget_ms": 16.666666666666668,
+    "paired_runs": [
+      {
+        "run": 1,
+        "baseline": {
+          "frame_mean_ms": 11.363864722443395,
+          "frame_p95_ms": 14.872739990096306,
+          "frame_p99_ms": 18.124058004759767,
+          "visual_p95_ms": 11.497355009487366,
+          "physics_p95_ms": 4.1911799962690575
+        },
+        "candidate": {
+          "frame_mean_ms": 16.73027111117133,
+          "frame_p95_ms": 21.20179000339704,
+          "frame_p99_ms": 24.859445003967284,
+          "visual_p95_ms": 16.41945500523434,
+          "physics_p95_ms": 6.9898349909635735
+        },
+        "frame_p95_delta_ms": 6.3290500133007335
+      },
+      {
+        "run": 2,
+        "baseline": {
+          "frame_mean_ms": 12.69363472217972,
+          "frame_p95_ms": 19.451365000713853,
+          "frame_p99_ms": 22.605177002406005,
+          "visual_p95_ms": 14.991499995812777,
+          "physics_p95_ms": 5.3027650057629225
+        },
+        "candidate": {
+          "frame_mean_ms": 17.73924722215775,
+          "frame_p95_ms": 23.620124996523373,
+          "frame_p99_ms": 30.100769999699015,
+          "visual_p95_ms": 17.192579987749927,
+          "physics_p95_ms": 7.854175003012644
+        },
+        "frame_p95_delta_ms": 4.16875999580952
+      },
+      {
+        "run": 3,
+        "baseline": {
+          "frame_mean_ms": 16.19253527747383,
+          "frame_p95_ms": 20.472434995463118,
+          "frame_p99_ms": 26.020855999231575,
+          "visual_p95_ms": 15.246414998546248,
+          "physics_p95_ms": 6.713760000275216
+        },
+        "candidate": {
+          "frame_mean_ms": 16.14057138835455,
+          "frame_p95_ms": 21.423874994070502,
+          "frame_p99_ms": 25.497197005024663,
+          "visual_p95_ms": 16.34480499342317,
+          "physics_p95_ms": 6.499529997381615
+        },
+        "frame_p95_delta_ms": 0.951439998607384
+      }
+    ],
+    "baseline_pass_count": 1,
+    "candidate_pass_count": 0,
+    "run_count": 3,
+    "candidate_all_runs_pass_60fps_p95": false,
+    "interpretation": "The replacement runs once during scene construction and reduces the bridge batch. Paired host measurements still cannot isolate its small cost from driver and scheduling variance."
+  },
+  "artifacts": {
+    "plan_map": "docs/validation/bridge_plan_v1/bridge_plan_map.png"
+  },
+  "passed": true
+}

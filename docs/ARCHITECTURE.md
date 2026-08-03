@@ -906,6 +906,18 @@ registration RMSE, resolvable deck-top samples, and stated vertical uncertainty
 before it permits any explicit vertical offset. The current V1-6 manifest is
 intentionally blocked and leaves `yeouido_scene.npz` bit-identical.
 
+V1-7 adds a separate dated plan-semantics layer without changing that vertical
+boundary. The original scene builder treated every `bridge` way as an
+independent fixed-width deck, including Seogang Bridge's closed outline,
+carriageways and sidewalks. `simulator.bridge_semantics` identifies the 90
+generic six-vertex segments covered by the 2024-10-05 closed bridge outline and
+replaces them once at scene construction with 64 connected cross-section
+segments. All replacement vertices retain local Y=7 m. The source outline's
+derived centreline is 60.024 m longer than the published main-plus-north-
+approach component length, so it is explicitly rejected as a completion-drawing
+station axis. Event-day scaffolding and paint boundaries are also suppressed
+until their locations can be registered from dated evidence.
+
 ## Event-site ground cover and street furniture
 
 A second Overpass query fixed to 2024-10-05 10:20 UTC adds 49 distinct

@@ -57,6 +57,26 @@ depth/deck-top samples, registration residuals, and vertical uncertainty pass.
 - Seoul Metropolitan Council bridge-clearance appendix:
   https://ms.smc.seoul.kr/attach/record/SEOUL/appendix/a08/A0026735.pdf
 
+`seogang_bridge_semantics_2024-10-05.json` adds a focused historical OSM query
+at the same show-start instant. It locks the closed Seogang Bridge outline way
+`875036744`, carriageway ways `910747602`, `910747603`, `338588827`,
+`620357093`, and sidewalk ways `634521303`, `634521306`. These grade-C plan
+features replace multiply rendered generic bridge strips but do not establish a
+survey-grade centreline, vertical profile, material, or construction state.
+
+The event date falls inside Seoul's published 2024-02-28 to 2025-11-27 Seogang
+Bridge paint-repair contract. The listed scope includes lower and upper steel
+painting and suspended scaffolding, but no event-day progress location was
+available. The renderer therefore does not infer fresh-paint boundaries or
+scaffold placement.
+
+- OpenStreetMap copyright and ODbL:
+  https://www.openstreetmap.org/copyright
+- Seoul construction notice, Seogang Bridge paint repair:
+  https://cis.seoul.go.kr/TotalAlimi_new/PopInfo.action?cmd=info1&pjt_cd=7182024022199
+- Seoul Metropolitan Council 2024 budget review, inspected PDF page 22:
+  https://ms.smc.seoul.kr/attach/record/SEOUL/appendix/a11/A0062073.pdf
+
 `yeouido_detail_osm_2024-10-05.json` is a second query fixed to the same
 historical timestamp. It preserves 131 mapped garden, pitch, track,
 playground, grass, scrub, forest, and wood polygons used by the detailed

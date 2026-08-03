@@ -10,6 +10,10 @@ import moderngl
 import numpy as np
 
 from .. import shaders
+from ..bridge_semantics import (
+    load_bridge_plan_semantics,
+    replace_seogang_bridge_plan,
+)
 from ..config import LightingConfig, PhysicalCameraConfig, RenderConfig
 from ..lighting import led_energy_budget
 from ..material_textures import (
@@ -598,7 +602,13 @@ class ScenePass:
             np.concatenate((scene.building_vertices, rooftop_detail), axis=0)
             if len(rooftop_detail) else scene.building_vertices
         )
-        bridge_deck = bridge_lighting_uv(scene.bridge_vertices)
+        bridge_plan, self.bridge_plan_replacement_stats = (
+            replace_seogang_bridge_plan(
+                scene.bridge_vertices,
+                load_bridge_plan_semantics(),
+            )
+        )
+        bridge_deck = bridge_lighting_uv(bridge_plan)
         bridge_structure = bridge_structure_vertices(bridge_deck)
         bridge_batch = (
             np.concatenate((bridge_deck, bridge_structure), axis=0)
