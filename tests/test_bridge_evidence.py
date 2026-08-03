@@ -26,10 +26,15 @@ def _registered_document() -> dict:
     application = document["vertical_profile_application"]
     application["status"] = "registered"
     application["blockers"] = []
+    application["event_date_validation"]["status"] = "verified"
+    application["event_date_validation"]["verified_through"] = "2024-10-05"
     application["station_registration"] = {
         "plan_rmse_m": 0.05,
+        "plan_source_confidence_grade": "B",
+        "drawing_plan_m_per_pixel": 0.05,
         "control_points": [
             {"station_m": 0.0, "world_xz_m": [-600.0, -100.0]},
+            {"station_m": 30.0, "world_xz_m": [-600.0, -130.0]},
             {"station_m": 60.0, "world_xz_m": [-600.0, -160.0]},
         ],
     }
@@ -99,6 +104,18 @@ def test_registered_station_and_vertical_profile_unlock_only_explicit_offsets() 
                 "station_registration"
             ].update({"plan_rmse_m": 0.5}),
             "station_plan_rmse_exceeds_threshold",
+        ),
+        (
+            lambda document: document["vertical_profile_application"][
+                "station_registration"
+            ].update({"drawing_plan_m_per_pixel": 0.5}),
+            "drawing_plan_resolution_exceeds_threshold",
+        ),
+        (
+            lambda document: document["vertical_profile_application"][
+                "event_date_validation"
+            ].update({"verified_through": "2019-12-31"}),
+            "event_date_structural_history_not_verified",
         ),
         (
             lambda document: document["vertical_profile_application"]["profiles"][0][
@@ -172,5 +189,5 @@ def test_schema_locks_event_and_requires_station_controls() -> None:
     assert schema["properties"]["target_event_date"]["const"] == "2024-10-05"
     assert schema["$defs"]["station_registration"]["properties"]["control_points"][
         "minItems"
-    ] == 2
+    ] == 3
     assert schema["$defs"]["profile"]["properties"]["samples"]["minItems"] == 2

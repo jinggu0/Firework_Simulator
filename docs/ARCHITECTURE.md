@@ -918,6 +918,23 @@ approach component length, so it is explicitly rejected as a completion-drawing
 station axis. Event-day scaffolding and paint boundaries are also suppressed
 until their locations can be registered from dated evidence.
 
+V1-8 separates event-day appearance evidence from the structural profile.
+`simulator.bridge_event_state` reviews checksum-locked event photographs,
+official traffic-control records, the 2019 history table, and four original
+rasters extracted from the checksum-locked 2015 HWP. None of the reviewed
+event views resolves Seogang Bridge, so the absence of the paint project from
+the roadworks list cannot be promoted into an absence of underside scaffolding.
+Both scaffolding and fresh-paint boundaries remain suppressed.
+
+The station gate now requires three independent controls rather than two. Two
+points can fit a similarity axis with a misleading zero residual, while a third
+point exposes scale or curvature disagreement. Registration also requires an
+A/B-grade plan source, drawing scale no coarser than 0.125 m/px, plan RMSE no
+greater than 0.25 m, and structural-history verification through the event
+date. The available P8/P9 arch endpoints, at least 0.5 m/px longitudinal
+rasters, grade-C historical OSM target, and 2019 history cutoff fail these
+conditions. This evidence audit has no runtime consumer or frame cost.
+
 ## Event-site ground cover and street furniture
 
 A second Overpass query fixed to 2024-10-05 10:20 UTC adds 49 distinct

@@ -91,14 +91,25 @@
   "vertical_profile_application": {
     "status": "blocked_missing_station_registration_and_deck_top_profile",
     "thresholds": {
+      "minimum_station_control_points": 3,
       "maximum_station_plan_rmse_m": 0.25,
-      "maximum_vertical_uncertainty_m": 0.1
+      "maximum_vertical_uncertainty_m": 0.1,
+      "maximum_drawing_plan_m_per_pixel": 0.125,
+      "accepted_plan_source_grades": ["A", "B"]
+    },
+    "event_date_validation": {
+      "status": "blocked_incomplete_event_day_observation",
+      "verified_through": "2019-12-31",
+      "event_state_manifest": "assets/seogang_bridge_event_state_2024-10-05.json",
+      "event_state_manifest_sha256": "83e79780a834c704f310e6fb9abe4d5573578a0bc81a6c111910f6f3e4391acf"
     },
     "station_registration": null,
     "profiles": [],
     "blockers": [
-      "2012/2015/2019 structural facts predate the event and require an alteration-history check through 2024-10-05",
+      "2019 records report no major design-change history only through that inspection; 2024-10-05 remains unverified",
       "navigation-span station is not registered to the 2024-10-05 OSM centreline",
+      "only P8 and P9 are identifiable in the official arch drawing; a third independent station control is absent",
+      "the annotated longitudinal raster is at least 0.5 m/px and the dated OSM plan target is grade C",
       "main-deck top EL or station-specific structural depth is incomplete",
       "raster longitudinal-profile labels require control-point digitisation and residual reporting"
     ],

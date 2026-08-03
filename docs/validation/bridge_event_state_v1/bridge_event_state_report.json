@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "stage": "V1-8",
+  "target_event_date": "2024-10-05",
+  "bridge_id": "seogang_bridge",
+  "event_state_manifest": "assets/seogang_bridge_event_state_2024-10-05.json",
+  "event_state_manifest_sha256": "83e79780a834c704f310e6fb9abe4d5573578a0bc81a6c111910f6f3e4391acf",
+  "vertical_evidence_link": {
+    "manifest": "assets/seogang_bridge_vertical_evidence.json",
+    "expected_event_state_sha256": "83e79780a834c704f310e6fb9abe4d5573578a0bc81a6c111910f6f3e4391acf",
+    "checksum_matches": true
+  },
+  "event_photo_review": {
+    "reviewed_file_count": 4,
+    "independent_view_count": 3,
+    "qualifying_seogang_view_count": 0,
+    "minimum_required_independent_views": 2,
+    "all_downloads_checksum_locked": true,
+    "seogang_bridge_visible_in_any_reviewed_photo": false,
+    "conclusion": "The reviewed event photos face the launch corridor and Yeouido skyline; none resolves Seogang Bridge. They cannot establish scaffold or fresh-paint state."
+  },
+  "event_day_work_state": {
+    "paint_contract_active": true,
+    "seogang_work_in_official_traffic_control_list": false,
+    "topside_traffic_control": "no_seogang_work_listed",
+    "scaffolding_state": "unresolved",
+    "fresh_paint_boundary_state": "unresolved",
+    "render_scaffolding": false,
+    "render_fresh_paint_boundaries": false,
+    "scope_warning": "The official list supports only absence from published traffic-controlled road work, not absence of underside access or scaffolding."
+  },
+  "station_registration": {
+    "identified_controls": [
+      "main_pier_p8",
+      "main_pier_p9"
+    ],
+    "control_count": 2,
+    "minimum_required_control_count": 3,
+    "longitudinal_raster_plan_m_per_pixel_lower_bound": 0.5,
+    "maximum_allowed_plan_m_per_pixel": 0.125,
+    "plan_target_source_grade": "C",
+    "station_plan_rmse_m": null,
+    "official_drawing_artifacts_checksum_locked": true,
+    "registration_allowed": false
+  },
+  "structural_history": {
+    "verified_no_major_design_change_through": "2019-12-31",
+    "verified_through_event_date": false,
+    "paint_contract_is_structural_profile_change": false,
+    "note": "The 2024 contract scope is painting and scaffolding, but the available records do not prove the complete absence of every deck-profile alteration between the 2019 inspection and the event."
+  },
+  "application": {
+    "event_day_visual_state_allowed": false,
+    "station_registration_allowed": false,
+    "vertical_profile_allowed": false,
+    "blocking_reasons": [
+      "fewer_than_two_qualifying_event_views",
+      "event_day_scaffolding_state_unresolved",
+      "event_day_paint_boundary_unresolved",
+      "fewer_than_three_station_controls",
+      "drawing_plan_resolution_exceeds_threshold",
+      "plan_target_source_grade_not_accepted",
+      "station_plan_rmse_not_measured",
+      "structural_history_not_verified_through_event_date"
+    ],
+    "scene_vertices_modified": 0,
+    "runtime_frame_path_changed": false,
+    "expected_frame_time_delta_ms": 0.0
+  },
+  "passed": true,
+  "next_evidence_gate": "Obtain at least two independent dated views resolving Seogang Bridge and a third grade-A/B plan control with <=0.125 m/px source scale. Then measure plan RMSE <=0.25 m and verify structural history through 2024-10-05 before applying a vertical profile."
+}

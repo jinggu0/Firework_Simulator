@@ -77,6 +77,30 @@ scaffold placement.
 - Seoul Metropolitan Council 2024 budget review, inspected PDF page 22:
   https://ms.smc.seoul.kr/attach/record/SEOUL/appendix/a11/A0062073.pdf
 
+`seogang_bridge_event_state_2024-10-05.json` records the V1-8 event-date review.
+The official 2015 HWP and 2019 PDF retain their previously recorded attachment
+checksums. Four embedded HWP drawings are identified by their extracted byte
+checksums but are not redistributed. The 2019 report's rendered pages 4-5 state
+that completion drawings and repair history were held and that no major design-
+change history was available through that inspection. This does not establish
+the absence of every structural alteration through 2024-10-05.
+
+The Seoul Police event-day roadworks table does not list the Seogang Bridge
+paint contract. This supports only the absence of published traffic-controlled
+road work; it does not prove that underside scaffolding was absent:
+
+- https://www.spatic.go.kr/spatic/assem/getInfoView.do?mgrSeq=437
+
+The following dated press images were downloaded only for visual review and
+checksum measurement. They are not redistributed. None resolves Seogang Bridge,
+and the FNNews image is a resized derivative of the News1 composition, so it is
+not counted as an independent view:
+
+- Newsis: https://mobile.newsis.com/photo/NISI20241006_0020545554
+- News1: https://www.news1.kr/society/general-society/5559767
+- Wikitree: https://www.wikitree.co.kr/articles/988638
+- Financial News: https://www.fnnews.com/news/202410060818209481
+
 `yeouido_detail_osm_2024-10-05.json` is a second query fixed to the same
 historical timestamp. It preserves 131 mapped garden, pitch, track,
 playground, grass, scrub, forest, and wood polygons used by the detailed

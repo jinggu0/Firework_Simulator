@@ -10,6 +10,7 @@ runtime scene.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
 import math
 from pathlib import Path
 import re
@@ -127,6 +128,38 @@ def _application_state(
     )
     if maximum_plan_rmse <= 0.0 or maximum_vertical_uncertainty <= 0.0:
         raise BridgeEvidenceError("application thresholds must be positive")
+    minimum_controls = int(thresholds.get("minimum_station_control_points", 0))
+    maximum_drawing_mpp = _finite_number(
+        thresholds.get("maximum_drawing_plan_m_per_pixel", 0.0),
+        "maximum_drawing_plan_m_per_pixel",
+    )
+    accepted_plan_grades = set(thresholds.get("accepted_plan_source_grades", []))
+    if minimum_controls < 3 or maximum_drawing_mpp <= 0.0:
+        raise BridgeEvidenceError("station evidence thresholds are incomplete")
+    if not accepted_plan_grades or not accepted_plan_grades <= {"A", "B"}:
+        raise BridgeEvidenceError("accepted plan source grades must be A and/or B")
+
+    event_validation = application.get("event_date_validation")
+    if not isinstance(event_validation, Mapping):
+        raise BridgeEvidenceError("event_date_validation must be an object")
+    manifest_hash = str(event_validation.get("event_state_manifest_sha256", ""))
+    if not event_validation.get("event_state_manifest") or not re.fullmatch(
+        r"[0-9a-f]{64}", manifest_hash
+    ):
+        raise BridgeEvidenceError("event state manifest and sha256 are required")
+    try:
+        event_verified_through = date.fromisoformat(
+            str(event_validation.get("verified_through", ""))
+        )
+    except ValueError as error:
+        raise BridgeEvidenceError(
+            "event verified-through date must be ISO-8601"
+        ) from error
+    if (
+        event_validation.get("status") != "verified"
+        or event_verified_through < date(2024, 10, 5)
+    ):
+        reasons.append("event_date_structural_history_not_verified")
 
     controls: Sequence[Any] = []
     if not isinstance(registration, Mapping):
@@ -135,8 +168,17 @@ def _application_state(
         controls = registration.get("control_points", [])
         if not isinstance(controls, Sequence) or isinstance(controls, (str, bytes)):
             raise BridgeEvidenceError("station control_points must be an array")
-        if len(controls) < 2:
-            reasons.append("fewer_than_two_station_controls")
+        if len(controls) < minimum_controls:
+            reasons.append("fewer_than_three_station_controls")
+        plan_grade = str(registration.get("plan_source_confidence_grade", ""))
+        if plan_grade not in accepted_plan_grades:
+            reasons.append("station_plan_source_grade_not_accepted")
+        drawing_mpp = _finite_number(
+            registration.get("drawing_plan_m_per_pixel", math.inf),
+            "drawing plan metres per pixel",
+        )
+        if drawing_mpp > maximum_drawing_mpp:
+            reasons.append("drawing_plan_resolution_exceeds_threshold")
         rmse = _finite_number(
             registration.get("plan_rmse_m", math.inf), "station plan_rmse_m"
         )

@@ -108,9 +108,10 @@ def build_report(evidence_path: Path, scene_path: Path) -> dict[str, object]:
         },
         "passed": scene_hash_matches and datum_matches and untouched,
         "next_evidence_gate": (
-            "Register at least two completion-drawing stations to the dated OSM "
-            "centreline at <=0.25 m plan RMSE, then digitise deck-top EL samples "
-            "at <=0.10 m documented vertical uncertainty."
+            "Verify structural history through 2024-10-05, then register at least "
+            "three independent completion-drawing controls from a grade-A/B plan "
+            "at <=0.125 m/px and <=0.25 m plan RMSE. Digitise deck-top EL samples "
+            "only at <=0.10 m documented vertical uncertainty."
         ),
     }
 

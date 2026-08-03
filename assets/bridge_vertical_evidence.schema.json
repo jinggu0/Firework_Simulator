@@ -64,16 +64,35 @@
     "vertical_profile_application": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["status", "thresholds", "station_registration", "profiles", "blockers", "runtime_policy"],
+      "required": ["status", "thresholds", "event_date_validation", "station_registration", "profiles", "blockers", "runtime_policy"],
       "properties": {
         "status": {"type": "string", "minLength": 1},
         "thresholds": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["maximum_station_plan_rmse_m", "maximum_vertical_uncertainty_m"],
+          "required": ["minimum_station_control_points", "maximum_station_plan_rmse_m", "maximum_vertical_uncertainty_m", "maximum_drawing_plan_m_per_pixel", "accepted_plan_source_grades"],
           "properties": {
+            "minimum_station_control_points": {"type": "integer", "minimum": 3},
             "maximum_station_plan_rmse_m": {"type": "number", "exclusiveMinimum": 0},
-            "maximum_vertical_uncertainty_m": {"type": "number", "exclusiveMinimum": 0}
+            "maximum_vertical_uncertainty_m": {"type": "number", "exclusiveMinimum": 0},
+            "maximum_drawing_plan_m_per_pixel": {"type": "number", "exclusiveMinimum": 0},
+            "accepted_plan_source_grades": {
+              "type": "array",
+              "minItems": 1,
+              "items": {"enum": ["A", "B"]},
+              "uniqueItems": true
+            }
+          }
+        },
+        "event_date_validation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "verified_through", "event_state_manifest", "event_state_manifest_sha256"],
+          "properties": {
+            "status": {"type": "string", "minLength": 1},
+            "verified_through": {"type": "string", "minLength": 10},
+            "event_state_manifest": {"type": "string", "minLength": 1},
+            "event_state_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
           }
         },
         "station_registration": {
@@ -111,12 +130,14 @@
     "station_registration": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["plan_rmse_m", "control_points"],
+      "required": ["plan_rmse_m", "plan_source_confidence_grade", "drawing_plan_m_per_pixel", "control_points"],
       "properties": {
         "plan_rmse_m": {"type": "number", "minimum": 0},
+        "plan_source_confidence_grade": {"enum": ["A", "B"]},
+        "drawing_plan_m_per_pixel": {"type": "number", "exclusiveMinimum": 0},
         "control_points": {
           "type": "array",
-          "minItems": 2,
+          "minItems": 3,
           "items": {
             "type": "object",
             "additionalProperties": false,

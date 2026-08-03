@@ -1,0 +1,181 @@
+{
+  "schema_version": 1,
+  "target_event_date": "2024-10-05",
+  "bridge_id": "seogang_bridge",
+  "reviewed_at": "2026-08-03",
+  "thresholds": {
+    "minimum_independent_event_views": 2,
+    "minimum_bridge_span_pixels": 300,
+    "minimum_station_control_points": 3,
+    "maximum_drawing_plan_m_per_pixel": 0.125,
+    "maximum_station_plan_rmse_m": 0.25,
+    "accepted_plan_source_grades": ["A", "B"]
+  },
+  "sources": [
+    {
+      "source_id": "seoul_construction_contract_7182024022199",
+      "source_url": "https://cis.seoul.go.kr/TotalAlimi_new/PopInfo.action?cmd=info1&pjt_cd=7182024022199",
+      "confidence_grade": "A",
+      "role": "contract_period_and_scope",
+      "fact": "2024-02-28 through 2025-11-27; lower steel paint 17,575 m2, upper steel paint 2,726 m2, suspended scaffold 14,556 m2",
+      "checksum": null
+    },
+    {
+      "source_id": "seoul_police_roadworks_2024-10-05",
+      "source_url": "https://www.spatic.go.kr/spatic/assem/getInfoView.do?mgrSeq=437",
+      "confidence_grade": "A",
+      "role": "event_day_traffic_control_list",
+      "fact": "The published event-day roadworks table contains no Seogang Bridge paint project.",
+      "checksum": null
+    },
+    {
+      "source_id": "seoul_seogang_safety_diagnosis_2015",
+      "source_url": "https://opengov.seoul.go.kr/public/10134339",
+      "confidence_grade": "A",
+      "role": "official_drawings_and_pier_topology",
+      "fact": "P8-P9 Nielsen arch span and P5-P26 main-bridge pier identifiers",
+      "checksum": "4895954617d65e0488b2158786de8e241df2bdd8dcf49b0482e1e23c53bc4fdd"
+    },
+    {
+      "source_id": "seoul_seogang_detailed_inspection_2019",
+      "source_url": "https://opengov.seoul.go.kr/og/com/download.php?fid=100979&nid=19523034",
+      "confidence_grade": "A",
+      "role": "structural_history_review",
+      "fact": "Pages 4-5 list completion drawings and repair records, and report no major design-change history through the inspection.",
+      "checksum": "0168e72f1603763759e8c4f2e9006f8d1299714f5eace4db94ffe10e3e5772a2"
+    },
+    {
+      "source_id": "newsis_event_photo_0020545554",
+      "source_url": "https://mobile.newsis.com/photo/NISI20241006_0020545554",
+      "artifact_url": "https://img1.newsis.com/2024/10/06/NISI20241006_0020545554_web.jpg",
+      "confidence_grade": "C",
+      "role": "dated_event_photo",
+      "fact": "Published 2024-10-06 01:12 KST and captioned as the 2024-10-05 event.",
+      "checksum": "6a8475513cbdad41c413cd918ccb4b964a106551f5ba2614d450e65dd089b09f"
+    },
+    {
+      "source_id": "news1_event_photo_6912314",
+      "source_url": "https://www.news1.kr/society/general-society/5559767",
+      "artifact_url": "https://i3n.news1.kr/system/photos/2024/10/5/6912314/high.jpg",
+      "confidence_grade": "C",
+      "role": "dated_event_photo",
+      "fact": "Published 2024-10-06 and shows the launch corridor toward the Yeouido skyline.",
+      "checksum": "01312c7c63b2b06992518d7989f812e6accdb985543ab87e214fd0e4767afda2"
+    },
+    {
+      "source_id": "wikitree_event_photo_202410052116263525",
+      "source_url": "https://www.wikitree.co.kr/articles/988638",
+      "artifact_url": "https://cdnweb01.wikitree.co.kr/webdata/editor/202410/05/202410052116263525.jpg",
+      "confidence_grade": "C",
+      "role": "dated_event_photo_composite",
+      "fact": "Published 2024-10-05 21:18 KST; composite view of the event and spectators.",
+      "checksum": "9e745a3e1b2cfd61929df293af6e5b80485a59b5b0122ea37893e260914b7a63"
+    },
+    {
+      "source_id": "fnnews_news1_derivative_202410060817075675",
+      "source_url": "https://www.fnnews.com/news/202410060818209481",
+      "artifact_url": "https://image.fnnews.com/resource/media/image/2024/10/06/202410060817075675_l.jpg",
+      "confidence_grade": "C",
+      "role": "dated_event_photo_duplicate",
+      "fact": "A resized derivative of the News1 composition; not an independent view.",
+      "checksum": "7f2a60e95c708f9c7c911cb518d8c6367504c5a941b7aff56b23c2468a7bcb9c"
+    }
+  ],
+  "event_photo_review": [
+    {
+      "source_id": "newsis_event_photo_0020545554",
+      "width_px": 720,
+      "height_px": 480,
+      "independent_view_id": "newsis_hangang_wide",
+      "seogang_bridge_visible": false,
+      "resolved_bridge_span_pixels": 0,
+      "reason": "The view covers the launch corridor and a different bridge; Seogang Bridge is outside the identifiable frame."
+    },
+    {
+      "source_id": "news1_event_photo_6912314",
+      "width_px": 1400,
+      "height_px": 768,
+      "independent_view_id": "news1_yeouido_skyline",
+      "seogang_bridge_visible": false,
+      "resolved_bridge_span_pixels": 0,
+      "reason": "IFC and Parc.1 establish an east-facing Yeouido skyline view; Seogang Bridge is outside the frame."
+    },
+    {
+      "source_id": "wikitree_event_photo_202410052116263525",
+      "width_px": 1200,
+      "height_px": 628,
+      "independent_view_id": "wikitree_event_composite",
+      "seogang_bridge_visible": false,
+      "resolved_bridge_span_pixels": 0,
+      "reason": "Neither half of the composite resolves Seogang Bridge."
+    },
+    {
+      "source_id": "fnnews_news1_derivative_202410060817075675",
+      "width_px": 800,
+      "height_px": 438,
+      "independent_view_id": "news1_yeouido_skyline",
+      "seogang_bridge_visible": false,
+      "resolved_bridge_span_pixels": 0,
+      "reason": "This is not an independent view and Seogang Bridge is outside the frame."
+    }
+  ],
+  "official_drawing_review": {
+    "source_id": "seoul_seogang_safety_diagnosis_2015",
+    "extracted_artifacts": [
+      {
+        "artifact_id": "BIN0012.jpg",
+        "width_px": 4964,
+        "height_px": 3510,
+        "sha256": "bf50fb3e452ea9bc655aba5ead98dfad4a0baf1dfd2dbf85f62474ee71ec7bbf",
+        "observation": "Nielsen arch general drawing labels P8 and P9 and 150.000 m pier-to-pier span."
+      },
+      {
+        "artifact_id": "BIN0013.jpg",
+        "width_px": 4964,
+        "height_px": 3510,
+        "sha256": "8f530241b7c9b54ecd80d875b14c82bcd466bfff2298f8a4073508d02630d78e",
+        "observation": "Arch-rib detail contains P8/P9 endpoints, but its fabrication annotations are not accepted as roadway alignment stations."
+      },
+      {
+        "artifact_id": "BIN00C1.bmp",
+        "width_px": 1198,
+        "height_px": 359,
+        "sha256": "d7002b92f7f83d0f345f4d7e5a8bf3d02bb5ecba036b83de6c2162bfc6940026",
+        "observation": "One half of the annotated main-bridge longitudinal profile."
+      },
+      {
+        "artifact_id": "BIN00C3.bmp",
+        "width_px": 1297,
+        "height_px": 306,
+        "sha256": "981a4d279de89bef83460fba223f42828cffb67e64a622287793d3667334b265",
+        "observation": "Other half of the annotated main-bridge longitudinal profile."
+      }
+    ],
+    "identified_control_landmarks": [
+      {"control_id": "main_pier_p8", "drawing_role": "nielsen_arch_south_endpoint"},
+      {"control_id": "main_pier_p9", "drawing_role": "nielsen_arch_north_endpoint"}
+    ],
+    "longitudinal_raster_estimated_plan_m_per_pixel_lower_bound": 0.5,
+    "plan_target_source_grade": "C",
+    "station_plan_rmse_m": null
+  },
+  "structural_history": {
+    "verified_no_major_design_change_through": "2019-12-31",
+    "verified_through_event_date": false,
+    "paint_contract_is_structural_profile_change": false,
+    "note": "The 2024 contract scope is painting and scaffolding, but the available records do not prove the complete absence of every deck-profile alteration between the 2019 inspection and the event."
+  },
+  "event_day_assessment": {
+    "topside_traffic_control": "no_seogang_work_listed",
+    "topside_inference_scope": "The official list supports only absence from published traffic-controlled road work, not absence of underside access or scaffolding.",
+    "scaffolding_state": "unresolved",
+    "fresh_paint_boundary_state": "unresolved",
+    "render_scaffolding": false,
+    "render_fresh_paint_boundaries": false
+  },
+  "application": {
+    "event_day_visual_state_allowed": false,
+    "station_registration_allowed": false,
+    "vertical_profile_allowed": false
+  }
+}
