@@ -40,6 +40,10 @@ their UFID and upper/lower role; 59 features carry a positive relative height
 between 0.3 m and 8.0 m. These values are dimensions, not absolute elevations,
 so the audit keeps `mesh_merge_allowed=false` pending a vertical anchor rule.
 
+V1-11b then evaluates the bundled `F0010000` contours and `F0020000` spot
+heights. See `../ngii_vertical_anchor_v1/README.md`: contour-to-spot RMSE is
+4.027 m and no structure passes the 0.10 m vertical-uncertainty gate.
+
 ## Reproduction
 
 Keep the original 16 files in the Downloads directory, then run:

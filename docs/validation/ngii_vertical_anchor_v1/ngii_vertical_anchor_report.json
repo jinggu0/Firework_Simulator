@@ -1,0 +1,385 @@
+{
+  "schema_version": 1,
+  "stage": "V1-11b",
+  "target_event_date": "2024-10-05",
+  "source_year": 2025,
+  "temporal_relation": "official_post_event",
+  "delivery_receipt_sha256": "03e53924594c7a8469122a1df0d20d31de2fb4cc796d7ab32911c6042c406fd4",
+  "structure_asset_sha256": "af1ee4d157cd0cd0488e5d947c78dd4e0bc6a43404efb847883b9e896b725e8b",
+  "attribute_asset_sha256": "ef1cc959a25b66c7b8774dd30b3fc676b1a4760c1fa075179e0326870b66dab1",
+  "source_crs": "EPSG:5186",
+  "vertical_datum": "provider elevation fields; absolute datum label not explicit in member DBF",
+  "source_members": [
+    {
+      "package": "(B010)수치지도_376082447_2025_00000915164295.zip",
+      "layer": "F0010000",
+      "members": [
+        {
+          "member_path": "N1L_F0010000.shp",
+          "sha256": "85d1d2e2dd200edcc018c2fe35c19baee7b5df03fd26191b6fafc4367059f8a6",
+          "bytes": 13548
+        },
+        {
+          "member_path": "N1L_F0010000.shx",
+          "sha256": "67c9e1de88b0a1689aadd49372665e41421a48488fdbf74ea8c9526cccf1a045",
+          "bytes": 188
+        },
+        {
+          "member_path": "N1L_F0010000.dbf",
+          "sha256": "063a646c0e8e622555d6440dc88daf54a6f64f221cd81221d6c7d2d762e27e45",
+          "bytes": 5905
+        },
+        {
+          "member_path": "N1L_F0010000.prj",
+          "sha256": "5ba4ead630f43c65545548fcc1950de6ef459da7292f16c23e0da66584f8a454",
+          "bytes": 416
+        }
+      ]
+    },
+    {
+      "package": "(B010)수치지도_376082447_2025_00000915164295.zip",
+      "layer": "F0020000",
+      "members": [
+        {
+          "member_path": "N1P_F0020000.shp",
+          "sha256": "e7124b98acc350c088d6df892ad90ec76edadf333693013962b364f2fdb0f1cd",
+          "bytes": 184
+        },
+        {
+          "member_path": "N1P_F0020000.shx",
+          "sha256": "3cf11d650508b2acb7f0e8d6098cc62bde6c2a296a40b103399449407ffc76f4",
+          "bytes": 124
+        },
+        {
+          "member_path": "N1P_F0020000.dbf",
+          "sha256": "1399f5fc9f486608c46ff890bac2c3d742b39724d47894a72149cd1a1f28a356",
+          "bytes": 911
+        },
+        {
+          "member_path": "N1P_F0020000.prj",
+          "sha256": "5ba4ead630f43c65545548fcc1950de6ef459da7292f16c23e0da66584f8a454",
+          "bytes": 416
+        }
+      ]
+    },
+    {
+      "package": "(B010)수치지도_376082448_2025_00000902094208.zip",
+      "layer": "F0010000",
+      "members": [
+        {
+          "member_path": "N1L_F0010000.shp",
+          "sha256": "aa76de62565317fafacb0ed71248694de0f43c1857a1eda8b1054ab13db8ed32",
+          "bytes": 5452
+        },
+        {
+          "member_path": "N1L_F0010000.shx",
+          "sha256": "7868fafed4f9926bc7d3202335c4982408bca0e817e40be12517b08ca4451944",
+          "bytes": 124
+        },
+        {
+          "member_path": "N1L_F0010000.dbf",
+          "sha256": "419ce8f48114d65a9ff818c7e03f86cc88203dbdf416d1f2be068c8556ee9d30",
+          "bytes": 1705
+        },
+        {
+          "member_path": "N1L_F0010000.prj",
+          "sha256": "5ba4ead630f43c65545548fcc1950de6ef459da7292f16c23e0da66584f8a454",
+          "bytes": 416
+        }
+      ]
+    },
+    {
+      "package": "(B010)수치지도_376082448_2025_00000902094208.zip",
+      "layer": "F0020000",
+      "members": [
+        {
+          "member_path": "N1P_F0020000.shp",
+          "sha256": "ed512571f8f64084017e9b18183f63096c298479ebd3bba1a9bf83c4525cee5b",
+          "bytes": 184
+        },
+        {
+          "member_path": "N1P_F0020000.shx",
+          "sha256": "7bfd632d500629b0a8008f5b90d50b85f5fc5442c9946e85e149adc7d9868bae",
+          "bytes": 124
+        },
+        {
+          "member_path": "N1P_F0020000.dbf",
+          "sha256": "ef7e5678bf9f5c976d7405d0d49eb81f8b01444ac313da963f453a6f2c0c575e",
+          "bytes": 911
+        },
+        {
+          "member_path": "N1P_F0020000.prj",
+          "sha256": "5ba4ead630f43c65545548fcc1950de6ef459da7292f16c23e0da66584f8a454",
+          "bytes": 416
+        }
+      ]
+    },
+    {
+      "package": "(B010)수치지도_376082457_2025_0000063402558.zip",
+      "layer": "F0010000",
+      "members": [
+        {
+          "member_path": "N1L_F0010000.shp",
+          "sha256": "0421a2f5ab979c38322c77d54c1852a487c49219601b728242fba0cfb9069cf7",
+          "bytes": 700
+        },
+        {
+          "member_path": "N1L_F0010000.shx",
+          "sha256": "476f3499c8055ca4e38e3be57a4318022adcbe83fab2cd4473fa632a8af9f347",
+          "bytes": 124
+        },
+        {
+          "member_path": "N1L_F0010000.dbf",
+          "sha256": "f84da3637c8ab0034d0ed53e3e5fef498bd7150ff18a0be23da850d703e8926d",
+          "bytes": 1705
+        },
+        {
+          "member_path": "N1L_F0010000.prj",
+          "sha256": "5ba4ead630f43c65545548fcc1950de6ef459da7292f16c23e0da66584f8a454",
+          "bytes": 416
+        }
+      ]
+    },
+    {
+      "package": "(B010)수치지도_376082457_2025_0000063402558.zip",
+      "layer": "F0020000",
+      "members": [
+        {
+          "member_path": "N1P_F0020000.shp",
+          "sha256": "575953d2f99303a343b6bb2211678f8ae71b1d0f81df19d7bcfeb607405ff69a",
+          "bytes": 184
+        },
+        {
+          "member_path": "N1P_F0020000.shx",
+          "sha256": "d84f9a93f74792f274d251ee86dfedca53902221d0b57f24f475ee6c511b1df8",
+          "bytes": 124
+        },
+        {
+          "member_path": "N1P_F0020000.dbf",
+          "sha256": "5463b5c6964e365638fa94a3eb86710d4b0866892097dfe13eb4ffcd5caf5a90",
+          "bytes": 911
+        },
+        {
+          "member_path": "N1P_F0020000.prj",
+          "sha256": "5ba4ead630f43c65545548fcc1950de6ef459da7292f16c23e0da66584f8a454",
+          "bytes": 416
+        }
+      ]
+    },
+    {
+      "package": "(B010)수치지도_376082458_2025_00000778028252.zip",
+      "layer": "F0010000",
+      "members": [
+        {
+          "member_path": "N1L_F0010000.shp",
+          "sha256": "4c8997a7199d0c5d85a7e33e971e8b6e69932f290faf60c83ae1a1a2cb9a1704",
+          "bytes": 12980
+        },
+        {
+          "member_path": "N1L_F0010000.shx",
+          "sha256": "32dde8c0f3a61f19f364f1995bee9e2db032cfdb4ccaaad74b297875865eebcc",
+          "bytes": 244
+        },
+        {
+          "member_path": "N1L_F0010000.dbf",
+          "sha256": "65b1bb3e52aa072adc511ad56032b8da9c8498e19fe4136798e7ebe5c5acd75f",
+          "bytes": 9580
+        },
+        {
+          "member_path": "N1L_F0010000.prj",
+          "sha256": "5ba4ead630f43c65545548fcc1950de6ef459da7292f16c23e0da66584f8a454",
+          "bytes": 416
+        }
+      ]
+    },
+    {
+      "package": "(B010)수치지도_376082458_2025_00000778028252.zip",
+      "layer": "F0020000",
+      "members": [
+        {
+          "member_path": "N1P_F0020000.shp",
+          "sha256": "e01293b00b5c370c5bf1c188db3a04b70500f9b5e925c5ef95d960e0466f38ba",
+          "bytes": 184
+        },
+        {
+          "member_path": "N1P_F0020000.shx",
+          "sha256": "4984e4586201b5f9a1fc98287bf642a9949329e04036628c1910f6da4129f801",
+          "bytes": 124
+        },
+        {
+          "member_path": "N1P_F0020000.dbf",
+          "sha256": "8125ed3977167e25387f64023579ffe896ad567ae43370655322915addb2d156",
+          "bytes": 911
+        },
+        {
+          "member_path": "N1P_F0020000.prj",
+          "sha256": "5ba4ead630f43c65545548fcc1950de6ef459da7292f16c23e0da66584f8a454",
+          "bytes": 416
+        }
+      ]
+    }
+  ],
+  "vertical_constraints": {
+    "contour_feature_count": 35,
+    "spot_height_count": 12,
+    "resampled_contour_constraint_count": 2825,
+    "absolute_elevation_range_m": [
+      2.977,
+      23.84
+    ],
+    "structure_point_convex_hull_support_fraction": 0.8802660753880266
+  },
+  "contour_to_spot_cross_validation": {
+    "spot_count": 12,
+    "supported_spot_count": 5,
+    "rmse_m": 4.026703550413937,
+    "mean_absolute_error_m": 2.7941942440985534,
+    "p95_absolute_error_m": 7.2150838585742205
+  },
+  "existing_terrain_limit": {
+    "source_scale": "1:5,000",
+    "output_spacing_m": [
+      4.887585639953613,
+      3.9100685119628906
+    ],
+    "constraint_rmse_m": 2.4881119638479237,
+    "constraint_p95_absolute_error_m": 4.0327072745635375
+  },
+  "plan_pair_candidates": [
+    {
+      "kind": "embankment",
+      "lower_feature_id": "9f18570bf5a029769cae0e4a",
+      "upper_feature_id": "eb3ea0a7cf7cb4885523081f",
+      "lower_ufid": "1000376082458C00510000000000000001",
+      "upper_ufid": "1000376082458C00510000000000000002",
+      "median_bidirectional_distance_m": 1.9793267345979948,
+      "p95_bidirectional_distance_m": 2.5339403456893717,
+      "declared_length_ratio": 1.5948761261261262,
+      "upper_declared_relative_height_m": 1.5,
+      "plan_pair_status": "strong_candidate",
+      "vertical_anchor_status": "blocked"
+    },
+    {
+      "kind": "embankment",
+      "lower_feature_id": "5441c922cd984f2fe1585255",
+      "upper_feature_id": "94e25c32c7ebeee8b87b577e",
+      "lower_ufid": "1000376082458C00510000000000000005",
+      "upper_ufid": "1000376082458C00510000000000000004",
+      "median_bidirectional_distance_m": 1.8875922556248235,
+      "p95_bidirectional_distance_m": 2.047293872929817,
+      "declared_length_ratio": 1.0809212573918456,
+      "upper_declared_relative_height_m": 1.5,
+      "plan_pair_status": "strong_candidate",
+      "vertical_anchor_status": "blocked"
+    },
+    {
+      "kind": "cut_or_fill",
+      "lower_feature_id": "95d22d27b9da331308d5a7e2",
+      "upper_feature_id": "3aaa96c220553554cbbc450c",
+      "lower_ufid": "1000376082447F00310000000000000006",
+      "upper_ufid": "1000376082447F00310000000000000003",
+      "median_bidirectional_distance_m": 2.596359816867103,
+      "p95_bidirectional_distance_m": 24.536821770930985,
+      "declared_length_ratio": 2.1976246626692766,
+      "upper_declared_relative_height_m": null,
+      "plan_pair_status": "partial_or_ambiguous",
+      "vertical_anchor_status": "blocked"
+    },
+    {
+      "kind": "cut_or_fill",
+      "lower_feature_id": "c693a871e0cbaec95204ca83",
+      "upper_feature_id": "6432c3a528f17d1c34ecf3d3",
+      "lower_ufid": "1000376082447F00310000000000000005",
+      "upper_ufid": "1000376082447F00310000000000000001",
+      "median_bidirectional_distance_m": 1.471462974736403,
+      "p95_bidirectional_distance_m": 2.766335735343474,
+      "declared_length_ratio": 1.0272826904221355,
+      "upper_declared_relative_height_m": null,
+      "plan_pair_status": "strong_candidate",
+      "vertical_anchor_status": "blocked"
+    },
+    {
+      "kind": "cut_or_fill",
+      "lower_feature_id": "5f1b3ff738380e1708ccff8e",
+      "upper_feature_id": "85097a28207a8c06f93e9b9e",
+      "lower_ufid": "1000376082447F00310000000000000004",
+      "upper_ufid": "1000376082447F00310000000000000002",
+      "median_bidirectional_distance_m": 1.2550770674311087,
+      "p95_bidirectional_distance_m": 1.5028143459528456,
+      "declared_length_ratio": 1.0060606436768904,
+      "upper_declared_relative_height_m": null,
+      "plan_pair_status": "strong_candidate",
+      "vertical_anchor_status": "blocked"
+    },
+    {
+      "kind": "retaining_wall",
+      "lower_feature_id": "05b192d2c19d78c8a64cb1cb",
+      "upper_feature_id": "84f66d3ad804f66a35f7c8b9",
+      "lower_ufid": "1000376082447F00410000000000000006",
+      "upper_ufid": "1000376082447F00410000000000000012",
+      "median_bidirectional_distance_m": 2.15260321882737,
+      "p95_bidirectional_distance_m": 6.46075746478214,
+      "declared_length_ratio": 3.1235485369252203,
+      "upper_declared_relative_height_m": 8.0,
+      "plan_pair_status": "partial_or_ambiguous",
+      "vertical_anchor_status": "blocked"
+    },
+    {
+      "kind": "retaining_wall",
+      "lower_feature_id": "0e08e4f64d3f7deb4a7db549",
+      "upper_feature_id": "89b8a2745130730fded5ba1c",
+      "lower_ufid": "1000376082447F00410000000000000005",
+      "upper_ufid": "1000376082447F00410000000000000010",
+      "median_bidirectional_distance_m": 9.086289486892422,
+      "p95_bidirectional_distance_m": 12.00929990124794,
+      "declared_length_ratio": 2.182865409344192,
+      "upper_declared_relative_height_m": 6.5,
+      "plan_pair_status": "partial_or_ambiguous",
+      "vertical_anchor_status": "blocked"
+    },
+    {
+      "kind": "retaining_wall",
+      "lower_feature_id": "71a9fab75d9893388a8b9bd7",
+      "upper_feature_id": "4ec9f1ed7ca1340c874c10bb",
+      "lower_ufid": "1000376082447F00410000000000000004",
+      "upper_ufid": "1000376082447F00410000000000000015",
+      "median_bidirectional_distance_m": 2.4717588591747397,
+      "p95_bidirectional_distance_m": 5.33197334728421,
+      "declared_length_ratio": 3.9957196361690746,
+      "upper_declared_relative_height_m": 4.5,
+      "plan_pair_status": "partial_or_ambiguous",
+      "vertical_anchor_status": "blocked"
+    },
+    {
+      "kind": "retaining_wall",
+      "lower_feature_id": "30fe5b25c5aea24c72465b2c",
+      "upper_feature_id": "6a73c6e4557f51e48772a74c",
+      "lower_ufid": "1000376082448F00410000000000000001",
+      "upper_ufid": "1000376082448F00410000000000000002",
+      "median_bidirectional_distance_m": 2.8396130648507896,
+      "p95_bidirectional_distance_m": 6.486529938622066,
+      "declared_length_ratio": 2.369675160474616,
+      "upper_declared_relative_height_m": 2.0,
+      "plan_pair_status": "partial_or_ambiguous",
+      "vertical_anchor_status": "blocked"
+    }
+  ],
+  "summary": {
+    "lower_edge_count": 9,
+    "strong_plan_pair_count": 4,
+    "vertical_anchor_pass_count": 0,
+    "scene_vertices_modified": 0
+  },
+  "gate": {
+    "passed": false,
+    "mesh_merge_allowed": false,
+    "reasons": [
+      "only a subset of spot heights lies inside the contour convex hull",
+      "contour-to-spot cross-validation error exceeds sub-metre structure needs",
+      "the existing 1:5,000 terrain fit error exceeds many 0.3-8.0 m structure heights",
+      "the F001/F002 member metadata does not explicitly name the absolute vertical datum",
+      "2025 elevation constraints are not verified as unchanged on 2024-10-05"
+    ],
+    "next_source_requirement": "Acquire provider-documented high-resolution DEM or surveyed elevations with explicit vertical datum and uncertainty. Require <=0.25 m plan registration RMSE and <=0.10 m vertical uncertainty before runtime merge."
+  }
+}
