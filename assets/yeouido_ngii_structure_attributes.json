@@ -1,0 +1,1097 @@
+{
+  "schema_version": 1,
+  "target_event_date": "2024-10-05",
+  "source_year": 2025,
+  "temporal_relation": "official_post_event",
+  "structure_asset": "assets/yeouido_ngii_structures.json",
+  "structure_asset_sha256": "af1ee4d157cd0cd0488e5d947c78dd4e0bc6a43404efb847883b9e896b725e8b",
+  "delivery_receipt": "C:/temp_git/Firework_Simulator/assets/yeouido_ngii_delivery_receipt.json",
+  "delivery_receipt_sha256": "03e53924594c7a8469122a1df0d20d31de2fb4cc796d7ab32911c6042c406fd4",
+  "source_members": [
+    {
+      "package": "(B010)수치지도_376082447_2025_00000915164295.zip",
+      "shp_member": "N1L_C0050000.shp",
+      "members": [
+        {
+          "member_path": "N1L_C0050000.shp",
+          "sha256": "bc61970970130126c8f9549eed5351a7d364c3f42583de7e8ece2822b241e49f",
+          "bytes": 644
+        },
+        {
+          "member_path": "N1L_C0050000.shx",
+          "sha256": "bf6a4d14c2bcc772f164a7a4b42c73bcd064a82bccb4990ee95bac97c1dac7e9",
+          "bytes": 132
+        },
+        {
+          "member_path": "N1L_C0050000.dbf",
+          "sha256": "bb04922242fb9f42da74f32415b409ad34e288ae6a6b373a244d77ea65b84308",
+          "bytes": 5470
+        },
+        {
+          "member_path": "N1L_C0050000.prj",
+          "sha256": "5ba4ead630f43c65545548fcc1950de6ef459da7292f16c23e0da66584f8a454",
+          "bytes": 416
+        }
+      ]
+    },
+    {
+      "package": "(B010)수치지도_376082447_2025_00000915164295.zip",
+      "shp_member": "N1L_F0030000.shp",
+      "members": [
+        {
+          "member_path": "N1L_F0030000.shp",
+          "sha256": "fb0a41be0ef5543f702849b6fb719160de310c8dc01a6f7d4ba6675c569c7229",
+          "bytes": 1988
+        },
+        {
+          "member_path": "N1L_F0030000.shx",
+          "sha256": "06b91765bd941f8335e91875d2c1b5cd3151cfe0aca546406b89b5c5f157ef47",
+          "bytes": 148
+        },
+        {
+          "member_path": "N1L_F0030000.dbf",
+          "sha256": "1134985d772422635f6ce7772a81ed8ee6a4a6d26da6d06c72bb89339ccacc3d",
+          "bytes": 4708
+        },
+        {
+          "member_path": "N1L_F0030000.prj",
+          "sha256": "5ba4ead630f43c65545548fcc1950de6ef459da7292f16c23e0da66584f8a454",
+          "bytes": 416
+        }
+      ]
+    },
+    {
+      "package": "(B010)수치지도_376082447_2025_00000915164295.zip",
+      "shp_member": "N1L_F0040000.shp",
+      "members": [
+        {
+          "member_path": "N1L_F0040000.shp",
+          "sha256": "f8bcc363126629d6fcddfaf1dd92a5c88d6e2b4c89fc0ebd83d1fba6aa48bab6",
+          "bytes": 3236
+        },
+        {
+          "member_path": "N1L_F0040000.shx",
+          "sha256": "e24e8bcdb2247a6903cbb656df4e0798f4cee25059170a986ff5d59380502b83",
+          "bytes": 276
+        },
+        {
+          "member_path": "N1L_F0040000.dbf",
+          "sha256": "2cd9d3468566c720c0ec6979d587fc6b9c64d868c53e0b5eecd5080c23c94563",
+          "bytes": 23304
+        },
+        {
+          "member_path": "N1L_F0040000.prj",
+          "sha256": "5ba4ead630f43c65545548fcc1950de6ef459da7292f16c23e0da66584f8a454",
+          "bytes": 416
+        }
+      ]
+    },
+    {
+      "package": "(B010)수치지도_376082448_2025_00000902094208.zip",
+      "shp_member": "N1L_C0050000.shp",
+      "members": [
+        {
+          "member_path": "N1L_C0050000.shp",
+          "sha256": "1243f5afbef46ac4c16b9187cc9ae96ca44008cb1df3e45afb321cf1fc32d47d",
+          "bytes": 740
+        },
+        {
+          "member_path": "N1L_C0050000.shx",
+          "sha256": "bf3ee1481c270a8e5d4c0429b17c5d87ed9d3867c5e839cb91ed39fb9a97a5a9",
+          "bytes": 148
+        },
+        {
+          "member_path": "N1L_C0050000.dbf",
+          "sha256": "9ee2428bd8655b72e5458c1cdb4db8d76d2a587efa7316ec0e3a7c3a3444731a",
+          "bytes": 8076
+        },
+        {
+          "member_path": "N1L_C0050000.prj",
+          "sha256": "5ba4ead630f43c65545548fcc1950de6ef459da7292f16c23e0da66584f8a454",
+          "bytes": 416
+        }
+      ]
+    },
+    {
+      "package": "(B010)수치지도_376082448_2025_00000902094208.zip",
+      "shp_member": "N1L_F0040000.shp",
+      "members": [
+        {
+          "member_path": "N1L_F0040000.shp",
+          "sha256": "f0b5df43c9848e4414cd0ffaefc8199d01fadb5c24ec9ea0e7eb2e34745e7344",
+          "bytes": 1124
+        },
+        {
+          "member_path": "N1L_F0040000.shx",
+          "sha256": "abfb000e4cb485009aa0b4437f8fcd0e630826906a851e5db75d304fdba26640",
+          "bytes": 148
+        },
+        {
+          "member_path": "N1L_F0040000.dbf",
+          "sha256": "b3103494fc92d46cfc27e5cb02319400352b2fdf10c6b343e5b9534c6658875a",
+          "bytes": 6520
+        },
+        {
+          "member_path": "N1L_F0040000.prj",
+          "sha256": "5ba4ead630f43c65545548fcc1950de6ef459da7292f16c23e0da66584f8a454",
+          "bytes": 416
+        }
+      ]
+    },
+    {
+      "package": "(B010)수치지도_376082457_2025_0000063402558.zip",
+      "shp_member": "N1L_F0040000.shp",
+      "members": [
+        {
+          "member_path": "N1L_F0040000.shp",
+          "sha256": "c12c4f9159f1f8f210263a435a316cac685523d8f80f5848e1b2f2e95631ce75",
+          "bytes": 940
+        },
+        {
+          "member_path": "N1L_F0040000.shx",
+          "sha256": "d7226e08a6fe4f776ff8469dc5d9a013c1ddde852a3fe21f57f98725d79355b3",
+          "bytes": 140
+        },
+        {
+          "member_path": "N1L_F0040000.dbf",
+          "sha256": "a4b4108397a89c9bb86007f5650a90c602f6d96553b0eeb0d3272ad40372ddbe",
+          "bytes": 5471
+        },
+        {
+          "member_path": "N1L_F0040000.prj",
+          "sha256": "5ba4ead630f43c65545548fcc1950de6ef459da7292f16c23e0da66584f8a454",
+          "bytes": 416
+        }
+      ]
+    },
+    {
+      "package": "(B010)수치지도_376082458_2025_00000778028252.zip",
+      "shp_member": "N1L_C0050000.shp",
+      "members": [
+        {
+          "member_path": "N1L_C0050000.shp",
+          "sha256": "ec67f444a7d072771253f6996ceadcf31a6234ca3a8096bb1c02798c660a3c33",
+          "bytes": 572
+        },
+        {
+          "member_path": "N1L_C0050000.shx",
+          "sha256": "0843c74e3fbdfbfe86fde1e46debfe19c41769edf452435418a9bb55cd2503e4",
+          "bytes": 140
+        },
+        {
+          "member_path": "N1L_C0050000.dbf",
+          "sha256": "7d35dad6cbc500ef4e0ca98406290b390e62718de682589373cdeb883ee66e2a",
+          "bytes": 6773
+        },
+        {
+          "member_path": "N1L_C0050000.prj",
+          "sha256": "5ba4ead630f43c65545548fcc1950de6ef459da7292f16c23e0da66584f8a454",
+          "bytes": 416
+        }
+      ]
+    },
+    {
+      "package": "(B010)수치지도_376082458_2025_00000778028252.zip",
+      "shp_member": "N1L_F0040000.shp",
+      "members": [
+        {
+          "member_path": "N1L_F0040000.shp",
+          "sha256": "9b87e894f6c0aa376a1951c6f3338aeaf1a390d44ab7c42474d4a7ed41a20918",
+          "bytes": 2748
+        },
+        {
+          "member_path": "N1L_F0040000.shx",
+          "sha256": "bac5e776206cfb98fa2fbe3fdaa38722527e1ecf9c09d48a8f400e6eaf24d669",
+          "bytes": 236
+        },
+        {
+          "member_path": "N1L_F0040000.dbf",
+          "sha256": "9a49b369484fbd2c4f74c4aab2fce1a33890e724e929b04b1ffa2c2709b60a5d",
+          "bytes": 18059
+        },
+        {
+          "member_path": "N1L_F0040000.prj",
+          "sha256": "5ba4ead630f43c65545548fcc1950de6ef459da7292f16c23e0da66584f8a454",
+          "bytes": 416
+        }
+      ]
+    }
+  ],
+  "features": [
+    {
+      "feature_id": "1085fe068c42ee46572917bf",
+      "kind": "embankment",
+      "source_member": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_C0050000.shp",
+      "record_index": 0,
+      "ufid": "1000376082447C00510000000000000004",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 3.0,
+      "declared_length_m": 52.285,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "9ae6c313421ad3fb11385e09",
+      "kind": "embankment",
+      "source_member": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_C0050000.shp",
+      "record_index": 1,
+      "ufid": "1000376082447C00510000000000000003",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 3.0,
+      "declared_length_m": 11.647,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "5fc7f6c7661b38e25e948454",
+      "kind": "embankment",
+      "source_member": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_C0050000.shp",
+      "record_index": 2,
+      "ufid": "1000376082447C00510000000000000002",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 0.3,
+      "declared_length_m": 2.989,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "a3faca09fb2698335f784a8c",
+      "kind": "embankment",
+      "source_member": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_C0050000.shp",
+      "record_index": 3,
+      "ufid": "1000376082447C00510000000000000001",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 1.0,
+      "declared_length_m": 232.34,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "95d22d27b9da331308d5a7e2",
+      "kind": "cut_or_fill",
+      "source_member": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_F0030000.shp",
+      "record_index": 0,
+      "ufid": "1000376082447F00310000000000000006",
+      "edge_role": "lower",
+      "provider_edge_role": "하단",
+      "declared_relative_height_m": null,
+      "declared_length_m": null,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "c693a871e0cbaec95204ca83",
+      "kind": "cut_or_fill",
+      "source_member": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_F0030000.shp",
+      "record_index": 1,
+      "ufid": "1000376082447F00310000000000000005",
+      "edge_role": "lower",
+      "provider_edge_role": "하단",
+      "declared_relative_height_m": null,
+      "declared_length_m": null,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "5f1b3ff738380e1708ccff8e",
+      "kind": "cut_or_fill",
+      "source_member": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_F0030000.shp",
+      "record_index": 2,
+      "ufid": "1000376082447F00310000000000000004",
+      "edge_role": "lower",
+      "provider_edge_role": "하단",
+      "declared_relative_height_m": null,
+      "declared_length_m": null,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "3aaa96c220553554cbbc450c",
+      "kind": "cut_or_fill",
+      "source_member": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_F0030000.shp",
+      "record_index": 3,
+      "ufid": "1000376082447F00310000000000000003",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": null,
+      "declared_length_m": null,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "85097a28207a8c06f93e9b9e",
+      "kind": "cut_or_fill",
+      "source_member": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_F0030000.shp",
+      "record_index": 4,
+      "ufid": "1000376082447F00310000000000000002",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": null,
+      "declared_length_m": null,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "6432c3a528f17d1c34ecf3d3",
+      "kind": "cut_or_fill",
+      "source_member": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_F0030000.shp",
+      "record_index": 5,
+      "ufid": "1000376082447F00310000000000000001",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": null,
+      "declared_length_m": null,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "814638d20964e7629d91259c",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_F0040000.shp",
+      "record_index": 0,
+      "ufid": "1000376082447F00410000000000000022",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 1.5,
+      "declared_length_m": 52.33,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "c11d412ad026dfbbdaae7583",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_F0040000.shp",
+      "record_index": 1,
+      "ufid": "1000376082447F00410000000000000021",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 1.0,
+      "declared_length_m": 9.695,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "0b18680e020566f2f669ba7a",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_F0040000.shp",
+      "record_index": 2,
+      "ufid": "1000376082447F00410000000000000020",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 1.0,
+      "declared_length_m": 8.859,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "0dc602805e2dc0e911785140",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_F0040000.shp",
+      "record_index": 3,
+      "ufid": "1000376082447F00410000000000000019",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 1.0,
+      "declared_length_m": 7.895,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "0f2e18a8009f75819501de8c",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_F0040000.shp",
+      "record_index": 4,
+      "ufid": "1000376082447F00410000000000000018",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 1.0,
+      "declared_length_m": 126.11,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "90c0d6c63bd6b6ebbf2bda2f",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_F0040000.shp",
+      "record_index": 5,
+      "ufid": "1000376082447F00410000000000000017",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 5.0,
+      "declared_length_m": 82.058,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "8d42deb944299e0af3967e20",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_F0040000.shp",
+      "record_index": 6,
+      "ufid": "1000376082447F00410000000000000016",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 1.0,
+      "declared_length_m": 85.533,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "4ec9f1ed7ca1340c874c10bb",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_F0040000.shp",
+      "record_index": 7,
+      "ufid": "1000376082447F00410000000000000015",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 4.5,
+      "declared_length_m": 3.738,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "a0a72a258d11397505b4edaf",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_F0040000.shp",
+      "record_index": 8,
+      "ufid": "1000376082447F00410000000000000014",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 0.5,
+      "declared_length_m": 11.163,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "afaffd202091dff1f86ec9de",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_F0040000.shp",
+      "record_index": 9,
+      "ufid": "1000376082447F00410000000000000013",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 0.5,
+      "declared_length_m": 35.449,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "84f66d3ad804f66a35f7c8b9",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_F0040000.shp",
+      "record_index": 10,
+      "ufid": "1000376082447F00410000000000000012",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 8.0,
+      "declared_length_m": 6.725,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "5401e17b02fa6dc026ccd894",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_F0040000.shp",
+      "record_index": 11,
+      "ufid": "1000376082447F00410000000000000011",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 6.5,
+      "declared_length_m": 8.587,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "89b8a2745130730fded5ba1c",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_F0040000.shp",
+      "record_index": 12,
+      "ufid": "1000376082447F00410000000000000010",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 6.5,
+      "declared_length_m": 18.664,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "14c2bf425421e5736dfa1a8b",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_F0040000.shp",
+      "record_index": 13,
+      "ufid": "1000376082447F00410000000000000009",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 0.5,
+      "declared_length_m": 3.396,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "05f9dc1a0957190d0a26313a",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_F0040000.shp",
+      "record_index": 14,
+      "ufid": "1000376082447F00410000000000000008",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 0.5,
+      "declared_length_m": 7.55,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "35f376bcc4d1a1b2921f7881",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_F0040000.shp",
+      "record_index": 15,
+      "ufid": "1000376082447F00410000000000000007",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 2.0,
+      "declared_length_m": 134.854,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "05b192d2c19d78c8a64cb1cb",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_F0040000.shp",
+      "record_index": 16,
+      "ufid": "1000376082447F00410000000000000006",
+      "edge_role": "lower",
+      "provider_edge_role": "하단",
+      "declared_relative_height_m": 0.0,
+      "declared_length_m": 2.153,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "0e08e4f64d3f7deb4a7db549",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_F0040000.shp",
+      "record_index": 17,
+      "ufid": "1000376082447F00410000000000000005",
+      "edge_role": "lower",
+      "provider_edge_role": "하단",
+      "declared_relative_height_m": 0.0,
+      "declared_length_m": 40.741,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "71a9fab75d9893388a8b9bd7",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_F0040000.shp",
+      "record_index": 18,
+      "ufid": "1000376082447F00410000000000000004",
+      "edge_role": "lower",
+      "provider_edge_role": "하단",
+      "declared_relative_height_m": 0.0,
+      "declared_length_m": 14.936,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "51d64c90e4dec47dc053d208",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_F0040000.shp",
+      "record_index": 19,
+      "ufid": "1000376082447F00410000000000000003",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 1.5,
+      "declared_length_m": 145.452,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "bc9c936e784e48388379e83f",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_F0040000.shp",
+      "record_index": 20,
+      "ufid": "1000376082447F00410000000000000002",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 1.0,
+      "declared_length_m": 125.143,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "21dae2a5be27b74a94422d49",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_F0040000.shp",
+      "record_index": 21,
+      "ufid": "1000376082447F00410000000000000001",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 2.0,
+      "declared_length_m": 268.345,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "8c15a28b30bd7838e01e90c0",
+      "kind": "embankment",
+      "source_member": "(B010)수치지도_376082448_2025_00000902094208.zip:N1L_C0050000.shp",
+      "record_index": 0,
+      "ufid": "1000376082448C00510000000000000006",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 1.5,
+      "declared_length_m": 90.467,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "7602aee06778a0b50b34bd29",
+      "kind": "embankment",
+      "source_member": "(B010)수치지도_376082448_2025_00000902094208.zip:N1L_C0050000.shp",
+      "record_index": 1,
+      "ufid": "1000376082448C00510000000000000005",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 3.0,
+      "declared_length_m": 31.728,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "ce0f5b76956aabf18fdb3c0a",
+      "kind": "embankment",
+      "source_member": "(B010)수치지도_376082448_2025_00000902094208.zip:N1L_C0050000.shp",
+      "record_index": 2,
+      "ufid": "1000376082448C00510000000000000004",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 1.5,
+      "declared_length_m": 21.669,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "22b2c7c2b74cc3d2bb8c2044",
+      "kind": "embankment",
+      "source_member": "(B010)수치지도_376082448_2025_00000902094208.zip:N1L_C0050000.shp",
+      "record_index": 3,
+      "ufid": "1000376082448C00510000000000000003",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 1.5,
+      "declared_length_m": 36.08,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "8d998959cef53c804ede4350",
+      "kind": "embankment",
+      "source_member": "(B010)수치지도_376082448_2025_00000902094208.zip:N1L_C0050000.shp",
+      "record_index": 4,
+      "ufid": "1000376082448C00510000000000000002",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 1.5,
+      "declared_length_m": 56.779,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "a26a0ee4165ef593854c96c6",
+      "kind": "embankment",
+      "source_member": "(B010)수치지도_376082448_2025_00000902094208.zip:N1L_C0050000.shp",
+      "record_index": 5,
+      "ufid": "1000376082448C00510000000000000001",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 1.5,
+      "declared_length_m": 27.866,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "726cd84207eed16a7212858b",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082448_2025_00000902094208.zip:N1L_F0040000.shp",
+      "record_index": 0,
+      "ufid": "1000376082448F00410000000000000006",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 1.0,
+      "declared_length_m": 64.506,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "4781a181754979449742e90a",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082448_2025_00000902094208.zip:N1L_F0040000.shp",
+      "record_index": 1,
+      "ufid": "1000376082448F00410000000000000005",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 1.0,
+      "declared_length_m": 29.473,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "d5052c8f8dd573bafa1778c4",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082448_2025_00000902094208.zip:N1L_F0040000.shp",
+      "record_index": 2,
+      "ufid": "1000376082448F00410000000000000004",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 1.5,
+      "declared_length_m": 16.041,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "662e9806fa366603f4dade4d",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082448_2025_00000902094208.zip:N1L_F0040000.shp",
+      "record_index": 3,
+      "ufid": "1000376082448F00410000000000000003",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 1.0,
+      "declared_length_m": 3.121,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "6a73c6e4557f51e48772a74c",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082448_2025_00000902094208.zip:N1L_F0040000.shp",
+      "record_index": 4,
+      "ufid": "1000376082448F00410000000000000002",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 2.0,
+      "declared_length_m": 10.282,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "30fe5b25c5aea24c72465b2c",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082448_2025_00000902094208.zip:N1L_F0040000.shp",
+      "record_index": 5,
+      "ufid": "1000376082448F00410000000000000001",
+      "edge_role": "lower",
+      "provider_edge_role": "하단",
+      "declared_relative_height_m": 0.0,
+      "declared_length_m": 24.365,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "682788af356a2e117823022d",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082457_2025_0000063402558.zip:N1L_F0040000.shp",
+      "record_index": 0,
+      "ufid": "1000376082457F00410000000000000001",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 3.0,
+      "declared_length_m": 0.0,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "6101ae0a929dd9f63591076c",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082457_2025_0000063402558.zip:N1L_F0040000.shp",
+      "record_index": 1,
+      "ufid": "1000376082457F00410000000000000002",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 3.0,
+      "declared_length_m": 0.0,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "8a7fc3575e645412b7d0318b",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082457_2025_0000063402558.zip:N1L_F0040000.shp",
+      "record_index": 2,
+      "ufid": "1000376082457F00410000000000000003",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 1.3,
+      "declared_length_m": 88.81,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "550f78e9f8a157a8f24147fb",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082457_2025_0000063402558.zip:N1L_F0040000.shp",
+      "record_index": 3,
+      "ufid": "1000376082457F00410000000000000004",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 1.0,
+      "declared_length_m": 22.75,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "a1f6b856e6cb0483fc81dc17",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082457_2025_0000063402558.zip:N1L_F0040000.shp",
+      "record_index": 4,
+      "ufid": "1000376082457F00410000000000000005",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 2.0,
+      "declared_length_m": 12.228,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "9f18570bf5a029769cae0e4a",
+      "kind": "embankment",
+      "source_member": "(B010)수치지도_376082458_2025_00000778028252.zip:N1L_C0050000.shp",
+      "record_index": 0,
+      "ufid": "1000376082458C00510000000000000001",
+      "edge_role": "lower",
+      "provider_edge_role": "하단",
+      "declared_relative_height_m": 0.0,
+      "declared_length_m": 3.552,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "eb3ea0a7cf7cb4885523081f",
+      "kind": "embankment",
+      "source_member": "(B010)수치지도_376082458_2025_00000778028252.zip:N1L_C0050000.shp",
+      "record_index": 1,
+      "ufid": "1000376082458C00510000000000000002",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 1.5,
+      "declared_length_m": 5.665,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "6c37d17af6771ade4a329fb6",
+      "kind": "embankment",
+      "source_member": "(B010)수치지도_376082458_2025_00000778028252.zip:N1L_C0050000.shp",
+      "record_index": 2,
+      "ufid": "1000376082458C00510000000000000003",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 1.5,
+      "declared_length_m": 21.332,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "94e25c32c7ebeee8b87b577e",
+      "kind": "embankment",
+      "source_member": "(B010)수치지도_376082458_2025_00000778028252.zip:N1L_C0050000.shp",
+      "record_index": 3,
+      "ufid": "1000376082458C00510000000000000004",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 1.5,
+      "declared_length_m": 25.704,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "5441c922cd984f2fe1585255",
+      "kind": "embankment",
+      "source_member": "(B010)수치지도_376082458_2025_00000778028252.zip:N1L_C0050000.shp",
+      "record_index": 4,
+      "ufid": "1000376082458C00510000000000000005",
+      "edge_role": "lower",
+      "provider_edge_role": "하단",
+      "declared_relative_height_m": 0.0,
+      "declared_length_m": 27.784,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "6868bfd331ae37c2c6d61f12",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082458_2025_00000778028252.zip:N1L_F0040000.shp",
+      "record_index": 0,
+      "ufid": "1000376082458F00410000000000000001",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 3.4,
+      "declared_length_m": 153.02,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "25bec8ad2a5a1b78c9b9629b",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082458_2025_00000778028252.zip:N1L_F0040000.shp",
+      "record_index": 1,
+      "ufid": "1000376082458F00410000000000000002",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 1.6,
+      "declared_length_m": 122.885,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "3d049b3a0e4f9aee3a4587ed",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082458_2025_00000778028252.zip:N1L_F0040000.shp",
+      "record_index": 2,
+      "ufid": "1000376082458F00410000000000000003",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 1.0,
+      "declared_length_m": 22.499,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "dac385fd841234f6b167a6ee",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082458_2025_00000778028252.zip:N1L_F0040000.shp",
+      "record_index": 3,
+      "ufid": "1000376082458F00410000000000000004",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 2.9,
+      "declared_length_m": 11.182,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "6016a97a8336904c8aa4feea",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082458_2025_00000778028252.zip:N1L_F0040000.shp",
+      "record_index": 4,
+      "ufid": "1000376082458F00410000000000000005",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 2.9,
+      "declared_length_m": 75.798,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "d69d9c0926b45375f8811f63",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082458_2025_00000778028252.zip:N1L_F0040000.shp",
+      "record_index": 5,
+      "ufid": "1000376082458F00410000000000000006",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 1.0,
+      "declared_length_m": 5.216,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "8da41b060d9324d36f0fe163",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082458_2025_00000778028252.zip:N1L_F0040000.shp",
+      "record_index": 6,
+      "ufid": "1000376082458F00410000000000000007",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 1.5,
+      "declared_length_m": 105.194,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "f56d9997c2e2385eeb5de7b7",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082458_2025_00000778028252.zip:N1L_F0040000.shp",
+      "record_index": 7,
+      "ufid": "1000376082458F00410000000000000008",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 0.9,
+      "declared_length_m": 12.931,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "b911e11c2c832ca769fc5ab7",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082458_2025_00000778028252.zip:N1L_F0040000.shp",
+      "record_index": 8,
+      "ufid": "1000376082458F00410000000000000009",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 5.1,
+      "declared_length_m": 97.818,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "cdb9b9c7c65cd99dc6833fed",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082458_2025_00000778028252.zip:N1L_F0040000.shp",
+      "record_index": 9,
+      "ufid": "1000376082458F00410000000000000010",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 1.3,
+      "declared_length_m": 22.279,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "adaeb2a91b294dafa0177ca8",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082458_2025_00000778028252.zip:N1L_F0040000.shp",
+      "record_index": 10,
+      "ufid": "1000376082458F00410000000000000011",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 1.2,
+      "declared_length_m": 52.904,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "960eb05a7ae0d2e4f9639f28",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082458_2025_00000778028252.zip:N1L_F0040000.shp",
+      "record_index": 11,
+      "ufid": "1000376082458F00410000000000000012",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 1.0,
+      "declared_length_m": 106.94,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "bee70b9aec24efa4c38e3d6f",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082458_2025_00000778028252.zip:N1L_F0040000.shp",
+      "record_index": 12,
+      "ufid": "1000376082458F00410000000000000013",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 1.5,
+      "declared_length_m": 9.414,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "ee2bfce58b6d81e06a65b16d",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082458_2025_00000778028252.zip:N1L_F0040000.shp",
+      "record_index": 13,
+      "ufid": "1000376082458F00410000000000000014",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 5.0,
+      "declared_length_m": 157.397,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "f0be278dbe6e7248200a4f14",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082458_2025_00000778028252.zip:N1L_F0040000.shp",
+      "record_index": 14,
+      "ufid": "1000376082458F00410000000000000015",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 2.1,
+      "declared_length_m": 24.666,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "d5e8fc27c374e87b46874833",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082458_2025_00000778028252.zip:N1L_F0040000.shp",
+      "record_index": 15,
+      "ufid": "1000376082458F00410000000000000016",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 2.1,
+      "declared_length_m": 23.741,
+      "height_usable_for_absolute_elevation": false
+    },
+    {
+      "feature_id": "7d22318626c5ea7d82458d5b",
+      "kind": "retaining_wall",
+      "source_member": "(B010)수치지도_376082458_2025_00000778028252.zip:N1L_F0040000.shp",
+      "record_index": 16,
+      "ufid": "1000376082458F00410000000000000017",
+      "edge_role": "upper",
+      "provider_edge_role": "상단",
+      "declared_relative_height_m": 1.5,
+      "declared_length_m": 85.726,
+      "height_usable_for_absolute_elevation": false
+    }
+  ],
+  "summary": {
+    "feature_count": 71,
+    "upper_edge_count": 62,
+    "lower_edge_count": 9,
+    "unknown_edge_role_count": 0,
+    "relative_height_count": 65,
+    "positive_relative_height_count": 59,
+    "relative_height_range_m": [
+      0.3,
+      8.0
+    ]
+  },
+  "application": {
+    "mesh_merge_allowed": false,
+    "absolute_elevation_available": false,
+    "policy": "Provider height is a relative structure dimension, not an absolute Seoul EL or runtime Y coordinate. Edge roles and heights are retained as evidence but cannot populate points_eus_m.y without an audited vertical anchoring rule.",
+    "blockers": [
+      "DXF structure Z coordinates are uniformly 0.0 placeholders",
+      "DBF height does not state an absolute elevation datum",
+      "upper/lower edge roles are not yet registered to a terrain-side anchor",
+      "2025 attributes are not verified as unchanged on 2024-10-05"
+    ]
+  }
+}

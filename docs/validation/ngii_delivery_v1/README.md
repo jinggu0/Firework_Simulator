@@ -34,6 +34,12 @@ None of the selected SHPs contain source elevation. Every normalized height is
 therefore `null`; no wall height or vertical profile is inferred. Runtime scene
 vertices remain unchanged until separate elevation evidence is supplied.
 
+V1-11a additionally audits the provider DBF attributes in
+`assets/yeouido_ngii_structure_attributes.json`. All 71 features are linked to
+their UFID and upper/lower role; 59 features carry a positive relative height
+between 0.3 m and 8.0 m. These values are dimensions, not absolute elevations,
+so the audit keeps `mesh_merge_allowed=false` pending a vertical anchor rule.
+
 ## Reproduction
 
 Keep the original 16 files in the Downloads directory, then run:
