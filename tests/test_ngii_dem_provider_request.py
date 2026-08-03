@@ -23,7 +23,7 @@ def _digest(path: Path) -> str:
     return sha256(path.read_bytes()).hexdigest()
 
 
-def test_shipped_request_is_authorized_private_and_not_submitted() -> None:
+def test_shipped_request_is_submitted_with_private_receipt() -> None:
     request = json.loads(REQUEST.read_text(encoding="utf-8"))
     fallback = {
         sheet["sheet_id"]: sheet["sheet_name"]
@@ -37,7 +37,7 @@ def test_shipped_request_is_authorized_private_and_not_submitted() -> None:
     assert set(request["required_deliverables"]) == REQUIRED_DELIVERABLES
     assert request["submission"]["applicant_personal_information_stored"] is False
     assert request["submission"]["authorized"] is True
-    assert request["submission"]["performed"] is False
+    assert request["submission"]["performed"] is True
     assert request["submission"]["authentication_required"] is True
     assert request["submission"]["authentication_completed"] is True
     assert request["submission"]["authentication_method_selected"] == (
@@ -52,22 +52,35 @@ def test_shipped_request_is_authorized_private_and_not_submitted() -> None:
     assert request["submission"]["selected_provider"] == (
         "국토교통부 국토지리정보원"
     )
-    assert request["submission"]["personal_information_collection_consent_confirmed"] is False
-    assert request["submission"]["third_party_personal_information_provision_consent_confirmed"] is False
+    assert request["submission"]["personal_information_collection_consent_confirmed"] is True
+    assert request["submission"]["third_party_personal_information_provision_consent_confirmed"] is True
+    assert request["submission"]["applicant_completion_pending"] == []
+    assert request["submission"]["receipt"] == {
+        "request_id": "136949",
+        "application_date": "2026-08-03",
+        "portal_list_processing_date": "2026-08-14",
+        "receiving_agency": "국토교통부 국토지리정보원",
+        "portal_status": "접수대기중",
+        "success_result_url": "https://www.data.go.kr/iim/dor/selectMyOfferReqstList.do?result=success",
+        "applicant_personal_information_recorded": False,
+    }
     assert request["acceptance_gate"]["scene_merge_allowed"] is False
 
 
 def test_committed_report_is_ready_but_never_unlocks_scene() -> None:
     report = json.loads(REPORT.read_text(encoding="utf-8"))
 
-    assert report["ready_for_manual_submission"]
+    assert not report["ready_for_manual_submission"]
     assert report["checks"]["fallback_sheet_count"] == 6
     assert report["checks"]["personal_information_keys_found"] == []
     assert report["submission_payload_ready"]
     assert report["external_submission_authorized"]
-    assert not report["external_submission_performed"]
+    assert report["external_submission_performed"]
     assert not report["portal_authentication_pending"]
-    assert report["applicant_completion_pending"]
+    assert not report["applicant_completion_pending"]
+    assert report["provider_review_pending"]
+    assert report["checks"]["submission_receipt_valid"]
+    assert report["submission_receipt"]["request_id"] == "136949"
     assert report["checks"]["credential_handling_safe"]
     assert report["checks"]["captcha_present"]
     assert report["checks"]["captcha_completed"]

@@ -2,7 +2,7 @@
   "schema_version": 1,
   "stage": "V1-11e",
   "request_asset": "assets/yeouido_ngii_dem_provider_request.json",
-  "request_sha256": "1f9a2ade5f0b148b32447fbffd0e26d57063d88be4066346f1ce6f384d98bee5",
+  "request_sha256": "e58f1915fbb33c58b0591ad47e8f18f09e0336f54e9a8fc5bb3b52bc45fd7062",
   "metadata_audit": "docs/validation/ngii_dem_v1/ngii_dem_metadata_report.json",
   "metadata_audit_sha256": "7c5514af50cf4f5004d9e9b17351a7694f712c2bccba6ee0e169ce19addd4a85",
   "checks": {
@@ -19,22 +19,32 @@
     "captcha_present": true,
     "captcha_completed": true,
     "application_fields_prepared": true,
-    "applicant_required_fields_completed": true
+    "applicant_required_fields_completed": true,
+    "submission_receipt_valid": true
   },
   "submission_payload_ready": true,
-  "ready_for_manual_submission": true,
+  "ready_for_manual_submission": false,
   "external_submission_authorized": true,
-  "external_submission_performed": false,
+  "external_submission_performed": true,
   "portal_authentication_pending": false,
-  "applicant_completion_pending": true,
+  "applicant_completion_pending": false,
+  "provider_review_pending": true,
+  "submission_receipt": {
+    "request_id": "136949",
+    "application_date": "2026-08-03",
+    "portal_list_processing_date": "2026-08-14",
+    "receiving_agency": "국토교통부 국토지리정보원",
+    "portal_status": "접수대기중",
+    "success_result_url": "https://www.data.go.kr/iim/dor/selectMyOfferReqstList.do?result=success",
+    "applicant_personal_information_recorded": false
+  },
   "scene_merge_allowed": false,
   "scene_vertices_modified": 0,
   "blocking_reasons": [
-    "10-year personal information collection and third-party provision consent remain unselected",
-    "the request has not been externally submitted",
+    "provider review and delivery are pending",
     "no provider raster package has been delivered",
     "published accuracy is blank for the six fallback sheets",
     "projected CRS and NoData are not verified from a delivered raster header"
   ],
-  "next_evidence_gate": "User-completed portal authentication and CAPTCHA, external submission, and provider delivery are still required. Verify the raster header, checksum, license, plan RMSE <= 0.25 m, and vertical uncertainty <= 0.10 m before any scene merge."
+  "next_evidence_gate": "Provider review and delivery are pending. Verify the raster header, checksum, license, plan RMSE <= 0.25 m, and vertical uncertainty <= 0.10 m before any scene merge."
 }

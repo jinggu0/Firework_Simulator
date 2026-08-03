@@ -123,6 +123,15 @@ def build_report(
     )
     external_submission_authorized = submission.get("authorized") is True
     external_submission_performed = submission.get("performed") is True
+    receipt = submission.get("receipt", {})
+    submission_receipt_valid = bool(
+        external_submission_performed
+        and receipt.get("request_id") == "136949"
+        and receipt.get("application_date") == "2026-08-03"
+        and receipt.get("receiving_agency") == "국토교통부 국토지리정보원"
+        and receipt.get("portal_status") == "접수대기중"
+        and receipt.get("applicant_personal_information_recorded") is False
+    )
     portal_authentication_pending = bool(
         submission.get("authentication_required") is True
         and submission.get("authentication_completed") is False
@@ -150,6 +159,7 @@ def build_report(
             "submission_authorized_waiting_for_portal_authentication",
             "form_prepared_waiting_for_applicant_fields_and_privacy_consent",
             "applicant_fields_completed_waiting_for_privacy_consent",
+            "submitted_pending_provider_review",
         }
         and official_route_valid
         and preferred_valid
@@ -158,7 +168,6 @@ def build_report(
         and metadata_link_matches
         and privacy_safe
         and credential_handling_safe
-        and not external_submission_performed
         and request.get("acceptance_gate", {}).get("scene_merge_allowed") is False
         and request.get("acceptance_gate", {}).get("scene_vertices_modified") == 0
     )
@@ -177,8 +186,8 @@ def build_report(
         blockers.append("request package contains a personal-information field")
     if not external_submission_authorized:
         blockers.append("external submission has not been authorized")
-    if external_submission_performed:
-        blockers.append("repository package unexpectedly claims external submission")
+    if external_submission_performed and not submission_receipt_valid:
+        blockers.append("external submission receipt is incomplete or invalid")
     blockers.extend(request.get("acceptance_gate", {}).get("blocking_reasons", []))
 
     return {
@@ -211,19 +220,25 @@ def build_report(
                 "applicant_required_fields_completed"
             )
             is True,
+            "submission_receipt_valid": submission_receipt_valid,
         },
         "submission_payload_ready": payload_ready,
-        "ready_for_manual_submission": payload_ready,
+        "ready_for_manual_submission": payload_ready
+        and not external_submission_performed,
         "external_submission_authorized": external_submission_authorized,
         "external_submission_performed": external_submission_performed,
         "portal_authentication_pending": portal_authentication_pending,
         "applicant_completion_pending": applicant_completion_pending,
+        "provider_review_pending": bool(
+            external_submission_performed
+            and receipt.get("portal_status") == "접수대기중"
+        ),
+        "submission_receipt": receipt if submission_receipt_valid else None,
         "scene_merge_allowed": False,
         "scene_vertices_modified": 0,
         "blocking_reasons": blockers,
         "next_evidence_gate": (
-            "User-completed portal authentication and CAPTCHA, external submission, "
-            "and provider delivery are still required. "
+            "Provider review and delivery are pending. "
             "Verify the raster header, checksum, license, plan RMSE <= 0.25 m, and "
             "vertical uncertainty <= 0.10 m before any scene merge."
         ),

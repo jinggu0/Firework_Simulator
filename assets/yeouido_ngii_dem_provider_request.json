@@ -2,10 +2,10 @@
   "schema_version": 1,
   "target_event_date": "2024-10-05",
   "prepared_at": "2026-08-03",
-  "status": "applicant_fields_completed_waiting_for_privacy_consent",
+  "status": "submitted_pending_provider_review",
   "submission": {
     "authorized": true,
-    "performed": false,
+    "performed": true,
     "authentication_required": true,
     "authentication_completed": true,
     "authentication_method_selected": "public_data_portal_id",
@@ -17,19 +17,25 @@
     "applicant_required_fields_completed": true,
     "selected_provider": "국토교통부 국토지리정보원",
     "selected_use_purpose": "학술연구(논문‧과제 등)",
-    "applicant_completion_pending": [
-      "personal information collection consent",
-      "third-party personal information provision consent"
-    ],
-    "personal_information_collection_consent_confirmed": false,
-    "third_party_personal_information_provision_consent_confirmed": false,
+    "applicant_completion_pending": [],
+    "personal_information_collection_consent_confirmed": true,
+    "third_party_personal_information_provision_consent_confirmed": true,
     "applicant_personal_information_stored": false,
     "primary_route": "https://www.data.go.kr/tcs/dor/insertDataOfferReqstProcssView.do",
     "provider": "국토교통부 국토지리정보원",
     "existing_dataset_urls": [
       "https://www.data.go.kr/data/15059920/fileData.do",
       "https://www.data.go.kr/data/15067637/fileData.do"
-    ]
+    ],
+    "receipt": {
+      "request_id": "136949",
+      "application_date": "2026-08-03",
+      "portal_list_processing_date": "2026-08-14",
+      "receiving_agency": "국토교통부 국토지리정보원",
+      "portal_status": "접수대기중",
+      "success_result_url": "https://www.data.go.kr/iim/dor/selectMyOfferReqstList.do?result=success",
+      "applicant_personal_information_recorded": false
+    }
   },
   "scene_scope": {
     "bbox_wgs84": [126.91, 37.515, 126.96, 37.545],
@@ -82,8 +88,7 @@
     "scene_merge_allowed": false,
     "scene_vertices_modified": 0,
     "blocking_reasons": [
-      "10-year personal information collection and third-party provision consent remain unselected",
-      "the request has not been externally submitted",
+      "provider review and delivery are pending",
       "no provider raster package has been delivered",
       "published accuracy is blank for the six fallback sheets",
       "projected CRS and NoData are not verified from a delivered raster header"

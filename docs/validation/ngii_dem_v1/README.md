@@ -39,11 +39,12 @@ legacy fallback, and all metadata needed to evaluate the acceptance gate. The
 request submission is authorized, but the public data portal requires separate
 authentication from the NGII session. Authentication is now complete, and the
 request name, provider, body, and research purpose are entered in the retained
-Chrome form. The applicant completed birth date, address, phone, and CAPTCHA;
-the two privacy consent radios remain unselected. The form states that submitted personal
+Chrome form. The applicant completed birth date, address, phone, CAPTCHA, and
+both privacy consents. The form states that submitted personal
 information is retained for ten years and provided to the receiving and
-processing institutions. The request has not been submitted externally and the
-repository contains no applicant personal information. Its completeness is locked by
+processing institutions. The request was accepted as ID `136949` with portal
+status `접수대기중`; the repository contains no applicant personal information.
+Its completeness is locked by
 `ngii_dem_provider_request_report.json`.
 
 Two official, login-free metadata CSVs were downloaded from the public data
