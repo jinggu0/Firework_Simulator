@@ -1,0 +1,451 @@
+{
+  "schema_version": 1,
+  "stage": "V2-1a",
+  "scenario": "assets/scenario_yeouido_2024-10-05.json",
+  "visual_views": {
+    "asset": "assets/visual_regression_views.json",
+    "sha256": "bc3c1272e0cea891c214b0ddeb794839923d822d16acdb97ce68646f9cc23200",
+    "view_ids": [
+      "grass_close",
+      "road_ground"
+    ],
+    "historical_observer_positions": false
+  },
+  "material_source": {
+    "manifest": "assets/materials/manifest.json",
+    "sha256": "896b1d7ed3fbbd928bc65cbaa24be14f93ee983b13cd9ced580ab57092208f11",
+    "site_identity_confidence": "D",
+    "sampled_at_yeouido": false
+  },
+  "runtime_contract": {
+    "world_metric_uv": true,
+    "mipmaps_built": true,
+    "trilinear_minification": true,
+    "anisotropic_filter_explicitly_configured": false,
+    "detail_fade_range_m": [
+      90.0,
+      420.0
+    ]
+  },
+  "projection_sampling": {
+    "eye_height_m": 1.68,
+    "resolution_px": [
+      1280,
+      720
+    ],
+    "focal_length_mm": 24.0,
+    "sensor_size_mm": [
+      36.0,
+      20.25
+    ],
+    "vertical_fov_deg": 45.74733038125343,
+    "samples": [
+      {
+        "distance_m": 2.0,
+        "along_view_m_per_px": 0.004503379263145177,
+        "cross_view_m_per_px": 0.002010941134395929,
+        "footprint_anisotropy": 2.23943863205024
+      },
+      {
+        "distance_m": 5.0,
+        "along_view_m_per_px": 0.018365211540063667,
+        "cross_view_m_per_px": 0.005027352835989822,
+        "footprint_anisotropy": 3.653058008698088
+      },
+      {
+        "distance_m": 10.0,
+        "along_view_m_per_px": 0.06787175538620113,
+        "cross_view_m_per_px": 0.010054705671979644,
+        "footprint_anisotropy": 6.750247854131174
+      },
+      {
+        "distance_m": 20.0,
+        "along_view_m_per_px": 0.265897930770751,
+        "cross_view_m_per_px": 0.02010941134395929,
+        "footprint_anisotropy": 13.222561626629847
+      },
+      {
+        "distance_m": 40.0,
+        "along_view_m_per_px": 1.0580026323089506,
+        "cross_view_m_per_px": 0.04021882268791858,
+        "footprint_anisotropy": 26.306156212443444
+      },
+      {
+        "distance_m": 80.0,
+        "along_view_m_per_px": 4.226421438461748,
+        "cross_view_m_per_px": 0.08043764537583716,
+        "footprint_anisotropy": 52.54282890447875
+      }
+    ]
+  },
+  "materials": [
+    {
+      "asset_id": "asphalt_04",
+      "tile_width_m": 4.0,
+      "resolution_px": [
+        1024,
+        1024
+      ],
+      "texel_pitch_mm": 3.90625,
+      "tile_repetitions_across_2_to_80_m": 19.5,
+      "diffuse_edge_discontinuity": {
+        "x_edge_mean_absolute": 0.04305172589869281,
+        "y_edge_mean_absolute": 0.042604932598039214,
+        "x_edge_to_internal_ratio": 0.9690354025523219,
+        "y_edge_to_internal_ratio": 0.9619384527871462
+      },
+      "sampling": [
+        {
+          "distance_m": 2.0,
+          "major_axis_texels_per_px": 1.1528650913651652,
+          "implicit_major_axis_lod": 0.20522369824037437,
+          "footprint_anisotropy": 2.23943863205024
+        },
+        {
+          "distance_m": 5.0,
+          "major_axis_texels_per_px": 4.701494154256299,
+          "implicit_major_axis_lod": 2.2331193241028036,
+          "footprint_anisotropy": 3.653058008698088
+        },
+        {
+          "distance_m": 10.0,
+          "major_axis_texels_per_px": 17.37516937886749,
+          "implicit_major_axis_lod": 4.118955136657959,
+          "footprint_anisotropy": 6.750247854131174
+        },
+        {
+          "distance_m": 20.0,
+          "major_axis_texels_per_px": 68.06987027731226,
+          "implicit_major_axis_lod": 6.088944455236418,
+          "footprint_anisotropy": 13.222561626629847
+        },
+        {
+          "distance_m": 40.0,
+          "major_axis_texels_per_px": 270.84867387109136,
+          "implicit_major_axis_lod": 8.081343216879485,
+          "footprint_anisotropy": 26.306156212443444
+        },
+        {
+          "distance_m": 80.0,
+          "major_axis_texels_per_px": 1081.9638882462075,
+          "implicit_major_axis_lod": 10.079436633071248,
+          "footprint_anisotropy": 52.54282890447875
+        }
+      ],
+      "files": {
+        "diff": {
+          "file_name": "asphalt_04_diff_1k.jpg",
+          "sha256": "837a78bb1e94864c221f847c85480484e953a9ee958772481dd2c501e18def2e"
+        },
+        "nor_gl": {
+          "file_name": "asphalt_04_nor_gl_1k.jpg",
+          "sha256": "18b91c2a6d83a8fbaa8d7fe84e80a66bd6451e4ec2774a09bf4429498c8f3912"
+        },
+        "arm": {
+          "file_name": "asphalt_04_arm_1k.jpg",
+          "sha256": "35f582fb66d223d242d294616aec5749affdc6ca0a97067311cd6f247f7ef081"
+        }
+      }
+    },
+    {
+      "asset_id": "concrete_pavers",
+      "tile_width_m": 1.9,
+      "resolution_px": [
+        1024,
+        1024
+      ],
+      "texel_pitch_mm": 1.85546875,
+      "tile_repetitions_across_2_to_80_m": 41.05263157894737,
+      "diffuse_edge_discontinuity": {
+        "x_edge_mean_absolute": 0.05194418913398693,
+        "y_edge_mean_absolute": 0.0434780943627451,
+        "x_edge_to_internal_ratio": 2.310031150289924,
+        "y_edge_to_internal_ratio": 1.8673202738729777
+      },
+      "sampling": [
+        {
+          "distance_m": 2.0,
+          "major_axis_texels_per_px": 2.427084402874032,
+          "implicit_major_axis_lod": 1.2792242796841513,
+          "footprint_anisotropy": 2.23943863205024
+        },
+        {
+          "distance_m": 5.0,
+          "major_axis_texels_per_px": 9.897882430013262,
+          "implicit_major_axis_lod": 3.3071199055465805,
+          "footprint_anisotropy": 3.653058008698088
+        },
+        {
+          "distance_m": 10.0,
+          "major_axis_texels_per_px": 36.579303955510504,
+          "implicit_major_axis_lod": 5.192955718101736,
+          "footprint_anisotropy": 6.750247854131174
+        },
+        {
+          "distance_m": 20.0,
+          "major_axis_texels_per_px": 143.3049900574995,
+          "implicit_major_axis_lod": 7.162945036680195,
+          "footprint_anisotropy": 13.222561626629847
+        },
+        {
+          "distance_m": 40.0,
+          "major_axis_texels_per_px": 570.2077344654555,
+          "implicit_major_axis_lod": 9.155343798323262,
+          "footprint_anisotropy": 26.306156212443444
+        },
+        {
+          "distance_m": 80.0,
+          "major_axis_texels_per_px": 2277.818712097279,
+          "implicit_major_axis_lod": 11.153437214515025,
+          "footprint_anisotropy": 52.54282890447875
+        }
+      ],
+      "files": {
+        "diff": {
+          "file_name": "concrete_pavers_diff_1k.jpg",
+          "sha256": "eea1fb8b498154754f4961ce0792092ef56cadc3d210becbb0dc3bf6c96c261d"
+        },
+        "nor_gl": {
+          "file_name": "concrete_pavers_nor_gl_1k.jpg",
+          "sha256": "761c8332b4b53ab06931adf83f5f8f4fa5b7559a1a8267bc7ef865f890b17894"
+        },
+        "arm": {
+          "file_name": "concrete_pavers_arm_1k.jpg",
+          "sha256": "8375d082a81e6e8043af5f6ec1c5c71ada9577e50faf60a3c412b8df5612eb4e"
+        }
+      }
+    },
+    {
+      "asset_id": "leafy_grass",
+      "tile_width_m": 2.0,
+      "resolution_px": [
+        1024,
+        1024
+      ],
+      "texel_pitch_mm": 1.953125,
+      "tile_repetitions_across_2_to_80_m": 39.0,
+      "diffuse_edge_discontinuity": {
+        "x_edge_mean_absolute": 0.054130923202614374,
+        "y_edge_mean_absolute": 0.05436963848039215,
+        "x_edge_to_internal_ratio": 1.094726863460954,
+        "y_edge_to_internal_ratio": 1.1040368658662114
+      },
+      "sampling": [
+        {
+          "distance_m": 2.0,
+          "major_axis_texels_per_px": 2.3057301827303305,
+          "implicit_major_axis_lod": 1.2052236982403743,
+          "footprint_anisotropy": 2.23943863205024
+        },
+        {
+          "distance_m": 5.0,
+          "major_axis_texels_per_px": 9.402988308512597,
+          "implicit_major_axis_lod": 3.2331193241028036,
+          "footprint_anisotropy": 3.653058008698088
+        },
+        {
+          "distance_m": 10.0,
+          "major_axis_texels_per_px": 34.75033875773498,
+          "implicit_major_axis_lod": 5.118955136657959,
+          "footprint_anisotropy": 6.750247854131174
+        },
+        {
+          "distance_m": 20.0,
+          "major_axis_texels_per_px": 136.13974055462452,
+          "implicit_major_axis_lod": 7.088944455236418,
+          "footprint_anisotropy": 13.222561626629847
+        },
+        {
+          "distance_m": 40.0,
+          "major_axis_texels_per_px": 541.6973477421827,
+          "implicit_major_axis_lod": 9.081343216879485,
+          "footprint_anisotropy": 26.306156212443444
+        },
+        {
+          "distance_m": 80.0,
+          "major_axis_texels_per_px": 2163.927776492415,
+          "implicit_major_axis_lod": 11.079436633071248,
+          "footprint_anisotropy": 52.54282890447875
+        }
+      ],
+      "files": {
+        "diff": {
+          "file_name": "leafy_grass_diff_1k.jpg",
+          "sha256": "cfa40bc9d9417d1852db8753a8d5917f110c40101179f63543c382e39bc05e4a"
+        },
+        "nor_gl": {
+          "file_name": "leafy_grass_nor_gl_1k.jpg",
+          "sha256": "832328216adc0a7e1f70a31d5ee48c9ab7f2152d83816122736cf42ac4b2ebd6"
+        },
+        "arm": {
+          "file_name": "leafy_grass_arm_1k.jpg",
+          "sha256": "95432451cb2693794459fe7ea339ea9ffdb5959c40373740f80a4aa1703f089d"
+        }
+      }
+    },
+    {
+      "asset_id": "concrete",
+      "tile_width_m": 4.0,
+      "resolution_px": [
+        1024,
+        1024
+      ],
+      "texel_pitch_mm": 3.90625,
+      "tile_repetitions_across_2_to_80_m": 19.5,
+      "diffuse_edge_discontinuity": {
+        "x_edge_mean_absolute": 0.038536560457516335,
+        "y_edge_mean_absolute": 0.036713643790849675,
+        "x_edge_to_internal_ratio": 1.1698206263554387,
+        "y_edge_to_internal_ratio": 1.0448706393050762
+      },
+      "sampling": [
+        {
+          "distance_m": 2.0,
+          "major_axis_texels_per_px": 1.1528650913651652,
+          "implicit_major_axis_lod": 0.20522369824037437,
+          "footprint_anisotropy": 2.23943863205024
+        },
+        {
+          "distance_m": 5.0,
+          "major_axis_texels_per_px": 4.701494154256299,
+          "implicit_major_axis_lod": 2.2331193241028036,
+          "footprint_anisotropy": 3.653058008698088
+        },
+        {
+          "distance_m": 10.0,
+          "major_axis_texels_per_px": 17.37516937886749,
+          "implicit_major_axis_lod": 4.118955136657959,
+          "footprint_anisotropy": 6.750247854131174
+        },
+        {
+          "distance_m": 20.0,
+          "major_axis_texels_per_px": 68.06987027731226,
+          "implicit_major_axis_lod": 6.088944455236418,
+          "footprint_anisotropy": 13.222561626629847
+        },
+        {
+          "distance_m": 40.0,
+          "major_axis_texels_per_px": 270.84867387109136,
+          "implicit_major_axis_lod": 8.081343216879485,
+          "footprint_anisotropy": 26.306156212443444
+        },
+        {
+          "distance_m": 80.0,
+          "major_axis_texels_per_px": 1081.9638882462075,
+          "implicit_major_axis_lod": 10.079436633071248,
+          "footprint_anisotropy": 52.54282890447875
+        }
+      ],
+      "files": {
+        "diff": {
+          "file_name": "concrete_diff_1k.jpg",
+          "sha256": "046c0e2aebe31e6043a6bc074e779f6a345f1d823d0ca1c69446c5cabadefa8a"
+        },
+        "nor_gl": {
+          "file_name": "concrete_nor_gl_1k.jpg",
+          "sha256": "298a0e93040c9d76d239a894bdf28a9787755ea5f22baa068ffa8075369ee428"
+        },
+        "arm": {
+          "file_name": "concrete_arm_1k.jpg",
+          "sha256": "98bd4ffb8ec52620b1053f6f576f1154caf20ee7a8786721724ea169b16582e0"
+        }
+      }
+    }
+  ],
+  "motion_capture": {
+    "performed": true,
+    "linear_hdr_before_display_transform": true,
+    "frames_per_view": 8,
+    "captures": [
+      {
+        "view_id": "grass_close",
+        "subject": "grass_close",
+        "position_eus_m": [
+          180.0,
+          13.0213,
+          800.0
+        ],
+        "target_eus_m": [
+          180.0,
+          11.3413,
+          793.0
+        ],
+        "motion_axis": "camera right",
+        "motion_step_m_per_frame": 0.02,
+        "motion_speed_at_60hz_mps": 1.2,
+        "metrics": {
+          "frame_count": 8,
+          "roi_fraction": [
+            0.1,
+            0.45,
+            0.9,
+            0.95
+          ],
+          "roi_size_px": [
+            1024,
+            360
+          ],
+          "signal_luminance_p95": 0.0002572603940963745,
+          "mean_absolute_frame_delta": 1.0168340646233113e-06,
+          "p95_absolute_frame_delta": 9.871482849121093e-07,
+          "normalized_mean_delta_to_signal_p95": 0.003952548032879039,
+          "two_percent_signal_flip_fraction": 0.020329163566468255,
+          "high_frequency_delta_fraction": 0.2620514392376717
+        }
+      },
+      {
+        "view_id": "road_ground",
+        "subject": "road_ground",
+        "position_eus_m": [
+          -1100.0,
+          9.0,
+          -330.0
+        ],
+        "target_eus_m": [
+          -1160.0,
+          8.0,
+          -362.0
+        ],
+        "motion_axis": "camera right",
+        "motion_step_m_per_frame": 0.02,
+        "motion_speed_at_60hz_mps": 1.2,
+        "metrics": {
+          "frame_count": 8,
+          "roi_fraction": [
+            0.1,
+            0.45,
+            0.9,
+            0.95
+          ],
+          "roi_size_px": [
+            1024,
+            360
+          ],
+          "signal_luminance_p95": 0.0008376700401306152,
+          "mean_absolute_frame_delta": 3.755245394736809e-06,
+          "p95_absolute_frame_delta": 4.325962066650205e-06,
+          "normalized_mean_delta_to_signal_p95": 0.004482964908415808,
+          "two_percent_signal_flip_fraction": 0.022090851314484128,
+          "high_frequency_delta_fraction": 0.9158299169575185
+        }
+      }
+    ],
+    "interpretation": "Repeatable baseline only. Frame deltas include geometry and perspective motion; a registered real sequence is required before defining a pass/fail shimmer threshold.",
+    "diagnostic": {
+      "asset": "docs/validation/material_detail_v1/material_motion_diagnostic.png",
+      "sha256": "026df89f3c4e81a78448256a26af82a3b4b58d322b0b52f7924feeba1a28901f"
+    }
+  },
+  "gates": {
+    "physical_tile_scale_documented": true,
+    "runtime_motion_baseline_captured": true,
+    "site_colour_tuning_allowed": false,
+    "temporal_shimmer_gate_defined": false,
+    "blocking_reasons": [
+      "all four scans are generic CC0 samples, not Yeouido measurements",
+      "no registered real motion sequence defines an acceptable shimmer threshold",
+      "anisotropic filtering is not explicitly configured on the scanned texture array",
+      "a single tile repeats 19.5 to 41.1 times across the 2-80 m inspection span"
+    ]
+  }
+}
