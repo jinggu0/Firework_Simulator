@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "target_event_date": "2024-10-05",
+  "observed_at": "2026-08-03",
+  "source": {
+    "provider": "국토지리정보원 국토정보플랫폼",
+    "portal_url": "https://map.ngii.go.kr/ms/map/NlipMap.do",
+    "product": "공개DEM",
+    "login_required_for_download": true,
+    "source_files_redistributed": false
+  },
+  "request": {
+    "sheet_id": "37608",
+    "sheet_name": "서울",
+    "production_year": 2024,
+    "catalogue_candidate_count": 1,
+    "selection_label": "2024 서울 37608"
+  },
+  "acquisition": {
+    "status": "awaiting_user_reauthentication",
+    "selected_in_portal": true,
+    "downloaded": false,
+    "package_file_name": null,
+    "package_sha256": null,
+    "package_bytes": null,
+    "projected_crs": null,
+    "vertical_datum": null,
+    "grid_spacing_m": null,
+    "no_data_value": null
+  },
+  "validation_gate": {
+    "maximum_plan_registration_rmse_m": 0.25,
+    "maximum_vertical_uncertainty_m": 0.1,
+    "required_metadata": [
+      "projected CRS",
+      "vertical datum",
+      "grid spacing",
+      "NoData value",
+      "provider package checksum"
+    ],
+    "scene_merge_allowed": false,
+    "scene_vertices_modified": 0,
+    "blocking_reasons": [
+      "authenticated download not completed",
+      "package checksum not available",
+      "projected CRS not verified from delivery",
+      "vertical datum not verified from delivery",
+      "grid spacing and vertical uncertainty not verified"
+    ]
+  }
+}
