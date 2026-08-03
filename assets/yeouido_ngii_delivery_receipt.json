@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "target_event_date": "2024-10-05",
+  "observed_at": "2026-08-03",
+  "source": {
+    "portal_url": "https://map.ngii.go.kr/ms/map/NlipMap.do",
+    "provider": "국토지리정보원 국토정보플랫폼",
+    "acquisition_route": "서울시 공식 안내에 따른 국토정보플랫폼 로그인 후 다운로드",
+    "login_required": true,
+    "source_files_redistributed": false
+  },
+  "request": {
+    "scale_denominator": 1000,
+    "maximum_source_year": 2024,
+    "accepted_formats": [
+      "DXF",
+      "NGI"
+    ],
+    "sheets": [
+      {
+        "sheet_id": "376082447",
+        "sheet_name": "서울2447",
+        "required_for_current_stage": true
+      },
+      {
+        "sheet_id": "376082448",
+        "sheet_name": "서울2448",
+        "required_for_current_stage": false
+      },
+      {
+        "sheet_id": "376082457",
+        "sheet_name": "서울2457",
+        "required_for_current_stage": false
+      },
+      {
+        "sheet_id": "376082458",
+        "sheet_name": "서울2458",
+        "required_for_current_stage": false
+      }
+    ]
+  },
+  "delivery": {
+    "status": "not_acquired",
+    "authenticated_download_confirmed": false,
+    "acquired_at": null,
+    "production_year": null,
+    "projected_crs": null,
+    "projected_crs_evidence": null,
+    "license": {
+      "name": null,
+      "url": null,
+      "verified": false,
+      "allows_local_derived_use": false,
+      "redistribution_allowed": false
+    },
+    "packages": [],
+    "import_members": []
+  },
+  "application": {
+    "import_allowed": false,
+    "blocking_reasons": [
+      "authenticated_download_not_confirmed",
+      "delivery_not_acquired",
+      "delivery_packages_not_checksum_locked",
+      "import_members_not_checksum_locked",
+      "event_compatible_source_year_not_verified",
+      "projected_crs_not_verified_from_delivery",
+      "license_not_verified_for_local_derived_use",
+      "required_sheet_coverage_incomplete"
+    ],
+    "scene_vertices_modified": 0,
+    "runtime_frame_path_changed": false
+  }
+}

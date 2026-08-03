@@ -407,6 +407,25 @@ The corresponding SHA-256 digests are:
 - concrete: diffuse `046c0e2a...fa8a`, normal `298a0e93...ee428`, ARM
   `98bd4ffb...582e0`
 
+## NGII authenticated-delivery receipt
+
+`yeouido_ngii_delivery_receipt.json` records the requested Seoul 1:1,000 sheet
+set and the still-pending authenticated acquisition state. The official route
+is the NGII National Land Information Platform described by Seoul Metropolitan
+Government. Downloaded map packages are not redistributed in this repository.
+
+The receipt currently contains no package or geometry hash and authorizes no
+import. A future local import must retain package/member SHA-256 values,
+explicit projected-CRS evidence from the delivery, and verified terms allowing
+local derived use. The catalogue's `GRS80` label and the neighbouring public
+controls' EPSG:5186 code are not accepted as delivery CRS evidence.
+
+- Seoul source and download instructions:
+  https://news.seoul.go.kr/gov/archives/528208
+- NGII National Land Information Platform:
+  https://map.ngii.go.kr/ms/map/NlipMap.do
+- Receipt schema and audit code: original project work
+
 ## Real-time ambient obscurance references
 
 The contact-obscurance pass follows the design principles of two published

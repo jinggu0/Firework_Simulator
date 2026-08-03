@@ -21,10 +21,12 @@ import zipfile
 import numpy as np
 
 from simulator.geodesy import LocalTangentPlane
-from simulator.ngii_control_evidence import (
-    DEFAULT_NGII_CONTROL_EVIDENCE_PATH,
-    NgiiControlEvidence,
-    load_ngii_control_evidence,
+from simulator.ngii_delivery import (
+    DEFAULT_NGII_DELIVERY_RECEIPT_PATH,
+    NgiiDeliveryReceipt,
+    load_ngii_delivery_receipt,
+    validate_delivery_packages,
+    validate_import_sources,
 )
 from simulator.scene import load_scene
 
@@ -312,26 +314,25 @@ def validate_source_year(
 
 
 def validate_delivery_evidence(
-    evidence: NgiiControlEvidence,
+    receipt: NgiiDeliveryReceipt,
     *,
     source_crs: str,
     source_year: int,
 ) -> None:
     """Require the authenticated package gate before a real CLI import."""
 
-    if not evidence.digital_map_crs_verified:
-        reasons = ", ".join(evidence.reasons)
-        raise ValueError(f"NGII delivery evidence is not verified: {reasons}")
-    product = evidence.document["catalogue_product"]
-    declared_crs = str(product.get("delivery_projected_crs", "")).upper()
+    if not receipt.verified:
+        reasons = ", ".join(receipt.reasons)
+        raise ValueError(f"NGII delivery receipt is not verified: {reasons}")
+    declared_crs = str(receipt.projected_crs).upper()
     if source_crs.upper() != declared_crs:
         raise ValueError(
             f"source CRS {source_crs} does not match delivery CRS {declared_crs}"
         )
-    if source_year != int(product["production_year"]):
+    if source_year != receipt.production_year:
         raise ValueError(
             f"source year {source_year} does not match delivery production year "
-            f"{product['production_year']}"
+            f"{receipt.production_year}"
         )
 
 
@@ -498,10 +499,10 @@ def main() -> None:
     parser.add_argument("--source-crs", required=True, help="confirmed projected CRS")
     parser.add_argument("--source-year", required=True, type=int)
     parser.add_argument(
-        "--control-evidence",
+        "--delivery-receipt",
         type=Path,
-        default=DEFAULT_NGII_CONTROL_EVIDENCE_PATH,
-        help="authenticated delivery and control evidence manifest",
+        default=DEFAULT_NGII_DELIVERY_RECEIPT_PATH,
+        help="authenticated delivery receipt with locked package/member hashes",
     )
     parser.add_argument("--scene", type=Path, default=Path("assets/yeouido_scene.npz"))
     parser.add_argument(
@@ -515,12 +516,14 @@ def main() -> None:
     if not sources:
         parser.error("no .dxf files found in the supplied paths")
     try:
-        evidence = load_ngii_control_evidence(arguments.control_evidence)
+        receipt = load_ngii_delivery_receipt(arguments.delivery_receipt)
         validate_delivery_evidence(
-            evidence,
+            receipt,
             source_crs=arguments.source_crs,
             source_year=arguments.source_year,
         )
+        validate_delivery_packages(receipt, arguments.input)
+        validate_import_sources(receipt, sources)
         asset = build_normalized_asset(
             sources,
             source_crs=arguments.source_crs,

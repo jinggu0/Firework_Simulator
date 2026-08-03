@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://firework-simulator.local/schema/ngii-delivery-receipt-v1.json",
+  "title": "Authenticated NGII digital-map delivery receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "target_event_date", "observed_at", "source", "request", "delivery", "application"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "target_event_date": {"const": "2024-10-05"},
+    "observed_at": {"type": "string", "format": "date"},
+    "source": {"$ref": "#/$defs/source"},
+    "request": {"$ref": "#/$defs/request"},
+    "delivery": {"$ref": "#/$defs/delivery"},
+    "application": {"$ref": "#/$defs/application"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["portal_url", "provider", "acquisition_route", "login_required", "source_files_redistributed"],
+      "properties": {
+        "portal_url": {"const": "https://map.ngii.go.kr/ms/map/NlipMap.do"},
+        "provider": {"const": "국토지리정보원 국토정보플랫폼"},
+        "acquisition_route": {"type": "string", "minLength": 1},
+        "login_required": {"const": true},
+        "source_files_redistributed": {"const": false}
+      }
+    },
+    "sheet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sheet_id", "sheet_name", "required_for_current_stage"],
+      "properties": {
+        "sheet_id": {"enum": ["376082447", "376082448", "376082457", "376082458"]},
+        "sheet_name": {"enum": ["서울2447", "서울2448", "서울2457", "서울2458"]},
+        "required_for_current_stage": {"type": "boolean"}
+      }
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scale_denominator", "maximum_source_year", "accepted_formats", "sheets"],
+      "properties": {
+        "scale_denominator": {"const": 1000},
+        "maximum_source_year": {"const": 2024},
+        "accepted_formats": {"const": ["DXF", "NGI"]},
+        "sheets": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"$ref": "#/$defs/sheet"}}
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file_name", "sha256", "bytes"],
+      "properties": {
+        "file_name": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "bytes": {"type": "integer", "minimum": 1}
+      }
+    },
+    "member": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["member_path", "sheet_id", "format", "sha256", "bytes"],
+      "properties": {
+        "member_path": {"type": "string", "minLength": 1},
+        "sheet_id": {"enum": ["376082447", "376082448", "376082457", "376082458"]},
+        "format": {"enum": ["DXF", "NGI"]},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "bytes": {"type": "integer", "minimum": 1}
+      }
+    },
+    "crs_evidence": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["method", "artifact_sha256", "catalogue_or_control_inference", "detail"],
+      "properties": {
+        "method": {"enum": ["embedded_metadata", "provider_sidecar", "provider_receipt"]},
+        "artifact_sha256": {"$ref": "#/$defs/sha256"},
+        "catalogue_or_control_inference": {"const": false},
+        "detail": {"type": "string", "minLength": 1}
+      }
+    },
+    "license": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "url", "verified", "allows_local_derived_use", "redistribution_allowed"],
+      "properties": {
+        "name": {"type": ["string", "null"]},
+        "url": {"type": ["string", "null"], "format": "uri"},
+        "verified": {"type": "boolean"},
+        "allows_local_derived_use": {"type": "boolean"},
+        "redistribution_allowed": {"type": "boolean"}
+      }
+    },
+    "delivery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "authenticated_download_confirmed", "acquired_at", "production_year", "projected_crs", "projected_crs_evidence", "license", "packages", "import_members"],
+      "properties": {
+        "status": {"enum": ["not_acquired", "acquired"]},
+        "authenticated_download_confirmed": {"type": "boolean"},
+        "acquired_at": {"type": ["string", "null"], "format": "date-time"},
+        "production_year": {"type": ["integer", "null"], "minimum": 1900},
+        "projected_crs": {"type": ["string", "null"], "pattern": "^EPSG:[0-9]+$"},
+        "projected_crs_evidence": {"$ref": "#/$defs/crs_evidence"},
+        "license": {"$ref": "#/$defs/license"},
+        "packages": {"type": "array", "items": {"$ref": "#/$defs/artifact"}},
+        "import_members": {"type": "array", "items": {"$ref": "#/$defs/member"}}
+      }
+    },
+    "application": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["import_allowed", "blocking_reasons", "scene_vertices_modified", "runtime_frame_path_changed"],
+      "properties": {
+        "import_allowed": {"type": "boolean"},
+        "blocking_reasons": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "scene_vertices_modified": {"const": 0},
+        "runtime_frame_path_changed": {"const": false}
+      }
+    }
+  }
+}

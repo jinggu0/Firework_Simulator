@@ -1193,6 +1193,24 @@ refuses import unless the authenticated delivery has a SHA-256 lock, explicit
 package EPSG code, verified licence, and production year matching the command.
 The current shipped evidence intentionally fails that gate.
 
+V1-10a moves authenticated delivery provenance out of the public-control
+record and into `assets/yeouido_ngii_delivery_receipt.json`. The two records
+remain deliberately independent: a public control can establish its own CRS
+without proving a downloaded map's projection, and a map delivery can be
+imported without pretending that destroyed controls are usable bridge survey
+stations. `simulator.ngii_delivery` validates the official provider, requested
+four-sheet event-area set, required Seoul2447 coverage, production year,
+projected-CRS evidence method, local-derived-use terms, and package/member
+checksums.
+
+The CLI now consumes `--delivery-receipt` instead of the control catalogue.
+After receipt validation it compares the complete multiset of actual DXF
+SHA-256 values and byte counts with the receipt's import members. Matching a
+file name is insufficient; missing, added, duplicated, or modified streams are
+rejected. The shipped receipt is intentionally `not_acquired`, so the current
+repository still cannot import NGII geometry. This evidence-only gate modifies
+zero scene vertices and adds no runtime frame work.
+
 The command refuses a source year later than 2024 unless
 `--allow-post-event-source` is stated. Even when explicitly permitted, its
 output remains labelled `official_post_event`. Same-year data is labelled

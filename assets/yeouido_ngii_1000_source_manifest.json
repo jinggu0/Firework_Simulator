@@ -56,6 +56,15 @@
     "bridge_landmark_control_count": 0,
     "status": "catalogue_crs_reference_only_all_controls_destroyed"
   },
+  "authenticated_delivery_receipt": {
+    "asset": "assets/yeouido_ngii_delivery_receipt.json",
+    "sha256": "1584af02be6476fa1626e2223ec26284eb686d7394746d0be6324f6386518770",
+    "required_sheet_id": "376082447",
+    "maximum_source_year": 2024,
+    "package_count": 0,
+    "import_member_count": 0,
+    "status": "awaiting_authenticated_download"
+  },
   "temporal_policy": "2025 제작본은 2024-10-05 행사 당시와 동일하다고 간주하지 않는다. 후행 자료 사용 시 명시적 허용과 변화 검증이 필요하다.",
   "runtime_status": "이 명세는 출처 발견 기록이며 현재 배포 장면의 구조물 형상을 변경하지 않는다."
 }
