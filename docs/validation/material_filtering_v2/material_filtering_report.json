@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "stage": "V2-1b",
+  "baseline": {
+    "asset": "docs/validation/material_detail_v1/material_detail_report.json",
+    "sha256": "a1f3c8de1cf739f032e49dc46f4e1f096078b60e30dec0833d84006c34fd89bd",
+    "diagnostic": "docs/validation/material_detail_v1/material_motion_diagnostic.png",
+    "diagnostic_sha256": "026df89f3c4e81a78448256a26af82a3b4b58d322b0b52f7924feeba1a28901f"
+  },
+  "capture_contract": {
+    "scenario": "assets/scenario_yeouido_2024-10-05.json",
+    "views": "assets/visual_regression_views.json",
+    "view_ids": [
+      "grass_close",
+      "road_ground"
+    ],
+    "linear_hdr_before_display_transform": true,
+    "frames_per_view": 8,
+    "motion_step_m_per_frame": 0.02,
+    "motion_speed_at_60hz_mps": 1.2,
+    "matches_v2_1a": true
+  },
+  "implementation": {
+    "anisotropy_requested": 8.0,
+    "anisotropy_applied": 8.0,
+    "anisotropy_supported": true,
+    "world_metric_uv_preserved": true,
+    "warp_amplitude_m": 0.16,
+    "warp_frequency_per_m": [
+      0.071,
+      0.057
+    ],
+    "maximum_local_scale_deviation_fraction": 0.011359999999999999,
+    "macro_albedo_multiplier_range": [
+      0.94,
+      1.06
+    ],
+    "macro_roughness_offset_range": [
+      -0.0275,
+      0.0275
+    ],
+    "shader": {
+      "asset": "simulator/shaders/scene.frag",
+      "sha256": "b0f916c893c0c5482d38f620bb1cd5e2a37d19e57caa0d02097dfd446d94ba77"
+    },
+    "texture_loader": {
+      "asset": "simulator/material_textures.py",
+      "sha256": "61a270a301a54d1d8b416afa952fd0bcd621e46b7f788a23939740030584c97d",
+      "explicit_anisotropy_assignment": true
+    }
+  },
+  "motion_comparisons": [
+    {
+      "view_id": "grass_close",
+      "baseline": {
+        "mean_absolute_frame_delta": 1.0168340646233113e-06,
+        "p95_absolute_frame_delta": 9.871482849121093e-07,
+        "normalized_mean_delta_to_signal_p95": 0.003952548032879039,
+        "two_percent_signal_flip_fraction": 0.020329163566468255,
+        "high_frequency_delta_fraction": 0.2620514392376717
+      },
+      "filtered": {
+        "mean_absolute_frame_delta": 1.0168340646233113e-06,
+        "p95_absolute_frame_delta": 9.871482849121093e-07,
+        "normalized_mean_delta_to_signal_p95": 0.003952548032879039,
+        "two_percent_signal_flip_fraction": 0.020329163566468255,
+        "high_frequency_delta_fraction": 0.2620514392376717
+      },
+      "filtered_to_baseline_ratio": {
+        "mean_absolute_frame_delta": 1.0,
+        "p95_absolute_frame_delta": 1.0,
+        "normalized_mean_delta_to_signal_p95": 1.0,
+        "two_percent_signal_flip_fraction": 1.0,
+        "high_frequency_delta_fraction": 1.0
+      }
+    },
+    {
+      "view_id": "road_ground",
+      "baseline": {
+        "mean_absolute_frame_delta": 3.755245394736809e-06,
+        "p95_absolute_frame_delta": 4.325962066650205e-06,
+        "normalized_mean_delta_to_signal_p95": 0.004482964908415808,
+        "two_percent_signal_flip_fraction": 0.022090851314484128,
+        "high_frequency_delta_fraction": 0.9158299169575185
+      },
+      "filtered": {
+        "mean_absolute_frame_delta": 4.092147698993646e-06,
+        "p95_absolute_frame_delta": 8.702898025512648e-06,
+        "normalized_mean_delta_to_signal_p95": 0.004868725853811367,
+        "two_percent_signal_flip_fraction": 0.029330977182539682,
+        "high_frequency_delta_fraction": 0.9426901244630712
+      },
+      "filtered_to_baseline_ratio": {
+        "mean_absolute_frame_delta": 1.0897151234720972,
+        "p95_absolute_frame_delta": 2.0117832499284276,
+        "normalized_mean_delta_to_signal_p95": 1.0860504048718684,
+        "two_percent_signal_flip_fraction": 1.32774318042277,
+        "high_frequency_delta_fraction": 1.0293288164190848
+      }
+    }
+  ],
+  "gates": {
+    "shader_rendered_in_both_views": true,
+    "same_motion_contract_as_baseline": true,
+    "anisotropy_request_applied": true,
+    "metric_scale_distortion_below_1_2_percent": true,
+    "site_colour_tuning_allowed": false,
+    "temporal_shimmer_gate_defined": false,
+    "interpretation": "A/B engineering measurement only. Without a registered real motion sequence, lower frame delta is not by itself a visual-fidelity pass."
+  },
+  "diagnostic": {
+    "asset": "docs/validation/material_filtering_v2/material_filtering_ab.png",
+    "sha256": "63a472094b376560b660ad1def5abd168b827797f8cc541528396b0a64070ba3"
+  }
+}

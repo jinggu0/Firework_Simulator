@@ -16,6 +16,16 @@ import numpy as np
 from PIL import Image
 
 SCANNED_MATERIAL_UNIT = 14
+# Eight taps cover the 6.75:1 footprint reached around 10 m while keeping the
+# request below the 16x ceiling common on desktop GPUs. ModernGL/driver clamps
+# the value to the device limit and exposes the applied value for the audit.
+SCANNED_MATERIAL_ANISOTROPY = 8.0
+ANISOTROPY_EXTENSIONS = frozenset(
+    {
+        "GL_ARB_texture_filter_anisotropic",
+        "GL_EXT_texture_filter_anisotropic",
+    }
+)
 
 MATERIAL_TEXTURE_DIRECTORY = (
     Path(__file__).resolve().parent.parent / "assets" / "materials"
@@ -81,6 +91,14 @@ class ScannedMaterialTextures:
             moderngl.LINEAR,
         )
         self.texture.build_mipmaps()
+        self.anisotropy_supported = bool(
+            ANISOTROPY_EXTENSIONS.intersection(ctx.extensions)
+        )
+        if self.anisotropy_supported:
+            self.texture.anisotropy = SCANNED_MATERIAL_ANISOTROPY
+            self.applied_anisotropy = float(self.texture.anisotropy)
+        else:
+            self.applied_anisotropy = 1.0
         self.diffuse_means = np.asarray(diffuse_means, dtype=np.float32)
 
     def bind(self) -> None:

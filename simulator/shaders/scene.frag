@@ -110,6 +110,24 @@ vec2 metric_material_uv(vec3 n) {
     return world_position.xy;
 }
 
+// Break exact tile alignment without changing the authored metre scale. The
+// two cross-axis sine offsets are at most 0.16 m and their Jacobian terms are
+// bounded by 0.0114 and 0.0091, so local scale changes stay below 1.2%. A
+// separate non-periodic macro field varies energy rather than rescaling UVs.
+vec2 scanned_antitile_metric_uv(int layer, vec2 metric_uv) {
+    float phase = float(layer) * 2.39996323;
+    vec2 warp_m = vec2(
+        sin(metric_uv.y * .071 + phase),
+        sin(metric_uv.x * .057 - phase * 1.37)
+    ) * .16;
+    return metric_uv + warp_m;
+}
+
+float scanned_macro_variation(int layer, vec2 metric_uv) {
+    vec2 phase = vec2(float(layer) * 17.17, float(layer) * -11.31);
+    return fbm2(metric_uv * vec2(.047, .039) + phase);
+}
+
 int scanned_layer_for_material(int material) {
     if (material == 3) return 0;                 // asphalt
     if (material == 5) return 1;                 // concrete pavers
@@ -123,7 +141,10 @@ void apply_scanned_material(
     inout vec3 n, inout vec3 albedo, inout vec4 reflectance
 ) {
     if (layer < 0 || detail <= .001) return;
-    vec2 map_uv = metric_material_uv(n) / scanned_texture_width_m[layer];
+    vec2 metric_uv = metric_material_uv(n);
+    vec2 map_uv = scanned_antitile_metric_uv(layer, metric_uv)
+                / scanned_texture_width_m[layer];
+    float macro_variation = scanned_macro_variation(layer, metric_uv);
     float base_layer = float(layer * 3);
     vec3 scanned_albedo = pow(texture(
         scanned_material_texture, vec3(map_uv, base_layer)
@@ -134,6 +155,7 @@ void apply_scanned_material(
         scanned_albedo / max(scanned_diffuse_mean[layer], vec3(.015)),
         vec3(.38), vec3(2.25)
     );
+    relative_albedo *= mix(.94, 1.06, macro_variation);
     albedo *= mix(
         vec3(1.0), relative_albedo,
         min(detail * colour_strength, 1.0)
@@ -152,7 +174,12 @@ void apply_scanned_material(
     vec3 arm = texture(
         scanned_material_texture, vec3(map_uv, base_layer + 2.0)
     ).rgb;
-    reflectance.x = mix(reflectance.x, arm.g, detail * .78);
+    float varied_roughness = clamp(
+        arm.g + (macro_variation - .5) * .055, .08, 1.0
+    );
+    reflectance.x = mix(
+        reflectance.x, varied_roughness, detail * .78
+    );
     reflectance.z *= mix(1.0, arm.r, detail * .42);
 }
 // Trowbridge-Reitz GGX with the Smith height-correlated visibility and a

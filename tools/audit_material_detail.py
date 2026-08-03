@@ -53,11 +53,12 @@ def _display_path(path: Path) -> str:
         return resolved.as_posix()
 
 
-def _capture_motion(
+def capture_motion(
     view: VisualRegressionView,
     scenario_path: Path,
     frames: int,
     step_m: float,
+    runtime_contract: dict[str, float | bool] | None = None,
 ) -> np.ndarray:
     base = SimulationConfig()
     config = replace(
@@ -67,6 +68,14 @@ def _capture_motion(
     app = SimulatorApp(config, scenario_path=scenario_path)
     captured: list[np.ndarray] = []
     try:
+        if runtime_contract is not None:
+            scanned = app.renderer.scene.scanned_materials
+            runtime_contract["applied_anisotropy"] = (
+                scanned.applied_anisotropy
+            )
+            runtime_contract["anisotropy_supported"] = (
+                scanned.anisotropy_supported
+            )
         app.world.shells.clear()
         app.world.stars.count = 0
         view.apply(app.camera)
@@ -99,7 +108,7 @@ def _display_panel(frame: np.ndarray, scale: float | None = None) -> Image.Image
     return Image.fromarray(np.rint(display * 255.0).astype(np.uint8), "RGB")
 
 
-def _diagnostic_row(frames: np.ndarray, label: str) -> Image.Image:
+def motion_diagnostic_row(frames: np.ndarray, label: str) -> Image.Image:
     first = frames[0]
     last = frames[-1]
     shared_scale = max(float(np.percentile(np.maximum(frames[..., :3], 0.0), 99.5)), 1e-12)
@@ -136,7 +145,7 @@ def build_report(
     diagnostic_rows = []
     for view_id in MOTION_VIEW_IDS:
         view = suite.view(view_id)
-        motion_frames = _capture_motion(view, scenario_path, frames, step_m)
+        motion_frames = capture_motion(view, scenario_path, frames, step_m)
         metrics = temporal_delta_metrics(motion_frames)
         captures.append(
             {
@@ -150,7 +159,7 @@ def build_report(
                 "metrics": metrics,
             }
         )
-        diagnostic_rows.append(_diagnostic_row(motion_frames, view_id))
+        diagnostic_rows.append(motion_diagnostic_row(motion_frames, view_id))
     diagnostic = Image.new("RGB", (1200, 250 * len(diagnostic_rows)))
     for index, row in enumerate(diagnostic_rows):
         diagnostic.paste(row, (0, index * 250))

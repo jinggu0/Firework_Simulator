@@ -6,8 +6,10 @@ from PIL import Image
 
 from simulator import shaders
 from simulator.material_textures import (
+    ANISOTROPY_EXTENSIONS,
     MAP_SUFFIXES,
     MATERIAL_TEXTURE_DIRECTORY,
+    SCANNED_MATERIAL_ANISOTROPY,
     SCANNED_MATERIALS,
     texture_widths_m,
 )
@@ -49,10 +51,29 @@ def test_scanned_tiles_have_physical_widths() -> None:
     assert widths[0] == 4.0
 
 
+def test_scanned_texture_filtering_has_a_bounded_anisotropy_request() -> None:
+    assert SCANNED_MATERIAL_ANISOTROPY == 8.0
+    assert ANISOTROPY_EXTENSIONS == {
+        "GL_ARB_texture_filter_anisotropic",
+        "GL_EXT_texture_filter_anisotropic",
+    }
+
+
 def test_scene_shader_consumes_all_three_pbr_channels() -> None:
     source = shaders.source("scene.frag")
     assert "uniform sampler2DArray scanned_material_texture;" in source
     assert "scanned_albedo" in source
     assert "tangent_normal" in source
-    assert "reflectance.x = mix(reflectance.x, arm.g" in source
+    assert "varied_roughness" in source
+    assert "reflectance.x = mix(" in source
     assert "reflectance.z *= mix(1.0, arm.r" in source
+
+
+def test_ground_antitiling_preserves_metric_scale_and_varies_energy() -> None:
+    source = shaders.source("scene.frag")
+
+    assert "scanned_antitile_metric_uv" in source
+    assert "scanned_macro_variation" in source
+    assert "/ scanned_texture_width_m[layer]" in source
+    assert "relative_albedo *= mix(.94, 1.06, macro_variation);" in source
+    assert "(macro_variation - .5) * .055" in source
