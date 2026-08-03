@@ -9,12 +9,17 @@ year and area: `2024 서울 37608`.
 - Sheet: Seoul `37608`
 - Production year: 2024
 - Portal selection: complete
-- Download: waiting for user reauthentication in Chrome
+- Authentication: confirmed
+- Application: purpose, detail, and terms prepared
+- Download: waiting for the user to enter the required date of birth
 - Runtime impact: none
 
 The portal also lists 2014, 2021, 2022, 2023, and 2025 versions. The 2024
 version is selected because it matches the target event year without the
 post-event temporal override required by the 2025 structure delivery.
+
+The date of birth is intentionally neither inferred nor stored in the
+repository. The prepared Chrome form is retained for direct user entry.
 
 ## Intake gate
 

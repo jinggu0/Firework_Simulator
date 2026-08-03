@@ -17,8 +17,14 @@
     "selection_label": "2024 서울 37608"
   },
   "acquisition": {
-    "status": "awaiting_user_reauthentication",
+    "status": "awaiting_user_date_of_birth_entry",
     "selected_in_portal": true,
+    "authenticated_session_confirmed": true,
+    "application_prepared": true,
+    "use_purpose": "제작 및 활용 / 교육, 학술, 연구",
+    "use_detail": "2024 여의도 불꽃축제 3D 시뮬레이터의 지형 고도 검증 및 시각화 연구",
+    "terms_accepted": true,
+    "date_of_birth_handling": "user_entry_required_not_stored_in_repository",
     "downloaded": false,
     "package_file_name": null,
     "package_sha256": null,

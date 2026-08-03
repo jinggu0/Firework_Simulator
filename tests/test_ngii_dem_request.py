@@ -19,6 +19,12 @@ def test_dem_request_targets_the_event_year_and_covering_sheet() -> None:
         "selection_label": "2024 서울 37608",
     }
     assert document["source"]["login_required_for_download"]
+    assert document["acquisition"]["authenticated_session_confirmed"]
+    assert document["acquisition"]["application_prepared"]
+    assert document["acquisition"]["terms_accepted"]
+    assert document["acquisition"]["date_of_birth_handling"] == (
+        "user_entry_required_not_stored_in_repository"
+    )
 
 
 def test_pending_dem_request_cannot_modify_the_scene() -> None:
