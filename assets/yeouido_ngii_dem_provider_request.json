@@ -2,10 +2,12 @@
   "schema_version": 1,
   "target_event_date": "2024-10-05",
   "prepared_at": "2026-08-03",
-  "status": "ready_for_manual_submission_not_submitted",
+  "status": "submission_authorized_waiting_for_portal_authentication",
   "submission": {
-    "authorized": false,
+    "authorized": true,
     "performed": false,
+    "authentication_required": true,
+    "authentication_completed": false,
     "applicant_personal_information_stored": false,
     "primary_route": "https://www.data.go.kr/tcs/dor/insertDataOfferReqstProcssView.do",
     "provider": "국토교통부 국토지리정보원",
@@ -65,6 +67,7 @@
     "scene_merge_allowed": false,
     "scene_vertices_modified": 0,
     "blocking_reasons": [
+      "separate public data portal authentication has not been completed",
       "the request has not been externally submitted",
       "no provider raster package has been delivered",
       "published accuracy is blank for the six fallback sheets",

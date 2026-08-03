@@ -121,16 +121,24 @@ def build_report(
         not personal_keys
         and submission.get("applicant_personal_information_stored") is False
     )
+    external_submission_authorized = submission.get("authorized") is True
     external_submission_performed = submission.get("performed") is True
-    ready = bool(
-        request.get("status") == "ready_for_manual_submission_not_submitted"
+    portal_authentication_pending = bool(
+        submission.get("authentication_required") is True
+        and submission.get("authentication_completed") is False
+    )
+    payload_ready = bool(
+        request.get("status")
+        in {
+            "ready_for_manual_submission_not_submitted",
+            "submission_authorized_waiting_for_portal_authentication",
+        }
         and official_route_valid
         and preferred_valid
         and fallback_valid
         and deliverables_complete
         and metadata_link_matches
         and privacy_safe
-        and submission.get("authorized") is False
         and not external_submission_performed
         and request.get("acceptance_gate", {}).get("scene_merge_allowed") is False
         and request.get("acceptance_gate", {}).get("scene_vertices_modified") == 0
@@ -148,13 +156,15 @@ def build_report(
         blockers.append("metadata audit link or checksum does not match")
     if not privacy_safe:
         blockers.append("request package contains a personal-information field")
+    if not external_submission_authorized:
+        blockers.append("external submission has not been authorized")
     if external_submission_performed:
         blockers.append("repository package unexpectedly claims external submission")
     blockers.extend(request.get("acceptance_gate", {}).get("blocking_reasons", []))
 
     return {
         "schema_version": 1,
-        "stage": "V1-11d",
+        "stage": "V1-11e",
         "request_asset": _display_path(request_path),
         "request_sha256": _digest(request_path),
         "metadata_audit": _display_path(metadata_report_path),
@@ -169,9 +179,11 @@ def build_report(
             "personal_information_keys_found": personal_keys,
             "privacy_safe": privacy_safe,
         },
-        "ready_for_manual_submission": ready,
-        "external_submission_authorized": submission.get("authorized") is True,
+        "submission_payload_ready": payload_ready,
+        "ready_for_manual_submission": payload_ready,
+        "external_submission_authorized": external_submission_authorized,
         "external_submission_performed": external_submission_performed,
+        "portal_authentication_pending": portal_authentication_pending,
         "scene_merge_allowed": False,
         "scene_vertices_modified": 0,
         "blocking_reasons": blockers,

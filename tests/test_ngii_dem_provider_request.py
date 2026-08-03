@@ -23,7 +23,7 @@ def _digest(path: Path) -> str:
     return sha256(path.read_bytes()).hexdigest()
 
 
-def test_shipped_request_is_complete_private_and_not_submitted() -> None:
+def test_shipped_request_is_authorized_private_and_not_submitted() -> None:
     request = json.loads(REQUEST.read_text(encoding="utf-8"))
     fallback = {
         sheet["sheet_id"]: sheet["sheet_name"]
@@ -36,8 +36,10 @@ def test_shipped_request_is_complete_private_and_not_submitted() -> None:
     assert fallback == EXPECTED_FALLBACK_SHEETS
     assert set(request["required_deliverables"]) == REQUIRED_DELIVERABLES
     assert request["submission"]["applicant_personal_information_stored"] is False
-    assert request["submission"]["authorized"] is False
+    assert request["submission"]["authorized"] is True
     assert request["submission"]["performed"] is False
+    assert request["submission"]["authentication_required"] is True
+    assert request["submission"]["authentication_completed"] is False
     assert request["acceptance_gate"]["scene_merge_allowed"] is False
 
 
@@ -47,8 +49,10 @@ def test_committed_report_is_ready_but_never_unlocks_scene() -> None:
     assert report["ready_for_manual_submission"]
     assert report["checks"]["fallback_sheet_count"] == 6
     assert report["checks"]["personal_information_keys_found"] == []
-    assert not report["external_submission_authorized"]
+    assert report["submission_payload_ready"]
+    assert report["external_submission_authorized"]
     assert not report["external_submission_performed"]
+    assert report["portal_authentication_pending"]
     assert not report["scene_merge_allowed"]
     assert report["scene_vertices_modified"] == 0
 
