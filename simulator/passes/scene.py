@@ -18,6 +18,11 @@ from ..material_textures import (
     texture_widths_m,
 )
 from ..materials import MATERIAL_LIBRARY, MaterialLibrary
+from ..road_semantics import (
+    RoadSemanticFilterStats,
+    filter_occluded_road_segments,
+    load_road_structure_semantics,
+)
 from ..scene import LINEAR_STYLE_STEPS, SURFACE_GRASS_BLADE, load_scene
 from ..site_details import GRASS_VERTICES_PER_TUFT
 from ..terrain import sample_heightmap_array
@@ -562,6 +567,7 @@ class ScenePass:
         self.data = SceneData.empty()
         self.road_tessellation_stats: AdaptiveTessellationStats | None = None
         self.road_edge_tessellation_stats: AdaptiveTessellationStats | None = None
+        self.road_semantic_filter_stats: RoadSemanticFilterStats | None = None
         if scene_path.exists():
             self._build(load_scene(scene_path))
 
@@ -598,7 +604,13 @@ class ScenePass:
             np.concatenate((bridge_deck, bridge_structure), axis=0)
             if len(bridge_structure) else bridge_deck
         )
-        road_deck = linear_feature_uv(scene.road_vertices)
+        visible_roads, self.road_semantic_filter_stats = (
+            filter_occluded_road_segments(
+                scene.road_vertices,
+                load_road_structure_semantics(),
+            )
+        )
+        road_deck = linear_feature_uv(visible_roads)
         stair_mask = np.isclose(road_deck[:, 9], LINEAR_STYLE_STEPS)
         ordinary_road = road_deck[~stair_mask]
         stair_geometry = stair_structure_vertices(

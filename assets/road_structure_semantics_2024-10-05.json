@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "scene_asset": "assets/yeouido_scene.npz",
+  "scene_asset_sha256": "c8b9d2720f935de3532a9401c74d37a55470d23645c06d32c24ff923c3291518",
+  "snapshot_utc": "2024-10-05T10:20:00Z",
+  "coordinate_system": "local East-Up-South metres; polyline stores X/Z",
+  "local_origin_wgs84": [37.529, 126.935],
+  "source": {
+    "provider": "OpenStreetMap contributors via Overpass API historical query",
+    "licence": "ODbL 1.0",
+    "query_scope": "highway ways carrying tunnel, covered, or negative layer tags inside the project extract bbox",
+    "overpass_query": "[out:json][timeout:90][date:\"2024-10-05T10:20:00Z\"];(way[\"highway\"][\"tunnel\"](37.515,126.910,37.545,126.960);way[\"highway\"][\"covered\"](37.515,126.910,37.545,126.960);way[\"highway\"][\"layer\"~\"^-\"](37.515,126.910,37.545,126.960););out geom;",
+    "retrieved_date": "2026-08-03",
+    "confidence_grade": "C",
+    "notes": "The dated tags establish below-grade visibility semantics, not surveyed tunnel profiles, portal geometry, road elevation, or construction dimensions. Runtime filtering removes only centre-lines that reproduce these exact dated ways."
+  },
+  "matching": {
+    "centreline_tolerance_m": 0.25,
+    "heading_cosine_minimum": 0.98,
+    "notes": "The small tolerance matches the same WGS84-to-local transform used to build the scene. Heading matching preserves surface roads that cross above a tunnel at the same plan position."
+  },
+  "corridors": [
+    {
+      "osm_way_id": 75113082,
+      "kind": "tunnel",
+      "render_policy": "occluded_below_terrain",
+      "tags": {"tunnel": "yes", "highway": "secondary", "layer": "-1", "name": "여의도지하차도", "oneway": "yes"},
+      "polyline_xz_m": [[-1320.444, 351.371], [-1135.836, 582.707]]
+    },
+    {
+      "osm_way_id": 215670926,
+      "kind": "tunnel",
+      "render_policy": "occluded_below_terrain",
+      "tags": {"tunnel": "yes", "highway": "cycleway", "name": "여의도공원 나들목", "oneway": "no"},
+      "polyline_xz_m": [[-694.942, -85.001], [-643.752, -128.393]]
+    },
+    {
+      "osm_way_id": 331203274,
+      "kind": "tunnel",
+      "render_policy": "occluded_below_terrain",
+      "tags": {"tunnel": "yes", "highway": "pedestrian", "level": "-2"},
+      "polyline_xz_m": [[-639.125, 389.164], [-831.241, 541.034], [-1006.107, 675.642], [-1003.102, 679.616], [-967.323, 726.934], [-968.066, 727.556], [-932.775, 785.695]]
+    },
+    {
+      "osm_way_id": 474507375,
+      "kind": "tunnel",
+      "render_policy": "occluded_below_terrain",
+      "tags": {"tunnel": "yes", "highway": "cycleway", "layer": "-1", "name": "여의도 나들목", "oneway": "no"},
+      "polyline_xz_m": [[86.832, 548.289], [88.972, 546.325], [115.243, 522.229]]
+    },
+    {
+      "osm_way_id": 475190608,
+      "kind": "tunnel",
+      "render_policy": "occluded_below_terrain",
+      "tags": {"tunnel": "yes", "highway": "secondary", "layer": "-1", "oneway": "yes", "source": "NTIC"},
+      "polyline_xz_m": [[-1132.101, -358.833], [-1139.322, -361.731], [-1142.274, -362.908], [-1162.134, -370.88], [-1182.745, -377.409]]
+    },
+    {
+      "osm_way_id": 480824684,
+      "kind": "tunnel",
+      "render_policy": "occluded_below_terrain",
+      "tags": {"tunnel": "yes", "highway": "secondary", "layer": "-1", "name": "여의도지하차도", "oneway": "yes"},
+      "polyline_xz_m": [[-1130.664, 578.623], [-1314.759, 345.7]]
+    },
+    {
+      "osm_way_id": 914374379,
+      "kind": "tunnel",
+      "render_policy": "occluded_below_terrain",
+      "tags": {"tunnel": "yes", "highway": "pedestrian", "level": "-2", "name": "국제금융로"},
+      "polyline_xz_m": [[-844.084, 525.772], [-831.241, 541.034]]
+    },
+    {
+      "osm_way_id": 925101314,
+      "kind": "tunnel",
+      "render_policy": "occluded_below_terrain",
+      "tags": {"tunnel": "yes", "highway": "cycleway", "layer": "-1", "name": "한강 자전거길", "oneway": "no", "width": "3"},
+      "polyline_xz_m": [[528.124, 905.708], [537.496, 919.758], [544.41, 932.777]]
+    }
+  ]
+}

@@ -27,6 +27,17 @@ bridge and road ways, parks, grass, forest, and the Han River multipolygon.
 OSM remains a community dataset: missing heights use documented fallbacks and
 do not establish survey-grade equality with every October 5, 2024 structure.
 
+`road_structure_semantics_2024-10-05.json` is a compact second historical
+Overpass query at the same instant. It retains the eight AOI highway ways
+tagged as tunnels (including negative `layer`/`level` where present), their OSM
+way IDs, selected source tags and local centre-lines. The legacy scene vertex
+array did not preserve way IDs and incorrectly drew those below-grade ways on
+the terrain surface. Runtime matching therefore uses a 0.25 m centre-line gate
+and a 0.98 heading cosine gate: this suppresses the dated tunnel strip while
+preserving a surface road crossing the same plan position. The asset proves
+only visibility semantics. It does not supply tunnel depth, portal dimensions,
+ramp elevations, retaining walls, or survey-grade road profiles.
+
 `yeouido_detail_osm_2024-10-05.json` is a second query fixed to the same
 historical timestamp. It preserves 131 mapped garden, pitch, track,
 playground, grass, scrub, forest, and wood polygons used by the detailed

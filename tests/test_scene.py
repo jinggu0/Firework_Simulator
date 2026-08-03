@@ -63,6 +63,30 @@ def test_bridge_way_becomes_a_deck() -> None:
     assert np.all(scene.bridge_vertices[:, 1] == 7.0)
 
 
+def test_tunnel_way_is_not_emitted_as_a_terrain_draped_surface() -> None:
+    scene = build_scene(
+        {
+            "elements": [
+                {
+                    "geometry": [
+                        {"lat": 37.5000, "lon": 126.9000},
+                        {"lat": 37.5002, "lon": 126.9002},
+                    ],
+                    "tags": {
+                        "highway": "secondary",
+                        "tunnel": "yes",
+                        "layer": "-1",
+                    },
+                }
+            ]
+        },
+        37.5,
+        126.9,
+    )
+    assert len(scene.road_vertices) == 0
+    assert len(scene.bridge_vertices) == 0
+
+
 def test_road_width_and_green_surface_are_meshed() -> None:
     osm = {
         "elements": [

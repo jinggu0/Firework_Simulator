@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "scene_asset": "assets/yeouido_scene.npz",
+  "scene_asset_sha256": "c8b9d2720f935de3532a9401c74d37a55470d23645c06d32c24ff923c3291518",
+  "semantic_asset": "assets/road_structure_semantics_2024-10-05.json",
+  "semantic_asset_sha256": "8ea93c2cefc39d9641a6c8265c91ff21cb9bcffceb020d7b0d01ae36e747c2ef",
+  "snapshot_utc": "2024-10-05T10:20:00Z",
+  "filter": {
+    "input_segments": 35340,
+    "output_segments": 35215,
+    "excluded_segments": 125,
+    "excluded_osm_way_ids": [
+      75113082,
+      215670926,
+      331203274,
+      474507375,
+      475190608,
+      480824684,
+      914374379,
+      925101314
+    ]
+  },
+  "adaptive_tessellation": {
+    "before_semantic_filter": {
+      "input_triangles": 70464,
+      "output_triangles": 76236,
+      "refined_triangles_by_level": [
+        1001,
+        923
+      ],
+      "maximum_subdivision_level": 2,
+      "warning_deviation_m": 0.05,
+      "area_bounds_xz_m": [
+        -1200.0,
+        -550.0,
+        600.0,
+        950.0
+      ]
+    },
+    "after_semantic_filter": {
+      "input_triangles": 70214,
+      "output_triangles": 75731,
+      "refined_triangles_by_level": [
+        976,
+        863
+      ],
+      "maximum_subdivision_level": 2,
+      "warning_deviation_m": 0.05,
+      "area_bounds_xz_m": [
+        -1200.0,
+        -550.0,
+        600.0,
+        950.0
+      ]
+    }
+  },
+  "priority_area_contact": {
+    "sampling_note": "Counts change when occluded tunnel triangles are removed.",
+    "before_semantic_filter": {
+      "sample_count": 68142,
+      "warning_5cm_sample_count": 2025,
+      "priority_20cm_sample_count": 256,
+      "immediate_50cm_sample_count": 35,
+      "absolute_p95_p99_max_m": [
+        0.039366001538677364,
+        0.11351065100470316,
+        1.171622798615839
+      ]
+    },
+    "after_semantic_filter": {
+      "sample_count": 66390,
+      "warning_5cm_sample_count": 1701,
+      "priority_20cm_sample_count": 185,
+      "immediate_50cm_sample_count": 32,
+      "absolute_p95_p99_max_m": [
+        0.03780897065422767,
+        0.09409156871891622,
+        1.171622798615839
+      ]
+    }
+  },
+  "residual_classification": {
+    "classification": "risk triage only; bridge proximity and terrain slope do not prove a road deck elevation",
+    "residual_priority_sample_count": 185,
+    "hierarchical_categories": {
+      "bridge_or_ramp_elevation_review_within_35m": 157,
+      "shoreline_review_within_25m": 5,
+      "moderate_source_slope_review_at_least_15deg": 18,
+      "unclassified": 5
+    },
+    "absolute_deviation_min_p50_p90_p95_max_m": [
+      0.20168013532363943,
+      0.30462384448470864,
+      0.614260751311032,
+      0.7939983659933024,
+      1.171622798615839
+    ],
+    "bridge_distance_min_p50_p90_p95_max_m": [
+      2.3741612023557095,
+      29.675611652399038,
+      35.686850780607934,
+      37.42003260748511,
+      261.93958789061463
+    ],
+    "water_distance_min_p50_p90_p95_max_m": [
+      2.2537370973921775,
+      201.84534937456738,
+      206.0111642782152,
+      206.6444066179557,
+      231.2103789488395
+    ],
+    "source_slope_min_p50_p90_p95_max_deg": [
+      6.5851952345968465,
+      20.178718059680907,
+      26.923772680715917,
+      29.20461017943728,
+      32.65702052762715
+    ],
+    "next_evidence_gate": "Do not raise or flatten the 157 bridge/ramp-adjacent residuals until grade-A/B deck, ramp, retaining-wall or portal elevations are registered."
+  },
+  "map": "road_structure_map.png",
+  "performance_ab": {
+    "frames_per_run": 360,
+    "fluid_backend": "3d",
+    "frame_budget_ms": 16.666666666666668,
+    "paired_runs": [
+      {
+        "run": 1,
+        "baseline": {
+          "frame_mean_ms": 12.08567500026321,
+          "frame_p95_ms": 15.32227500501904,
+          "frame_p99_ms": 17.18453500114265,
+          "visual_p95_ms": 11.345149999397108,
+          "physics_p95_ms": 4.827649999060668
+        },
+        "candidate": {
+          "frame_mean_ms": 12.315156944653912,
+          "frame_p95_ms": 14.84388499011402,
+          "frame_p99_ms": 16.7263229994569,
+          "visual_p95_ms": 10.642539994296385,
+          "physics_p95_ms": 4.929955004627118
+        },
+        "frame_p95_delta_ms": -0.4783900149050204
+      },
+      {
+        "run": 2,
+        "baseline": {
+          "frame_mean_ms": 11.740621944004992,
+          "frame_p95_ms": 15.217560005112318,
+          "frame_p99_ms": 16.584457003773423,
+          "visual_p95_ms": 10.892340001737466,
+          "physics_p95_ms": 4.944144998444244
+        },
+        "candidate": {
+          "frame_mean_ms": 15.208922499975111,
+          "frame_p95_ms": 19.83024000073783,
+          "frame_p99_ms": 27.818553002580416,
+          "visual_p95_ms": 13.901110008737305,
+          "physics_p95_ms": 7.440620003035293
+        },
+        "frame_p95_delta_ms": 4.612679995625513
+      },
+      {
+        "run": 3,
+        "baseline": {
+          "frame_mean_ms": 11.647782500141249,
+          "frame_p95_ms": 15.604030002577929,
+          "frame_p99_ms": 16.683186995360305,
+          "visual_p95_ms": 11.101474996394245,
+          "physics_p95_ms": 5.106514996441548
+        },
+        "candidate": {
+          "frame_mean_ms": 11.842375277855252,
+          "frame_p95_ms": 15.074505002121443,
+          "frame_p99_ms": 16.44198099136702,
+          "visual_p95_ms": 10.87036499302485,
+          "physics_p95_ms": 5.174110001098597
+        },
+        "frame_p95_delta_ms": -0.529525000456486
+      }
+    ],
+    "baseline_pass_count": 3,
+    "candidate_pass_count": 2,
+    "run_count": 3,
+    "candidate_all_runs_pass_60fps_p95": false,
+    "candidate_worst_frame_p95_ms": 19.83024000073783,
+    "interpretation": "The filter is a startup-only mesh reduction, but one candidate run is a large visual/physics outlier. The strict all-run gate fails and these samples do not establish a causal performance improvement."
+  }
+}

@@ -67,7 +67,7 @@ def test_shipped_priority_area_is_tied_to_the_scene_and_camera_scope() -> None:
         [
             (-120.0, 330.0),
             (180.0, 800.0),
-            (330.0, 620.0),
+            (-1100.0, -330.0),
             (-650.0, 900.0),
             (-900.0, 250.0),
             (-100.0, 260.0),

@@ -943,7 +943,12 @@ def build_scene(
             except ValueError:
                 width = 12.0
             bridges.extend(_bridge_mesh(local, width, 7.0))
-        elif "highway" in tags and len(local) >= 2:
+        elif (
+            "highway" in tags
+            and len(local) >= 2
+            and tags.get("tunnel") not in {"yes", "building_passage"}
+            and tags.get("covered") != "yes"
+        ):
             roads.extend(
                 _linear_feature_mesh(
                     local,

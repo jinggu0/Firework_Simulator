@@ -34,11 +34,11 @@
     {
       "view_id": "road_ground",
       "subject": "road_ground",
-      "position_eus_m": [330.0, 8.987, 620.0],
-      "target_eus_m": [360.0, 20.852, 600.0],
+      "position_eus_m": [-1100.0, 9.0, -330.0],
+      "target_eus_m": [-1160.0, 8.0, -362.0],
       "expected_surface": "land",
-      "minimum_ground_clearance_m": 1.6,
-      "notes": "Walking-height view through the highest AOI road-chord defect, exposing deck, kerb and multi-level contact."
+      "minimum_ground_clearance_m": 1.7,
+      "notes": "Walking-height view toward the Seogang Bridge/Gukhoe-daero multi-level junction, exposing surface roads, the dated tunnel corridor and approach contact."
     },
     {
       "view_id": "facade_landmark",
