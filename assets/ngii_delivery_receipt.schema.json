@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://firework-simulator.local/schema/ngii-delivery-receipt-v1.json",
+  "$id": "https://firework-simulator.local/schema/ngii-delivery-receipt-v2.json",
   "title": "Authenticated NGII digital-map delivery receipt",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema_version", "target_event_date", "observed_at", "source", "request", "delivery", "application"],
   "properties": {
-    "schema_version": {"const": 1},
+    "schema_version": {"const": 2},
     "target_event_date": {"const": "2024-10-05"},
     "observed_at": {"type": "string", "format": "date"},
     "source": {"$ref": "#/$defs/source"},
@@ -45,7 +45,7 @@
       "properties": {
         "scale_denominator": {"const": 1000},
         "maximum_source_year": {"const": 2024},
-        "accepted_formats": {"const": ["DXF", "NGI"]},
+        "accepted_formats": {"const": ["DXF", "NGI", "SHP"]},
         "sheets": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"$ref": "#/$defs/sheet"}}
       }
     },
@@ -66,7 +66,7 @@
       "properties": {
         "member_path": {"type": "string", "minLength": 1},
         "sheet_id": {"enum": ["376082447", "376082448", "376082457", "376082458"]},
-        "format": {"enum": ["DXF", "NGI"]},
+        "format": {"enum": ["DXF", "NGI", "SHP"]},
         "sha256": {"$ref": "#/$defs/sha256"},
         "bytes": {"type": "integer", "minimum": 1}
       }
@@ -113,10 +113,24 @@
     "application": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["import_allowed", "blocking_reasons", "scene_vertices_modified", "runtime_frame_path_changed"],
+      "required": ["import_allowed", "blocking_reasons", "post_event_source_authorization", "scene_vertices_modified", "runtime_frame_path_changed"],
       "properties": {
         "import_allowed": {"type": "boolean"},
         "blocking_reasons": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "post_event_source_authorization": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["authorized", "authorized_at", "authorized_by", "maximum_production_year", "scope", "historical_identity_claim", "reason"],
+          "properties": {
+            "authorized": {"const": true},
+            "authorized_at": {"type": "string", "format": "date"},
+            "authorized_by": {"const": "project_owner"},
+            "maximum_production_year": {"const": 2025},
+            "scope": {"const": "normalization_and_local_derived_scene_use"},
+            "historical_identity_claim": {"const": false},
+            "reason": {"type": "string", "minLength": 1}
+          }
+        },
         "scene_vertices_modified": {"const": 0},
         "runtime_frame_path_changed": {"const": false}
       }

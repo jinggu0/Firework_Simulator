@@ -2,8 +2,9 @@
 
 Catalogue metadata, survey controls, and an authenticated file delivery are
 different evidence scopes.  This module accepts only the last of those as
-permission to import geometry, and binds every imported DXF byte stream to a
-checksum recorded in the delivery receipt.
+permission to import geometry, and binds every imported geometry byte stream
+to a checksum recorded in the delivery receipt.  A post-event delivery can be
+used only through an explicit, non-historical project-owner authorization.
 """
 
 from __future__ import annotations
@@ -55,6 +56,8 @@ class NgiiDeliveryReceipt:
     projected_crs: str | None
     verified: bool
     reasons: tuple[str, ...]
+    post_event_authorized: bool
+    historical_identity_verified: bool
 
 
 def _sequence(value: Any, field: str) -> Sequence[Any]:
@@ -88,7 +91,7 @@ def _parse_datetime(value: Any, field: str) -> datetime:
 
 
 def parse_ngii_delivery_receipt(document: Mapping[str, Any]) -> NgiiDeliveryReceipt:
-    if document.get("schema_version") != 1:
+    if document.get("schema_version") != 2:
         raise NgiiDeliveryError("unsupported NGII delivery receipt schema")
     if document.get("target_event_date") != EVENT_DATE.isoformat():
         raise NgiiDeliveryError("delivery receipt must target 2024-10-05")
@@ -111,7 +114,7 @@ def parse_ngii_delivery_receipt(document: Mapping[str, Any]) -> NgiiDeliveryRece
     if (
         request.get("scale_denominator") != 1000
         or request.get("maximum_source_year") != EVENT_DATE.year
-        or request.get("accepted_formats") != ["DXF", "NGI"]
+        or request.get("accepted_formats") != ["DXF", "NGI", "SHP"]
     ):
         raise NgiiDeliveryError("request scale, year, or formats are inconsistent")
     sheets = _sequence(request.get("sheets"), "request.sheets")
@@ -127,7 +130,7 @@ def parse_ngii_delivery_receipt(document: Mapping[str, Any]) -> NgiiDeliveryRece
         declared_sheets[sheet_id] = name
         if raw.get("required_for_current_stage") is True:
             required_sheet_ids.add(sheet_id)
-    if declared_sheets != EXPECTED_SHEETS or required_sheet_ids != {"376082447"}:
+    if declared_sheets != EXPECTED_SHEETS or required_sheet_ids != set(EXPECTED_SHEETS):
         raise NgiiDeliveryError("event-area sheet request is incomplete")
 
     delivery = document.get("delivery")
@@ -192,7 +195,7 @@ def parse_ngii_delivery_receipt(document: Mapping[str, Any]) -> NgiiDeliveryRece
             or member_path.startswith("/")
             or ".." in Path(member_path).parts
             or sheet_id not in EXPECTED_SHEETS
-            or file_format not in {"DXF", "NGI"}
+            or file_format not in {"DXF", "NGI", "SHP"}
         ):
             raise NgiiDeliveryError(f"import member {index} metadata is invalid")
         key = (digest, byte_count)
@@ -232,6 +235,27 @@ def parse_ngii_delivery_receipt(document: Mapping[str, Any]) -> NgiiDeliveryRece
     )
     delivered_sheet_ids = {member.sheet_id for member in members}
 
+    application = document.get("application")
+    if not isinstance(application, Mapping):
+        raise NgiiDeliveryError("application must be an object")
+    post_event_record = application.get("post_event_source_authorization")
+    post_event_authorized = False
+    if isinstance(post_event_record, Mapping):
+        authorized_at = post_event_record.get("authorized_at")
+        if authorized_at is not None:
+            date.fromisoformat(str(authorized_at))
+        maximum_authorized_year = post_event_record.get("maximum_production_year")
+        post_event_authorized = bool(
+            post_event_record.get("authorized") is True
+            and post_event_record.get("authorized_by") == "project_owner"
+            and post_event_record.get("historical_identity_claim") is False
+            and str(post_event_record.get("scope", "")).strip()
+            and str(post_event_record.get("reason", "")).strip()
+            and production_year is not None
+            and isinstance(maximum_authorized_year, int)
+            and EVENT_DATE.year < production_year <= maximum_authorized_year
+        )
+
     reasons: list[str] = []
     if not authenticated:
         reasons.append("authenticated_download_not_confirmed")
@@ -241,7 +265,9 @@ def parse_ngii_delivery_receipt(document: Mapping[str, Any]) -> NgiiDeliveryRece
         reasons.append("delivery_packages_not_checksum_locked")
     if not members:
         reasons.append("import_members_not_checksum_locked")
-    if production_year is None or production_year > EVENT_DATE.year:
+    if production_year is None or (
+        production_year > EVENT_DATE.year and not post_event_authorized
+    ):
         reasons.append("event_compatible_source_year_not_verified")
     if not crs_verified:
         reasons.append("projected_crs_not_verified_from_delivery")
@@ -251,9 +277,6 @@ def parse_ngii_delivery_receipt(document: Mapping[str, Any]) -> NgiiDeliveryRece
         reasons.append("required_sheet_coverage_incomplete")
 
     verified = not reasons
-    application = document.get("application")
-    if not isinstance(application, Mapping):
-        raise NgiiDeliveryError("application must be an object")
     if application.get("import_allowed") is not verified:
         raise NgiiDeliveryError("application import claim does not match delivery")
     if tuple(application.get("blocking_reasons", ())) != tuple(reasons):
@@ -271,6 +294,10 @@ def parse_ngii_delivery_receipt(document: Mapping[str, Any]) -> NgiiDeliveryRece
         projected_crs=projected_crs,
         verified=verified,
         reasons=tuple(reasons),
+        post_event_authorized=post_event_authorized,
+        historical_identity_verified=bool(
+            production_year is not None and production_year <= EVENT_DATE.year
+        ),
     )
 
 
@@ -284,7 +311,7 @@ def validate_import_sources(
     receipt: NgiiDeliveryReceipt,
     sources: Iterable[tuple[str, bytes]],
 ) -> None:
-    """Verify that imported DXFs are exactly the receipt-locked byte streams."""
+    """Verify imported geometry is exactly the receipt-locked byte streams."""
 
     if not receipt.verified:
         raise NgiiDeliveryError(
@@ -293,16 +320,15 @@ def validate_import_sources(
     expected = Counter(
         (member.sha256, member.bytes)
         for member in receipt.import_members
-        if member.format == "DXF"
     )
     actual = Counter((sha256(raw).hexdigest(), len(raw)) for _, raw in sources)
     if not expected:
-        raise NgiiDeliveryError("verified receipt has no DXF import members")
+        raise NgiiDeliveryError("verified receipt has no geometry import members")
     if actual != expected:
         missing = sum((expected - actual).values())
         unexpected = sum((actual - expected).values())
         raise NgiiDeliveryError(
-            "DXF inputs do not match the authenticated delivery receipt "
+            "geometry inputs do not match the authenticated delivery receipt "
             f"(missing={missing}, unexpected={unexpected})"
         )
 
@@ -330,7 +356,7 @@ def validate_delivery_packages(
                 path
                 for path in supplied.rglob("*")
                 if path.is_file()
-                and path.suffix.casefold() in {".zip", ".dxf", ".ngi"}
+                and path.suffix.casefold() in {".zip", ".dxf", ".ngi", ".xml"}
             )
         elif supplied.is_file():
             supplied_packages.append(supplied)

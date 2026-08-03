@@ -1,11 +1,11 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "target_event_date": "2024-10-05",
   "observed_at": "2026-08-03",
   "source": {
     "portal_url": "https://map.ngii.go.kr/ms/map/NlipMap.do",
     "provider": "국토지리정보원 국토정보플랫폼",
-    "acquisition_route": "서울시 공식 안내에 따른 국토정보플랫폼 로그인 후 다운로드",
+    "acquisition_route": "사용자 인증 Chrome 세션에서 약관 동의 후 직접 다운로드",
     "login_required": true,
     "source_files_redistributed": false
   },
@@ -14,7 +14,8 @@
     "maximum_source_year": 2024,
     "accepted_formats": [
       "DXF",
-      "NGI"
+      "NGI",
+      "SHP"
     ],
     "sheets": [
       {
@@ -25,49 +26,80 @@
       {
         "sheet_id": "376082448",
         "sheet_name": "서울2448",
-        "required_for_current_stage": false
+        "required_for_current_stage": true
       },
       {
         "sheet_id": "376082457",
         "sheet_name": "서울2457",
-        "required_for_current_stage": false
+        "required_for_current_stage": true
       },
       {
         "sheet_id": "376082458",
         "sheet_name": "서울2458",
-        "required_for_current_stage": false
+        "required_for_current_stage": true
       }
     ]
   },
   "delivery": {
-    "status": "not_acquired",
-    "authenticated_download_confirmed": false,
-    "acquired_at": null,
-    "production_year": null,
-    "projected_crs": null,
-    "projected_crs_evidence": null,
+    "status": "acquired",
+    "authenticated_download_confirmed": true,
+    "acquired_at": "2026-08-03T17:46:55+09:00",
+    "production_year": 2025,
+    "projected_crs": "EPSG:5186",
+    "projected_crs_evidence": {
+      "method": "provider_sidecar",
+      "artifact_sha256": "5ba4ead630f43c65545548fcc1950de6ef459da7292f16c23e0da66584f8a454",
+      "catalogue_or_control_inference": false,
+      "detail": "각 수치지도 2.0 ZIP의 PRJ가 Korea 2000 Central Belt 2010을 명시하며 pyproj가 EPSG:5186으로 식별했다."
+    },
     "license": {
-      "name": null,
-      "url": null,
-      "verified": false,
-      "allows_local_derived_use": false,
+      "name": "국토정보플랫폼 공공데이터 이용조건 및 다운로드 사용자 준수사항",
+      "url": "https://map.ngii.go.kr/nw/common/login/publicInformation.do",
+      "verified": true,
+      "allows_local_derived_use": true,
       "redistribution_allowed": false
     },
-    "packages": [],
-    "import_members": []
+    "packages": [
+      {"file_name": "(B010)수치지도_376082447_2025_00000915164295.xml", "sha256": "40a5e9148c129eec26056b241672f02aa5864e05aa3970f86a36052da80458e4", "bytes": 1261},
+      {"file_name": "(B010)수치지도_376082447_2025_00000915164295.zip", "sha256": "ce7a8a7eefe7eb2d75d3b98aed4cae8c20dc4c46effeb34b1f5f22bcb4d873af", "bytes": 153983},
+      {"file_name": "(B010)수치지도_376082447_2025_0000099287457.dxf", "sha256": "155a6aef212d7dbd49caee3b542b8c9067c514449a42d871262747f48131e359", "bytes": 849387},
+      {"file_name": "(B010)수치지도_376082447_2025_0000099287457.xml", "sha256": "50ab7bf88eaf3859bd3ec7cb57da095f5854a020a257d560a36f72c82569da48", "bytes": 1261},
+      {"file_name": "(B010)수치지도_376082448_2025_00000338282850.dxf", "sha256": "28092e6b7355e8e7c08fc23da762553e86745245a38b68daf827e4456be3f0ea", "bytes": 273715},
+      {"file_name": "(B010)수치지도_376082448_2025_00000338282850.xml", "sha256": "806e91482544da2411d55dce963e3040dd178439a5ddb8b2ad6ab664e121c1d1", "bytes": 1261},
+      {"file_name": "(B010)수치지도_376082448_2025_00000902094208.xml", "sha256": "2b2921ffe7bd61372614d86b8ed186db560616ced0bf018ac8b24b2052f5faa1", "bytes": 1261},
+      {"file_name": "(B010)수치지도_376082448_2025_00000902094208.zip", "sha256": "3b19034432ba65c3ce5fbbb1440335f3a8be5100e5a2be1b7650b3ce0cd9e948", "bytes": 63314},
+      {"file_name": "(B010)수치지도_376082457_2025_00000591948314.dxf", "sha256": "52f881ab443c49d0e0f9b0ab8624d1b2712e5179e23704e26ece8be6d5fdcb80", "bytes": 893160},
+      {"file_name": "(B010)수치지도_376082457_2025_00000591948314.xml", "sha256": "6b73b070f6dd892216c729b27b5afd12a1e8add47046aa6b1105070de85f6921", "bytes": 1261},
+      {"file_name": "(B010)수치지도_376082457_2025_0000063402558.xml", "sha256": "5bc97354931a7830abb2b98deda0ddc852095a1b94e577031e732f031b8a3861", "bytes": 1261},
+      {"file_name": "(B010)수치지도_376082457_2025_0000063402558.zip", "sha256": "de818ecefd7fe3327c30b75bd7513de5d34217277426aedc585f4d7a60072ddc", "bytes": 149452},
+      {"file_name": "(B010)수치지도_376082458_2025_00000383988524.dxf", "sha256": "efb3345f75b935e0811df0c153d15312772c8ab2e5a4a6d512d365bda35ccd0e", "bytes": 1012635},
+      {"file_name": "(B010)수치지도_376082458_2025_00000383988524.xml", "sha256": "8ceddcb3163d98a171eeaeaedd1aa440a20a95071f3a2c0d1732c094471d3b95", "bytes": 1261},
+      {"file_name": "(B010)수치지도_376082458_2025_00000778028252.xml", "sha256": "9fa50086c25151516db4eb1f57ecc4997ef8e90783b010cca556ca963347b13a", "bytes": 1261},
+      {"file_name": "(B010)수치지도_376082458_2025_00000778028252.zip", "sha256": "71daca737f66b7d8bb6a1112f29785e77236d4966d270e52c59f46dbe5033c42", "bytes": 166830}
+    ],
+    "import_members": [
+      {"member_path": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_C0050000.shp", "sheet_id": "376082447", "format": "SHP", "sha256": "bc61970970130126c8f9549eed5351a7d364c3f42583de7e8ece2822b241e49f", "bytes": 644},
+      {"member_path": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_F0030000.shp", "sheet_id": "376082447", "format": "SHP", "sha256": "fb0a41be0ef5543f702849b6fb719160de310c8dc01a6f7d4ba6675c569c7229", "bytes": 1988},
+      {"member_path": "(B010)수치지도_376082447_2025_00000915164295.zip:N1L_F0040000.shp", "sheet_id": "376082447", "format": "SHP", "sha256": "f8bcc363126629d6fcddfaf1dd92a5c88d6e2b4c89fc0ebd83d1fba6aa48bab6", "bytes": 3236},
+      {"member_path": "(B010)수치지도_376082448_2025_00000902094208.zip:N1L_C0050000.shp", "sheet_id": "376082448", "format": "SHP", "sha256": "1243f5afbef46ac4c16b9187cc9ae96ca44008cb1df3e45afb321cf1fc32d47d", "bytes": 740},
+      {"member_path": "(B010)수치지도_376082448_2025_00000902094208.zip:N1L_F0040000.shp", "sheet_id": "376082448", "format": "SHP", "sha256": "f0b5df43c9848e4414cd0ffaefc8199d01fadb5c24ec9ea0e7eb2e34745e7344", "bytes": 1124},
+      {"member_path": "(B010)수치지도_376082457_2025_0000063402558.zip:N1L_F0040000.shp", "sheet_id": "376082457", "format": "SHP", "sha256": "c12c4f9159f1f8f210263a435a316cac685523d8f80f5848e1b2f2e95631ce75", "bytes": 940},
+      {"member_path": "(B010)수치지도_376082458_2025_00000778028252.zip:N1L_C0050000.shp", "sheet_id": "376082458", "format": "SHP", "sha256": "ec67f444a7d072771253f6996ceadcf31a6234ca3a8096bb1c02798c660a3c33", "bytes": 572},
+      {"member_path": "(B010)수치지도_376082458_2025_00000778028252.zip:N1L_F0040000.shp", "sheet_id": "376082458", "format": "SHP", "sha256": "9b87e894f6c0aa376a1951c6f3338aeaf1a390d44ab7c42474d4a7ed41a20918", "bytes": 2748}
+    ]
   },
   "application": {
-    "import_allowed": false,
-    "blocking_reasons": [
-      "authenticated_download_not_confirmed",
-      "delivery_not_acquired",
-      "delivery_packages_not_checksum_locked",
-      "import_members_not_checksum_locked",
-      "event_compatible_source_year_not_verified",
-      "projected_crs_not_verified_from_delivery",
-      "license_not_verified_for_local_derived_use",
-      "required_sheet_coverage_incomplete"
-    ],
+    "import_allowed": true,
+    "blocking_reasons": [],
+    "post_event_source_authorization": {
+      "authorized": true,
+      "authorized_at": "2026-08-03",
+      "authorized_by": "project_owner",
+      "maximum_production_year": 2025,
+      "scope": "normalization_and_local_derived_scene_use",
+      "historical_identity_claim": false,
+      "reason": "프로젝트 소유자가 확보한 2025 공식 배포본을 그대로 채택하도록 명시적으로 승인했다. 행사일 당시와 동일하다는 주장은 하지 않는다."
+    },
     "scene_vertices_modified": 0,
     "runtime_frame_path_changed": false
   }

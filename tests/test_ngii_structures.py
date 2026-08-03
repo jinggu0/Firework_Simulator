@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 import json
+import io
 import math
 from pathlib import Path
 
@@ -12,6 +13,7 @@ from tools.import_ngii_structures import (
     build_normalized_asset,
     iter_dxf_sources,
     parse_ascii_dxf,
+    parse_shp_polylines,
     resolve_layer_kind,
     validate_delivery_evidence,
     validate_source_year,
@@ -57,6 +59,23 @@ def test_parser_rejects_malformed_group_pairs_and_vertices() -> None:
         parse_ascii_dxf("0\nSECTION\n2\n")
     with pytest.raises(ValueError, match="matching x"):
         parse_ascii_dxf(_dxf("0", "LWPOLYLINE", "8", "C0050000", "20", "2"))
+
+
+def test_shp_parser_splits_multipart_structure_lines() -> None:
+    shapefile = pytest.importorskip("shapefile")
+    shp, shx, dbf = io.BytesIO(), io.BytesIO(), io.BytesIO()
+    writer = shapefile.Writer(shp=shp, shx=shx, dbf=dbf, shapeType=shapefile.POLYLINE)
+    writer.field("UFID", "C")
+    writer.line([[[1.0, 2.0], [3.0, 4.0]], [[5.0, 6.0], [7.0, 8.0]]])
+    writer.record("test")
+    writer.close()
+
+    entities = parse_shp_polylines(shp.getvalue(), "N1L_F0040000.shp")
+
+    assert len(entities) == 2
+    assert {entity.layer for entity in entities} == {"F0040000"}
+    assert entities[0].points == ((1.0, 2.0, None), (3.0, 4.0, None))
+    assert entities[1].points == ((5.0, 6.0, None), (7.0, 8.0, None))
 
 
 def test_lwpolyline_preserves_bulge_arcs_and_closed_flag() -> None:
@@ -154,7 +173,7 @@ def test_directory_and_zip_discovery_is_case_insensitive(tmp_path: Path) -> None
     assert sources[1][0] == "sheets.zip:nested/B.DxF"
 
 
-def test_source_manifest_records_non_ingested_temporal_gate() -> None:
+def test_source_manifest_records_explicit_post_event_adoption() -> None:
     path = Path("assets/yeouido_ngii_1000_source_manifest.json")
     data = json.loads(path.read_text(encoding="utf-8"))
 
@@ -163,16 +182,21 @@ def test_source_manifest_records_non_ingested_temporal_gate() -> None:
         "376082447", "376082448", "376082457", "376082458"
     }
     assert {sheet["production_year_shown"] for sheet in data["event_area_sheets"]} == {2025}
-    assert data["product"]["projected_crs"] is None
-    assert data["ingestion_status"] == "blocked_by_authentication_and_temporal_mismatch"
+    assert data["product"]["projected_crs"] == "EPSG:5186"
+    assert data["ingestion_status"] == (
+        "authenticated_2025_delivery_normalized_as_post_event_planimetry"
+    )
+    assert data["normalized_structure_asset"]["feature_count"] == 71
+    assert data["normalized_structure_asset"]["features_with_source_elevation"] == 0
 
 
-def test_real_import_rejects_the_unverified_shipped_delivery() -> None:
+def test_real_import_accepts_the_authorized_post_event_delivery_evidence() -> None:
     receipt = load_ngii_delivery_receipt()
 
-    with pytest.raises(ValueError, match="delivery receipt is not verified"):
-        validate_delivery_evidence(
-            receipt,
-            source_crs="EPSG:5186",
-            source_year=2025,
-        )
+    validate_delivery_evidence(
+        receipt,
+        source_crs="EPSG:5186",
+        source_year=2025,
+    )
+    assert receipt.post_event_authorized
+    assert not receipt.historical_identity_verified

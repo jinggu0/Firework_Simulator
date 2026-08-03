@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "target_event_date": "2024-10-05",
   "platform": {
     "name": "국토정보플랫폼 국토정보맵",
@@ -10,11 +10,12 @@
     "name": "1:1,000 수치지형도",
     "format_candidates": [
       "DXF",
-      "NGI Ver2.0"
+      "NGI Ver2.0",
+      "SHP (수치지도 2.0 ZIP)"
     ],
     "coordinate_metadata_shown_by_platform": "GRS80",
-    "projected_crs": null,
-    "projected_crs_policy": "다운로드 파일의 메타데이터를 확인하기 전에는 EPSG 코드를 추정하지 않는다."
+    "projected_crs": "EPSG:5186",
+    "projected_crs_policy": "다운로드한 각 수치지도 2.0 ZIP의 PRJ SHA-256 5ba4ead630f43c65545548fcc1950de6ef459da7292f16c23e0da66584f8a454를 pyproj로 판독했다."
   },
   "event_area_sheets": [
     {
@@ -43,8 +44,8 @@
     "F0030000": "성/절토",
     "F0040000": "옹벽"
   },
-  "ingestion_status": "blocked_by_authentication_and_temporal_mismatch",
-  "download_observation": "비로그인 상태에서 서울2447 DXF를 선택하고 다운로드를 실행했으나 5초 동안 다운로드 이벤트가 발생하지 않았고 파일도 확보되지 않았다.",
+  "ingestion_status": "authenticated_2025_delivery_normalized_as_post_event_planimetry",
+  "download_observation": "사용자 인증 Chrome 세션에서 4개 도엽의 DXF, 수치지도 2.0 ZIP, XML을 확보하고 원본 16개의 SHA-256과 바이트 수를 영수증에 고정했다.",
   "history_observation": "플랫폼의 서울2447 도엽 이력 조회에는 이력정보가 표시되지 않았다.",
   "public_control_evidence": {
     "asset": "assets/yeouido_ngii_public_controls_2017.json",
@@ -58,13 +59,21 @@
   },
   "authenticated_delivery_receipt": {
     "asset": "assets/yeouido_ngii_delivery_receipt.json",
-    "sha256": "1584af02be6476fa1626e2223ec26284eb686d7394746d0be6324f6386518770",
+    "sha256": "03e53924594c7a8469122a1df0d20d31de2fb4cc796d7ab32911c6042c406fd4",
     "required_sheet_id": "376082447",
     "maximum_source_year": 2024,
-    "package_count": 0,
-    "import_member_count": 0,
-    "status": "awaiting_authenticated_download"
+    "package_count": 16,
+    "import_member_count": 8,
+    "status": "verified_post_event_adoption"
   },
-  "temporal_policy": "2025 제작본은 2024-10-05 행사 당시와 동일하다고 간주하지 않는다. 후행 자료 사용 시 명시적 허용과 변화 검증이 필요하다.",
+  "normalized_structure_asset": {
+    "asset": "assets/yeouido_ngii_structures.json",
+    "sha256": "af1ee4d157cd0cd0488e5d947c78dd4e0bc6a43404efb847883b9e896b725e8b",
+    "feature_count": 71,
+    "planar_length_m": 3560.1445976094683,
+    "features_with_source_elevation": 0,
+    "status": "planimetry_only_height_profiles_required_before_scene_merge"
+  },
+  "temporal_policy": "프로젝트 소유자가 2025 공식 배포본의 정규화·로컬 파생 사용을 명시적으로 승인했다. 2024-10-05 행사 당시와 동일하다는 주장은 하지 않으며, 당시 상태 검증은 별도 과제로 유지한다.",
   "runtime_status": "이 명세는 출처 발견 기록이며 현재 배포 장면의 구조물 형상을 변경하지 않는다."
 }

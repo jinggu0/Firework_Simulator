@@ -26,7 +26,6 @@ def _document() -> dict:
 
 def _verified_document(raw: bytes = b"verified dxf bytes") -> dict:
     document = deepcopy(_document())
-    digest = sha256(raw).hexdigest()
     delivery = document["delivery"]
     delivery.update(
         {
@@ -53,12 +52,13 @@ def _verified_document(raw: bytes = b"verified dxf bytes") -> dict:
             ],
             "import_members": [
                 {
-                    "member_path": "376082447.dxf",
-                    "sheet_id": "376082447",
+                    "member_path": f"{sheet_id}.dxf",
+                    "sheet_id": sheet_id,
                     "format": "DXF",
-                    "sha256": digest,
-                    "bytes": len(raw),
+                    "sha256": sha256(raw + sheet_id.encode("ascii")).hexdigest(),
+                    "bytes": len(raw + sheet_id.encode("ascii")),
                 }
+                for sheet_id in ("376082447", "376082448", "376082457", "376082458")
             ],
         }
     )
@@ -67,15 +67,23 @@ def _verified_document(raw: bytes = b"verified dxf bytes") -> dict:
     return document
 
 
-def test_shipped_receipt_is_safe_but_not_delivery_verified() -> None:
+def _verified_sources(raw: bytes) -> list[tuple[str, bytes]]:
+    return [
+        (f"{sheet_id}.dxf", raw + sheet_id.encode("ascii"))
+        for sheet_id in ("376082447", "376082448", "376082457", "376082458")
+    ]
+
+
+def test_shipped_receipt_is_verified_post_event_but_not_historical_identity() -> None:
     receipt = load_ngii_delivery_receipt()
 
-    assert not receipt.verified
-    assert not receipt.import_members
-    assert receipt.production_year is None
-    assert receipt.projected_crs is None
-    assert "authenticated_download_not_confirmed" in receipt.reasons
-    assert "required_sheet_coverage_incomplete" in receipt.reasons
+    assert receipt.verified
+    assert len(receipt.import_members) == 8
+    assert receipt.production_year == 2025
+    assert receipt.projected_crs == "EPSG:5186"
+    assert receipt.post_event_authorized
+    assert not receipt.historical_identity_verified
+    assert not receipt.reasons
 
 
 def test_event_sheet_request_is_exact_and_seoul2447_is_required() -> None:
@@ -104,7 +112,7 @@ def test_catalogue_or_control_crs_inference_is_rejected() -> None:
 
 def test_application_overclaim_is_rejected() -> None:
     document = _document()
-    document["application"]["import_allowed"] = True
+    document["application"]["import_allowed"] = False
 
     with pytest.raises(NgiiDeliveryError, match="import claim"):
         parse_ngii_delivery_receipt(document)
@@ -114,10 +122,12 @@ def test_verified_receipt_accepts_only_checksum_locked_dxf() -> None:
     raw = b"verified dxf bytes"
     receipt = parse_ngii_delivery_receipt(_verified_document(raw))
 
-    validate_import_sources(receipt, [("renamed.dxf", raw)])
+    validate_import_sources(receipt, _verified_sources(raw))
 
     with pytest.raises(NgiiDeliveryError, match="missing=1, unexpected=1"):
-        validate_import_sources(receipt, [("376082447.dxf", raw + b"tampered")])
+        tampered = _verified_sources(raw)
+        tampered[0] = (tampered[0][0], tampered[0][1] + b"tampered")
+        validate_import_sources(receipt, tampered)
 
 
 def test_download_package_is_bound_by_name_hash_and_size(tmp_path: Path) -> None:
@@ -161,11 +171,13 @@ def test_readiness_report_separates_safety_from_completion() -> None:
     report = build_report()
 
     assert report["safety_gate_passed"]
-    assert not report["stage_complete"]
-    assert not report["delivery"]["verified"]
+    assert report["stage_complete"]
+    assert report["delivery"]["verified"]
+    assert report["delivery"]["post_event_authorized"]
+    assert not report["historical_fidelity_complete"]
     assert report["runtime_impact"]["scene_vertices_modified"] == 0
     assert not report["runtime_impact"]["frame_path_changed"]
-    assert report["enforcement"]["exact_dxf_member_set_required"]
+    assert report["enforcement"]["exact_geometry_member_set_required"]
     assert report["enforcement"]["exact_package_file_set_required"]
 
 

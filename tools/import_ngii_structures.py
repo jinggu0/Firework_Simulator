@@ -1,4 +1,4 @@
-"""Import surveyed linear structures from NGII 1:1,000 ASCII DXF sheets.
+"""Import surveyed linear structures from NGII 1:1,000 DXF or SHP sheets.
 
 This importer deliberately stops short of generating render meshes.  A mapped
 retaining-wall line without a measured top/bottom elevation is planimetric
@@ -12,9 +12,11 @@ import argparse
 from dataclasses import dataclass
 from datetime import date
 from hashlib import sha256
+import io
 import json
 import math
 from pathlib import Path
+import re
 from typing import Iterable, Iterator, Mapping, Sequence
 import zipfile
 
@@ -283,6 +285,45 @@ def parse_ascii_dxf(text: str) -> list[DxfPolyline]:
     return output
 
 
+def parse_shp_polylines(data: bytes, label: str) -> list[DxfPolyline]:
+    """Read planimetric polyline parts from one receipt-locked SHP member."""
+
+    try:
+        import shapefile
+    except ImportError as error:
+        raise RuntimeError("install requirements-terrain.txt for SHP import") from error
+    match = re.search(r"_([A-Z][0-9]{7})\.shp$", label, re.IGNORECASE)
+    if match is None:
+        raise ValueError(f"unable to determine NGII layer code from {label!r}")
+    layer = match.group(1).upper()
+    reader = shapefile.Reader(shp=io.BytesIO(data))
+    if reader.shapeType not in {
+        shapefile.POLYLINE,
+        shapefile.POLYLINEZ,
+        shapefile.POLYLINEM,
+    }:
+        raise ValueError(f"unsupported SHP geometry {reader.shapeTypeName} in {label}")
+    output: list[DxfPolyline] = []
+    for shape in reader.iterShapes():
+        part_offsets = list(shape.parts) + [len(shape.points)]
+        z_values = list(getattr(shape, "z", ()))
+        for start, end in zip(part_offsets, part_offsets[1:]):
+            if end - start < 2:
+                continue
+            points = tuple(
+                (
+                    float(shape.points[index][0]),
+                    float(shape.points[index][1]),
+                    float(z_values[index])
+                    if index < len(z_values) and math.isfinite(float(z_values[index]))
+                    else None,
+                )
+                for index in range(start, end)
+            )
+            output.append(DxfPolyline(layer, "SHP_POLYLINE", points))
+    return output
+
+
 def resolve_layer_kind(layer: str, mapping: Mapping[str, str]) -> str | None:
     normalized = layer.strip().upper()
     if normalized in mapping:
@@ -366,6 +407,34 @@ def iter_dxf_sources(paths: Iterable[Path]) -> Iterator[tuple[str, bytes]]:
                 yield str(candidate), candidate.read_bytes()
 
 
+def iter_shp_sources(paths: Iterable[Path]) -> Iterator[tuple[str, bytes]]:
+    """Yield only the three evidence-gated NGII structure layers."""
+
+    accepted_codes = tuple(DEFAULT_LAYER_KINDS)
+    for path in paths:
+        candidates = (
+            sorted(
+                candidate
+                for candidate in path.rglob("*")
+                if candidate.suffix.casefold() in {".shp", ".zip"}
+            )
+            if path.is_dir()
+            else [path]
+        )
+        for candidate in candidates:
+            if candidate.suffix.casefold() == ".zip":
+                with zipfile.ZipFile(candidate) as archive:
+                    for member in sorted(archive.namelist()):
+                        normalized = member.upper()
+                        if normalized.endswith(".SHP") and any(
+                            normalized.endswith(f"_{code}.SHP")
+                            for code in accepted_codes
+                        ):
+                            yield f"{candidate.name}:{member}", archive.read(member)
+            elif candidate.suffix.casefold() == ".shp":
+                yield str(candidate), candidate.read_bytes()
+
+
 def _bbox_intersects(points: Sequence[Sequence[float]], bounds: Sequence[float]) -> bool:
     x = [point[0] for point in points]
     z = [point[2] for point in points]
@@ -385,6 +454,7 @@ def build_normalized_asset(
     scene_path: Path,
     layer_kinds: Mapping[str, str] = DEFAULT_LAYER_KINDS,
     allow_post_event_source: bool = False,
+    source_format: str = "DXF",
 ) -> dict[str, object]:
     """Transform selected entities to the runtime East-Up-South frame."""
 
@@ -404,11 +474,23 @@ def build_normalized_asset(
     total_length_m = 0.0
 
     for label, raw in sources:
+        normalized_format = source_format.upper()
         source_records.append(
-            {"label": label, "sha256": sha256(raw).hexdigest(), "bytes": len(raw)}
+            {
+                "label": label,
+                "format": normalized_format,
+                "sha256": sha256(raw).hexdigest(),
+                "bytes": len(raw),
+            }
         )
         source_checksum = sha256(raw).hexdigest()
-        for entity_index, entity in enumerate(parse_ascii_dxf(_decode(raw, label))):
+        if normalized_format == "DXF":
+            entities = parse_ascii_dxf(_decode(raw, label))
+        elif normalized_format == "SHP":
+            entities = parse_shp_polylines(raw, label)
+        else:
+            raise ValueError(f"unsupported normalized structure format {source_format}")
+        for entity_index, entity in enumerate(entities):
             kind = resolve_layer_kind(entity.layer, layer_kinds)
             if kind is None:
                 continue
@@ -495,7 +577,9 @@ def _layer_overrides(values: Sequence[str]) -> dict[str, str]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("input", nargs="+", type=Path, help="DXF, ZIP, or directory")
+    parser.add_argument(
+        "input", nargs="+", type=Path, help="receipt-listed DXF, SHP ZIP, XML, or directory"
+    )
     parser.add_argument("--source-crs", required=True, help="confirmed projected CRS")
     parser.add_argument("--source-year", required=True, type=int)
     parser.add_argument(
@@ -512,11 +596,21 @@ def main() -> None:
     parser.add_argument("--allow-post-event-source", action="store_true")
     arguments = parser.parse_args()
 
-    sources = list(iter_dxf_sources(arguments.input))
-    if not sources:
-        parser.error("no .dxf files found in the supplied paths")
     try:
         receipt = load_ngii_delivery_receipt(arguments.delivery_receipt)
+        import_formats = {member.format for member in receipt.import_members}
+        if import_formats == {"SHP"}:
+            source_format = "SHP"
+            sources = list(iter_shp_sources(arguments.input))
+        elif import_formats == {"DXF"}:
+            source_format = "DXF"
+            sources = list(iter_dxf_sources(arguments.input))
+        else:
+            raise ValueError(
+                "delivery receipt must select exactly one supported import format"
+            )
+        if not sources:
+            raise ValueError(f"no {source_format} structure sources found")
         validate_delivery_evidence(
             receipt,
             source_crs=arguments.source_crs,
@@ -531,6 +625,7 @@ def main() -> None:
             scene_path=arguments.scene,
             layer_kinds=_layer_overrides(arguments.layer),
             allow_post_event_source=arguments.allow_post_event_source,
+            source_format=source_format,
         )
     except (RuntimeError, ValueError) as error:
         parser.error(str(error))

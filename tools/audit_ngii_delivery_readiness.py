@@ -1,4 +1,4 @@
-"""Audit the V1-10 authenticated NGII delivery intake gate."""
+"""Audit the authenticated NGII delivery and post-event adoption gate."""
 
 from __future__ import annotations
 
@@ -56,6 +56,8 @@ def build_report(
         and manifest_link.get("sha256") == receipt_digest
         and manifest_link.get("required_sheet_id") == "376082447"
         and manifest_link.get("maximum_source_year") == 2024
+        and manifest_link.get("package_count") == len(delivery["packages"])
+        and manifest_link.get("import_member_count") == len(delivery["import_members"])
     )
     blockers = list(receipt.reasons)
     safety_gate_passed = bool(
@@ -63,14 +65,16 @@ def build_report(
         and catalogue_sheets == EXPECTED_SHEETS
         and receipt_link_matches
         and request["maximum_source_year"] == 2024
-        and not receipt.verified
-        and blockers
+        and receipt.verified
+        and not blockers
+        and receipt.post_event_authorized
+        and not receipt.historical_identity_verified
         and receipt.document["application"]["scene_vertices_modified"] == 0
         and receipt.document["application"]["runtime_frame_path_changed"] is False
     )
     return {
-        "schema_version": 1,
-        "stage": "V1-10a",
+        "schema_version": 2,
+        "stage": "V1-10d",
         "target_event_date": receipt.document["target_event_date"],
         "receipt_asset": _display_path(receipt_path),
         "receipt_sha256": receipt_digest,
@@ -95,6 +99,7 @@ def build_report(
             "accepted_formats": request["accepted_formats"],
             "requested_sheets": requested_sheets,
             "required_current_stage_sheet": "376082447",
+            "required_current_stage_sheets": sorted(EXPECTED_SHEETS),
             "matches_catalogue_sheet_set": requested_sheets == catalogue_sheets,
         },
         "delivery": {
@@ -104,6 +109,8 @@ def build_report(
             "production_year": receipt.production_year,
             "projected_crs": receipt.projected_crs,
             "verified": receipt.verified,
+            "post_event_authorized": receipt.post_event_authorized,
+            "historical_identity_verified": receipt.historical_identity_verified,
             "blocking_reasons": blockers,
         },
         "enforcement": {
@@ -112,10 +119,12 @@ def build_report(
             "package_sha256_required": True,
             "exact_package_file_set_required": True,
             "import_member_sha256_and_byte_count_required": True,
-            "exact_dxf_member_set_required": True,
+            "exact_geometry_member_set_required": True,
             "explicit_delivery_epsg_required": True,
             "local_derived_use_license_required": True,
-            "maximum_production_year": 2024,
+            "requested_maximum_production_year": 2024,
+            "authorized_post_event_maximum_year": 2025,
+            "historical_identity_claim_allowed": False,
         },
         "runtime_impact": {
             "scene_vertices_modified": 0,
@@ -124,10 +133,11 @@ def build_report(
         },
         "safety_gate_passed": safety_gate_passed,
         "stage_complete": receipt.verified,
+        "historical_fidelity_complete": receipt.historical_identity_verified,
         "next_evidence_gate": (
-            "Sign in to the official portal, download Seoul2447 from a 2024-or-earlier "
-            "authenticated delivery, retain the provider licence and projected-CRS "
-            "artifact, then lock both package and extracted-member hashes in the receipt."
+            "Use the checksum-locked SHP plan geometry for normalization only. Retain "
+            "unknown heights as null, and require separately cited elevation profiles "
+            "plus a 2024-10-05 change audit before modifying runtime scene geometry."
         ),
     }
 

@@ -1,28 +1,29 @@
 {
-  "schema_version": 1,
-  "stage": "V1-10a",
+  "schema_version": 2,
+  "stage": "V1-10d",
   "target_event_date": "2024-10-05",
   "receipt_asset": "assets/yeouido_ngii_delivery_receipt.json",
-  "receipt_sha256": "1584af02be6476fa1626e2223ec26284eb686d7394746d0be6324f6386518770",
+  "receipt_sha256": "03e53924594c7a8469122a1df0d20d31de2fb4cc796d7ab32911c6042c406fd4",
   "source_manifest": "assets/yeouido_ngii_1000_source_manifest.json",
-  "source_manifest_sha256": "4a6a170a3cdffb6a0beb98b55ea1ba01d00b6a2c7df5d8dcec2f2c933b73f366",
+  "source_manifest_sha256": "ffaea34eecdaf8b8c7f2681f610258bf10e033a560a0d889d6c5e241bd799a28",
   "source_manifest_link": {
     "asset": "assets/yeouido_ngii_delivery_receipt.json",
-    "expected_sha256": "1584af02be6476fa1626e2223ec26284eb686d7394746d0be6324f6386518770",
+    "expected_sha256": "03e53924594c7a8469122a1df0d20d31de2fb4cc796d7ab32911c6042c406fd4",
     "matches": true
   },
   "official_route": {
     "provider": "국토지리정보원 국토정보플랫폼",
     "portal_url": "https://map.ngii.go.kr/ms/map/NlipMap.do",
     "login_required": true,
-    "current_repository_has_authenticated_delivery": false
+    "current_repository_has_authenticated_delivery": true
   },
   "request": {
     "scale_denominator": 1000,
     "maximum_source_year": 2024,
     "accepted_formats": [
       "DXF",
-      "NGI"
+      "NGI",
+      "SHP"
     ],
     "requested_sheets": {
       "376082447": "서울2447",
@@ -31,25 +32,24 @@
       "376082458": "서울2458"
     },
     "required_current_stage_sheet": "376082447",
+    "required_current_stage_sheets": [
+      "376082447",
+      "376082448",
+      "376082457",
+      "376082458"
+    ],
     "matches_catalogue_sheet_set": true
   },
   "delivery": {
-    "status": "not_acquired",
-    "package_count": 0,
-    "import_member_count": 0,
-    "production_year": null,
-    "projected_crs": null,
-    "verified": false,
-    "blocking_reasons": [
-      "authenticated_download_not_confirmed",
-      "delivery_not_acquired",
-      "delivery_packages_not_checksum_locked",
-      "import_members_not_checksum_locked",
-      "event_compatible_source_year_not_verified",
-      "projected_crs_not_verified_from_delivery",
-      "license_not_verified_for_local_derived_use",
-      "required_sheet_coverage_incomplete"
-    ]
+    "status": "acquired",
+    "package_count": 16,
+    "import_member_count": 8,
+    "production_year": 2025,
+    "projected_crs": "EPSG:5186",
+    "verified": true,
+    "post_event_authorized": true,
+    "historical_identity_verified": false,
+    "blocking_reasons": []
   },
   "enforcement": {
     "catalogue_crs_inference_allowed": false,
@@ -57,10 +57,12 @@
     "package_sha256_required": true,
     "exact_package_file_set_required": true,
     "import_member_sha256_and_byte_count_required": true,
-    "exact_dxf_member_set_required": true,
+    "exact_geometry_member_set_required": true,
     "explicit_delivery_epsg_required": true,
     "local_derived_use_license_required": true,
-    "maximum_production_year": 2024
+    "requested_maximum_production_year": 2024,
+    "authorized_post_event_maximum_year": 2025,
+    "historical_identity_claim_allowed": false
   },
   "runtime_impact": {
     "scene_vertices_modified": 0,
@@ -68,6 +70,7 @@
     "expected_frame_time_delta_ms": 0.0
   },
   "safety_gate_passed": true,
-  "stage_complete": false,
-  "next_evidence_gate": "Sign in to the official portal, download Seoul2447 from a 2024-or-earlier authenticated delivery, retain the provider licence and projected-CRS artifact, then lock both package and extracted-member hashes in the receipt."
+  "stage_complete": true,
+  "historical_fidelity_complete": false,
+  "next_evidence_gate": "Use the checksum-locked SHP plan geometry for normalization only. Retain unknown heights as null, and require separately cited elevation profiles plus a 2024-10-05 change audit before modifying runtime scene geometry."
 }
