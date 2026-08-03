@@ -39,13 +39,19 @@ def test_shipped_request_is_authorized_private_and_not_submitted() -> None:
     assert request["submission"]["authorized"] is True
     assert request["submission"]["performed"] is False
     assert request["submission"]["authentication_required"] is True
-    assert request["submission"]["authentication_completed"] is False
+    assert request["submission"]["authentication_completed"] is True
     assert request["submission"]["authentication_method_selected"] == (
         "public_data_portal_id"
     )
     assert request["submission"]["credentials_entered_by_agent"] is False
     assert request["submission"]["captcha_present"] is True
     assert request["submission"]["captcha_completed"] is False
+    assert request["submission"]["application_fields_prepared"] is True
+    assert request["submission"]["selected_provider"] == (
+        "국토교통부 국토지리정보원"
+    )
+    assert request["submission"]["personal_information_collection_consent_confirmed"] is False
+    assert request["submission"]["third_party_personal_information_provision_consent_confirmed"] is False
     assert request["acceptance_gate"]["scene_merge_allowed"] is False
 
 
@@ -58,10 +64,12 @@ def test_committed_report_is_ready_but_never_unlocks_scene() -> None:
     assert report["submission_payload_ready"]
     assert report["external_submission_authorized"]
     assert not report["external_submission_performed"]
-    assert report["portal_authentication_pending"]
+    assert not report["portal_authentication_pending"]
+    assert report["applicant_completion_pending"]
     assert report["checks"]["credential_handling_safe"]
     assert report["checks"]["captcha_present"]
     assert not report["checks"]["captcha_completed"]
+    assert report["checks"]["application_fields_prepared"]
     assert not report["scene_merge_allowed"]
     assert report["scene_vertices_modified"] == 0
 

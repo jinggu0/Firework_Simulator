@@ -37,10 +37,13 @@ a queued request or a large-file-transfer handoff.
 data request route. It asks for the preferred 2024 product, the exact six-sheet
 legacy fallback, and all metadata needed to evaluate the acceptance gate. The
 request submission is authorized, but the public data portal requires separate
-authentication from the NGII session. The retained Chrome tab is at the portal
-ID login form, which requires user credentials and a CAPTCHA. Neither was read
-or entered by the agent. The request has not been submitted externally and
-contains no applicant personal information. Its completeness is locked by
+authentication from the NGII session. Authentication is now complete, and the
+request name, provider, body, and research purpose are entered in the retained
+Chrome form. Applicant birth date, address, phone, CAPTCHA, and the two privacy
+consents remain for user completion. The form states that submitted personal
+information is retained for ten years and provided to the receiving and
+processing institutions. The request has not been submitted externally and the
+repository contains no applicant personal information. Its completeness is locked by
 `ngii_dem_provider_request_report.json`.
 
 Two official, login-free metadata CSVs were downloaded from the public data

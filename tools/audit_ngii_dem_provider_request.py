@@ -127,6 +127,16 @@ def build_report(
         submission.get("authentication_required") is True
         and submission.get("authentication_completed") is False
     )
+    applicant_completion_pending = bool(
+        submission.get("application_fields_prepared") is True
+        and submission.get("applicant_completion_pending")
+        and submission.get("personal_information_collection_consent_confirmed")
+        is False
+        and submission.get(
+            "third_party_personal_information_provision_consent_confirmed"
+        )
+        is False
+    )
     credential_handling_safe = bool(
         submission.get("credentials_entered_by_agent") is False
         and submission.get("captcha_present") is True
@@ -137,6 +147,7 @@ def build_report(
         in {
             "ready_for_manual_submission_not_submitted",
             "submission_authorized_waiting_for_portal_authentication",
+            "form_prepared_waiting_for_applicant_fields_and_privacy_consent",
         }
         and official_route_valid
         and preferred_valid
@@ -190,12 +201,17 @@ def build_report(
             ),
             "captcha_present": submission.get("captcha_present") is True,
             "captcha_completed": submission.get("captcha_completed") is True,
+            "application_fields_prepared": submission.get(
+                "application_fields_prepared"
+            )
+            is True,
         },
         "submission_payload_ready": payload_ready,
         "ready_for_manual_submission": payload_ready,
         "external_submission_authorized": external_submission_authorized,
         "external_submission_performed": external_submission_performed,
         "portal_authentication_pending": portal_authentication_pending,
+        "applicant_completion_pending": applicant_completion_pending,
         "scene_merge_allowed": False,
         "scene_vertices_modified": 0,
         "blocking_reasons": blockers,

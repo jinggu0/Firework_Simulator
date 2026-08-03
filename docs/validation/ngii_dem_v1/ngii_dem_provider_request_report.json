@@ -2,7 +2,7 @@
   "schema_version": 1,
   "stage": "V1-11e",
   "request_asset": "assets/yeouido_ngii_dem_provider_request.json",
-  "request_sha256": "dc5d72077de815cbdb7214032345e20209d004e6e870ec0d86777bbb53b02c43",
+  "request_sha256": "7d1cf2a8dcdef5e443e02b4c1585d4e7362256c08e52b9c77d7bf50d91b6eaa8",
   "metadata_audit": "docs/validation/ngii_dem_v1/ngii_dem_metadata_report.json",
   "metadata_audit_sha256": "7c5514af50cf4f5004d9e9b17351a7694f712c2bccba6ee0e169ce19addd4a85",
   "checks": {
@@ -17,17 +17,20 @@
     "credential_handling_safe": true,
     "authentication_method_selected": "public_data_portal_id",
     "captcha_present": true,
-    "captcha_completed": false
+    "captcha_completed": false,
+    "application_fields_prepared": true
   },
   "submission_payload_ready": true,
   "ready_for_manual_submission": true,
   "external_submission_authorized": true,
   "external_submission_performed": false,
-  "portal_authentication_pending": true,
+  "portal_authentication_pending": false,
+  "applicant_completion_pending": true,
   "scene_merge_allowed": false,
   "scene_vertices_modified": 0,
   "blocking_reasons": [
-    "public data portal credentials and CAPTCHA have not been completed",
+    "required applicant fields and CAPTCHA have not been completed",
+    "10-year personal information collection and third-party provision consent has not been confirmed",
     "the request has not been externally submitted",
     "no provider raster package has been delivered",
     "published accuracy is blank for the six fallback sheets",
