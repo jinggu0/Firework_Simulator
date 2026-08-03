@@ -1,4 +1,4 @@
-# V1-11c authenticated NGII DEM intake
+# V1-11d authenticated NGII DEM intake and provider request
 
 The NGII portal catalogue exposes a public DEM candidate matching the event
 year and area: `2024 서울 37608`.
@@ -32,6 +32,13 @@ The portal's modal closes when a complete request is submitted. Network tracing
 shows that the front end posts to `shbtInsertTritVidoDem.do` and expects JSON,
 but the server returns the site's page-not-found HTML with HTTP 200. This is not
 a queued request or a large-file-transfer handoff.
+
+`PROVIDER_REQUEST.md` now contains a Korean request ready for the official public
+data request route. It asks for the preferred 2024 product, the exact six-sheet
+legacy fallback, and all metadata needed to evaluate the acceptance gate. The
+request has not been submitted externally and contains no applicant personal
+information. Its completeness is locked by
+`ngii_dem_provider_request_report.json`.
 
 Two official, login-free metadata CSVs were downloaded from the public data
 portal and locked by checksum. The performance snapshot identifies six 2009

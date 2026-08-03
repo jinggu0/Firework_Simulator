@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "target_event_date": "2024-10-05",
+  "prepared_at": "2026-08-03",
+  "status": "ready_for_manual_submission_not_submitted",
+  "submission": {
+    "authorized": false,
+    "performed": false,
+    "applicant_personal_information_stored": false,
+    "primary_route": "https://www.data.go.kr/tcs/dor/insertDataOfferReqstProcssView.do",
+    "provider": "국토교통부 국토지리정보원",
+    "existing_dataset_urls": [
+      "https://www.data.go.kr/data/15059920/fileData.do",
+      "https://www.data.go.kr/data/15067637/fileData.do"
+    ]
+  },
+  "scene_scope": {
+    "bbox_wgs84": [126.91, 37.515, 126.96, 37.545],
+    "analysis_crs": "EPSG:5186",
+    "bbox_epsg5186": [192043.301, 546169.683, 196465.106, 549502.366]
+  },
+  "request_scope": {
+    "preferred_product": {
+      "product": "공개DEM",
+      "sheet_id": "37608",
+      "sheet_name": "서울",
+      "production_year": 2024,
+      "selection_label": "2024 서울 37608"
+    },
+    "fallback_legacy_sheets": [
+      {"sheet_id": "37608087", "sheet_name": "서울087", "production_year": 2009, "grid_spacing_m": 1.0},
+      {"sheet_id": "37608088", "sheet_name": "서울088", "production_year": 2009, "grid_spacing_m": 1.0},
+      {"sheet_id": "37608089", "sheet_name": "서울089", "production_year": 2009, "grid_spacing_m": 1.0},
+      {"sheet_id": "37608097", "sheet_name": "서울097", "production_year": 2009, "grid_spacing_m": 1.0},
+      {"sheet_id": "37608098", "sheet_name": "서울098", "production_year": 2009, "grid_spacing_m": 1.0},
+      {"sheet_id": "37608099", "sheet_name": "서울099", "production_year": 2009, "grid_spacing_m": 1.0}
+    ]
+  },
+  "required_deliverables": [
+    "provider raster package",
+    "explicit projected CRS or EPSG evidence",
+    "vertical datum and height type",
+    "grid spacing",
+    "NoData value",
+    "accuracy RMSE LE90 or equivalent quality document",
+    "production and acquisition dates",
+    "provider package checksum or official receipt",
+    "local derived use and redistribution terms"
+  ],
+  "observed_portal_defect": {
+    "submission_endpoint": "https://map.ngii.go.kr/pd/shbtManage/shbtInsertTritVidoDem.do",
+    "frontend_expected_response": "application/json orderDownList",
+    "observed_http_status": 200,
+    "observed_mime_type": "text/html",
+    "observed_page": "요청하신 페이지를 찾을 수 없습니다",
+    "registered_public_dem_download_count": 0
+  },
+  "evidence": {
+    "metadata_audit": "docs/validation/ngii_dem_v1/ngii_dem_metadata_report.json",
+    "metadata_audit_sha256": "7c5514af50cf4f5004d9e9b17351a7694f712c2bccba6ee0e169ce19addd4a85"
+  },
+  "acceptance_gate": {
+    "maximum_plan_registration_rmse_m": 0.25,
+    "maximum_vertical_uncertainty_m": 0.1,
+    "scene_merge_allowed": false,
+    "scene_vertices_modified": 0,
+    "blocking_reasons": [
+      "the request has not been externally submitted",
+      "no provider raster package has been delivered",
+      "published accuracy is blank for the six fallback sheets",
+      "projected CRS and NoData are not verified from a delivered raster header"
+    ]
+  }
+}
