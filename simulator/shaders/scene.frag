@@ -56,6 +56,17 @@ const float TRANSMISSION_RADIANCE = 0.00018 / 0.35;
 // choice: without the surface footprint in metres the height channel cannot be
 // converted to a slope, so this sets how pronounced a seam reads at all.
 const float RELIEF_GRADIENT_TO_NORMAL = 64.0;
+// Current grade-D road-paint contract. The V coordinates are normalized road
+// width, so the audit converts these values back to metres per rendered quad.
+const float ROAD_EDGE_LINE_V_INNER = .78;
+const float ROAD_EDGE_LINE_V_OUTER = .87;
+const float ROAD_CENTRE_LINE_V_CORE = .018;
+const float ROAD_CENTRE_LINE_V_SUPPORT = .045;
+const float ROAD_DASH_PERIOD_M = 6.0;
+const float ROAD_DASH_START_PHASE = .10;
+const float ROAD_DASH_CORE_START_PHASE = .18;
+const float ROAD_DASH_CORE_END_PHASE = .58;
+const float ROAD_DASH_END_PHASE = .68;
 
 float hash21(vec2 p) {
     p = fract(p * vec2(123.34, 456.21));
@@ -394,12 +405,27 @@ void main() {
             ));
             float cross_road = abs(surface_uv.y);
             float road_aa = max(fwidth(cross_road), .004);
-            float edge_line = interval(cross_road, .78, .87, road_aa);
-            float centre_line = 1.0 - smoothstep(
-                .018, .045 + road_aa, cross_road
+            float edge_line = interval(
+                cross_road,
+                ROAD_EDGE_LINE_V_INNER,
+                ROAD_EDGE_LINE_V_OUTER,
+                road_aa
             );
-            float dash = smoothstep(.10, .18, fract(surface_uv.x / 6.0))
-                       * (1.0 - smoothstep(.58, .68, fract(surface_uv.x / 6.0)));
+            float centre_line = 1.0 - smoothstep(
+                ROAD_CENTRE_LINE_V_CORE,
+                ROAD_CENTRE_LINE_V_SUPPORT + road_aa,
+                cross_road
+            );
+            float dash_phase = fract(surface_uv.x / ROAD_DASH_PERIOD_M);
+            float dash = smoothstep(
+                ROAD_DASH_START_PHASE,
+                ROAD_DASH_CORE_START_PHASE,
+                dash_phase
+            ) * (1.0 - smoothstep(
+                ROAD_DASH_CORE_END_PHASE,
+                ROAD_DASH_END_PHASE,
+                dash_phase
+            ));
             float marking = max(edge_line, centre_line * dash);
             float paint_wear = value_noise(world_position.xz * 1.7 + 17.0);
             vec3 aged_paint = vec3(.52, .52, .46)

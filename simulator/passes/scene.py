@@ -50,6 +50,11 @@ SURFACE_LAMP = 10.0
 SURFACE_CONCRETE = 12.0
 LAMP_VERTICES_PER_FIXTURE = 36
 GRASS_CHUNK_SIZE_M = 64.0
+KERB_REVEAL_HEIGHT_M = 0.14
+KERB_TOP_WIDTH_M = 0.18
+KERB_MIN_ROAD_WIDTH_M = 3.5
+KERB_MAX_ROAD_WIDTH_M = 32.0
+KERB_MAX_ORIGIN_DISTANCE_M = 1_700.0
 
 
 def linear_feature_uv(vertices: np.ndarray) -> np.ndarray:
@@ -109,8 +114,7 @@ def road_edge_detail_vertices(road_vertices: np.ndarray) -> np.ndarray:
     if not len(road_vertices) or len(road_vertices) % 6:
         return np.empty((0, 10), dtype=np.float32)
     output: list[list[float]] = []
-    up = np.array([0.0, 0.14, 0.0], dtype=np.float64)
-    kerb_width_m = 0.18
+    up = np.array([0.0, KERB_REVEAL_HEIGHT_M, 0.0], dtype=np.float64)
     for offset in range(0, len(road_vertices), 6):
         quad = road_vertices[offset : offset + 6]
         if not np.isclose(quad[0, 6], 3.0):
@@ -123,10 +127,13 @@ def road_edge_detail_vertices(road_vertices: np.ndarray) -> np.ndarray:
         centre_start = 0.5 * (left_start + right_start)
         centre_end = 0.5 * (left_end + right_end)
         length_m = float(np.linalg.norm(centre_end - centre_start))
-        if not 3.5 <= width_m <= 32.0 or length_m < 0.35:
+        if (
+            not KERB_MIN_ROAD_WIDTH_M <= width_m <= KERB_MAX_ROAD_WIDTH_M
+            or length_m < 0.35
+        ):
             continue
         midpoint_xz = 0.5 * (centre_start + centre_end)[[0, 2]]
-        if float(np.linalg.norm(midpoint_xz)) > 1_700.0:
+        if float(np.linalg.norm(midpoint_xz)) > KERB_MAX_ORIGIN_DISTANCE_M:
             continue
         for edge_start, edge_end in (
             (left_start, left_end),
@@ -135,8 +142,8 @@ def road_edge_detail_vertices(road_vertices: np.ndarray) -> np.ndarray:
             outward = edge_start - centre_start
             outward[1] = 0.0
             outward /= max(float(np.linalg.norm(outward)), 1e-6)
-            outer_start = edge_start + outward * kerb_width_m
-            outer_end = edge_end + outward * kerb_width_m
+            outer_start = edge_start + outward * KERB_TOP_WIDTH_M
+            outer_end = edge_end + outward * KERB_TOP_WIDTH_M
             # The road-facing vertical reveal catches grazing lamp light.
             _append_quad(
                 output,

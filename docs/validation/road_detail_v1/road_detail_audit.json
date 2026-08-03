@@ -1,0 +1,325 @@
+{
+  "schema_version": 1,
+  "stage": "V2-2a",
+  "scene": {
+    "asset": "assets/yeouido_scene.npz",
+    "sha256": "c8b9d2720f935de3532a9401c74d37a55470d23645c06d32c24ff923c3291518",
+    "snapshot_utc": "2024-10-05T10:20:00Z",
+    "coordinate_system": "local East-Up-South metres"
+  },
+  "implementation_sources": {
+    "road_shader": {
+      "asset": "simulator/shaders/scene.frag",
+      "sha256": "55448596b021893531594f6811d4227401abc17abbc8dc96ae515e272cfcad39"
+    },
+    "kerb_mesh": {
+      "asset": "simulator/passes/scene.py",
+      "sha256": "6799afcb70f0fe6a8925d5bb590bacce1175e52af8322406eaba53e9dfb27cde"
+    }
+  },
+  "runtime_road_inventory": {
+    "visible_segment_count": 35215,
+    "visible_centreline_length_m": 353869.0475706506,
+    "semantic_filter": {
+      "input_segments": 35340,
+      "output_segments": 35215,
+      "excluded_segments": 125,
+      "excluded_osm_way_ids": [
+        75113082,
+        215670926,
+        331203274,
+        474507375,
+        475190608,
+        480824684,
+        914374379,
+        925101314
+      ]
+    },
+    "surfaces": [
+      {
+        "surface_code": 3,
+        "surface": "asphalt_road",
+        "segment_count": 25616,
+        "centreline_length_m": 262956.81433558784,
+        "authored_width_m": {
+          "minimum": 3.199873717946767,
+          "p50": 6.999992572484311,
+          "p95": 17.999993169988343,
+          "maximum": 28.800041122782826
+        },
+        "rounded_authored_width_counts": [
+          {
+            "width_m": 3.2,
+            "segment_count": 517
+          },
+          {
+            "width_m": 3.632,
+            "segment_count": 2
+          },
+          {
+            "width_m": 3.682,
+            "segment_count": 2
+          },
+          {
+            "width_m": 4.0,
+            "segment_count": 5130
+          },
+          {
+            "width_m": 5.0,
+            "segment_count": 2692
+          },
+          {
+            "width_m": 6.4,
+            "segment_count": 1798
+          },
+          {
+            "width_m": 7.0,
+            "segment_count": 6922
+          },
+          {
+            "width_m": 9.6,
+            "segment_count": 214
+          },
+          {
+            "width_m": 11.0,
+            "segment_count": 824
+          },
+          {
+            "width_m": 12.8,
+            "segment_count": 1965
+          },
+          {
+            "width_m": 14.0,
+            "segment_count": 3034
+          },
+          {
+            "width_m": 16.0,
+            "segment_count": 674
+          },
+          {
+            "width_m": 18.0,
+            "segment_count": 1491
+          },
+          {
+            "width_m": 19.2,
+            "segment_count": 186
+          },
+          {
+            "width_m": 22.0,
+            "segment_count": 113
+          },
+          {
+            "width_m": 22.4,
+            "segment_count": 4
+          },
+          {
+            "width_m": 25.6,
+            "segment_count": 29
+          },
+          {
+            "width_m": 28.8,
+            "segment_count": 19
+          }
+        ]
+      },
+      {
+        "surface_code": 5,
+        "surface": "concrete_footway",
+        "segment_count": 6846,
+        "centreline_length_m": 63267.50665171535,
+        "authored_width_m": {
+          "minimum": 1.787036348102816,
+          "p50": 2.2000106613245802,
+          "p95": 4.000016441926047,
+          "maximum": 4.000100485067503
+        },
+        "rounded_authored_width_counts": [
+          {
+            "width_m": 1.787,
+            "segment_count": 2
+          },
+          {
+            "width_m": 1.863,
+            "segment_count": 2
+          },
+          {
+            "width_m": 1.967,
+            "segment_count": 2
+          },
+          {
+            "width_m": 1.99,
+            "segment_count": 2
+          },
+          {
+            "width_m": 2.0,
+            "segment_count": 196
+          },
+          {
+            "width_m": 2.155,
+            "segment_count": 2
+          },
+          {
+            "width_m": 2.191,
+            "segment_count": 2
+          },
+          {
+            "width_m": 2.2,
+            "segment_count": 4841
+          },
+          {
+            "width_m": 3.091,
+            "segment_count": 2
+          },
+          {
+            "width_m": 4.0,
+            "segment_count": 1795
+          }
+        ]
+      },
+      {
+        "surface_code": 6,
+        "surface": "cycleway",
+        "segment_count": 2726,
+        "centreline_length_m": 27390.12691790832,
+        "authored_width_m": {
+          "minimum": 0.9999378311203906,
+          "p50": 2.5000174982164314,
+          "p95": 3.000038176791261,
+          "maximum": 3.000137990544056
+        },
+        "rounded_authored_width_counts": [
+          {
+            "width_m": 1.0,
+            "segment_count": 8
+          },
+          {
+            "width_m": 2.0,
+            "segment_count": 128
+          },
+          {
+            "width_m": 2.5,
+            "segment_count": 1458
+          },
+          {
+            "width_m": 3.0,
+            "segment_count": 1132
+          }
+        ]
+      },
+      {
+        "surface_code": 15,
+        "surface": "compacted_trail",
+        "segment_count": 27,
+        "centreline_length_m": 254.59966543903917,
+        "authored_width_m": {
+          "minimum": 1.4999580828822503,
+          "p50": 1.5000098585188,
+          "p95": 1.5000349219850262,
+          "maximum": 1.5000408002024836
+        },
+        "rounded_authored_width_counts": [
+          {
+            "width_m": 1.5,
+            "segment_count": 27
+          }
+        ]
+      }
+    ]
+  },
+  "kerb_contract": {
+    "implementation": "derived mesh on selected asphalt edges",
+    "confidence_grade": "D",
+    "surveyed_at_yeouido": false,
+    "reveal_height_m": 0.14,
+    "top_width_m": 0.18,
+    "eligible_road_width_m": [
+      3.5,
+      32.0
+    ],
+    "maximum_origin_distance_m": 1700.0,
+    "generated_source_segment_count": 10072,
+    "generated_triangle_count": 80576,
+    "site_position_evidence": false
+  },
+  "asphalt_marking_contract": {
+    "implementation": "procedural shader on every asphalt surface",
+    "confidence_grade": "D",
+    "road_specific_lane_semantics_available": false,
+    "shader_constants": {
+      "ROAD_EDGE_LINE_V_INNER": 0.78,
+      "ROAD_EDGE_LINE_V_OUTER": 0.87,
+      "ROAD_CENTRE_LINE_V_CORE": 0.018,
+      "ROAD_CENTRE_LINE_V_SUPPORT": 0.045,
+      "ROAD_DASH_PERIOD_M": 6.0,
+      "ROAD_DASH_START_PHASE": 0.1,
+      "ROAD_DASH_CORE_START_PHASE": 0.18,
+      "ROAD_DASH_CORE_END_PHASE": 0.58,
+      "ROAD_DASH_END_PHASE": 0.68
+    },
+    "edge_line_support_width_m": {
+      "minimum": 0.14399431730760448,
+      "p50": 0.3149996657617939,
+      "p95": 0.8099996926494752,
+      "maximum": 1.2960018505252267
+    },
+    "centre_line_support_width_m": {
+      "minimum": 0.1439943173076045,
+      "p50": 0.31499966576179395,
+      "p95": 0.8099996926494755,
+      "maximum": 1.296001850525227
+    },
+    "segments_over_0_20_m_line_width": 19965,
+    "segments_over_0_30_m_line_width": 15475,
+    "dash_support_length_m": 3.4800000000000004,
+    "dash_core_length_m": 2.4,
+    "finding": "Paint width scales with normalized road width, so identical shader constants produce different physical widths."
+  },
+  "cycleway_marking_contract": {
+    "implementation": "red surface with periodic transverse stripe",
+    "confidence_grade": "D",
+    "stripe_period_m": 9.090909090909092,
+    "stripe_core_width_m": 0.4545454545454546,
+    "stripe_support_width_m": 1.0,
+    "bicycle_symbol_geometry_present": false,
+    "site_specific_marking_evidence": false
+  },
+  "missing_detail_inventory": {
+    "manhole_geometry_present": false,
+    "crack_geometry_present": false,
+    "bicycle_symbol_geometry_present": false,
+    "road_source_way_ids_retained_in_scene_asset": false,
+    "road_source_tags_retained_in_scene_asset": false,
+    "detail_snapshot": {
+      "asset": "assets/yeouido_detail_osm_2024-10-05.json",
+      "sha256": "afaef42f3ed887b203c7e186822c99b45628f7cb78d49e5ae6134ff3f31956cc",
+      "element_count": 131,
+      "highway_element_count": 0,
+      "manhole_element_count": 0,
+      "bicycle_marking_element_count": 0,
+      "scope_note": "This focused detail snapshot contains land-cover and facility ways, not the broad road-source elements used to build the NPZ."
+    },
+    "structure_semantics": {
+      "asset": "assets/road_structure_semantics_2024-10-05.json",
+      "sha256": "8ea93c2cefc39d9641a6c8265c91ff21cb9bcffceb020d7b0d01ae36e747c2ef",
+      "scope": "tunnel visibility only; not lane or marking semantics"
+    }
+  },
+  "gates": {
+    "current_scale_audit_complete": true,
+    "kerb_dimensions_site_verified": false,
+    "marking_width_is_metric": false,
+    "road_specific_marking_semantics_available": false,
+    "manhole_or_crack_placement_allowed": false,
+    "detail_geometry_application_allowed": false,
+    "blocking_reasons": [
+      "the scene NPZ does not retain source OSM way ids or road tags",
+      "kerb dimensions are generic grade-D values, not site measurements",
+      "lane-paint width scales with normalized road width",
+      "no dated source locates manholes, cracks, or bicycle symbols"
+    ]
+  },
+  "diagnostic": {
+    "asset": "docs/validation/road_detail_v1/road_detail_scale_map.png",
+    "sha256": "d9f636d60eed1b26b5475b3bb4dd68c4e27d87132ae08f3d744c38a7b6202f6b"
+  }
+}
