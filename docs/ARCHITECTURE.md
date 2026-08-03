@@ -1160,6 +1160,24 @@ projected CRS are recorded in
 `assets/yeouido_ngii_1000_source_manifest.json` rather than being hidden in a
 developer note.
 
+V1-9 separately audits the public-survey controls returned for Seoul2447.
+`assets/yeouido_ngii_public_controls_2017.json` records CP01, CP02, CP11, and
+NO22 with the portal's explicit reference code `5186`, projected coordinates,
+orthometric heights, survey dates, and `망실` status. The audit resolves those
+catalogue coordinates as EPSG:5186 using `always_xy=True`: all four resulting
+positions fall inside the scene bounds, while swapping Easting and Northing
+places all four outside. This verifies the portal field mapping, not the CRS of
+the absent DXF delivery. The product still exposes only the broad `GRS80`
+label, so the importer cannot inherit EPSG:5186 from neighbouring controls.
+
+`simulator.ngii_control_evidence` enforces three independent scopes. Historic
+destroyed controls may document the catalogue's CRS convention; only current
+controls re-observed within the configured age may serve as field controls;
+and bridge station registration additionally needs at least three controls
+explicitly tied to Seogang Bridge landmarks plus an authenticated pre-event
+delivery whose projected CRS is verified from package metadata. The shipped
+evidence therefore changes zero scene vertices and no runtime frame path.
+
 `tools/import_ngii_structures.py` is the reproducible boundary for files
 obtained through an authorised platform session. It reads ASCII DXF `LINE`,
 `LWPOLYLINE`, and legacy `POLYLINE/VERTEX` entities, records the SHA-256 of
@@ -1169,6 +1187,11 @@ five degrees per chord, and selects the published standard feature codes `C00500
 confirmed projected CRS must be supplied explicitly; a GRS80 datum label is
 not treated as an EPSG projection. The codes are cross-checked against the
 [national-base-map feature-code report](https://www.codil.or.kr/filebank/original/RK/OTKCRK220915/OTKCRK220915.pdf).
+
+The CLI now loads the control-evidence manifest before reading geometry. It
+refuses import unless the authenticated delivery has a SHA-256 lock, explicit
+package EPSG code, verified licence, and production year matching the command.
+The current shipped evidence intentionally fails that gate.
 
 The command refuses a source year later than 2024 unless
 `--allow-post-event-source` is stated. Even when explicitly permitted, its

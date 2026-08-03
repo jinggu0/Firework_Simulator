@@ -234,6 +234,7 @@ statement of survey resolution.
 - Event-area sheets: 376082447, 376082448, 376082457, 376082458
 - Platform production year shown on 2026-08-03: 2025 for all four sheets
 - Current asset: `yeouido_ngii_1000_source_manifest.json`
+- Public-control evidence: `yeouido_ngii_public_controls_2017.json`
 
 No DXF/NGI geometry from these sheets is shipped in the current scene. The
 platform did not complete an anonymous download, the checked sheet displayed
@@ -250,6 +251,16 @@ full-rank pose, <=2 px RMSE, <=3 px p95, <=5 px maximum error, and at least 2%
 image control coverage. No held event photograph currently supplies both a
 known physical camera and a metric pose, so no report is represented as real
 event evidence.
+
+The official Seoul2447 public-survey catalogue also exposes four grade-4
+public triangulation points: CP01, CP02, CP11, and NO22. Their records explicitly
+identify reference code 5186 and publish planar coordinates and orthometric
+heights, but every point is marked `망실` (destroyed). They are retained only
+as historical catalogue CRS references. They are not redistributed source
+files, active field monuments, Seogang Bridge landmarks, or permission to
+alter scene elevation. Portal `minx/miny` values are treated as
+Easting/Northing for `always_xy=True`; the EPSG-native Northing/Easting axis
+metadata is recorded separately to prevent an axis-order substitution.
 
 ## Historical weather
 

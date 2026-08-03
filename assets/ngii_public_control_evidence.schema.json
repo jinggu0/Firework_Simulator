@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://firework-simulator.local/schema/ngii-public-control-evidence-v1.json",
+  "title": "NGII public survey-control evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "target_event_date",
+    "observed_at",
+    "source",
+    "catalogue_product",
+    "coordinate_reference",
+    "public_controls",
+    "thresholds",
+    "application"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "target_event_date": {"const": "2024-10-05"},
+    "observed_at": {"type": "string", "format": "date"},
+    "source": {"$ref": "#/$defs/source"},
+    "catalogue_product": {"$ref": "#/$defs/catalogue_product"},
+    "coordinate_reference": {"$ref": "#/$defs/coordinate_reference"},
+    "public_controls": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/control"}
+    },
+    "thresholds": {"$ref": "#/$defs/thresholds"},
+    "application": {"$ref": "#/$defs/application"}
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_id", "source_url", "provider", "confidence_grade", "observation_method", "source_files_redistributed"],
+      "properties": {
+        "source_id": {"type": "string", "minLength": 1},
+        "source_url": {"type": "string", "format": "uri"},
+        "provider": {"type": "string", "minLength": 1},
+        "confidence_grade": {"enum": ["A", "B"]},
+        "observation_method": {"type": "string", "minLength": 1},
+        "source_files_redistributed": {"const": false}
+      }
+    },
+    "catalogue_product": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sheet_id", "sheet_name", "scale_denominator", "product_name", "production_year", "coordinate_label", "projected_crs_verified_from_delivery", "history_result", "anonymous_download_attempted", "download_event_observed", "downloaded_file_count", "delivery_sha256", "delivery_projected_crs", "license", "license_verified", "temporal_relation"],
+      "properties": {
+        "sheet_id": {"const": "376082447"},
+        "sheet_name": {"const": "서울2447"},
+        "scale_denominator": {"const": 1000},
+        "product_name": {"type": "string", "minLength": 1},
+        "production_year": {"type": "integer", "minimum": 1900},
+        "coordinate_label": {"type": "string", "minLength": 1},
+        "projected_crs_verified_from_delivery": {"type": "boolean"},
+        "history_result": {"type": "string", "minLength": 1},
+        "anonymous_download_attempted": {"type": "boolean"},
+        "download_event_observed": {"type": "boolean"},
+        "downloaded_file_count": {"type": "integer", "minimum": 0},
+        "delivery_sha256": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "delivery_projected_crs": {
+          "type": ["string", "null"],
+          "pattern": "^EPSG:[0-9]+$"
+        },
+        "license": {"type": ["string", "null"]},
+        "license_verified": {"type": "boolean"},
+        "temporal_relation": {"enum": ["official_pre_event", "official_same_year_date_unverified", "official_post_event"]}
+      }
+    },
+    "coordinate_reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authority", "code", "name", "portal_dom_reference_code", "portal_field_mapping", "epsg_native_axis_order", "runtime_transform_policy", "scope"],
+      "properties": {
+        "authority": {"const": "EPSG"},
+        "code": {"const": 5186},
+        "name": {"const": "KGD2002 / Central Belt 2010"},
+        "portal_dom_reference_code": {"const": "5186"},
+        "portal_field_mapping": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["minx", "miny"],
+          "properties": {
+            "minx": {"const": "easting_m"},
+            "miny": {"const": "northing_m"}
+          }
+        },
+        "epsg_native_axis_order": {
+          "const": ["northing_m", "easting_m"]
+        },
+        "runtime_transform_policy": {"type": "string", "minLength": 1},
+        "scope": {"type": "string", "minLength": 1}
+      }
+    },
+    "control": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["control_id", "point_name", "point_kind", "control_grade", "status", "status_source_value", "easting_m", "northing_m", "orthometric_height_m", "installed_on", "observed_on", "work_number", "project_name", "location_note", "bridge_landmark"],
+      "properties": {
+        "control_id": {"type": "string", "minLength": 1},
+        "point_name": {"type": "string", "minLength": 1},
+        "point_kind": {"const": "공공삼각점"},
+        "control_grade": {"type": "string", "minLength": 1},
+        "status": {"enum": ["active", "destroyed", "unknown"]},
+        "status_source_value": {"type": "string", "minLength": 1},
+        "easting_m": {"type": "number"},
+        "northing_m": {"type": "number"},
+        "orthometric_height_m": {"type": "number"},
+        "installed_on": {"type": "string", "format": "date"},
+        "observed_on": {"type": "string", "format": "date"},
+        "work_number": {"type": "string", "minLength": 1},
+        "project_name": {"type": "string", "minLength": 1},
+        "location_note": {"type": "string", "minLength": 1},
+        "bridge_landmark": {"type": ["string", "null"]}
+      }
+    },
+    "thresholds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minimum_active_bridge_controls", "maximum_station_plan_rmse_m", "maximum_control_age_days_without_reobservation", "require_delivery_crs_metadata", "maximum_source_year"],
+      "properties": {
+        "minimum_active_bridge_controls": {"type": "integer", "minimum": 3},
+        "maximum_station_plan_rmse_m": {"type": "number", "exclusiveMinimum": 0},
+        "maximum_control_age_days_without_reobservation": {"type": "integer", "minimum": 1},
+        "require_delivery_crs_metadata": {"const": true},
+        "maximum_source_year": {"const": 2024}
+      }
+    },
+    "application": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["catalogue_crs_reference_allowed", "digital_map_crs_verified", "field_control_use_allowed", "bridge_station_registration_allowed", "vertical_profile_allowed", "blocking_reasons", "scene_vertices_modified", "runtime_frame_path_changed"],
+      "properties": {
+        "catalogue_crs_reference_allowed": {"type": "boolean"},
+        "digital_map_crs_verified": {"type": "boolean"},
+        "field_control_use_allowed": {"type": "boolean"},
+        "bridge_station_registration_allowed": {"type": "boolean"},
+        "vertical_profile_allowed": {"type": "boolean"},
+        "blocking_reasons": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "scene_vertices_modified": {"const": 0},
+        "runtime_frame_path_changed": {"const": false}
+      }
+    }
+  }
+}

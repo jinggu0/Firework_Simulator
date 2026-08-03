@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "target_event_date": "2024-10-05",
+  "observed_at": "2026-08-03",
+  "source": {
+    "source_id": "ngii_nlip_seoul2447_public_survey_controls",
+    "source_url": "https://map.ngii.go.kr/ms/map/NlipMap.do",
+    "provider": "국토지리정보원 국토정보플랫폼",
+    "confidence_grade": "A",
+    "observation_method": "Official portal metadata panels and their rendered control-point records",
+    "source_files_redistributed": false
+  },
+  "catalogue_product": {
+    "sheet_id": "376082447",
+    "sheet_name": "서울2447",
+    "scale_denominator": 1000,
+    "product_name": "수치지형도(DXF파일)",
+    "production_year": 2025,
+    "coordinate_label": "GRS80",
+    "projected_crs_verified_from_delivery": false,
+    "history_result": "no_history_available",
+    "anonymous_download_attempted": true,
+    "download_event_observed": false,
+    "downloaded_file_count": 0,
+    "delivery_sha256": null,
+    "delivery_projected_crs": null,
+    "license": null,
+    "license_verified": false,
+    "temporal_relation": "official_post_event"
+  },
+  "coordinate_reference": {
+    "authority": "EPSG",
+    "code": 5186,
+    "name": "KGD2002 / Central Belt 2010",
+    "portal_dom_reference_code": "5186",
+    "portal_field_mapping": {
+      "minx": "easting_m",
+      "miny": "northing_m"
+    },
+    "epsg_native_axis_order": [
+      "northing_m",
+      "easting_m"
+    ],
+    "runtime_transform_policy": "Use always_xy=True and pass portal minx as easting, miny as northing.",
+    "scope": "This CRS is explicit for the public-control records only. It is not assigned to an undelivered digital-map file."
+  },
+  "public_controls": [
+    {
+      "control_id": "2017-3193:CP01",
+      "point_name": "CP01",
+      "point_kind": "공공삼각점",
+      "control_grade": "4급",
+      "status": "destroyed",
+      "status_source_value": "망실",
+      "easting_m": 193653.691,
+      "northing_m": 547206.455,
+      "orthometric_height_m": 12.773,
+      "installed_on": "2017-03-16",
+      "observed_on": "2017-03-16",
+      "work_number": "201704000338",
+      "project_name": "여의1H#4~S1203 직매구간 해소공사 위치탐사용역 외 1건",
+      "location_note": "유진빌딩 앞 중앙화단 아스팔트",
+      "bridge_landmark": null
+    },
+    {
+      "control_id": "2017-3193:CP02",
+      "point_name": "CP02",
+      "point_kind": "공공삼각점",
+      "control_grade": "4급",
+      "status": "destroyed",
+      "status_source_value": "망실",
+      "easting_m": 193647.074,
+      "northing_m": 547254.069,
+      "orthometric_height_m": 12.674,
+      "installed_on": "2017-03-16",
+      "observed_on": "2017-03-16",
+      "work_number": "201704000338",
+      "project_name": "여의1H#4~S1203 직매구간 해소공사 위치탐사용역 외 1건",
+      "location_note": "유진빌딩 앞 사거리 교통섬",
+      "bridge_landmark": null
+    },
+    {
+      "control_id": "2017-0271:CP11",
+      "point_name": "CP11",
+      "point_kind": "공공삼각점",
+      "control_grade": "4급",
+      "status": "destroyed",
+      "status_source_value": "망실",
+      "easting_m": 193516.006,
+      "northing_m": 547071.947,
+      "orthometric_height_m": 12.764,
+      "installed_on": "2016-11-01",
+      "observed_on": "2016-11-01",
+      "work_number": "201702000071",
+      "project_name": "변전소간 연계력 확보공사(여의SS) 위치탐사용역",
+      "location_note": "여의도우체국 삼거리",
+      "bridge_landmark": null
+    },
+    {
+      "control_id": "2017-3538:NO22",
+      "point_name": "NO22",
+      "point_kind": "공공삼각점",
+      "control_grade": "4급",
+      "status": "destroyed",
+      "status_source_value": "망실",
+      "easting_m": 193342.105,
+      "northing_m": 547354.799,
+      "orthometric_height_m": 12.012,
+      "installed_on": "2017-12-01",
+      "observed_on": "2017-12-01",
+      "work_number": "201712000287",
+      "project_name": "2017년 하수사업 GIS DB 구축용역",
+      "location_note": "서울 국제금융센터 앞 버스 승강장 끝 안전지대",
+      "bridge_landmark": null
+    }
+  ],
+  "thresholds": {
+    "minimum_active_bridge_controls": 3,
+    "maximum_station_plan_rmse_m": 0.25,
+    "maximum_control_age_days_without_reobservation": 365,
+    "require_delivery_crs_metadata": true,
+    "maximum_source_year": 2024
+  },
+  "application": {
+    "catalogue_crs_reference_allowed": true,
+    "digital_map_crs_verified": false,
+    "field_control_use_allowed": false,
+    "bridge_station_registration_allowed": false,
+    "vertical_profile_allowed": false,
+    "blocking_reasons": [
+      "all_public_controls_are_destroyed",
+      "no_control_is_a_seogang_bridge_landmark",
+      "digital_map_delivery_not_acquired",
+      "digital_map_delivery_not_checksum_locked",
+      "digital_map_projected_crs_not_verified_from_delivery",
+      "digital_map_license_not_verified",
+      "available_sheet_is_post_event_2025",
+      "no_pre_event_sheet_history_available"
+    ],
+    "scene_vertices_modified": 0,
+    "runtime_frame_path_changed": false
+  }
+}

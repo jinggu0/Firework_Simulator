@@ -44,8 +44,18 @@
     "F0040000": "옹벽"
   },
   "ingestion_status": "blocked_by_authentication_and_temporal_mismatch",
-  "download_observation": "비로그인 상태에서는 선택 도엽 다운로드가 완료되지 않았다.",
+  "download_observation": "비로그인 상태에서 서울2447 DXF를 선택하고 다운로드를 실행했으나 5초 동안 다운로드 이벤트가 발생하지 않았고 파일도 확보되지 않았다.",
   "history_observation": "플랫폼의 서울2447 도엽 이력 조회에는 이력정보가 표시되지 않았다.",
+  "public_control_evidence": {
+    "asset": "assets/yeouido_ngii_public_controls_2017.json",
+    "sha256": "59a1977aba497b96b83a2d75274b0f764e88cab369657bea06bc7e7ea972b040",
+    "sheet_id": "376082447",
+    "catalogue_control_crs": "EPSG:5186",
+    "control_count": 4,
+    "active_control_count": 0,
+    "bridge_landmark_control_count": 0,
+    "status": "catalogue_crs_reference_only_all_controls_destroyed"
+  },
   "temporal_policy": "2025 제작본은 2024-10-05 행사 당시와 동일하다고 간주하지 않는다. 후행 자료 사용 시 명시적 허용과 변화 검증이 필요하다.",
   "runtime_status": "이 명세는 출처 발견 기록이며 현재 배포 장면의 구조물 형상을 변경하지 않는다."
 }

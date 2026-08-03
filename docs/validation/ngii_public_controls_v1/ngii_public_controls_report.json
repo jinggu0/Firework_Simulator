@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "stage": "V1-9",
+  "target_event_date": "2024-10-05",
+  "evidence_asset": "assets/yeouido_ngii_public_controls_2017.json",
+  "evidence_sha256": "59a1977aba497b96b83a2d75274b0f764e88cab369657bea06bc7e7ea972b040",
+  "source_manifest_link": {
+    "manifest": "assets/yeouido_ngii_1000_source_manifest.json",
+    "expected_asset": "assets/yeouido_ngii_public_controls_2017.json",
+    "expected_sha256": "59a1977aba497b96b83a2d75274b0f764e88cab369657bea06bc7e7ea972b040",
+    "matches": true
+  },
+  "scene_asset": "assets/yeouido_scene.npz",
+  "scene_sha256": "c8b9d2720f935de3532a9401c74d37a55470d23645c06d32c24ff923c3291518",
+  "catalogue_product": {
+    "sheet_id": "376082447",
+    "sheet_name": "서울2447",
+    "scale_denominator": 1000,
+    "product_name": "수치지형도(DXF파일)",
+    "production_year": 2025,
+    "coordinate_label": "GRS80",
+    "projected_crs_verified_from_delivery": false,
+    "history_result": "no_history_available",
+    "anonymous_download_attempted": true,
+    "download_event_observed": false,
+    "downloaded_file_count": 0,
+    "delivery_sha256": null,
+    "delivery_projected_crs": null,
+    "license": null,
+    "license_verified": false,
+    "temporal_relation": "official_post_event"
+  },
+  "crs_audit": {
+    "catalogue_control_crs": "EPSG:5186",
+    "crs_name": "KGD2002 / Central Belt 2010",
+    "native_axis_order": [
+      {
+        "name": "Northing",
+        "abbreviation": "X",
+        "direction": "north",
+        "unit": "metre"
+      },
+      {
+        "name": "Easting",
+        "abbreviation": "Y",
+        "direction": "east",
+        "unit": "metre"
+      }
+    ],
+    "portal_mapping": "minx=easting, miny=northing",
+    "runtime_policy": "always_xy=True",
+    "correct_mapping_inside_scene_count": 4,
+    "swapped_mapping_inside_scene_count": 0,
+    "control_count": 4,
+    "digital_map_delivery_crs_verified": false,
+    "scope_warning": "The control catalogue explicitly identifies EPSG:5186. The undelivered 2025 DXF only displays GRS80, so its projected CRS remains unverified until package metadata is inspected."
+  },
+  "controls": [
+    {
+      "control_id": "2017-3193:CP01",
+      "status": "destroyed",
+      "longitude_deg": 126.92820653960865,
+      "latitude_deg": 37.524326301568514,
+      "local_east_m": -600.5198181780659,
+      "local_south_m": 518.7005994833322,
+      "unapplied_runtime_y_reference_m": 9.983000038146972,
+      "inside_scene_bounds": true,
+      "swapped_axis_inside_scene_bounds": false,
+      "bridge_landmark": null
+    },
+    {
+      "control_id": "2017-3193:CP02",
+      "status": "destroyed",
+      "longitude_deg": 126.92813127244105,
+      "latitude_deg": 37.52475525897361,
+      "local_east_m": -607.169714712532,
+      "local_south_m": 471.09120695130963,
+      "unapplied_runtime_y_reference_m": 9.884000038146972,
+      "inside_scene_bounds": true,
+      "swapped_axis_inside_scene_bounds": false,
+      "bridge_landmark": null
+    },
+    {
+      "control_id": "2017-0271:CP11",
+      "status": "destroyed",
+      "longitude_deg": 126.92665014748749,
+      "latitude_deg": 37.5231134250446,
+      "local_east_m": -738.1117710531969,
+      "local_south_m": 653.3036363119716,
+      "unapplied_runtime_y_reference_m": 9.974000038146972,
+      "inside_scene_bounds": true,
+      "swapped_axis_inside_scene_bounds": false,
+      "bridge_landmark": null
+    },
+    {
+      "control_id": "2017-3538:NO22",
+      "status": "destroyed",
+      "longitude_deg": 126.92468034074064,
+      "latitude_deg": 37.52566068800862,
+      "local_east_m": -912.2080865862364,
+      "local_south_m": 370.5720190918059,
+      "unapplied_runtime_y_reference_m": 9.222000038146973,
+      "inside_scene_bounds": true,
+      "swapped_axis_inside_scene_bounds": false,
+      "bridge_landmark": null
+    }
+  ],
+  "qualification": {
+    "destroyed_control_count": 4,
+    "active_field_control_count": 0,
+    "active_bridge_control_count": 0,
+    "catalogue_crs_reference_allowed": true,
+    "field_control_use_allowed": false,
+    "bridge_station_registration_allowed": false,
+    "vertical_profile_allowed": false,
+    "blocking_reasons": [
+      "all_public_controls_are_destroyed",
+      "no_control_is_a_seogang_bridge_landmark",
+      "digital_map_delivery_not_acquired",
+      "digital_map_delivery_not_checksum_locked",
+      "digital_map_projected_crs_not_verified_from_delivery",
+      "digital_map_license_not_verified",
+      "available_sheet_is_post_event_2025",
+      "no_pre_event_sheet_history_available"
+    ]
+  },
+  "runtime_impact": {
+    "scene_vertices_modified": 0,
+    "frame_path_changed": false,
+    "expected_frame_time_delta_ms": 0.0
+  },
+  "passed": true,
+  "next_evidence_gate": "Acquire an authenticated 2024-or-earlier 1:1,000 delivery, verify its embedded projected CRS and licence, and obtain at least three active controls tied to Seogang Bridge landmarks before station registration."
+}

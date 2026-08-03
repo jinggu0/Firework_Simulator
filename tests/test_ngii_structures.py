@@ -13,8 +13,10 @@ from tools.import_ngii_structures import (
     iter_dxf_sources,
     parse_ascii_dxf,
     resolve_layer_kind,
+    validate_delivery_evidence,
     validate_source_year,
 )
+from simulator.ngii_control_evidence import load_ngii_control_evidence
 
 
 def _dxf(*entity_lines: str) -> str:
@@ -163,3 +165,14 @@ def test_source_manifest_records_non_ingested_temporal_gate() -> None:
     assert {sheet["production_year_shown"] for sheet in data["event_area_sheets"]} == {2025}
     assert data["product"]["projected_crs"] is None
     assert data["ingestion_status"] == "blocked_by_authentication_and_temporal_mismatch"
+
+
+def test_real_import_rejects_the_unverified_shipped_delivery() -> None:
+    evidence = load_ngii_control_evidence()
+
+    with pytest.raises(ValueError, match="delivery evidence is not verified"):
+        validate_delivery_evidence(
+            evidence,
+            source_crs="EPSG:5186",
+            source_year=2025,
+        )
