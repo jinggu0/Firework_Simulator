@@ -1,0 +1,668 @@
+{
+  "schema_version": 1,
+  "stage": "V2-2e",
+  "source": {
+    "service": "https://smap.seoul.go.kr/",
+    "official_guide": "https://smap.seoul.go.kr/guide/guide.html",
+    "map_configuration": {
+      "url": "https://smap.seoul.go.kr/js/mapConst.js",
+      "sha256": "4d96227c826048e6ed8ee557372b3dfa48b2cc06a4c00965785969ecc15f1cd1",
+      "bytes": 104281,
+      "browser_verified_utc": "2026-08-03T13:51:21.082675Z"
+    },
+    "provider_attribution": "© 서울특별시 모든 권리 보유",
+    "guide_allows_map_view_png_download": true,
+    "raw_tile_redistribution_authorised": false,
+    "raw_pixels_committed_to_repository": false
+  },
+  "layer_contract": {
+    "layer": "ortho_drone_25cm_2024",
+    "code_comment": "[202410] 2024 orthophoto - 25 cm external network 20241209",
+    "code_comment_period_hint": "2024-10",
+    "exact_imagery_acquisition_date": null,
+    "event_date": "2024-10-05",
+    "event_date_applicability_confirmed": false,
+    "crs": "EPSG:5186",
+    "proj4": "+ellps=GRS80 +proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 +y_0=600000 +units=m +no_defs",
+    "origin_m": [
+      153468.0,
+      513944.0
+    ],
+    "extent_m": [
+      153468.0,
+      513944.0,
+      219004.0,
+      579478.0
+    ],
+    "resolutions_m_per_pixel": [
+      256.0,
+      128.0,
+      64.0,
+      32.0,
+      16.0,
+      8.0,
+      4.0,
+      2.0,
+      1.0,
+      0.5,
+      0.25
+    ],
+    "zoom": 10,
+    "native_resolution_m_per_pixel": 0.25,
+    "tile_size_px": [
+      256,
+      256
+    ]
+  },
+  "local_acquisition": {
+    "manifest_asset": "local_reference/smap_2024_ortho/manifest.json",
+    "manifest_sha256": "f74881209bed1499b4de55d26e16af60421f2443de9f63c3eee75b02ca30e3f3",
+    "tile_range": [
+      634,
+      639,
+      520,
+      525
+    ],
+    "tile_count": 36,
+    "initial_downloaded_tile_count": 36,
+    "verified_this_run": 36,
+    "bbox_epsg5186_m": [
+      194044.0,
+      547224.0,
+      194428.0,
+      547608.0
+    ],
+    "ground_coverage_m": [
+      384.0,
+      384.0
+    ],
+    "mosaic_pixel_size": [
+      1536,
+      1536
+    ],
+    "mosaic_sha256": "fa684b74bb513a80e76caaecc53510aebdd854563a54737a796d1685aaea1789",
+    "world_file_sha256": "95e0c5331601e4b321dd5897032ffae7c07ddcf686af1689b78dcfad5af182d9",
+    "tile_records": [
+      {
+        "zoom": 10,
+        "x": 634,
+        "y": 520,
+        "url": "https://smap2.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/634/520.jpg",
+        "local_asset": "10/634/520.jpg",
+        "sha256": "705eab985794eb8dc8d136ed16acd1721e084a60d1fb96e2af7a88f7b9471656",
+        "bounds_epsg5186_m": [
+          194044.0,
+          547224.0,
+          194108.0,
+          547288.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 635,
+        "y": 520,
+        "url": "https://smap3.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/635/520.jpg",
+        "local_asset": "10/635/520.jpg",
+        "sha256": "ff2f42b0f70c735cf8f788bcb6f72c4627de7c9b784eb5e59bbe77913a761a92",
+        "bounds_epsg5186_m": [
+          194108.0,
+          547224.0,
+          194172.0,
+          547288.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 636,
+        "y": 520,
+        "url": "https://smap1.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/636/520.jpg",
+        "local_asset": "10/636/520.jpg",
+        "sha256": "ede4626fe05c8079e581e3cc7e681af1ed806bbcddf60c5ce8898510238bff7a",
+        "bounds_epsg5186_m": [
+          194172.0,
+          547224.0,
+          194236.0,
+          547288.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 637,
+        "y": 520,
+        "url": "https://smap2.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/637/520.jpg",
+        "local_asset": "10/637/520.jpg",
+        "sha256": "12b805570ff2c2fe4adcbe4a8e6e060e6b28fad8a0281a0ecd2ec423f5710096",
+        "bounds_epsg5186_m": [
+          194236.0,
+          547224.0,
+          194300.0,
+          547288.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 638,
+        "y": 520,
+        "url": "https://smap3.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/638/520.jpg",
+        "local_asset": "10/638/520.jpg",
+        "sha256": "8f3e9c02e436ab25c9db19f57a024c069682899082869ac9baf07001764fadff",
+        "bounds_epsg5186_m": [
+          194300.0,
+          547224.0,
+          194364.0,
+          547288.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 639,
+        "y": 520,
+        "url": "https://smap1.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/639/520.jpg",
+        "local_asset": "10/639/520.jpg",
+        "sha256": "8fab7391085b49208c73736793136e564c28171126dd57e54c1636f0543da850",
+        "bounds_epsg5186_m": [
+          194364.0,
+          547224.0,
+          194428.0,
+          547288.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 634,
+        "y": 521,
+        "url": "https://smap2.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/634/521.jpg",
+        "local_asset": "10/634/521.jpg",
+        "sha256": "fa10c27e2c7ef85780b6b30e98fdcccd6e0b0f6d76baeed8e5fad83d95ec3a0f",
+        "bounds_epsg5186_m": [
+          194044.0,
+          547288.0,
+          194108.0,
+          547352.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 635,
+        "y": 521,
+        "url": "https://smap3.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/635/521.jpg",
+        "local_asset": "10/635/521.jpg",
+        "sha256": "50b55d583ee8687ad64851c57c0cffc450dfc94e3dcabb7e416c2718dbf03cb7",
+        "bounds_epsg5186_m": [
+          194108.0,
+          547288.0,
+          194172.0,
+          547352.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 636,
+        "y": 521,
+        "url": "https://smap1.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/636/521.jpg",
+        "local_asset": "10/636/521.jpg",
+        "sha256": "047d767ebe81815f08ca2946a5916e0d6d7a86f38ab27d8c1ddac146a865e1fd",
+        "bounds_epsg5186_m": [
+          194172.0,
+          547288.0,
+          194236.0,
+          547352.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 637,
+        "y": 521,
+        "url": "https://smap2.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/637/521.jpg",
+        "local_asset": "10/637/521.jpg",
+        "sha256": "120438b7cd26b0d2a3c1093d508f56c2f09752c1e79ecb8d8939a64942dca076",
+        "bounds_epsg5186_m": [
+          194236.0,
+          547288.0,
+          194300.0,
+          547352.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 638,
+        "y": 521,
+        "url": "https://smap3.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/638/521.jpg",
+        "local_asset": "10/638/521.jpg",
+        "sha256": "bcb093e5ef0a76603606c710bef480735f354e024672564b9b718cd90750a9dc",
+        "bounds_epsg5186_m": [
+          194300.0,
+          547288.0,
+          194364.0,
+          547352.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 639,
+        "y": 521,
+        "url": "https://smap1.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/639/521.jpg",
+        "local_asset": "10/639/521.jpg",
+        "sha256": "9e66738994fc3250e28c01c97149bf131a0c6d8445cac93636451042770ec5d5",
+        "bounds_epsg5186_m": [
+          194364.0,
+          547288.0,
+          194428.0,
+          547352.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 634,
+        "y": 522,
+        "url": "https://smap2.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/634/522.jpg",
+        "local_asset": "10/634/522.jpg",
+        "sha256": "277112cae9041b00abf9e38ef9acbea6deee1c79891cff1eaa4e721d162739c5",
+        "bounds_epsg5186_m": [
+          194044.0,
+          547352.0,
+          194108.0,
+          547416.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 635,
+        "y": 522,
+        "url": "https://smap3.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/635/522.jpg",
+        "local_asset": "10/635/522.jpg",
+        "sha256": "51df9aa14819bb4724d0e43398d0c76ccf2e9c80a5c94a9022551bcf2e0884ab",
+        "bounds_epsg5186_m": [
+          194108.0,
+          547352.0,
+          194172.0,
+          547416.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 636,
+        "y": 522,
+        "url": "https://smap1.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/636/522.jpg",
+        "local_asset": "10/636/522.jpg",
+        "sha256": "7b6b85d123b69bed9a9cfd28f871609d6d2c3bf82ff7a6eae41ba1a85104e46f",
+        "bounds_epsg5186_m": [
+          194172.0,
+          547352.0,
+          194236.0,
+          547416.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 637,
+        "y": 522,
+        "url": "https://smap2.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/637/522.jpg",
+        "local_asset": "10/637/522.jpg",
+        "sha256": "e673a90925e81cecfad585b9bcf7fb1b28f8f96ad51dd830f8fdff6e55164cfb",
+        "bounds_epsg5186_m": [
+          194236.0,
+          547352.0,
+          194300.0,
+          547416.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 638,
+        "y": 522,
+        "url": "https://smap3.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/638/522.jpg",
+        "local_asset": "10/638/522.jpg",
+        "sha256": "99046c3ab872a973637e21c2a69f1c9263b3162a8923a7c2e46bfb8b2de657c3",
+        "bounds_epsg5186_m": [
+          194300.0,
+          547352.0,
+          194364.0,
+          547416.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 639,
+        "y": 522,
+        "url": "https://smap1.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/639/522.jpg",
+        "local_asset": "10/639/522.jpg",
+        "sha256": "f9e6697c21ac353dfcfa580c4ea4aa691de4d00a5cadb7ebac6dbb7921bcb575",
+        "bounds_epsg5186_m": [
+          194364.0,
+          547352.0,
+          194428.0,
+          547416.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 634,
+        "y": 523,
+        "url": "https://smap2.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/634/523.jpg",
+        "local_asset": "10/634/523.jpg",
+        "sha256": "4c00a0f587f75a766ba4b34c14f39af5ae4d2056bb3fe2f15fc70f3702148818",
+        "bounds_epsg5186_m": [
+          194044.0,
+          547416.0,
+          194108.0,
+          547480.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 635,
+        "y": 523,
+        "url": "https://smap3.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/635/523.jpg",
+        "local_asset": "10/635/523.jpg",
+        "sha256": "bc8fc38135a8a9ccbb84ad03f140433d5c76240809603c977dc88e2b7ead52da",
+        "bounds_epsg5186_m": [
+          194108.0,
+          547416.0,
+          194172.0,
+          547480.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 636,
+        "y": 523,
+        "url": "https://smap1.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/636/523.jpg",
+        "local_asset": "10/636/523.jpg",
+        "sha256": "60852336ab1415167703f954ac0a534b1dc6ca340f58de66ce391d4d8bc9f202",
+        "bounds_epsg5186_m": [
+          194172.0,
+          547416.0,
+          194236.0,
+          547480.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 637,
+        "y": 523,
+        "url": "https://smap2.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/637/523.jpg",
+        "local_asset": "10/637/523.jpg",
+        "sha256": "84afd5d32df9fdca8d1097bc56eb59b2f292bf652d4e8f4b979060c2a23855de",
+        "bounds_epsg5186_m": [
+          194236.0,
+          547416.0,
+          194300.0,
+          547480.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 638,
+        "y": 523,
+        "url": "https://smap3.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/638/523.jpg",
+        "local_asset": "10/638/523.jpg",
+        "sha256": "eebba84d2fc3824482b816c8ec789f9c048569da2bda94cf260a115f2792083a",
+        "bounds_epsg5186_m": [
+          194300.0,
+          547416.0,
+          194364.0,
+          547480.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 639,
+        "y": 523,
+        "url": "https://smap1.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/639/523.jpg",
+        "local_asset": "10/639/523.jpg",
+        "sha256": "79a7f9aae670e76a0a017f8885665f9afb4842eab72829b473504de202e63ac4",
+        "bounds_epsg5186_m": [
+          194364.0,
+          547416.0,
+          194428.0,
+          547480.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 634,
+        "y": 524,
+        "url": "https://smap2.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/634/524.jpg",
+        "local_asset": "10/634/524.jpg",
+        "sha256": "78b418a95e1e7258e27c4cdb57245f21f290efefff9a3ae822a0d68f8d050790",
+        "bounds_epsg5186_m": [
+          194044.0,
+          547480.0,
+          194108.0,
+          547544.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 635,
+        "y": 524,
+        "url": "https://smap3.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/635/524.jpg",
+        "local_asset": "10/635/524.jpg",
+        "sha256": "4b2956a6e3ad27452586dce02b96730fd9d47a495f494f13ecd4dadf7a329b6e",
+        "bounds_epsg5186_m": [
+          194108.0,
+          547480.0,
+          194172.0,
+          547544.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 636,
+        "y": 524,
+        "url": "https://smap1.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/636/524.jpg",
+        "local_asset": "10/636/524.jpg",
+        "sha256": "6de7888dd029de630c080477e99d553247e2c5adc409846350aca0a8372ee074",
+        "bounds_epsg5186_m": [
+          194172.0,
+          547480.0,
+          194236.0,
+          547544.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 637,
+        "y": 524,
+        "url": "https://smap2.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/637/524.jpg",
+        "local_asset": "10/637/524.jpg",
+        "sha256": "a836bf433c72f53dc3c76a4effa0f84bed22bb86e89768fa1ff56726df42c052",
+        "bounds_epsg5186_m": [
+          194236.0,
+          547480.0,
+          194300.0,
+          547544.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 638,
+        "y": 524,
+        "url": "https://smap3.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/638/524.jpg",
+        "local_asset": "10/638/524.jpg",
+        "sha256": "a09ed3cd792572d25ade3e3e4dbd5961f528b38aebfa130ca45e1c87ccf5ca66",
+        "bounds_epsg5186_m": [
+          194300.0,
+          547480.0,
+          194364.0,
+          547544.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 639,
+        "y": 524,
+        "url": "https://smap1.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/639/524.jpg",
+        "local_asset": "10/639/524.jpg",
+        "sha256": "b279a47ae8c4af383b5b83a5739aaa2ae55ffc715f697ef93aa556b0bb985db5",
+        "bounds_epsg5186_m": [
+          194364.0,
+          547480.0,
+          194428.0,
+          547544.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 634,
+        "y": 525,
+        "url": "https://smap2.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/634/525.jpg",
+        "local_asset": "10/634/525.jpg",
+        "sha256": "be01e0bcdf93cad31a178efd64c39fd4bc03826ed5589c42046c2126f2400256",
+        "bounds_epsg5186_m": [
+          194044.0,
+          547544.0,
+          194108.0,
+          547608.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 635,
+        "y": 525,
+        "url": "https://smap3.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/635/525.jpg",
+        "local_asset": "10/635/525.jpg",
+        "sha256": "7c6c0e8d09acb066b13ffec4992e9aff1b01805dd956cb025446475f14970704",
+        "bounds_epsg5186_m": [
+          194108.0,
+          547544.0,
+          194172.0,
+          547608.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 636,
+        "y": 525,
+        "url": "https://smap1.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/636/525.jpg",
+        "local_asset": "10/636/525.jpg",
+        "sha256": "0aae27aa668cc2bd54b83b637895bc88b5e02edeb9563a50fd37445035b60589",
+        "bounds_epsg5186_m": [
+          194172.0,
+          547544.0,
+          194236.0,
+          547608.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 637,
+        "y": 525,
+        "url": "https://smap2.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/637/525.jpg",
+        "local_asset": "10/637/525.jpg",
+        "sha256": "419b402f9a333abb62561153617dba010181df8192e28d816fcfd7a5f43e98b1",
+        "bounds_epsg5186_m": [
+          194236.0,
+          547544.0,
+          194300.0,
+          547608.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 638,
+        "y": 525,
+        "url": "https://smap3.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/638/525.jpg",
+        "local_asset": "10/638/525.jpg",
+        "sha256": "ac0c8cb538972e4c5a33efd47d5e20737f9528b0bbdaa6e30b8f9e9bd989d664",
+        "bounds_epsg5186_m": [
+          194300.0,
+          547544.0,
+          194364.0,
+          547608.0
+        ]
+      },
+      {
+        "zoom": 10,
+        "x": 639,
+        "y": 525,
+        "url": "https://smap1.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/10/639/525.jpg",
+        "local_asset": "10/639/525.jpg",
+        "sha256": "f11ef5e75bd75217e826f9b2eb38fade481ba8147945ec3ac2d2f8cb4d217e05",
+        "bounds_epsg5186_m": [
+          194364.0,
+          547544.0,
+          194428.0,
+          547608.0
+        ]
+      }
+    ]
+  },
+  "registration": {
+    "method": "provider EPSG:5186 tile grid; no fitted control points",
+    "pixel_origin": "north-west pixel centre",
+    "pixel_size_m": [
+      0.25,
+      -0.25
+    ],
+    "grid_registration_residual_m": 0.0,
+    "independent_check_point_residual_m": null,
+    "provider_grid_registration_passes": true,
+    "independent_spatial_check_passes": false
+  },
+  "candidate_coverage": {
+    "already_rendered_oneway_lane_dividers": {
+      "way_count": 0,
+      "rendered_segment_count": 0,
+      "tile_count": 0,
+      "osm_way_ids": []
+    },
+    "centre_line_candidates_non_oneway_yes_multilane": {
+      "way_count": 0,
+      "rendered_segment_count": 0,
+      "tile_count": 0,
+      "osm_way_ids": []
+    },
+    "directional_lane_count_candidates": {
+      "way_count": 0,
+      "rendered_segment_count": 0,
+      "tile_count": 0,
+      "osm_way_ids": []
+    },
+    "cycle_lane_tag_candidates": {
+      "way_count": 3,
+      "rendered_segment_count": 34,
+      "tile_count": 7,
+      "osm_way_ids": [
+        384826214,
+        474507374,
+        474507381
+      ]
+    },
+    "crossing_marking_presence_candidates": {
+      "way_count": 0,
+      "rendered_segment_count": 0,
+      "tile_count": 0,
+      "osm_way_ids": []
+    }
+  },
+  "inputs": {
+    "event_evidence_report": {
+      "asset": "docs/validation/road_marking_evidence_v2/road_marking_evidence_report.json",
+      "sha256": "a17216345a2370a4e4b6cbea1163be0ddcfe20e465c5df9c1dc29d6b1fe4ebf5"
+    },
+    "scene": {
+      "asset": "assets/yeouido_scene.npz",
+      "sha256": "c8b9d2720f935de3532a9401c74d37a55470d23645c06d32c24ff923c3291518"
+    },
+    "binding": {
+      "asset": "assets/yeouido_road_detail_semantics_2024-10-05.json",
+      "sha256": "bd98ab2ad5ea21b9b18cd85b3045226e529853ed3bef33f23183a7e07bb11728"
+    }
+  },
+  "diagnostic": {
+    "asset": "docs/validation/road_marking_registration_v2/smap_2024_candidate_coverage.png",
+    "sha256": "4729ae43518a6fb3b809108f7769d365fc05dde7775f309944956d9e78d2a420"
+  },
+  "application_gates": {
+    "provider_pixels_acquired_locally": true,
+    "provider_crs_and_grid_explicit": true,
+    "native_25cm_resolution_confirmed": true,
+    "exact_imagery_acquisition_date_confirmed": false,
+    "independent_spatial_check_passes": false,
+    "event_date_marking_classification_allowed": false,
+    "runtime_geometry_changed_by_this_stage": false,
+    "reason": "The provider grid is directly registered, but a 2024-10 period hint does not prove capture on or before 2024-10-05. Raw-pixel redistribution and independent check-point terms also remain open."
+  }
+}
