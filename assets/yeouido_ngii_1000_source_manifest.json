@@ -94,10 +94,10 @@
   },
   "dem_acquisition_request": {
     "asset": "assets/yeouido_ngii_dem_request.json",
-    "sha256": "b4003ea6d9c01215b8e9f668ed0d76c64b270bc43ecd7e7e7b68ed911181b306",
+    "sha256": "2055e6c3a88f44ce904ac4de1712c778e955f94b6e716fa77745dcd2a39ed8ba",
     "sheet_id": "37608",
     "production_year": 2024,
-    "status": "awaiting_user_date_of_birth_entry"
+    "status": "awaiting_user_date_of_birth_reentry_after_portal_reset"
   },
   "temporal_policy": "프로젝트 소유자가 2025 공식 배포본의 정규화·로컬 파생 사용을 명시적으로 승인했다. 2024-10-05 행사 당시와 동일하다는 주장은 하지 않으며, 당시 상태 검증은 별도 과제로 유지한다.",
   "runtime_status": "이 명세는 출처 발견 기록이며 현재 배포 장면의 구조물 형상을 변경하지 않는다."

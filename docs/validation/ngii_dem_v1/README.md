@@ -11,7 +11,10 @@ year and area: `2024 서울 37608`.
 - Portal selection: complete
 - Authentication: confirmed
 - Application: purpose, detail, and terms prepared
-- Download: waiting for the user to enter the required date of birth
+- Submission attempts: 2 complete forms closed without a browser download event
+  or a new file in the configured Downloads folder
+- Download: waiting for the user to re-enter the required date of birth after
+  the portal reset the form during request diagnostics
 - Runtime impact: none
 
 The portal also lists 2014, 2021, 2022, 2023, and 2025 versions. The 2024
@@ -19,7 +22,13 @@ version is selected because it matches the target event year without the
 post-event temporal override required by the 2025 structure delivery.
 
 The date of birth is intentionally neither inferred nor stored in the
-repository. The prepared Chrome form is retained for direct user entry.
+repository. The prepared Chrome form is retained for direct user re-entry;
+all non-sensitive application fields and the terms choice are already restored.
+
+The portal's modal closes when a complete request is submitted, but neither of
+the two observed submissions emitted a browser download event or created a new
+file in the configured Downloads folder. A third diagnostic pass was stopped
+before submission when reopening the modal cleared the user-entered date.
 
 ## Intake gate
 
