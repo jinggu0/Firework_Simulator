@@ -1,0 +1,57 @@
+{
+  "stage": "V1-6",
+  "target_event_date": "2024-10-05",
+  "bridge_id": "seogang_bridge",
+  "evidence_manifest": "assets/seogang_bridge_vertical_evidence.json",
+  "scene": {
+    "asset": "assets/yeouido_scene.npz",
+    "expected_sha256": "c8b9d2720f935de3532a9401c74d37a55470d23645c06d32c24ff923c3291518",
+    "observed_sha256": "c8b9d2720f935de3532a9401c74d37a55470d23645c06d32c24ff923c3291518",
+    "checksum_matches": true,
+    "expected_elevation_datum_el_m": 2.79,
+    "observed_elevation_datum_el_m": 2.7899999618530273,
+    "datum_matches": true,
+    "bridge_vertex_count": 6330,
+    "stored_bridge_local_y_values_m": [
+      7.0
+    ]
+  },
+  "official_vertical_anchors": [
+    {
+      "anchor_id": "navigation_span_deck_underside",
+      "component": "main_navigation_span",
+      "quantity": "deck_underside_elevation",
+      "absolute_el_m": 23.3,
+      "runtime_y_m": 20.51,
+      "uncertainty_m": null,
+      "source_id": "seoul_council_hangang_bridge_clearance_2012"
+    }
+  ],
+  "source_integrity": {
+    "grade_a_or_b_source_count": 3,
+    "all_sources_checksum_locked": true,
+    "source_files_redistributed_in_repository": false,
+    "note": "The report locks the inspected official attachment checksums. Their licences and source pages remain authoritative; source documents are not copied into the repository."
+  },
+  "geometry_application": {
+    "allowed": false,
+    "status": "blocked_missing_station_registration_and_deck_top_profile",
+    "registered_profiles": 0,
+    "blocking_reasons": [
+      "application_status_is_not_registered",
+      "no_registered_vertical_profile",
+      "declared_blockers_remain",
+      "station_registration_missing"
+    ],
+    "vertices_modified": 0,
+    "direct_height_error_comparison": "blocked_without_station_registration",
+    "note": "EL 23.3 m describes the underside at the navigation span. The stored 7 m value is a terrain-relative deck offset used by many OSM bridge ways, so subtracting the two would be dimensionally and spatially invalid."
+  },
+  "regression": {
+    "scene_checksum_unchanged_during_audit": true,
+    "runtime_frame_path_changed": false,
+    "expected_frame_time_delta_ms": 0.0
+  },
+  "passed": true,
+  "next_evidence_gate": "Register at least two completion-drawing stations to the dated OSM centreline at <=0.25 m plan RMSE, then digitise deck-top EL samples at <=0.10 m documented vertical uncertainty."
+}

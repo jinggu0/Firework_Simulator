@@ -38,6 +38,25 @@ preserving a surface road crossing the same plan position. The asset proves
 only visibility semantics. It does not supply tunnel depth, portal dimensions,
 ramp elevations, retaining walls, or survey-grade road profiles.
 
+`seogang_bridge_vertical_evidence.json` records three official bridge sources
+reviewed for V1-6 without redistributing their source documents: the Seoul
+Bridge Safety Division's 2015 detailed safety diagnosis, the 2019 detailed
+inspection summary, and a Seoul Metropolitan Council appendix. Their inspected
+attachment SHA-256 values are locked in the manifest. The council table gives
+Seogang Bridge's 1,320 m length, 60 m navigation span, 57 m clear span, and
+deck-underside elevation EL 23.3 m. The renderer's EL datum converts the last
+value to runtime Y=20.51 m. It remains an underside scalar at an unregistered
+station, not a deck-top profile. The manifest and `simulator.bridge_evidence`
+therefore prohibit geometry application until station controls, structural
+depth/deck-top samples, registration residuals, and vertical uncertainty pass.
+
+- Seoul Open Government, 2015 safety diagnosis:
+  https://opengov.seoul.go.kr/public/10134339
+- Seoul Open Government, 2019 detailed inspection summary:
+  https://opengov.seoul.go.kr/og/com/download.php?fid=100979&nid=19523034
+- Seoul Metropolitan Council bridge-clearance appendix:
+  https://ms.smc.seoul.kr/attach/record/SEOUL/appendix/a08/A0026735.pdf
+
 `yeouido_detail_osm_2024-10-05.json` is a second query fixed to the same
 historical timestamp. It preserves 131 mapped garden, pitch, track,
 playground, grass, scrub, forest, and wood polygons used by the detailed

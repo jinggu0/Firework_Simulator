@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://firework-simulator.local/schema/bridge-vertical-evidence-v1.json",
+  "title": "Evidence-gated bridge vertical profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "target_event_date",
+    "bridge_id",
+    "coordinate_system",
+    "scene",
+    "sources",
+    "published_dimensions",
+    "vertical_anchors",
+    "drawing_review",
+    "vertical_profile_application"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "target_event_date": {"const": "2024-10-05"},
+    "bridge_id": {"const": "seogang_bridge"},
+    "coordinate_system": {"type": "string", "minLength": 1},
+    "scene": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["asset", "sha256", "elevation_datum_el_m", "runtime_conversion"],
+      "properties": {
+        "asset": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "elevation_datum_el_m": {"type": "number"},
+        "runtime_conversion": {"type": "string", "minLength": 1}
+      }
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/evidence"}
+    },
+    "published_dimensions": {
+      "type": "array",
+      "items": {"type": "object"}
+    },
+    "vertical_anchors": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["anchor_id", "component", "quantity", "elevation_el_m", "runtime_y_m", "uncertainty_m", "source_id", "application_note"],
+        "properties": {
+          "anchor_id": {"type": "string", "minLength": 1},
+          "component": {"type": "string", "minLength": 1},
+          "quantity": {"type": "string", "minLength": 1},
+          "elevation_el_m": {"type": "number"},
+          "runtime_y_m": {"type": "number"},
+          "uncertainty_m": {"type": ["number", "null"], "minimum": 0},
+          "source_id": {"type": "string", "minLength": 1},
+          "application_note": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "drawing_review": {"type": "object"},
+    "vertical_profile_application": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "thresholds", "station_registration", "profiles", "blockers", "runtime_policy"],
+      "properties": {
+        "status": {"type": "string", "minLength": 1},
+        "thresholds": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["maximum_station_plan_rmse_m", "maximum_vertical_uncertainty_m"],
+          "properties": {
+            "maximum_station_plan_rmse_m": {"type": "number", "exclusiveMinimum": 0},
+            "maximum_vertical_uncertainty_m": {"type": "number", "exclusiveMinimum": 0}
+          }
+        },
+        "station_registration": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/$defs/station_registration"}
+          ]
+        },
+        "profiles": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/profile"}
+        },
+        "blockers": {"type": "array", "items": {"type": "string"}},
+        "runtime_policy": {"type": "string", "minLength": 1}
+      }
+    }
+  },
+  "$defs": {
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_id", "source_url", "license", "coordinate_reference_system", "units", "confidence_grade", "uncertainty", "checksum", "notes"],
+      "properties": {
+        "source_id": {"type": "string", "minLength": 1},
+        "source_url": {"type": "string", "minLength": 1},
+        "license": {"type": "string"},
+        "coordinate_reference_system": {"type": "string"},
+        "units": {"type": "string"},
+        "confidence_grade": {"enum": ["A", "B"]},
+        "uncertainty": {"type": "string"},
+        "checksum": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "notes": {"type": "string"}
+      }
+    },
+    "station_registration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["plan_rmse_m", "control_points"],
+      "properties": {
+        "plan_rmse_m": {"type": "number", "minimum": 0},
+        "control_points": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["station_m", "world_xz_m"],
+            "properties": {
+              "station_m": {"type": "number"},
+              "world_xz_m": {
+                "type": "array",
+                "prefixItems": [{"type": "number"}, {"type": "number"}],
+                "minItems": 2,
+                "maxItems": 2
+              }
+            }
+          }
+        }
+      }
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile_id", "component", "source_id", "samples"],
+      "properties": {
+        "profile_id": {"type": "string", "minLength": 1},
+        "component": {"type": "string", "minLength": 1},
+        "source_id": {"type": "string", "minLength": 1},
+        "samples": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["station_m", "vertical_uncertainty_m"],
+            "properties": {
+              "station_m": {"type": "number"},
+              "deck_top_el_m": {"type": "number"},
+              "deck_underside_el_m": {"type": "number"},
+              "structural_depth_m": {"type": "number", "exclusiveMinimum": 0},
+              "vertical_uncertainty_m": {"type": "number", "minimum": 0}
+            },
+            "anyOf": [
+              {"required": ["deck_top_el_m"]},
+              {"required": ["deck_underside_el_m", "structural_depth_m"]}
+            ]
+          }
+        }
+      }
+    }
+  }
+}

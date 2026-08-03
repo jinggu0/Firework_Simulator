@@ -895,6 +895,17 @@ daily GIS building integration dataset and 1–5 m NGII DEM require authenticate
 downloads and can replace these inputs when supplied. OSM attribution and
 licensing are recorded in `assets/ATTRIBUTION.md`.
 
+Bridge vertical geometry has an additional evidence boundary. Official Seoul
+documents establish Seogang Bridge dimensions and an EL 23.3 m deck-underside
+anchor at the navigation span, which is runtime Y=20.51 m after subtracting the
+scene's EL 2.79 m datum. That scalar cannot replace the stored deck Y: the
+vertex shader adds terrain height to the OSM-relative 7 m offset, and the
+official table does not identify a project-space station or deck-top elevation.
+`simulator.bridge_evidence` validates source checksums, station controls,
+registration RMSE, resolvable deck-top samples, and stated vertical uncertainty
+before it permits any explicit vertical offset. The current V1-6 manifest is
+intentionally blocked and leaves `yeouido_scene.npz` bit-identical.
+
 ## Event-site ground cover and street furniture
 
 A second Overpass query fixed to 2024-10-05 10:20 UTC adds 49 distinct

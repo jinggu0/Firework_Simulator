@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "target_event_date": "2024-10-05",
+  "bridge_id": "seogang_bridge",
+  "coordinate_system": "local East-Up-South metres; absolute elevations use Seoul EL metres",
+  "scene": {
+    "asset": "assets/yeouido_scene.npz",
+    "sha256": "c8b9d2720f935de3532a9401c74d37a55470d23645c06d32c24ff923c3291518",
+    "elevation_datum_el_m": 2.79,
+    "runtime_conversion": "runtime_y_m = absolute_EL_m - 2.79 m"
+  },
+  "sources": [
+    {
+      "source_id": "seoul_seogang_safety_diagnosis_2015",
+      "source_url": "https://opengov.seoul.go.kr/public/10134339",
+      "license": "공공누리 제4유형: 출처표시, 비상업적 이용, 변경금지",
+      "coordinate_reference_system": "completion drawing station and Seoul EL; drawing raster not georegistered to project EUS",
+      "units": "m and mm",
+      "confidence_grade": "A",
+      "uncertainty": "published report dimensions are authoritative; raster digitisation uncertainty is unresolved",
+      "checksum": "sha256:4895954617d65e0488b2158786de8e241df2bdd8dcf49b0482e1e23c53bc4fdd",
+      "notes": "서울특별시 교량안전과 서강대교 정밀안전진단 요약보고서 HWP. Repository does not redistribute the source document. Visual review used converted-PDF pages 25, 27, 95, 110 and 115."
+    },
+    {
+      "source_id": "seoul_seogang_detailed_inspection_2019",
+      "source_url": "https://opengov.seoul.go.kr/og/com/download.php?dname=%EC%84%9C%EA%B0%95%EB%8C%80%EA%B5%90+%EC%A0%95%EB%B0%80%EC%A0%90%EA%B2%80%EC%9A%A9%EC%97%AD+%EC%9A%94%EC%95%BD%EB%B3%B4%EA%B3%A0%EC%84%9C.pdf&dtype=basic&fid=100979&nid=19523034&rid=&uri=%2Fsites%2Fdefault%2Ffiles%2Fpublic_new%2F202001%2F100979.pdf",
+      "license": "서울정보소통광장 공개자료; 원문 이용조건 준수",
+      "coordinate_reference_system": "bridge station; no project EUS registration",
+      "units": "m",
+      "confidence_grade": "A",
+      "uncertainty": "published dimensions only; no inferred elevations",
+      "checksum": "sha256:0168e72f1603763759e8c4f2e9006f8d1299714f5eace4db94ffe10e3e5772a2",
+      "notes": "서강대교 정밀점검용역 요약보고서. Confirms main bridge, north approach and Ramp-A dimensions and structural families."
+    },
+    {
+      "source_id": "seoul_council_hangang_bridge_clearance_2012",
+      "source_url": "https://ms.smc.seoul.kr/attach/record/SEOUL/appendix/a08/A0026735.pdf?time=20260625080440",
+      "license": "서울특별시의회 회의록 공개 첨부자료; 출처표시",
+      "coordinate_reference_system": "Seoul EL vertical datum; navigation-span plan station not published in the table",
+      "units": "m",
+      "confidence_grade": "A",
+      "uncertainty": "table precision 0.1 m; exact station and measurement tolerance are not stated",
+      "checksum": "sha256:f1e417e09d942550e56637a93bbe0918dc772282b22b8c95bb494599e2bbf212",
+      "notes": "PDF page 36 table gives Seogang Bridge length 1,320 m, span 60 m, clear span 57 m and deck underside EL 23.3 m."
+    }
+  ],
+  "published_dimensions": [
+    {
+      "component": "main_bridge",
+      "length_m": 1320.0,
+      "width_range_m": [29.0, 34.0],
+      "source_id": "seoul_seogang_detailed_inspection_2019"
+    },
+    {
+      "component": "north_approach_bridge",
+      "length_m": 386.0,
+      "width_m": 29.0,
+      "source_id": "seoul_seogang_detailed_inspection_2019"
+    },
+    {
+      "component": "ramp_a",
+      "length_m": 411.6,
+      "width_m": 7.5,
+      "cross_section_structural_depth_m": 2.035,
+      "cross_section_scope": "published Ramp-A representative cross-section; not assumed constant without longitudinal registration",
+      "source_id": "seoul_seogang_safety_diagnosis_2015"
+    }
+  ],
+  "vertical_anchors": [
+    {
+      "anchor_id": "navigation_span_deck_underside",
+      "component": "main_navigation_span",
+      "quantity": "deck_underside_elevation",
+      "elevation_el_m": 23.3,
+      "runtime_y_m": 20.51,
+      "uncertainty_m": null,
+      "source_id": "seoul_council_hangang_bridge_clearance_2012",
+      "application_note": "The scalar is a verified absolute datum anchor. It is not a deck-top elevation and cannot move scene vertices until its station and structural depth are registered."
+    }
+  ],
+  "drawing_review": {
+    "status": "official_raster_drawings_visually_reviewed_not_digitised",
+    "reviewed_converted_pdf_pages": [25, 27, 95, 110, 115],
+    "observations": [
+      "Page 25 contains the main bridge plan and longitudinal profile.",
+      "Page 27 contains Ramp-A and Ramp-B plan/longitudinal drawings with elevation axes.",
+      "Page 115 gives a 7.5 m Ramp-A cross-section and a shown 2.035 m structural depth.",
+      "The public raster does not yet support a sub-decimetre station-to-EUS registration or a complete deck-top profile."
+    ]
+  },
+  "vertical_profile_application": {
+    "status": "blocked_missing_station_registration_and_deck_top_profile",
+    "thresholds": {
+      "maximum_station_plan_rmse_m": 0.25,
+      "maximum_vertical_uncertainty_m": 0.1
+    },
+    "station_registration": null,
+    "profiles": [],
+    "blockers": [
+      "2012/2015/2019 structural facts predate the event and require an alteration-history check through 2024-10-05",
+      "navigation-span station is not registered to the 2024-10-05 OSM centreline",
+      "main-deck top EL or station-specific structural depth is incomplete",
+      "raster longitudinal-profile labels require control-point digitisation and residual reporting"
+    ],
+    "runtime_policy": "Keep the current scene bit-identical. Never convert EL 23.3 m directly into a deck-top height."
+  }
+}
