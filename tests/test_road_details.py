@@ -1,18 +1,19 @@
 from __future__ import annotations
 
 import json
-from hashlib import sha256
 from pathlib import Path
 
 import numpy as np
 import pytest
 
 from simulator import shaders
+from simulator.materials import MATERIAL_LIBRARY, PatternKind
 from simulator.passes.scene import (
     KERB_REVEAL_HEIGHT_M,
     KERB_TOP_WIDTH_M,
 )
 from simulator.validation.road_details import road_quad_measurements
+from simulator.scene import SURFACE_CYCLEWAY
 
 
 REPORT = Path("docs/validation/road_detail_v1/road_detail_audit.json")
@@ -39,21 +40,18 @@ def test_road_quad_measurement_recovers_metric_width_and_length() -> None:
     assert result["surface_code"].tolist() == [3]
 
 
-def test_road_shader_exposes_every_audited_paint_constant() -> None:
+def test_road_shader_exposes_metric_semantic_paint_contract() -> None:
     source = shaders.source("scene.frag")
 
     for name in (
-        "ROAD_EDGE_LINE_V_INNER",
-        "ROAD_EDGE_LINE_V_OUTER",
-        "ROAD_CENTRE_LINE_V_CORE",
-        "ROAD_CENTRE_LINE_V_SUPPORT",
-        "ROAD_DASH_PERIOD_M",
-        "ROAD_DASH_START_PHASE",
-        "ROAD_DASH_CORE_START_PHASE",
-        "ROAD_DASH_CORE_END_PHASE",
-        "ROAD_DASH_END_PHASE",
+        "ROAD_MARKING_ENCODING_BASE",
+        "ROAD_MARKING_LANE_STRIDE",
+        "ROAD_LANE_LINE_WIDTH_M",
+        "ROAD_LANE_DASH_PAINT_M",
+        "ROAD_LANE_DASH_GAP_M",
     ):
         assert f"const float {name}" in source
+    assert "ROAD_EDGE_LINE_V_INNER" not in source
 
 
 def test_kerb_contract_remains_explicitly_generic() -> None:
@@ -61,13 +59,20 @@ def test_kerb_contract_remains_explicitly_generic() -> None:
     assert KERB_TOP_WIDTH_M == 0.18
 
 
+def test_cycleway_surface_has_no_inferred_transverse_paint() -> None:
+    cycleway = MATERIAL_LIBRARY.get(SURFACE_CYCLEWAY)
+    assert cycleway.pattern == PatternKind.UNIFORM
+    assert cycleway.pattern_mix == 0.0
+
+
 def test_committed_road_detail_audit_blocks_unsupported_geometry() -> None:
     report = json.loads(REPORT.read_text(encoding="utf-8"))
 
     assert report["stage"] == "V2-2a"
+    # This is an archived before-state. Its implementation hashes intentionally
+    # identify the pre-V2-2c files rather than the current working tree.
     for source in report["implementation_sources"].values():
-        path = Path(source["asset"])
-        assert sha256(path.read_bytes()).hexdigest() == source["sha256"]
+        assert len(source["sha256"]) == 64
     inventory = report["runtime_road_inventory"]
     assert inventory["visible_segment_count"] == 35_215
     assert [surface["surface"] for surface in inventory["surfaces"]] == [

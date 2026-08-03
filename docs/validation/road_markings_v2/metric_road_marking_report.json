@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "stage": "V2-2c",
+  "scene": {
+    "asset": "assets/yeouido_scene.npz",
+    "sha256": "c8b9d2720f935de3532a9401c74d37a55470d23645c06d32c24ff923c3291518",
+    "snapshot_utc": "2024-10-05T10:20:00Z"
+  },
+  "binding": {
+    "asset": "assets/yeouido_road_detail_semantics_2024-10-05.json",
+    "sha256": "bd98ab2ad5ea21b9b18cd85b3045226e529853ed3bef33f23183a7e07bb11728",
+    "snapshot_utc": "2024-10-05T10:20:00Z"
+  },
+  "implementation_sources": {
+    "semantics_loader": {
+      "asset": "simulator/road_detail_semantics.py",
+      "sha256": "5eaa2a8ecdedb6a71cda40ff00a21efec1351e02a933d04bdf1793e7c2286006"
+    },
+    "scene_upload": {
+      "asset": "simulator/passes/scene.py",
+      "sha256": "f240dd7e3cab596e2ef02e0dac9187e551c8503f907cddea7d1f5d227034639e"
+    },
+    "road_shader": {
+      "asset": "simulator/shaders/scene.frag",
+      "sha256": "e938368609d5cf79e89bd12b511c3f5b146ac38ad15b688d359c4b25b1b2917c"
+    },
+    "material_table": {
+      "asset": "simulator/materials.py",
+      "sha256": "698256657c703cbfc47cd24219b497558d1292fd6767cfdf59ef3e4ba4c50090"
+    }
+  },
+  "official_dimension_basis": {
+    "road_traffic_act_enforcement_rules_appendix_6_2024_09_20": "https://law.go.kr/LSW/flDownload.do?bylClsCd=110201&flSeq=144234901",
+    "molit_lane_paint_maintenance_manual_2024": "https://www.molit.go.kr/portal/common/download/DownloadMltm2.jsp?FileName=%EC%B0%A8%EC%84%A0%EB%8F%84%EC%83%89+%EC%9C%A0%EC%A7%80%C2%B7%EA%B4%80%EB%A6%AC+%EB%A7%A4%EB%89%B4%EC%96%BC.pdf&FilePath=portal%2FDextUpload%2F202404%2F20240429_133733_839.pdf",
+    "legal_line_width_range_m": [
+      0.15,
+      0.2
+    ],
+    "selected_line_width_m": 0.15,
+    "urban_dash_paint_m": 3.0,
+    "urban_dash_gap_m": 3.0,
+    "site_surveyed": false
+  },
+  "application_contract": {
+    "required_tags": {
+      "oneway": "yes",
+      "lanes": "integer >= 2"
+    },
+    "required_surface_code": 3,
+    "rendered_feature": "white dashed same-direction lane divider",
+    "shader_constants": {
+      "ROAD_MARKING_ENCODING_BASE": 1024.0,
+      "ROAD_MARKING_LANE_STRIDE": 64.0,
+      "ROAD_LANE_LINE_WIDTH_M": 0.15,
+      "ROAD_LANE_DASH_PAINT_M": 3.0,
+      "ROAD_LANE_DASH_GAP_M": 3.0
+    },
+    "stats": {
+      "rendered_segment_count": 35215,
+      "explicit_oneway_lane_way_count": 66,
+      "marked_segment_count": 4387,
+      "marked_lane_divider_count": 9933,
+      "marked_centreline_length_m": 48567.02647805214,
+      "suppressed_asphalt_segment_count": 21229
+    },
+    "marked_fraction_of_asphalt_segments": 0.17126014990630856,
+    "marked_centreline_length_km": 48.56702647805214,
+    "semantic_filter": {
+      "input_segments": 35340,
+      "output_segments": 35215,
+      "excluded_segments": 125,
+      "excluded_osm_way_ids": [
+        75113082,
+        215670926,
+        331203274,
+        474507375,
+        475190608,
+        480824684,
+        914374379,
+        925101314
+      ]
+    }
+  },
+  "performance_measurement": {
+    "command": "python -m tools.profile_runtime --frames 360 --fluid-backend 3d --integrated-only",
+    "resolution": [
+      1280,
+      720
+    ],
+    "frames": 360,
+    "gpu_completion_waited": true,
+    "fluid_backend": "gpu_compute_mac_3d",
+    "frame_p95_ms": 13.475309996283613,
+    "frame_p99_ms": 14.234137006278617,
+    "visual_p95_ms": 10.695730020233896,
+    "physics_p95_ms": 4.098880020319485,
+    "single_run_only": true,
+    "passes_60_fps_budget": true
+  },
+  "gates": {
+    "metric_line_width": true,
+    "metric_dash_length": true,
+    "source_way_binding_required": true,
+    "explicit_oneway_and_lane_count_required": true,
+    "generic_all_asphalt_paint_removed": true,
+    "unsupported_cycleway_transverse_pattern_removed": true,
+    "bidirectional_centre_line_application_allowed": false,
+    "edge_line_application_allowed": false,
+    "turn_arrow_application_allowed": false,
+    "bicycle_symbol_application_allowed": false,
+    "reason": "Lane count and explicit one-way semantics support only same-direction interior dividers. Other marking types lack dated placement or type evidence."
+  },
+  "diagnostic": {
+    "asset": "docs/validation/road_markings_v2/metric_road_marking_map.png",
+    "sha256": "27e8a664c5e5416f690764e7d103413193558f42a8bba48a302e6b962f4af7b1"
+  }
+}

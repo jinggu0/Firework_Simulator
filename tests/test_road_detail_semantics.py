@@ -1,10 +1,20 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from hashlib import sha256
 import json
 from pathlib import Path
 
-from simulator.road_detail_semantics import load_road_detail_semantics
+import numpy as np
+import pytest
+
+from simulator.road_detail_semantics import (
+    ROAD_MARKING_ENCODING_BASE,
+    ROAD_MARKING_LANE_STRIDE,
+    apply_metric_road_marking_semantics,
+    load_road_detail_semantics,
+)
+from simulator.validation.road_details import rendered_road_measurements
 
 
 SOURCE = Path("assets/yeouido_road_osm_2024-10-05.json")
@@ -41,7 +51,7 @@ def test_committed_binding_covers_every_nonambiguous_rendered_segment() -> None:
     assert sum(way_id != 0 for way_id in segment_way_ids) == 35_203
 
 
-def test_binding_retains_only_evidenced_semantics_and_blocks_runtime_paint() -> None:
+def test_binding_retains_only_evidenced_semantics_and_limits_runtime_paint() -> None:
     payload = json.loads(BINDING.read_text(encoding="utf-8"))
     coverage = payload["tag_coverage_way_counts"]
 
@@ -56,4 +66,39 @@ def test_binding_retains_only_evidenced_semantics_and_blocks_runtime_paint() -> 
     assert gates["historical_source_preserved"]
     assert gates["scene_checksum_unchanged"]
     assert gates["unique_binding_coverage_sufficient"]
-    assert not gates["runtime_marking_application_allowed"]
+    assert gates["runtime_marking_application_allowed"]
+    assert "oneway=yes" in gates["runtime_marking_policy"]
+
+
+def test_metric_markings_apply_only_to_explicit_oneway_multilane_segments() -> None:
+    measurements, _, _ = rendered_road_measurements()
+    semantics = load_road_detail_semantics()
+    converted, stats = apply_metric_road_marking_semantics(
+        measurements["quads"].reshape(-1, 10), semantics
+    )
+    quads = converted.reshape(-1, 6, 10)
+    encoded = quads[:, 0, 9] >= ROAD_MARKING_ENCODING_BASE
+
+    assert stats.rendered_segment_count == 35_215
+    assert stats.explicit_oneway_lane_way_count == 66
+    assert stats.marked_segment_count == 4_387
+    assert stats.suppressed_asphalt_segment_count == 21_229
+    assert int(encoded.sum()) == stats.marked_segment_count
+
+    packed = quads[encoded, 0, 9] - ROAD_MARKING_ENCODING_BASE
+    lane_counts = np.floor(packed / ROAD_MARKING_LANE_STRIDE).astype(int)
+    assert lane_counts.min() == 2
+    assert lane_counts.max() == 9
+
+
+def test_metric_markings_refuse_a_disabled_binding_gate() -> None:
+    measurements, _, _ = rendered_road_measurements()
+    semantics = replace(
+        load_road_detail_semantics(),
+        runtime_marking_application_allowed=False,
+    )
+
+    with pytest.raises(ValueError, match="do not allow"):
+        apply_metric_road_marking_semantics(
+            measurements["quads"].reshape(-1, 10), semantics
+        )

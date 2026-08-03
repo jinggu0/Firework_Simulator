@@ -942,8 +942,19 @@ rendered sports fields, running tracks, playgrounds, gardens, and scrub areas
 that were absent from the first broad land-cover pass. Imported road widths
 retain the source hierarchy and select separate compacted-trail, concrete
 footway, red cycleway, and asphalt-road material families. Metric world
-coordinates drive joints, aggregate, lane markings, track markings, and
-rubber-playground tiles without a repeating image texture.
+coordinates drive joints, aggregate, track markings, and rubber-playground
+tiles without a repeating image texture.
+
+The broad OSM road snapshot is separately checksum-locked and its way IDs are
+bound to 35,203 of 35,215 visible centre-line segments. At upload time only an
+explicit `oneway=yes`, integer `lanes>=2`, asphalt way packs its lane count and
+measured mesh width into the existing linear-style float. The fragment shader
+unpacks that value and converts normalized cross-road UV into metres, producing
+15 cm internal dividers with a 3 m paint / 3 m gap period. Untagged asphalt,
+bidirectional centre lines, edge lines, arrows and bicycle symbols receive no
+paint. This avoids a new vertex attribute and draw call while making every
+rendered lane divider traceable to a dated source way. The 15 cm dimension is
+the lower bound of the official Korean 15–20 cm contract, not a site survey.
 
 The historical data contains 25 `natural=wood` regions but no individual tree
 nodes. The asset builder therefore distributes 201 deterministic low-poly

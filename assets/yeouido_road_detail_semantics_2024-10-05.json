@@ -80,8 +80,9 @@
     "historical_source_preserved": true,
     "scene_checksum_unchanged": true,
     "unique_binding_coverage_sufficient": true,
-    "runtime_marking_application_allowed": false,
-    "reason": "V2-2b binds dated source semantics only. V2-2c must apply metric paint selectively and may not infer absent markings."
+    "runtime_marking_application_allowed": true,
+    "runtime_marking_policy": "explicit oneway=yes, integer lanes>=2, asphalt only",
+    "reason": "V2-2c may apply only same-direction lane dividers supported by explicit tags; absent or bidirectional markings remain blocked."
   },
   "ways": [
     {

@@ -41,6 +41,20 @@ copyright or licence restrictions beyond those of its OSM source. The binding
 does not constitute surveyed lane geometry: absent lane markings, turn arrows,
 widths and bicycle symbols remain absent rather than inferred.
 
+V2-2c uses the following official Korean sources only for the physical line
+dimension contract. The Road Traffic Act Enforcement Rules Appendix 6 in force
+immediately before the event specifies the road-marking construction forms;
+the Ministry of Land, Infrastructure and Transport's 2024 lane-paint
+maintenance manual reproduces the 15–20 cm line-width range and the urban
+3 m paint / 3 m gap standard. The renderer selects the 15 cm lower bound.
+These are regulatory dimensions, not a survey of the paint present at
+Yeouido on the event date.
+
+- Road Traffic Act Enforcement Rules Appendix 6, amended 2024-09-20:
+  https://law.go.kr/LSW/flDownload.do?bylClsCd=110201&flSeq=144234901
+- MOLIT Lane-paint Maintenance Manual, 2024:
+  https://www.molit.go.kr/portal/common/download/DownloadMltm2.jsp?FileName=%EC%B0%A8%EC%84%A0%EB%8F%84%EC%83%89+%EC%9C%A0%EC%A7%80%C2%B7%EA%B4%80%EB%A6%AC+%EB%A7%A4%EB%89%B4%EC%96%BC.pdf&FilePath=portal%2FDextUpload%2F202404%2F20240429_133733_839.pdf
+
 `road_structure_semantics_2024-10-05.json` is a compact second historical
 Overpass query at the same instant. It retains the eight AOI highway ways
 tagged as tunnels (including negative `layer`/`level` where present), their OSM

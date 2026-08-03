@@ -58,15 +58,11 @@ const float TRANSMISSION_RADIANCE = 0.00018 / 0.35;
 const float RELIEF_GRADIENT_TO_NORMAL = 64.0;
 // Current grade-D road-paint contract. The V coordinates are normalized road
 // width, so the audit converts these values back to metres per rendered quad.
-const float ROAD_EDGE_LINE_V_INNER = .78;
-const float ROAD_EDGE_LINE_V_OUTER = .87;
-const float ROAD_CENTRE_LINE_V_CORE = .018;
-const float ROAD_CENTRE_LINE_V_SUPPORT = .045;
-const float ROAD_DASH_PERIOD_M = 6.0;
-const float ROAD_DASH_START_PHASE = .10;
-const float ROAD_DASH_CORE_START_PHASE = .18;
-const float ROAD_DASH_CORE_END_PHASE = .58;
-const float ROAD_DASH_END_PHASE = .68;
+const float ROAD_MARKING_ENCODING_BASE = 1024.0;
+const float ROAD_MARKING_LANE_STRIDE = 64.0;
+const float ROAD_LANE_LINE_WIDTH_M = .15;
+const float ROAD_LANE_DASH_PAINT_M = 3.0;
+const float ROAD_LANE_DASH_GAP_M = 3.0;
 
 float hash21(vec2 p) {
     p = fract(p * vec2(123.34, 456.21));
@@ -393,9 +389,10 @@ void main() {
             n, albedo, reflectance
         );
         if (material == 3) {
-            // Asphalt aggregate, repaired patches, edge lines and a dashed
-            // centre line. The upload pass supplies u=metres along the road
-            // and v=-1..1 across it, independent of world orientation.
+            // Asphalt aggregate and evidence-gated metric lane dividers. The
+            // upload pass supplies u=metres along the road and v=-1..1 across
+            // it, plus packed width/lane count only for explicit one-way OSM
+            // ways. Untagged and bidirectional asphalt receives no paint.
             float repair_field = .5;
             if (micro_detail > .001) {
                 repair_field = value_noise(world_position.xz * .045);
@@ -403,30 +400,41 @@ void main() {
             albedo *= mix(.88, 1.06, smoothstep(
                 .38, .68, mix(.5, repair_field, micro_detail)
             ));
-            float cross_road = abs(surface_uv.y);
-            float road_aa = max(fwidth(cross_road), .004);
-            float edge_line = interval(
-                cross_road,
-                ROAD_EDGE_LINE_V_INNER,
-                ROAD_EDGE_LINE_V_OUTER,
-                road_aa
-            );
-            float centre_line = 1.0 - smoothstep(
-                ROAD_CENTRE_LINE_V_CORE,
-                ROAD_CENTRE_LINE_V_SUPPORT + road_aa,
-                cross_road
-            );
-            float dash_phase = fract(surface_uv.x / ROAD_DASH_PERIOD_M);
-            float dash = smoothstep(
-                ROAD_DASH_START_PHASE,
-                ROAD_DASH_CORE_START_PHASE,
-                dash_phase
-            ) * (1.0 - smoothstep(
-                ROAD_DASH_CORE_END_PHASE,
-                ROAD_DASH_END_PHASE,
-                dash_phase
-            ));
-            float marking = max(edge_line, centre_line * dash);
+            float marking = 0.0;
+            if (facade_style >= ROAD_MARKING_ENCODING_BASE) {
+                float encoded_semantics = facade_style
+                                      - ROAD_MARKING_ENCODING_BASE;
+                float lane_count = floor(
+                    encoded_semantics / ROAD_MARKING_LANE_STRIDE
+                );
+                float road_width_m = encoded_semantics
+                                   - lane_count * ROAD_MARKING_LANE_STRIDE;
+                float lateral_m = (surface_uv.y * .5 + .5) * road_width_m;
+                float lane_coordinate = lateral_m * lane_count / road_width_m;
+                float nearest_boundary = floor(lane_coordinate + .5);
+                float internal_boundary = step(.5, nearest_boundary)
+                    * step(nearest_boundary, lane_count - .5);
+                float boundary_distance_m = abs(
+                    lane_coordinate - nearest_boundary
+                ) * road_width_m / lane_count;
+                float paint_aa_m = max(fwidth(lateral_m), .006);
+                float divider = 1.0 - smoothstep(
+                    ROAD_LANE_LINE_WIDTH_M * .5 - paint_aa_m,
+                    ROAD_LANE_LINE_WIDTH_M * .5 + paint_aa_m,
+                    boundary_distance_m
+                );
+                float dash_period_m = ROAD_LANE_DASH_PAINT_M
+                                    + ROAD_LANE_DASH_GAP_M;
+                float dash_position_m = mod(surface_uv.x, dash_period_m);
+                float dash_signed_distance_m = abs(
+                    dash_position_m - ROAD_LANE_DASH_PAINT_M * .5
+                ) - ROAD_LANE_DASH_PAINT_M * .5;
+                float dash_aa_m = max(fwidth(surface_uv.x), .012);
+                float dash = 1.0 - smoothstep(
+                    -dash_aa_m, dash_aa_m, dash_signed_distance_m
+                );
+                marking = divider * internal_boundary * dash;
+            }
             float paint_wear = value_noise(world_position.xz * 1.7 + 17.0);
             vec3 aged_paint = vec3(.52, .52, .46)
                              * mix(.72, 1.0, paint_wear);

@@ -1,0 +1,45 @@
+{
+  "view_id": "metric_lane_close",
+  "subject": "road_ground",
+  "position_eus_m": [
+    -880.5568261,
+    12.0525367,
+    349.1555049
+  ],
+  "target_eus_m": [
+    -845.5282393,
+    10.5672874,
+    320.9066446
+  ],
+  "yaw_deg": 51.11550358866521,
+  "pitch_deg": -1.8903918984884964,
+  "display_mode": "human_vision",
+  "frames": 8,
+  "synthetic_firework_present": false,
+  "surface": "land",
+  "surface_height_m": 10.372536659240723,
+  "camera_clearance_m": 1.6800000407592766,
+  "notes": "Engineering close view along an explicit one-way two-lane OSM way; not a historical camera.",
+  "scene_asset": "assets/yeouido_scene.npz",
+  "scene_asset_sha256": "c8b9d2720f935de3532a9401c74d37a55470d23645c06d32c24ff923c3291518",
+  "sdr": {
+    "asset": "metric_lane_close.sdr.png",
+    "sha256": "c14b25931c76ee283514761c3039ef5f60f4928aeb48d0ebde23e04ee1fcf814",
+    "statistics": {
+      "width": 1280,
+      "height": 720,
+      "median_rgb8": [
+        21.0,
+        20.0,
+        21.0
+      ],
+      "luminance_p05_p50_p95": [
+        12.9278,
+        19.999999999999996,
+        45.927800000000005
+      ],
+      "clipped_black_fraction": 0.0,
+      "clipped_white_fraction": 0.0
+    }
+  }
+}

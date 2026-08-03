@@ -12,6 +12,7 @@ from typing import Any
 import numpy as np
 
 from simulator.scene import _road_surface, _road_width, build_scene, load_scene
+from simulator.road_detail_semantics import RUNTIME_MARKING_POLICY
 from simulator.validation.road_details import (
     rendered_road_measurements,
     road_quad_measurements,
@@ -250,10 +251,11 @@ def build_binding(source_path: Path, scene_path: Path) -> dict[str, Any]:
             "historical_source_preserved": True,
             "scene_checksum_unchanged": True,
             "unique_binding_coverage_sufficient": coverage >= 0.99,
-            "runtime_marking_application_allowed": False,
+            "runtime_marking_application_allowed": True,
+            "runtime_marking_policy": RUNTIME_MARKING_POLICY,
             "reason": (
-                "V2-2b binds dated source semantics only. V2-2c must apply "
-                "metric paint selectively and may not infer absent markings."
+                "V2-2c may apply only same-direction lane dividers supported "
+                "by explicit tags; absent or bidirectional markings remain blocked."
             ),
         },
         "ways": [ways[way_id] for way_id in sorted(ways)],
