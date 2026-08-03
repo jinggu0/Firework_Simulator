@@ -27,6 +27,20 @@ bridge and road ways, parks, grass, forest, and the Han River multipolygon.
 OSM remains a community dataset: missing heights use documented fallbacks and
 do not establish survey-grade equality with every October 5, 2024 structure.
 
+`yeouido_road_osm_2024-10-05.json` is a dedicated historical Overpass extract
+of all 2,421 `highway` ways intersecting the same bounding box at 2024-10-05
+10:20 UTC. It preserves way IDs, complete returned tags and geometry under the
+ODbL, together with the exact query, retrieval endpoint and bounding box. The
+snapshot was retrieved on 2026-08-03 from an attic-capable Overpass endpoint.
+
+`yeouido_road_detail_semantics_2024-10-05.json` is original project work
+derived from that extract. It checksum-locks both source and shipped scene and
+binds OSM way IDs plus selected road tags to the rendered centreline segments
+using orientation-independent endpoints quantized to 1 cm. It does not add
+copyright or licence restrictions beyond those of its OSM source. The binding
+does not constitute surveyed lane geometry: absent lane markings, turn arrows,
+widths and bicycle symbols remain absent rather than inferred.
+
 `road_structure_semantics_2024-10-05.json` is a compact second historical
 Overpass query at the same instant. It retains the eight AOI highway ways
 tagged as tunnels (including negative `layer`/`level` where present), their OSM

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import replace
+from datetime import date
 import json
 from pathlib import Path
 import urllib.parse
@@ -29,7 +30,9 @@ def _overpass(query: str) -> dict:
         )
         try:
             with urllib.request.urlopen(request, timeout=300) as response:
-                return json.load(response)
+                payload = json.load(response)
+                payload["_retrieval_endpoint"] = endpoint
+                return payload
         except Exception as error:
             last_error = error
     raise RuntimeError("all configured Overpass endpoints failed") from last_error
@@ -65,6 +68,56 @@ out body;
     return _overpass(query)
 
 
+def road_query(snapshot_utc: str = SNAPSHOT_UTC) -> str:
+    south, west, north, east = BBOX
+    return f"""
+[out:json][timeout:240][date:"{snapshot_utc}"];
+way["highway"]({south},{west},{north},{east});
+out geom tags;
+"""
+
+
+def download_roads(snapshot_utc: str = SNAPSHOT_UTC) -> dict:
+    return _overpass(road_query(snapshot_utc))
+
+
+def write_road_source_snapshot(
+    payload: dict,
+    output: Path,
+    snapshot_utc: str = SNAPSHOT_UTC,
+) -> None:
+    elements = [
+        {
+            "type": element.get("type", "way"),
+            "id": int(element["id"]),
+            "geometry": element.get("geometry", []),
+            "tags": element.get("tags", {}),
+        }
+        for element in payload.get("elements", [])
+        if element.get("type") == "way"
+        and element.get("tags", {}).get("highway")
+    ]
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "provider": "OpenStreetMap contributors via Overpass API",
+                "licence": "ODbL 1.0",
+                "endpoint": payload.get("_retrieval_endpoint", ""),
+                "query": road_query(snapshot_utc).strip(),
+                "bbox_wgs84": [BBOX[1], BBOX[0], BBOX[3], BBOX[2]],
+                "snapshot_utc": snapshot_utc,
+                "retrieved_date": date.today().isoformat(),
+                "elements": elements,
+            },
+            ensure_ascii=False,
+            separators=(",", ":"),
+        ) + "\n",
+        encoding="utf-8",
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -95,7 +148,25 @@ def main() -> None:
         type=Path,
         default=Path("assets/yeouido_detail_osm_2024-10-05.json"),
     )
+    parser.add_argument(
+        "--roads-output",
+        type=Path,
+        default=Path("assets/yeouido_road_osm_2024-10-05.json"),
+    )
+    parser.add_argument(
+        "--roads-only",
+        action="store_true",
+        help="Download and preserve dated highway ways without rebuilding the scene.",
+    )
     args = parser.parse_args()
+    if args.roads_only:
+        roads = download_roads(args.snapshot)
+        write_road_source_snapshot(roads, args.roads_output, args.snapshot)
+        print(
+            f"saved {args.roads_output}: "
+            f"{len(roads.get('elements', [])):,} dated highway ways"
+        )
+        return
     osm = download(args.snapshot)
     scene = build_scene(osm, *ORIGIN, snapshot_utc=args.snapshot)
     if args.buildings_only or args.planimetry_only:
