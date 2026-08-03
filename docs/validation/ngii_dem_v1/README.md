@@ -37,7 +37,9 @@ a queued request or a large-file-transfer handoff.
 data request route. It asks for the preferred 2024 product, the exact six-sheet
 legacy fallback, and all metadata needed to evaluate the acceptance gate. The
 request submission is authorized, but the public data portal requires separate
-authentication from the NGII session. It has not been submitted externally and
+authentication from the NGII session. The retained Chrome tab is at the portal
+ID login form, which requires user credentials and a CAPTCHA. Neither was read
+or entered by the agent. The request has not been submitted externally and
 contains no applicant personal information. Its completeness is locked by
 `ngii_dem_provider_request_report.json`.
 

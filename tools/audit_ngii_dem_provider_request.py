@@ -127,6 +127,11 @@ def build_report(
         submission.get("authentication_required") is True
         and submission.get("authentication_completed") is False
     )
+    credential_handling_safe = bool(
+        submission.get("credentials_entered_by_agent") is False
+        and submission.get("captcha_present") is True
+        and submission.get("captcha_completed") is False
+    )
     payload_ready = bool(
         request.get("status")
         in {
@@ -139,6 +144,7 @@ def build_report(
         and deliverables_complete
         and metadata_link_matches
         and privacy_safe
+        and credential_handling_safe
         and not external_submission_performed
         and request.get("acceptance_gate", {}).get("scene_merge_allowed") is False
         and request.get("acceptance_gate", {}).get("scene_vertices_modified") == 0
@@ -178,6 +184,12 @@ def build_report(
             "metadata_link_matches": metadata_link_matches,
             "personal_information_keys_found": personal_keys,
             "privacy_safe": privacy_safe,
+            "credential_handling_safe": credential_handling_safe,
+            "authentication_method_selected": submission.get(
+                "authentication_method_selected"
+            ),
+            "captcha_present": submission.get("captcha_present") is True,
+            "captcha_completed": submission.get("captcha_completed") is True,
         },
         "submission_payload_ready": payload_ready,
         "ready_for_manual_submission": payload_ready,
@@ -188,7 +200,8 @@ def build_report(
         "scene_vertices_modified": 0,
         "blocking_reasons": blockers,
         "next_evidence_gate": (
-            "A user-reviewed external submission and provider delivery are still required. "
+            "User-completed portal authentication and CAPTCHA, external submission, "
+            "and provider delivery are still required. "
             "Verify the raster header, checksum, license, plan RMSE <= 0.25 m, and "
             "vertical uncertainty <= 0.10 m before any scene merge."
         ),

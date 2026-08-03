@@ -62,9 +62,9 @@
     },
     "provider_request": {
       "request_asset": "assets/yeouido_ngii_dem_provider_request.json",
-      "request_sha256": "dd53dc39fd483dd0dea697e0255902f6d8f508e85a50542b48ebad7ac0d41217",
+      "request_sha256": "dc5d72077de815cbdb7214032345e20209d004e6e870ec0d86777bbb53b02c43",
       "audit_report": "docs/validation/ngii_dem_v1/ngii_dem_provider_request_report.json",
-      "audit_report_sha256": "4796d30187bb8d1e91e023cec6902d856dcc35767150ee48711b5407567d4d76",
+      "audit_report_sha256": "e924ea447202e2aeaa9987d08cf4ec65eb12dca06f3963b135d2f91e5e3dc7bf",
       "status": "submission_authorized_waiting_for_portal_authentication",
       "external_submission_performed": false
     },
