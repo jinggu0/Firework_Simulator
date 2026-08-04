@@ -255,6 +255,105 @@ def height_source_attribution(snapshot_path: Path) -> dict[str, Any]:
     }
 
 
+#: A building type needs at least this many tagged neighbours in the same dated
+#: snapshot before their median is worth treating as a candidate default.
+MINIMUM_TYPE_SAMPLE = 20
+
+
+def untagged_default_plausibility(
+    snapshot_path: Path, asset: Path, default_height_m: float
+) -> dict[str, Any]:
+    """Test the flat untagged default against the tagged buildings beside it.
+
+    Every building with neither `height` nor `building:levels` is built at one
+    constant. Whether that constant is reasonable is answerable from the same
+    dated snapshot: the buildings that *do* carry heights are the comparison
+    group, and they can be split by building type so apartments are judged
+    against apartments.
+
+    The comparison is not unbiased — a building large enough to be notable is
+    likelier to have been tagged — so the per-type split matters more than the
+    overall median, and the result is a candidate rather than a correction.
+    """
+
+    from statistics import median, quantiles
+
+    snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    tagged: list[tuple[float, str]] = []
+    untagged: list[str] = []
+    for element in snapshot["elements"]:
+        tags = element["tags"]
+        kind = tags.get("building") or tags.get("building:part") or "(none)"
+        raw = tags.get("height", "").lower().replace("m", "").strip()
+        try:
+            tagged.append((float(raw), kind))
+            continue
+        except ValueError:
+            pass
+        try:
+            levels = float(tags.get("building:levels", ""))
+            tagged.append((max(3.2, levels * 3.2), kind))
+        except ValueError:
+            untagged.append(kind)
+
+    heights = [height for height, _ in tagged]
+    by_type: dict[str, list[float]] = {}
+    for height, kind in tagged:
+        by_type.setdefault(kind, []).append(height)
+    untagged_counts: dict[str, int] = {}
+    for kind in untagged:
+        untagged_counts[kind] = untagged_counts.get(kind, 0) + 1
+
+    candidates = []
+    for kind, count in sorted(
+        untagged_counts.items(), key=lambda item: -item[1]
+    ):
+        sample = by_type.get(kind, [])
+        if len(sample) < MINIMUM_TYPE_SAMPLE:
+            continue
+        candidates.append(
+            {
+                "building_type": kind,
+                "untagged_count": count,
+                "tagged_sample": len(sample),
+                "tagged_median_m": round(median(sample), 2),
+                "current_default_m": default_height_m,
+                "ratio_to_default": round(median(sample) / default_height_m, 2),
+            }
+        )
+
+    with np.load(asset) as archive:
+        vertices = archive["building_vertices"]
+    at_default = int(
+        np.count_nonzero(np.isclose(vertices[:, 1].astype(float), default_height_m, atol=1e-3))
+    )
+
+    return {
+        "default_height_m": default_height_m,
+        "untagged_way_count": len(untagged),
+        "tagged_way_count": len(tagged),
+        "tagged_median_m": round(median(heights), 2),
+        "tagged_quartiles_m": [round(value, 2) for value in quantiles(heights, n=4)],
+        "tagged_fraction_at_or_below_default": round(
+            sum(1 for height in heights if height <= default_height_m)
+            / len(heights),
+            4,
+        ),
+        "untagged_composition": dict(
+            sorted(untagged_counts.items(), key=lambda item: -item[1])
+        ),
+        "per_type_candidates": candidates,
+        "scene_vertices_at_default": at_default,
+        "scene_vertex_share_at_default": round(at_default / len(vertices), 4),
+        "supported_by_evidence": False,
+        "not_applied_because": (
+            "Replacing the default would move the mass of every untagged "
+            "building, and rebuilding the scene asset needs a fresh geometry "
+            "download. The candidates are recorded, not applied."
+        ),
+    }
+
+
 def scene_style_usage(asset: Path) -> dict[float, dict[str, int]]:
     """Wall and roof vertex counts per style in the built asset."""
 
@@ -435,6 +534,13 @@ def build_report(
             for row in storey_rows
             if abs(row["relative_error"]) <= 0.05
         )
+    plausibility = (
+        untagged_default_plausibility(
+            building_tags_path, scene_asset_path, storey["untagged_default_height_m"]
+        )
+        if attribution is not None and storey["untagged_default_height_m"]
+        else None
+    )
     worst = (
         max(storey_rows, key=lambda row: abs(row["relative_error"]))
         if storey_rows
@@ -521,6 +627,14 @@ def build_report(
                 "neither height nor building:levels, so their mass comes from "
                 f"the {storey['untagged_default_height_m']} m default alone"
             )
+    if plausibility is not None:
+        blockers.append(
+            f"the {plausibility['default_height_m']} m default stands at "
+            f"{plausibility['scene_vertex_share_at_default'] * 100:.1f}% of all "
+            "building vertices while the tagged buildings beside it have a "
+            f"median of {plausibility['tagged_median_m']} m, and it is not "
+            "supported by evidence"
+        )
 
     return {
         "schema_version": 1,
@@ -570,6 +684,7 @@ def build_report(
             "rows": storey_rows,
         },
         "height_source_attribution": attribution,
+        "untagged_default_plausibility": plausibility,
         "implied_floor_counts": implied,
         "checks": {
             "styles_consistent": styles_consistent,
@@ -591,6 +706,7 @@ def build_report(
             "photo_registration_available": bool(
                 evidence["photo_registration"]["registerable_viewpoint_count"]
             ),
+            "untagged_default_height_supported_by_evidence": False,
             "runtime_geometry_changed_by_this_stage": False,
             "scene_vertices_modified": 0,
         },

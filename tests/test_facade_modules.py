@@ -387,6 +387,60 @@ def test_the_audit_still_runs_without_the_snapshot(tmp_path: Path) -> None:
     assert not report["storey_height_consistency"]["storey_heights_agree"]
 
 
+def test_the_default_height_dominates_the_built_scene() -> None:
+    # Independent of the audit: 12.0 m must actually be the most common
+    # non-zero building height in the geometry, or the finding is theoretical.
+    import numpy as np
+
+    with np.load(SCENE_ASSET) as archive:
+        heights = np.round(archive["building_vertices"][:, 1].astype(float), 2)
+    values, counts = np.unique(heights[heights > 0.0], return_counts=True)
+    ranked = values[np.argsort(-counts)]
+
+    assert ranked[0] == 12.0
+    # By a wide margin: more than triple the next most common height.
+    assert counts.max() > 3 * np.sort(counts)[-2]
+
+
+def test_the_untagged_default_is_measured_against_its_neighbours() -> None:
+    report = json.loads(REPORT.read_text(encoding="utf-8"))
+    plausibility = report["untagged_default_plausibility"]
+
+    assert plausibility["default_height_m"] == 12.0
+    assert plausibility["untagged_way_count"] == 456
+    assert plausibility["tagged_way_count"] == 858
+    assert plausibility["scene_vertices_at_default"] == 17064
+    assert plausibility["scene_vertex_share_at_default"] == 0.1643
+    # The comparison group is four times taller at the median, and only 15.4%
+    # of it sits at or below the constant every untagged building is built at.
+    assert plausibility["tagged_median_m"] == 40.0
+    assert plausibility["tagged_fraction_at_or_below_default"] == 0.1538
+
+
+def test_the_candidates_require_a_real_sample_and_are_not_applied() -> None:
+    from tools.audit_facade_modules import MINIMUM_TYPE_SAMPLE
+
+    report = json.loads(REPORT.read_text(encoding="utf-8"))
+    plausibility = report["untagged_default_plausibility"]
+    candidates = {row["building_type"]: row for row in plausibility["per_type_candidates"]}
+
+    assert candidates["apartments"]["untagged_count"] == 121
+    assert candidates["apartments"]["tagged_median_m"] == 48.0
+    assert candidates["apartments"]["ratio_to_default"] == 4.0
+    for row in plausibility["per_type_candidates"]:
+        assert row["tagged_sample"] >= MINIMUM_TYPE_SAMPLE
+    # Types with too few tagged neighbours must not produce a candidate, however
+    # many untagged buildings they have.
+    assert "house" not in candidates
+    assert "roof" not in candidates
+    # Nothing here changes geometry.
+    assert not report["application_gates"][
+        "untagged_default_height_supported_by_evidence"
+    ]
+    assert report["application_gates"]["scene_vertices_modified"] == 0
+    assert plausibility["not_applied_because"]
+
+
 def test_the_style_constants_and_landmark_heights_still_parse() -> None:
     scene_module = SCENE_MODULE.read_text(encoding="utf-8")
 

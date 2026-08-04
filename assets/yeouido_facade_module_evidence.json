@@ -175,7 +175,8 @@
       "value": 12.0,
       "used_by": "simulator/scene.py _height(), for any building with neither height nor building:levels",
       "evidence_grade": "D",
-      "basis": "A flat fallback standing in for an unknown building. Roughly four storeys at the assumed 3.2 m."
+      "basis": "A flat fallback standing in for an unknown building. Roughly four storeys at the assumed 3.2 m.",
+      "measured_against_neighbours": "Confirmed in geometry, not just in theory: 17,064 building vertices, 16.4% of all of them, sit at exactly 12.00 m, the most common non-zero height and more than triple the next. Against the 858 buildings in the same dated snapshot that do carry heights, the median is 40.0 m and only 15.4% sit at or below 12.0 m. By type: 121 untagged apartments against a tagged apartment median of 48.0 m (4.0x), 163 untagged 'yes' against 24.0 m (2.0x), 119 untagged commercial against 20.0 m (1.67x). Tagging is biased toward larger buildings, so the per-type split is the more reliable read and these remain candidates, not corrections."
     },
     "known_inconsistency": "The importer derives heights at 3.2 m per storey while the shader paints storey bands at each family's own floor height, 3.05 m to 4.8 m. For any building whose height came from building:levels the rendered band count therefore contradicts the floor count that produced the height, by -33.3% for the FKI family down to +4.9% for residential.",
     "not_reconciled_because": "Making the two agree would move every untagged building's mass or every family's storey banding, and no held evidence says which value is right. It is reported rather than silently changed.",
@@ -198,6 +199,7 @@
     "a published overall height for the IFC towers; the scene currently takes theirs from OSM tags with no separate citation",
     "surveyed or published floor-to-floor heights for the residential and institutional families, which together cover most wall area in the scene",
     "a photograph with a solvable camera pose, or an architectural elevation, for any named landmark",
-    "published floor counts remain the open item for raising the grade-D module dimensions to B; the dated OSM snapshot supplies building:levels for 206 ways but OSM is a community dataset, so it caps at grade B and covers none of the named landmark towers"
+    "published floor counts remain the open item for raising the grade-D module dimensions to B; the dated OSM snapshot supplies building:levels for 206 ways but OSM is a community dataset, so it caps at grade B and covers none of the named landmark towers",
+    "authorisation to rebuild assets/yeouido_scene.npz, which needs a fresh building geometry download, before any change to the 12.0 m default can be applied and measured"
   ]
 }

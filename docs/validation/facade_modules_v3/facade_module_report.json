@@ -9,7 +9,7 @@
     "scene_asset": "assets/yeouido_scene.npz",
     "scene_asset_sha256": "c8b9d2720f935de3532a9401c74d37a55470d23645c06d32c24ff923c3291518",
     "evidence": "assets/yeouido_facade_module_evidence.json",
-    "evidence_sha256": "abbefd6f605824b4df19ecfb5eb1f0f5d679fc8b6c2dc0064576e61903e62b1e",
+    "evidence_sha256": "c201f59e66c9a6d7d9d4626e4af28898e953f4cc54e653b7fc7b686219dc90ad",
     "attribution": "assets/ATTRIBUTION.md",
     "attribution_sha256": "ce53e6b3237d07b7277e2cc692b8f1ee37221e1e2d13848ddb6b0e32836a83c0"
   },
@@ -344,6 +344,72 @@
     "exposed_building_count": 206,
     "exposed_within_5_percent": 202
   },
+  "untagged_default_plausibility": {
+    "default_height_m": 12.0,
+    "untagged_way_count": 456,
+    "tagged_way_count": 858,
+    "tagged_median_m": 40.0,
+    "tagged_quartiles_m": [
+      20.0,
+      40.0,
+      57.6
+    ],
+    "tagged_fraction_at_or_below_default": 0.1538,
+    "untagged_composition": {
+      "yes": 163,
+      "apartments": 121,
+      "commercial": 119,
+      "roof": 30,
+      "school": 6,
+      "house": 5,
+      "construction": 4,
+      "church": 2,
+      "train_station": 1,
+      "office": 1,
+      "government": 1,
+      "parking": 1,
+      "hut": 1,
+      "kindergarten": 1
+    },
+    "per_type_candidates": [
+      {
+        "building_type": "yes",
+        "untagged_count": 163,
+        "tagged_sample": 205,
+        "tagged_median_m": 24.0,
+        "current_default_m": 12.0,
+        "ratio_to_default": 2.0
+      },
+      {
+        "building_type": "apartments",
+        "untagged_count": 121,
+        "tagged_sample": 297,
+        "tagged_median_m": 48.0,
+        "current_default_m": 12.0,
+        "ratio_to_default": 4.0
+      },
+      {
+        "building_type": "commercial",
+        "untagged_count": 119,
+        "tagged_sample": 27,
+        "tagged_median_m": 20.0,
+        "current_default_m": 12.0,
+        "ratio_to_default": 1.67
+      },
+      {
+        "building_type": "office",
+        "untagged_count": 1,
+        "tagged_sample": 181,
+        "tagged_median_m": 40.0,
+        "current_default_m": 12.0,
+        "ratio_to_default": 3.33
+      }
+    ],
+    "scene_vertices_at_default": 17064,
+    "scene_vertex_share_at_default": 0.1643,
+    "supported_by_evidence": false,
+    "not_applied_because": "Replacing the default would move the mass of every untagged building, and rebuilding the scene asset needs a fresh geometry download. The candidates are recorded, not applied."
+  },
   "implied_floor_counts": [
     {
       "landmark_key": "63_city",
@@ -411,6 +477,7 @@
     "module_dimensions_traceable": true,
     "surveyed_facade_module_claim_allowed": false,
     "photo_registration_available": false,
+    "untagged_default_height_supported_by_evidence": false,
     "runtime_geometry_changed_by_this_stage": false,
     "scene_vertices_modified": 0
   },
@@ -420,11 +487,13 @@
     "a published overall height for the IFC towers; the scene currently takes theirs from OSM tags with no separate citation",
     "surveyed or published floor-to-floor heights for the residential and institutional families, which together cover most wall area in the scene",
     "a photograph with a solvable camera pose, or an architectural elevation, for any named landmark",
-    "published floor counts remain the open item for raising the grade-D module dimensions to B; the dated OSM snapshot supplies building:levels for 206 ways but OSM is a community dataset, so it caps at grade B and covers none of the named landmark towers"
+    "published floor counts remain the open item for raising the grade-D module dimensions to B; the dated OSM snapshot supplies building:levels for 206 ways but OSM is a community dataset, so it caps at grade B and covers none of the named landmark towers",
+    "authorisation to rebuild assets/yeouido_scene.npz, which needs a fresh building geometry download, before any change to the 12.0 m default can be applied and measured"
   ],
   "blocking_reasons": [
     "9 facade families carry unsurveyed module dimensions, so no surveyed-fidelity claim may be made",
     "the importer derives heights at 3.2 m per storey while the shader paints FACADE_FKI at 4.8 m, a 33.3% disagreement, so rendered storey bands contradict the source floor count; the worst family that actually holds such buildings is FACADE_GLASS_BLUE at 30.0% over 2 buildings",
-    "456 of 1314 dated building ways (34.7%) carry neither height nor building:levels, so their mass comes from the 12.0 m default alone"
+    "456 of 1314 dated building ways (34.7%) carry neither height nor building:levels, so their mass comes from the 12.0 m default alone",
+    "the 12.0 m default stands at 16.4% of all building vertices while the tagged buildings beside it have a median of 40.0 m, and it is not supported by evidence"
   ]
 }
