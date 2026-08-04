@@ -1,0 +1,258 @@
+{
+  "schema_version": 1,
+  "stage": "V3-1a",
+  "inputs": {
+    "shader": "simulator/shaders/scene.frag",
+    "shader_sha256": "e938368609d5cf79e89bd12b511c3f5b146ac38ad15b688d359c4b25b1b2917c",
+    "scene_module": "simulator/scene.py",
+    "scene_module_sha256": "47784651de0dbae3c5544c4805f6bf1aaef76a7e5fcf2b590946d49fd4ca119b",
+    "scene_asset": "assets/yeouido_scene.npz",
+    "scene_asset_sha256": "c8b9d2720f935de3532a9401c74d37a55470d23645c06d32c24ff923c3291518",
+    "evidence": "assets/yeouido_facade_module_evidence.json",
+    "evidence_sha256": "e8231f0c0e5953091b57c1079bc7d8d296e18657a6780ba27fb650920e550368",
+    "attribution": "assets/ATTRIBUTION.md",
+    "attribution_sha256": "ce53e6b3237d07b7277e2cc692b8f1ee37221e1e2d13848ddb6b0e32836a83c0"
+  },
+  "coverage": {
+    "declared_style_count": 12,
+    "scene_style_count": 12,
+    "scene_styles": [
+      0.0,
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      5.0,
+      6.0,
+      7.0,
+      8.0,
+      9.0,
+      10.0,
+      12.0
+    ],
+    "undeclared_scene_styles": [],
+    "styles_without_a_shader_branch": [],
+    "styles_inheriting_the_generic_grid": [],
+    "opaque_styles": [
+      9.0,
+      10.0
+    ],
+    "windowed_style_count": 9,
+    "styles_consistent": true
+  },
+  "module_dimensions": [
+    {
+      "facade_style": 0.0,
+      "name": "FACADE_GENERIC",
+      "bay_width_m": 4.2,
+      "floor_height_m": 3.25,
+      "evidence_grade": "D",
+      "wall_vertex_count": 30714
+    },
+    {
+      "facade_style": 1.0,
+      "name": "FACADE_GLASS_BLUE",
+      "bay_width_m": 3.6,
+      "floor_height_m": 4.57,
+      "evidence_grade": "D",
+      "wall_vertex_count": 2040
+    },
+    {
+      "facade_style": 2.0,
+      "name": "FACADE_GOLD_63",
+      "bay_width_m": 3.25,
+      "floor_height_m": 4.0,
+      "evidence_grade": "D",
+      "wall_vertex_count": 4464
+    },
+    {
+      "facade_style": 3.0,
+      "name": "FACADE_RESIDENTIAL",
+      "bay_width_m": 3.4,
+      "floor_height_m": 3.05,
+      "evidence_grade": "D",
+      "wall_vertex_count": 22548
+    },
+    {
+      "facade_style": 4.0,
+      "name": "FACADE_INSTITUTIONAL",
+      "bay_width_m": 5.4,
+      "floor_height_m": 3.8,
+      "evidence_grade": "D",
+      "wall_vertex_count": 7902
+    },
+    {
+      "facade_style": 5.0,
+      "name": "FACADE_PARC1",
+      "bay_width_m": 3.8,
+      "floor_height_m": 4.65,
+      "evidence_grade": "D",
+      "wall_vertex_count": 96
+    },
+    {
+      "facade_style": 6.0,
+      "name": "FACADE_HOTEL",
+      "bay_width_m": 3.2,
+      "floor_height_m": 3.55,
+      "evidence_grade": "D",
+      "wall_vertex_count": 708
+    },
+    {
+      "facade_style": 7.0,
+      "name": "FACADE_FKI",
+      "bay_width_m": 3.35,
+      "floor_height_m": 4.8,
+      "evidence_grade": "D",
+      "wall_vertex_count": 222
+    },
+    {
+      "facade_style": 8.0,
+      "name": "FACADE_NATIONAL_ASSEMBLY",
+      "bay_width_m": 5.8,
+      "floor_height_m": 3.6,
+      "evidence_grade": "D",
+      "wall_vertex_count": 1662
+    }
+  ],
+  "style_usage": {
+    "0.0": {
+      "vertex_count": 42135,
+      "roof_vertex_count": 11421,
+      "wall_vertex_count": 30714
+    },
+    "1.0": {
+      "vertex_count": 2793,
+      "roof_vertex_count": 753,
+      "wall_vertex_count": 2040
+    },
+    "2.0": {
+      "vertex_count": 4590,
+      "roof_vertex_count": 126,
+      "wall_vertex_count": 4464
+    },
+    "3.0": {
+      "vertex_count": 31194,
+      "roof_vertex_count": 8646,
+      "wall_vertex_count": 22548
+    },
+    "4.0": {
+      "vertex_count": 12027,
+      "roof_vertex_count": 4125,
+      "wall_vertex_count": 7902
+    },
+    "5.0": {
+      "vertex_count": 132,
+      "roof_vertex_count": 36,
+      "wall_vertex_count": 96
+    },
+    "6.0": {
+      "vertex_count": 990,
+      "roof_vertex_count": 282,
+      "wall_vertex_count": 708
+    },
+    "7.0": {
+      "vertex_count": 381,
+      "roof_vertex_count": 159,
+      "wall_vertex_count": 222
+    },
+    "8.0": {
+      "vertex_count": 2172,
+      "roof_vertex_count": 510,
+      "wall_vertex_count": 1662
+    },
+    "9.0": {
+      "vertex_count": 2880,
+      "roof_vertex_count": 0,
+      "wall_vertex_count": 2880
+    },
+    "10.0": {
+      "vertex_count": 1152,
+      "roof_vertex_count": 0,
+      "wall_vertex_count": 1152
+    },
+    "12.0": {
+      "vertex_count": 3420,
+      "roof_vertex_count": 3420,
+      "wall_vertex_count": 0
+    }
+  },
+  "implied_floor_counts": [
+    {
+      "landmark_key": "63_city",
+      "height_m": 252.0,
+      "height_source_url": "https://english.visitseoul.net/area/63-Square/ENP000210",
+      "floor_height_m": 4.0,
+      "implied_floor_count": 63.0,
+      "published_floor_count_confirmed": false
+    },
+    {
+      "landmark_key": "parc1_tower1",
+      "height_m": 318.0,
+      "height_source_url": "https://rshp.com/projects/mixed-use/parc-1/",
+      "floor_height_m": 4.65,
+      "implied_floor_count": 68.39,
+      "published_floor_count_confirmed": false
+    },
+    {
+      "landmark_key": "parc1_tower2",
+      "height_m": 246.0,
+      "height_source_url": "https://rshp.com/projects/mixed-use/parc-1/",
+      "floor_height_m": 4.65,
+      "implied_floor_count": 52.9,
+      "published_floor_count_confirmed": false
+    },
+    {
+      "landmark_key": "parc1_hotel",
+      "height_m": 101.0,
+      "height_source_url": "https://rshp.com/projects/mixed-use/parc-1/",
+      "floor_height_m": 3.55,
+      "implied_floor_count": 28.45,
+      "published_floor_count_confirmed": false
+    },
+    {
+      "landmark_key": "fki",
+      "height_m": 240.0,
+      "height_source_url": "https://www.smithgill.com/work/fki/",
+      "floor_height_m": 4.8,
+      "implied_floor_count": 50.0,
+      "published_floor_count_confirmed": false
+    }
+  ],
+  "checks": {
+    "styles_consistent": true,
+    "evidence_consistent": true,
+    "citations_verified": true,
+    "unrecorded_dimension_styles": [],
+    "drifted_dimensions": [],
+    "unknown_evidence_grades": [],
+    "uncited_sources": [],
+    "unsurveyed_families": [
+      "FACADE_FKI (D)",
+      "FACADE_GENERIC (D)",
+      "FACADE_GLASS_BLUE (D)",
+      "FACADE_GOLD_63 (D)",
+      "FACADE_HOTEL (D)",
+      "FACADE_INSTITUTIONAL (D)",
+      "FACADE_NATIONAL_ASSEMBLY (D)",
+      "FACADE_PARC1 (D)",
+      "FACADE_RESIDENTIAL (D)"
+    ]
+  },
+  "application_gates": {
+    "module_dimensions_traceable": true,
+    "surveyed_facade_module_claim_allowed": false,
+    "photo_registration_available": false,
+    "runtime_geometry_changed_by_this_stage": false,
+    "scene_vertices_modified": 0
+  },
+  "missing_data": [
+    "published floor counts for 63 City, the IFC towers, Parc.1 Tower 1 and Tower 2, the Parc.1 hotel and FKI Tower, to check the floor heights the shader implies",
+    "a published curtain-wall module or typical bay dimension for any Yeouido landmark",
+    "a published overall height for the IFC towers; the scene currently takes theirs from OSM tags with no separate citation",
+    "surveyed or published floor-to-floor heights for the residential and institutional families, which together cover most wall area in the scene",
+    "a photograph with a solvable camera pose, or an architectural elevation, for any named landmark"
+  ],
+  "blocking_reasons": [
+    "9 facade families carry unsurveyed module dimensions, so no surveyed-fidelity claim may be made"
+  ]
+}

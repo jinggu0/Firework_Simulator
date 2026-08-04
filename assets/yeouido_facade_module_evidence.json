@@ -1,0 +1,171 @@
+{
+  "schema_version": 1,
+  "stage": "V3-1a",
+  "target_event_date": "2024-10-05",
+  "prepared_at": "2026-08-04",
+  "scope": "Records what backs each facade module dimension the renderer uses. Landmark heights and material families are sourced in assets/ATTRIBUTION.md; the window-grid spacings are not, and this makes that explicit per dimension rather than as a single blanket caveat.",
+  "grading": {
+    "A": "official or original observation",
+    "B": "reconstructed from a published record, photogrammetry or geometry",
+    "C": "estimated with an accepted physical or statistical model",
+    "D": "artistic supplement, bounded by published constraints",
+    "U": "unverified"
+  },
+  "facade_styles": [
+    {
+      "facade_style": 0.0,
+      "name": "FACADE_GENERIC",
+      "applies_to": "every building with no landmark, material or use tag that selects another family",
+      "bay_width_m": 4.2,
+      "floor_height_m": 3.25,
+      "evidence_grade": "D",
+      "height_source_url": null,
+      "basis": "Plausible mid-rise commercial office spacing. No Yeouido measurement and no published module backs either value.",
+      "landmarks": []
+    },
+    {
+      "facade_style": 1.0,
+      "name": "FACADE_GLASS_BLUE",
+      "applies_to": "IFC Seoul office towers, 국제금융 named buildings, and any building tagged glass or a blue colour",
+      "bay_width_m": 3.6,
+      "floor_height_m": 4.57,
+      "evidence_grade": "D",
+      "height_source_url": "https://www.ifcseoul.com/en/BD_02_00.asp",
+      "basis": "The owner's description supports the crystalline glass material family only. The 3.6 m bay and 4.57 m floor are unsourced; 4.57 m is 15 ft to the centimetre, which suggests an imperial office module was assumed rather than measured.",
+      "landmarks": []
+    },
+    {
+      "facade_style": 2.0,
+      "name": "FACADE_GOLD_63",
+      "applies_to": "63 City / 63 Square and gold-tagged buildings",
+      "bay_width_m": 3.25,
+      "floor_height_m": 4.0,
+      "evidence_grade": "D",
+      "height_source_url": "https://english.visitseoul.net/area/63-Square/ENP000210",
+      "basis": "Seoul's visitor guide supports the golden-tower identity, not the module. The 4.0 m floor divides the dated OSM 252 m height into exactly 63.0 floors, so it appears to be back-derived from the building's name rather than measured. That is self-consistent but it is not evidence.",
+      "landmarks": [
+        {
+          "landmark_key": "63_city",
+          "height_m": 252.0,
+          "height_basis": "dated OSM snapshot, recorded in ATTRIBUTION.md"
+        }
+      ]
+    },
+    {
+      "facade_style": 3.0,
+      "name": "FACADE_RESIDENTIAL",
+      "applies_to": "buildings tagged apartments, residential or officetel",
+      "bay_width_m": 3.4,
+      "floor_height_m": 3.05,
+      "evidence_grade": "D",
+      "height_source_url": null,
+      "basis": "Plausible Korean apartment spacing. No surveyed Yeouido block backs it. This family covers 22,548 wall vertices, the second largest in the scene, so the value carries a large share of the built appearance.",
+      "landmarks": []
+    },
+    {
+      "facade_style": 4.0,
+      "name": "FACADE_INSTITUTIONAL",
+      "applies_to": "government, public, civic, school, university and church buildings, and dome roofs",
+      "bay_width_m": 5.4,
+      "floor_height_m": 3.8,
+      "evidence_grade": "D",
+      "height_source_url": null,
+      "basis": "Wider bays and taller floors than the commercial default, consistent with institutional construction but not drawn from any published section.",
+      "landmarks": []
+    },
+    {
+      "facade_style": 5.0,
+      "name": "FACADE_PARC1",
+      "applies_to": "Parc.1 Tower 1 and Tower 2",
+      "bay_width_m": 3.8,
+      "floor_height_m": 4.65,
+      "evidence_grade": "D",
+      "height_source_url": "https://rshp.com/projects/mixed-use/parc-1/",
+      "basis": "The architect's record publishes the completed heights and identifies the red exterior columns, both of which the scene uses. It does not publish the curtain-wall module, so the bay and floor spacings are reconstruction.",
+      "landmarks": [
+        {"landmark_key": "parc1_tower1", "height_basis": "RSHP project record"},
+        {"landmark_key": "parc1_tower2", "height_basis": "RSHP project record"}
+      ]
+    },
+    {
+      "facade_style": 6.0,
+      "name": "FACADE_HOTEL",
+      "applies_to": "Conrad Seoul, Fairmont Ambassador and buildings tagged hotel",
+      "bay_width_m": 3.2,
+      "floor_height_m": 3.55,
+      "evidence_grade": "D",
+      "height_source_url": "https://rshp.com/projects/mixed-use/parc-1/",
+      "basis": "Narrow bays matching guest-room widths. The cited record publishes the 101 m hotel height only; the room module is assumed.",
+      "landmarks": [
+        {"landmark_key": "parc1_hotel", "height_basis": "RSHP project record"}
+      ]
+    },
+    {
+      "facade_style": 7.0,
+      "name": "FACADE_FKI",
+      "applies_to": "FKI Tower / 전경련회관",
+      "bay_width_m": 3.35,
+      "floor_height_m": 4.8,
+      "evidence_grade": "D",
+      "height_source_url": "https://www.smithgill.com/work/fki/",
+      "basis": "The architect's record publishes the 240 m height and the 30-degree photovoltaic spandrel over 15-degree vision panel arrangement, and the shader reproduces that alternating normal field per floor. The floor pitch the pattern repeats on is itself unsourced, so the published angles sit on an assumed spacing.",
+      "landmarks": [
+        {"landmark_key": "fki", "height_basis": "Adrian Smith + Gordon Gill project record"}
+      ]
+    },
+    {
+      "facade_style": 8.0,
+      "name": "FACADE_NATIONAL_ASSEMBLY",
+      "applies_to": "국회의사당 main block",
+      "bay_width_m": 5.8,
+      "floor_height_m": 3.6,
+      "evidence_grade": "D",
+      "height_source_url": "https://nafi.re.kr/new/bidding.do?articleNo=5189&attachNo=5682&mode=download",
+      "basis": "The cited description supports the copper dome and the twenty-four octagonal columns, both modelled as geometry. The wall module behind them is reconstruction.",
+      "landmarks": []
+    }
+  ],
+  "opaque_styles": [
+    {
+      "facade_style": 9.0,
+      "name": "FACADE_PARC1_STRUCTURE",
+      "treatment": "solid red column and beam surfaces; the shader returns before the window grid",
+      "evidence_grade": "B",
+      "height_source_url": "https://rshp.com/projects/mixed-use/parc-1/",
+      "basis": "The architect identifies the exterior red columns as the complex's defining expression, so treating them as geometry rather than painted window cells follows the published record."
+    },
+    {
+      "facade_style": 10.0,
+      "name": "FACADE_ASSEMBLY_COLUMN",
+      "treatment": "pale stone colonnade; the shader returns before the window grid",
+      "evidence_grade": "B",
+      "height_source_url": "https://nafi.re.kr/new/bidding.do?articleNo=5189&attachNo=5682&mode=download",
+      "basis": "The building description specifies twenty-four exterior octagonal columns."
+    },
+    {
+      "facade_style": 12.0,
+      "name": "FACADE_ASSEMBLY_DOME",
+      "treatment": "weathered copper roof; every dome vertex is emitted as roof, so it never reaches the window grid",
+      "evidence_grade": "B",
+      "height_source_url": "https://nafi.re.kr/new/bidding.do?articleNo=5189&attachNo=5682&mode=download",
+      "basis": "The building description identifies the weathered copper dome."
+    }
+  ],
+  "photo_registration": {
+    "registerable_viewpoint_count": 0,
+    "assessed_against": "assets/yeouido_2024-10-05_appearance_reference.json",
+    "finding": "No held photograph publishes a camera position and orientation precise enough for pixel registration, so no building facade can currently be registered against an image. The CC0 mobile captures publish full EXIF but no pose; the press photographs publish neither pose nor raw linear data and may not be redistributed.",
+    "consequence": "Facade module dimensions cannot be measured photogrammetrically from held material. Either a posed photograph or a published architectural elevation is required.",
+    "candidate_routes": [
+      "an architectural elevation or section published by the building's architect or owner, which would give the module directly",
+      "a photograph with a solvable pose, needing identifiable coplanar features at known separation on the facade itself"
+    ]
+  },
+  "missing_data": [
+    "published floor counts for 63 City, the IFC towers, Parc.1 Tower 1 and Tower 2, the Parc.1 hotel and FKI Tower, to check the floor heights the shader implies",
+    "a published curtain-wall module or typical bay dimension for any Yeouido landmark",
+    "a published overall height for the IFC towers; the scene currently takes theirs from OSM tags with no separate citation",
+    "surveyed or published floor-to-floor heights for the residential and institutional families, which together cover most wall area in the scene",
+    "a photograph with a solvable camera pose, or an architectural elevation, for any named landmark"
+  ]
+}
