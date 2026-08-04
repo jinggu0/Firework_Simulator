@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "stage": "V2-2f",
+  "target_event_date": "2024-10-05",
+  "prepared_at": "2026-08-04",
+  "status": "ready_for_manual_submission_not_submitted",
+  "purpose": "Confirm the exact acquisition date and the local-use scope of the S-Map ortho_drone_25cm_2024 imagery already registered in V2-2e. This asks for metadata about imagery the project has retrieved for local verification; it does not request a data delivery.",
+  "submission": {
+    "authorized": false,
+    "performed": false,
+    "provider": "서울특별시 공간정보과",
+    "primary_route": "https://smap.seoul.go.kr/guide/qna.html",
+    "primary_route_kind": "S-Map Q&A 게시판 (비회원 글쓰기 / 회원 글쓰기)",
+    "primary_route_verified_utc": "2026-08-04T05:04:12Z",
+    "primary_route_evidence": "The Q&A list page exposes 비회원 글쓰기 and 회원 글쓰기 controls, carries a 담당부서 column, and shows administrator [Re] replies to data questions one to two days after posting.",
+    "telephone_route": "02-2133-2835",
+    "telephone_route_evidence": "S-Map 공지사항 448061 (2025-12-03) names 공간정보과 and this number as the S-Map operations contact.",
+    "applicant_personal_information_stored": false,
+    "credentials_entered_by_agent": false,
+    "captcha_entered_by_agent": false,
+    "provider_attachments_downloaded_by_agent": false,
+    "submission_is_user_gated": true
+  },
+  "request_scope": {
+    "layer": "ortho_drone_25cm_2024",
+    "layer_code_comment": "[202410] 2024 orthophoto - 25 cm external network 20241209",
+    "crs": "EPSG:5186",
+    "bbox_epsg5186_m": [194044.0, 547224.0, 194428.0, 547608.0],
+    "ground_coverage_m": [384.0, 384.0],
+    "native_resolution_m_per_pixel": 0.25,
+    "place_description": "여의도한강공원 서강대교 남단 일대",
+    "tile_service_host_pattern": "https://smap{1,2,3}.eseoul.go.kr:5432/tile.sqlite/ortho_drone_25cm_2024/{z}/{x}/{y}.jpg"
+  },
+  "questions": [
+    {
+      "id": "q1_acquisition_date",
+      "addresses_gate": "exact_imagery_acquisition_date_confirmed",
+      "question_ko": "위 EPSG:5186 범위를 덮는 ortho_drone_25cm_2024 정사영상의 정확한 촬영일(또는 촬영일 범위)을 알려주실 수 있습니까? 해당 범위가 단일 촬영분인지, 여러 날짜의 영상을 접합한 모자이크인지도 함께 확인 부탁드립니다.",
+      "why": "The layer name and the configuration comment give a 2024-10 period hint and a 20241209 distribution hint. Neither proves capture on or before the 2024-10-05 event date."
+    },
+    {
+      "id": "q2_source_agency",
+      "addresses_gate": "exact_imagery_acquisition_date_confirmed",
+      "question_ko": "이 정사영상 레이어가 서울특별시가 저작권을 보유한 자료인지, 외부기관 제공 자료인지 알려주시기 바랍니다. 외부기관 자료라면 기관명과 적용되는 저작권 정책을 알려주십시오.",
+      "why": "공지사항 448061 states that some layers contain external-agency material to which that agency's policy applies. Which body produced the imagery also determines who holds the acquisition record."
+    },
+    {
+      "id": "q3_positional_accuracy",
+      "addresses_gate": "independent_spatial_check_passes",
+      "question_ko": "이 정사영상의 평면 위치정확도 성과(검사점 잔차, RMSE 등) 문서가 있습니까? 있다면 공개 가능 여부와 열람 방법을, 그리고 정사보정에 사용한 기준 표고면(DEM/DSM)의 종류를 알려주시기 바랍니다.",
+      "why": "The project holds no independent check point at 1 m or better inside the crop: the four public NGII control points nearby are all recorded as destroyed and lie 390 m to 702 m outside it. A provider accuracy document is the only remaining route to the 1 m gate."
+    },
+    {
+      "id": "q4_local_use_scope",
+      "addresses_gate": "raw_tile_redistribution_authorised",
+      "question_ko": "2025-12-03 공지(지도 화면 캡처 이미지 저작권 및 활용 안내)의 자유이용 범위가, 지도 화면 캡처가 아니라 타일 서비스에서 직접 받은 타일 이미지를 재배포 없이 로컬 연구 검증에만 사용하는 경우에도 적용됩니까? 적용된다면 요구되는 출처 표시 문구를 확인 부탁드립니다. 원시 타일의 공개 재배포는 요청하지 않습니다.",
+      "why": "The 2025-12-03 notice grants free use of map screen captures. The V2-2e acquisition instead fetched tiles from the tile endpoint, which the notice does not address. The project keeps the pixels out of version control until this is answered."
+    }
+  ],
+  "required_deliverables": [
+    "exact acquisition date or date range covering the requested bbox",
+    "single-sortie or multi-date mosaic composition for that bbox",
+    "source agency and applicable copyright policy for the layer",
+    "positional accuracy document or check-point residuals",
+    "orthorectification reference surface",
+    "local research use scope for tiles retrieved from the tile service",
+    "required attribution wording",
+    "official reply reference or receipt"
+  ],
+  "provider_evidence": {
+    "map_capture_terms_notice": {
+      "board": "S-Map 공지사항",
+      "post_code": "448061",
+      "url": "https://smap.seoul.go.kr/guide/notice.html#view/448061",
+      "published": "2025-12-03",
+      "department": "공간정보과",
+      "published_operations_telephone": "02-2133-2835",
+      "browser_verified_utc": "2026-08-04T05:04:12Z",
+      "summary": "Seoul states that S-Map map screen captures may be used without separate permission under Copyright Act article 24-2, for commercial and non-commercial purposes, where Seoul holds the copyright. Attribution is mandatory. Layers containing external-agency material follow that agency's policy. The map screen is advisory and carries no legal effect.",
+      "required_attribution": "출처 : 서울시 S-Map(https://smap.seoul.go.kr)",
+      "scope_limitation_observed": "The notice addresses 지도 화면 캡처 이미지, that is images captured from the map screen. It does not mention tiles retrieved directly from the tile service, which is how V2-2e acquired its pixels.",
+      "internal_inconsistency_observed": "The notice body permits commercial use, while the board stamps the posting itself with KOGL type 4 (attribution, no commercial use, no derivatives). The stamp applies to the posting; the body applies to map captures. This request does not resolve the tension by assumption."
+    },
+    "data_provision_faq_notice": {
+      "board": "S-Map Q&A",
+      "post_code": "441460",
+      "url": "https://smap.seoul.go.kr/guide/qna.html#view/441460",
+      "published": "2025-08-18",
+      "browser_verified_utc": "2026-08-04T05:04:12Z",
+      "summary": "Administrator notice collecting the FAQ on Seoul 3D spatial-information provision, including an academic-research route and a security review for restricted-disclosure spatial information.",
+      "listed_attachments": [
+        {"file_name": "★ 3D 제공 관련 FAQ 모음집(2025.08.).pdf", "bytes": 1010023, "downloaded_by_agent": false},
+        {"file_name": "공개제한 공간정보 신청 서식(학술연구목적).zip", "bytes": 100105, "downloaded_by_agent": false},
+        {"file_name": "공개제한 공간정보 보안심사 안내글(요약).pdf", "bytes": 1118050, "downloaded_by_agent": false}
+      ],
+      "relevance": "It establishes an official academic-research route for Seoul spatial data. It concerns 3D data provision rather than the orthophoto background map, and its attachments were not opened, so it is recorded as context and not as an answer to any question here."
+    }
+  },
+  "evidence": {
+    "registration_report": "docs/validation/road_marking_registration_v2/smap_2024_registration_report.json",
+    "registration_report_sha256": "e3f304d6875c5adf656e6484d41d3fc6d8a3857b36b8399fb329327feb2b7b2f"
+  },
+  "reply": {
+    "received": false,
+    "asset": null,
+    "schema": "assets/smap_ortho_provider_reply.schema.json"
+  },
+  "acceptance_gate": {
+    "latest_allowed_acquisition_date": "2024-10-05",
+    "maximum_independent_check_point_residual_m": 1.0,
+    "event_date_marking_classification_allowed": false,
+    "scene_vertices_modified": 0,
+    "runtime_geometry_changed_by_this_stage": false,
+    "blocking_reasons": [
+      "the enquiry has not been submitted and no provider reply exists",
+      "the exact acquisition date of the Yeouido coverage is unknown",
+      "no independent check point at 1 m or better is available inside the crop",
+      "the reuse scope for tiles retrieved from the tile service is unconfirmed"
+    ]
+  }
+}

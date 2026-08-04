@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://firework-simulator.local/schema/smap-ortho-provider-reply-v1.json",
+  "title": "S-Map 2024 orthophoto provider reply",
+  "description": "Records a reply from the S-Map operator about the ortho_drone_25cm_2024 layer. No file matching this schema is committed until a reply actually arrives; the audit stays blocked while it is absent. Applicant personal information is never recorded here.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "target_event_date",
+    "received_at",
+    "channel",
+    "reply_reference",
+    "responding_department",
+    "coverage",
+    "acquisition",
+    "positional_accuracy",
+    "use_scope",
+    "applicant_personal_information_recorded"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "target_event_date": {"const": "2024-10-05"},
+    "received_at": {"type": "string", "format": "date"},
+    "channel": {"enum": ["smap_qna_board", "telephone", "email", "official_letter"]},
+    "reply_reference": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Board post number, document number or other identifier that lets a third party locate the reply. A channel with no identifier is not acceptable evidence."
+    },
+    "responding_department": {"type": "string", "minLength": 1},
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bbox_epsg5186_m", "covers_requested_bbox", "composition"],
+      "properties": {
+        "bbox_epsg5186_m": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {"type": "number"}
+        },
+        "covers_requested_bbox": {"type": "boolean"},
+        "composition": {"enum": ["single_sortie", "multi_date_mosaic", "unstated"]}
+      }
+    },
+    "acquisition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["date_earliest", "date_latest", "basis"],
+      "properties": {
+        "date_earliest": {"type": ["string", "null"], "format": "date"},
+        "date_latest": {
+          "type": ["string", "null"],
+          "format": "date",
+          "description": "Latest capture date contributing to the requested bbox. The event-date gate compares this value, not the earliest, so a mosaic cannot qualify on its oldest frame."
+        },
+        "basis": {"enum": ["provider_statement", "attached_document", "not_provided"]},
+        "source_agency": {"type": ["string", "null"]},
+        "notes": {"type": ["string", "null"]}
+      }
+    },
+    "positional_accuracy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["document_provided", "independent_check_point_residual_m"],
+      "properties": {
+        "document_provided": {"type": "boolean"},
+        "independent_check_point_residual_m": {"type": ["number", "null"], "minimum": 0.0},
+        "metric": {"type": ["string", "null"], "description": "RMSE, CE90 or whatever the provider states. Recorded verbatim so it is never silently reinterpreted as RMSE."},
+        "orthorectification_reference_surface": {"type": ["string", "null"]}
+      }
+    },
+    "use_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tile_service_local_research_use_allowed", "redistribution_allowed", "attribution_required"],
+      "properties": {
+        "tile_service_local_research_use_allowed": {"type": ["boolean", "null"]},
+        "redistribution_allowed": {"type": "boolean"},
+        "attribution_required": {"type": ["string", "null"]},
+        "notes": {"type": ["string", "null"]}
+      }
+    },
+    "applicant_personal_information_recorded": {"const": false}
+  }
+}

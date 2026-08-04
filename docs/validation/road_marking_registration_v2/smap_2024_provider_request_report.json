@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "stage": "V2-2f",
+  "request_asset": "assets/yeouido_smap_ortho_provider_request.json",
+  "request_sha256": "ae4698221b6716a94481f6dfb489e49319683d6a39ff45c0faeaa2798b5a2c00",
+  "registration_report": "docs/validation/road_marking_registration_v2/smap_2024_registration_report.json",
+  "registration_report_sha256": "e3f304d6875c5adf656e6484d41d3fc6d8a3857b36b8399fb329327feb2b7b2f",
+  "reply_asset": null,
+  "checks": {
+    "gate_classification_complete": true,
+    "unclassified_gates": [],
+    "classified_gates_absent_from_report": [],
+    "open_provider_gates": [
+      "exact_imagery_acquisition_date_confirmed",
+      "independent_spatial_check_passes",
+      "raw_tile_redistribution_authorised"
+    ],
+    "open_gates_without_a_question": [],
+    "stale_questions": [],
+    "questions_well_formed": true,
+    "question_count": 4,
+    "registration_link_matches": true,
+    "provider_route_valid": true,
+    "personal_information_keys_found": [],
+    "privacy_safe": true,
+    "external_action_safe": true,
+    "required_deliverables_complete": true
+  },
+  "reply_outcome": {
+    "reply_received": false,
+    "acquisition_date_confirmed": false,
+    "event_date_applicability_confirmed": false,
+    "independent_spatial_check_passes": false,
+    "tile_local_research_use_confirmed": false,
+    "latest_acquisition_date": null,
+    "reasons": [
+      "no provider reply has been received"
+    ]
+  },
+  "submission_payload_ready": true,
+  "ready_for_manual_submission": true,
+  "external_submission_authorized": false,
+  "external_submission_performed": false,
+  "event_date_marking_classification_allowed": false,
+  "scene_vertices_modified": 0,
+  "runtime_geometry_changed_by_this_stage": false,
+  "blocking_reasons": [
+    "no provider reply has been received"
+  ],
+  "next_evidence_gate": "Submission is the project owner's action. When a reply arrives, record it against assets/smap_ortho_provider_reply.schema.json and re-run this audit. Event-day marking classification additionally needs an independent check point at or below 1.0 m, which no held source supplies."
+}
