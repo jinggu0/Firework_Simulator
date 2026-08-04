@@ -227,6 +227,67 @@ def test_a_grade_upgrade_alone_cannot_open_the_surveyed_gate(
     assert report["checks"]["unsurveyed_families"] == []
 
 
+def test_the_importer_storey_height_is_read_and_recorded() -> None:
+    from tools.audit_facade_modules import import_storey_heights
+
+    parsed = import_storey_heights(SCENE_MODULE.read_text(encoding="utf-8"))
+    evidence = json.loads(EVIDENCE.read_text(encoding="utf-8"))
+    recorded = evidence["import_geometry_heights"]
+
+    assert parsed["levels_to_height_m"] == 3.2
+    assert parsed["untagged_default_height_m"] == 12.0
+    # These place vertices rather than paint them, so drift between the module
+    # and its record would misstate the mass of every untagged building.
+    assert recorded["levels_to_height_m"]["value"] == parsed["levels_to_height_m"]
+    assert (
+        recorded["untagged_default_height_m"]["value"]
+        == parsed["untagged_default_height_m"]
+    )
+    assert recorded["levels_to_height_m"]["evidence_grade"] in EVIDENCE_GRADES
+
+
+def test_the_storey_height_disagreement_is_reported_not_hidden() -> None:
+    report = json.loads(REPORT.read_text(encoding="utf-8"))
+    consistency = report["storey_height_consistency"]
+    rows = {row["name"]: row for row in consistency["rows"]}
+
+    # The importer derives height from levels at 3.2 m; the shader paints bands
+    # at each family's own floor height. They do not agree, and the audit must
+    # say so rather than let the two numbers drift apart unnoticed.
+    assert not consistency["storey_heights_agree"]
+    assert consistency["worst_family"]["name"] == "FACADE_FKI"
+    assert rows["FACADE_FKI"]["relative_error"] == -0.3333
+    # The families that actually carry most untagged buildings disagree least,
+    # which is why the headline percentage must not be read as scene-wide error.
+    assert abs(rows["FACADE_GENERIC"]["relative_error"]) < 0.02
+    assert abs(rows["FACADE_RESIDENTIAL"]["relative_error"]) < 0.05
+    assert any(
+        "contradict the source floor count" in reason
+        for reason in report["blocking_reasons"]
+    )
+
+
+def test_reconciling_the_storey_heights_would_clear_the_finding(
+    tmp_path: Path,
+) -> None:
+    # Guards the arithmetic: if every painted floor height equalled the
+    # importer's 3.2 m, the disagreement would be zero. Without this the test
+    # above could pass on a metric that is simply always false.
+    text = SHADER.read_text(encoding="utf-8")
+    for painted in ("3.25", "4.57", "4.0", "3.05", "3.8", "4.65", "3.55", "4.8", "3.6"):
+        text = text.replace(f"floor_height = {painted};", "floor_height = 3.2;")
+    shader = tmp_path / "scene.frag"
+    shader.write_text(text, encoding="utf-8")
+
+    report = build_report(shader, SCENE_MODULE, SCENE_ASSET, EVIDENCE, ATTRIBUTION)
+
+    assert report["storey_height_consistency"]["storey_heights_agree"]
+    assert not any(
+        "contradict the source floor count" in reason
+        for reason in report["blocking_reasons"]
+    )
+
+
 def test_the_style_constants_and_landmark_heights_still_parse() -> None:
     scene_module = SCENE_MODULE.read_text(encoding="utf-8")
 

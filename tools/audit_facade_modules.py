@@ -56,6 +56,11 @@ _BRANCH = re.compile(
 _DECLARED = re.compile(r"float\s+(bay_width|floor_height)\s*=\s*([0-9.]+)\s*;")
 _ASSIGNED = re.compile(r"\b(bay_width|floor_height)\s*=\s*([0-9.]+)\s*;")
 _LANDMARK_HEIGHT = re.compile(r'"([a-z0-9_]+)"\s*:\s*([0-9.]+)\s*,')
+_LEVELS_TO_HEIGHT = re.compile(r"levels\s*\*\s*([0-9.]+)")
+_MIN_LEVEL_TO_HEIGHT = re.compile(
+    r'building:min_level[^)]*\)\s*\*\s*([0-9.]+)'
+)
+_DEFAULT_HEIGHT = re.compile(r"return\s+([0-9.]+)\s*$", re.M)
 
 
 def _digest(path: Path) -> str:
@@ -175,6 +180,34 @@ def landmark_heights(scene_module: str) -> dict[str, float]:
     region = scene_module[start:end if end > start else len(scene_module)]
     return {
         name: float(value) for name, value in _LANDMARK_HEIGHT.findall(region)
+    }
+
+
+def import_storey_heights(scene_module: str) -> dict[str, float | None]:
+    """The storey heights the importer uses to turn tags into geometry.
+
+    A building with no `height` tag gets its mass from `building:levels` times
+    an assumed storey height. That assumption sets real vertex positions, so it
+    matters more than the window grid painted over them — and it is a different
+    number from every one of those grids.
+    """
+
+    def region(name: str) -> str:
+        start = scene_module.find(f"def {name}")
+        if start < 0:
+            return ""
+        end = scene_module.find("\ndef ", start + 1)
+        return scene_module[start : end if end > start else len(scene_module)]
+
+    height = region("_height")
+    minimum = region("_minimum_height")
+    levels = _LEVELS_TO_HEIGHT.search(height)
+    min_levels = _MIN_LEVEL_TO_HEIGHT.search(minimum)
+    defaults = _DEFAULT_HEIGHT.findall(height)
+    return {
+        "levels_to_height_m": float(levels.group(1)) if levels else None,
+        "min_level_to_height_m": float(min_levels.group(1)) if min_levels else None,
+        "untagged_default_height_m": float(defaults[-1]) if defaults else None,
     }
 
 
@@ -309,6 +342,41 @@ def build_report(
         }
     )
 
+    # The importer derives untagged building heights from `building:levels`
+    # times one assumed storey height, then the shader paints storey bands at a
+    # different one. For those buildings the rendered band count contradicts the
+    # only floor-count evidence the importer had.
+    storey = import_storey_heights(scene_module)
+    import_height = storey["levels_to_height_m"]
+    storey_rows: list[dict[str, Any]] = []
+    if import_height:
+        for style, values in sorted(dimensions.items()):
+            painted = values.get("floor_height")
+            if not painted:
+                continue
+            storey_rows.append(
+                {
+                    "facade_style": style,
+                    "name": records.get(style, {}).get("name"),
+                    "import_storey_height_m": import_height,
+                    "painted_floor_height_m": painted,
+                    "painted_bands_per_source_storey": round(
+                        import_height / painted, 4
+                    ),
+                    "relative_error": round(
+                        (import_height - painted) / painted, 4
+                    ),
+                }
+            )
+    worst = (
+        max(storey_rows, key=lambda row: abs(row["relative_error"]))
+        if storey_rows
+        else None
+    )
+    storey_heights_agree = bool(
+        storey_rows and all(row["relative_error"] == 0.0 for row in storey_rows)
+    )
+
     styles_consistent = not undeclared and not unhandled and not missing_dimensions
     evidence_consistent = not unrecorded and not drifted and not bad_grades
     citations_verified = not uncited
@@ -351,6 +419,14 @@ def build_report(
             f"{len(unsurveyed)} facade families carry unsurveyed module "
             "dimensions, so no surveyed-fidelity claim may be made"
         )
+    if worst and not storey_heights_agree:
+        blockers.append(
+            "the importer derives heights at "
+            f"{worst['import_storey_height_m']} m per storey while the shader "
+            f"paints {worst['name']} at {worst['painted_floor_height_m']} m, a "
+            f"{abs(worst['relative_error']) * 100:.1f}% disagreement, so "
+            "rendered storey bands contradict the source floor count"
+        )
 
     return {
         "schema_version": 1,
@@ -392,6 +468,12 @@ def build_report(
             for style, values in sorted(dimensions.items())
         ],
         "style_usage": {str(style): counts for style, counts in usage.items()},
+        "import_storey_heights": storey,
+        "storey_height_consistency": {
+            "storey_heights_agree": storey_heights_agree,
+            "worst_family": worst,
+            "rows": storey_rows,
+        },
         "implied_floor_counts": implied,
         "checks": {
             "styles_consistent": styles_consistent,
@@ -402,6 +484,7 @@ def build_report(
             "unknown_evidence_grades": bad_grades,
             "uncited_sources": uncited,
             "unsurveyed_families": unsurveyed,
+            "storey_heights_agree": storey_heights_agree,
         },
         "application_gates": {
             "module_dimensions_traceable": evidence_consistent

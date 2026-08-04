@@ -176,6 +176,96 @@
       "wall_vertex_count": 0
     }
   },
+  "import_storey_heights": {
+    "levels_to_height_m": 3.2,
+    "min_level_to_height_m": null,
+    "untagged_default_height_m": 12.0
+  },
+  "storey_height_consistency": {
+    "storey_heights_agree": false,
+    "worst_family": {
+      "facade_style": 7.0,
+      "name": "FACADE_FKI",
+      "import_storey_height_m": 3.2,
+      "painted_floor_height_m": 4.8,
+      "painted_bands_per_source_storey": 0.6667,
+      "relative_error": -0.3333
+    },
+    "rows": [
+      {
+        "facade_style": 0.0,
+        "name": "FACADE_GENERIC",
+        "import_storey_height_m": 3.2,
+        "painted_floor_height_m": 3.25,
+        "painted_bands_per_source_storey": 0.9846,
+        "relative_error": -0.0154
+      },
+      {
+        "facade_style": 1.0,
+        "name": "FACADE_GLASS_BLUE",
+        "import_storey_height_m": 3.2,
+        "painted_floor_height_m": 4.57,
+        "painted_bands_per_source_storey": 0.7002,
+        "relative_error": -0.2998
+      },
+      {
+        "facade_style": 2.0,
+        "name": "FACADE_GOLD_63",
+        "import_storey_height_m": 3.2,
+        "painted_floor_height_m": 4.0,
+        "painted_bands_per_source_storey": 0.8,
+        "relative_error": -0.2
+      },
+      {
+        "facade_style": 3.0,
+        "name": "FACADE_RESIDENTIAL",
+        "import_storey_height_m": 3.2,
+        "painted_floor_height_m": 3.05,
+        "painted_bands_per_source_storey": 1.0492,
+        "relative_error": 0.0492
+      },
+      {
+        "facade_style": 4.0,
+        "name": "FACADE_INSTITUTIONAL",
+        "import_storey_height_m": 3.2,
+        "painted_floor_height_m": 3.8,
+        "painted_bands_per_source_storey": 0.8421,
+        "relative_error": -0.1579
+      },
+      {
+        "facade_style": 5.0,
+        "name": "FACADE_PARC1",
+        "import_storey_height_m": 3.2,
+        "painted_floor_height_m": 4.65,
+        "painted_bands_per_source_storey": 0.6882,
+        "relative_error": -0.3118
+      },
+      {
+        "facade_style": 6.0,
+        "name": "FACADE_HOTEL",
+        "import_storey_height_m": 3.2,
+        "painted_floor_height_m": 3.55,
+        "painted_bands_per_source_storey": 0.9014,
+        "relative_error": -0.0986
+      },
+      {
+        "facade_style": 7.0,
+        "name": "FACADE_FKI",
+        "import_storey_height_m": 3.2,
+        "painted_floor_height_m": 4.8,
+        "painted_bands_per_source_storey": 0.6667,
+        "relative_error": -0.3333
+      },
+      {
+        "facade_style": 8.0,
+        "name": "FACADE_NATIONAL_ASSEMBLY",
+        "import_storey_height_m": 3.2,
+        "painted_floor_height_m": 3.6,
+        "painted_bands_per_source_storey": 0.8889,
+        "relative_error": -0.1111
+      }
+    ]
+  },
   "implied_floor_counts": [
     {
       "landmark_key": "63_city",
@@ -236,7 +326,8 @@
       "FACADE_NATIONAL_ASSEMBLY (D)",
       "FACADE_PARC1 (D)",
       "FACADE_RESIDENTIAL (D)"
-    ]
+    ],
+    "storey_heights_agree": false
   },
   "application_gates": {
     "module_dimensions_traceable": true,
@@ -253,6 +344,7 @@
     "a photograph with a solvable camera pose, or an architectural elevation, for any named landmark"
   ],
   "blocking_reasons": [
-    "9 facade families carry unsurveyed module dimensions, so no surveyed-fidelity claim may be made"
+    "9 facade families carry unsurveyed module dimensions, so no surveyed-fidelity claim may be made",
+    "the importer derives heights at 3.2 m per storey while the shader paints FACADE_FKI at 4.8 m, a 33.3% disagreement, so rendered storey bands contradict the source floor count"
   ]
 }

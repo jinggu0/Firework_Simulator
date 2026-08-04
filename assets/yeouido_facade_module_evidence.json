@@ -151,6 +151,23 @@
       "basis": "The building description identifies the weathered copper dome."
     }
   ],
+  "import_geometry_heights": {
+    "scope": "These are not window paint. They place real vertices, so an error here changes the building's mass rather than its surface pattern.",
+    "levels_to_height_m": {
+      "value": 3.2,
+      "used_by": "simulator/scene.py _height(), for any building with building:levels but no height tag",
+      "evidence_grade": "D",
+      "basis": "A common assumed storey height. No published Yeouido value backs it, and it is the single number that sets the mass of every untagged building in the scene."
+    },
+    "untagged_default_height_m": {
+      "value": 12.0,
+      "used_by": "simulator/scene.py _height(), for any building with neither height nor building:levels",
+      "evidence_grade": "D",
+      "basis": "A flat fallback standing in for an unknown building. Roughly four storeys at the assumed 3.2 m."
+    },
+    "known_inconsistency": "The importer derives heights at 3.2 m per storey while the shader paints storey bands at each family's own floor height, 3.05 m to 4.8 m. For any building whose height came from building:levels the rendered band count therefore contradicts the floor count that produced the height, by -33.3% for the FKI family down to +4.9% for residential. The landmark families mostly receive explicit heights instead, so the practical impact concentrates in the generic and residential families where the disagreement is smallest, 1.5% and 4.9%. Which buildings took which path cannot currently be determined because the building tags are not archived.",
+    "not_reconciled_because": "Making the two agree would move every untagged building's mass or every family's storey banding, and no held evidence says which value is right. It is reported rather than silently changed."
+  },
   "photo_registration": {
     "registerable_viewpoint_count": 0,
     "assessed_against": "assets/yeouido_2024-10-05_appearance_reference.json",
@@ -166,6 +183,7 @@
     "a published curtain-wall module or typical bay dimension for any Yeouido landmark",
     "a published overall height for the IFC towers; the scene currently takes theirs from OSM tags with no separate citation",
     "surveyed or published floor-to-floor heights for the residential and institutional families, which together cover most wall area in the scene",
-    "a photograph with a solvable camera pose, or an architectural elevation, for any named landmark"
+    "a photograph with a solvable camera pose, or an architectural elevation, for any named landmark",
+    "a dated OSM building snapshot. Roads are archived as assets/yeouido_road_osm_2024-10-05.json but buildings are downloaded live and their tags discarded at import, so building:levels and height cannot be checked per building and the storey-height inconsistency above cannot be attributed to the buildings it actually affects"
   ]
 }
