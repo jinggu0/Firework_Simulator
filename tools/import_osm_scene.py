@@ -118,6 +118,77 @@ def write_road_source_snapshot(
     )
 
 
+def building_tag_query(snapshot_utc: str = SNAPSHOT_UTC) -> str:
+    """Dated building tags, without geometry.
+
+    The scene build already downloads building geometry and consumes it. What
+    it does not keep is the tags, so nothing afterwards can tell whether a
+    given building's height came from a `height` tag, from `building:levels`
+    times an assumed storey height, or from the untagged fallback. This asks
+    for exactly that evidence and nothing else: `out tags` keeps the archive
+    small enough to version alongside the roads snapshot.
+    """
+
+    south, west, north, east = BBOX
+    return f"""
+[out:json][timeout:240][date:"{snapshot_utc}"];
+(
+  way["building"]({south},{west},{north},{east});
+  way["building:part"]({south},{west},{north},{east});
+);
+out tags;
+"""
+
+
+def download_building_tags(snapshot_utc: str = SNAPSHOT_UTC) -> dict:
+    return _overpass(building_tag_query(snapshot_utc))
+
+
+def write_building_tag_snapshot(
+    payload: dict,
+    output: Path,
+    snapshot_utc: str = SNAPSHOT_UTC,
+) -> None:
+    elements = [
+        {
+            "type": element.get("type", "way"),
+            "id": int(element["id"]),
+            "tags": element.get("tags", {}),
+        }
+        for element in payload.get("elements", [])
+        if element.get("type") == "way"
+        and (
+            element.get("tags", {}).get("building")
+            or element.get("tags", {}).get("building:part")
+        )
+    ]
+    elements.sort(key=lambda element: element["id"])
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "provider": "OpenStreetMap contributors via Overpass API",
+                "licence": "ODbL 1.0",
+                "endpoint": payload.get("_retrieval_endpoint", ""),
+                "query": building_tag_query(snapshot_utc).strip(),
+                "geometry_omitted": True,
+                "geometry_omitted_reason": (
+                    "This archive exists to evidence height provenance, not to "
+                    "rebuild geometry; the scene build downloads its own."
+                ),
+                "bbox_wgs84": [BBOX[1], BBOX[0], BBOX[3], BBOX[2]],
+                "snapshot_utc": snapshot_utc,
+                "retrieved_date": date.today().isoformat(),
+                "elements": elements,
+            },
+            ensure_ascii=False,
+            separators=(",", ":"),
+        ) + "\n",
+        encoding="utf-8",
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -158,7 +229,30 @@ def main() -> None:
         action="store_true",
         help="Download and preserve dated highway ways without rebuilding the scene.",
     )
+    parser.add_argument(
+        "--building-tags-output",
+        type=Path,
+        default=Path("assets/yeouido_building_osm_2024-10-05.json"),
+    )
+    parser.add_argument(
+        "--building-tags-only",
+        action="store_true",
+        help=(
+            "Download and preserve dated building tags without geometry and "
+            "without rebuilding the scene."
+        ),
+    )
     args = parser.parse_args()
+    if args.building_tags_only:
+        buildings = download_building_tags(args.snapshot)
+        write_building_tag_snapshot(
+            buildings, args.building_tags_output, args.snapshot
+        )
+        print(
+            f"saved {args.building_tags_output}: "
+            f"{len(buildings.get('elements', [])):,} dated building ways"
+        )
+        return
     if args.roads_only:
         roads = download_roads(args.snapshot)
         write_road_source_snapshot(roads, args.roads_output, args.snapshot)

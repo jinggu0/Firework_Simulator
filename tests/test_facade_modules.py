@@ -28,6 +28,7 @@ SCENE_MODULE = Path("simulator/scene.py")
 SCENE_ASSET = Path("assets/yeouido_scene.npz")
 EVIDENCE = Path("assets/yeouido_facade_module_evidence.json")
 ATTRIBUTION = Path("assets/ATTRIBUTION.md")
+BUILDING_TAGS = Path("assets/yeouido_building_osm_2024-10-05.json")
 REPORT = Path("docs/validation/facade_modules_v3/facade_module_report.json")
 
 
@@ -286,6 +287,104 @@ def test_reconciling_the_storey_heights_would_clear_the_finding(
         "contradict the source floor count" in reason
         for reason in report["blocking_reasons"]
     )
+
+
+def test_the_height_path_classification_agrees_with_the_importer() -> None:
+    # The audit restates _height's branch order to name which rule fired. If
+    # the importer's order ever changed, every attribution below would be
+    # mislabelled while still looking plausible, so this checks the
+    # classification against the function it describes, building by building.
+    from simulator.scene import _height
+
+    snapshot = json.loads(BUILDING_TAGS.read_text(encoding="utf-8"))
+    checked = {"height_tag": 0, "levels_times_assumed": 0, "untagged_default": 0}
+    for element in snapshot["elements"]:
+        tags = element["tags"]
+        raw = tags.get("height", "").lower().replace("m", "").strip()
+        try:
+            expected = float(raw)
+            source = "height_tag"
+        except ValueError:
+            try:
+                expected = max(3.2, float(tags.get("building:levels", "")) * 3.2)
+                source = "levels_times_assumed"
+            except ValueError:
+                expected = 12.0
+                source = "untagged_default"
+        assert _height(tags) == expected, element["id"]
+        checked[source] += 1
+
+    assert checked == {
+        "height_tag": 652,
+        "levels_times_assumed": 206,
+        "untagged_default": 456,
+    }
+
+
+def test_the_mismatch_is_weighted_by_buildings_that_actually_take_the_path() -> None:
+    report = json.loads(REPORT.read_text(encoding="utf-8"))
+    consistency = report["storey_height_consistency"]
+    attribution = report["height_source_attribution"]
+    rows = {row["name"]: row for row in consistency["rows"]}
+
+    # The point of the attribution: the two worst-disagreeing families hold no
+    # buildings on the levels path at all, so the headline percentage describes
+    # nothing in the scene.
+    assert rows["FACADE_FKI"]["buildings_on_the_levels_path"] == 0
+    assert rows["FACADE_PARC1"]["buildings_on_the_levels_path"] == 0
+    assert consistency["worst_family"]["name"] == "FACADE_FKI"
+    assert consistency["worst_family_with_exposed_buildings"]["name"] == (
+        "FACADE_GLASS_BLUE"
+    )
+    # 202 of the 206 exposed buildings disagree by no more than 5%.
+    assert attribution["exposed_building_count"] == 206
+    assert attribution["exposed_within_5_percent"] == 202
+    assert rows["FACADE_RESIDENTIAL"]["buildings_on_the_levels_path"] == 172
+
+
+def test_the_untagged_default_carries_a_third_of_the_buildings() -> None:
+    report = json.loads(REPORT.read_text(encoding="utf-8"))
+    counts = report["height_source_attribution"]["height_source_counts"]
+
+    # A single unsourced 12.0 m constant sets the mass of more buildings than
+    # the storey disagreement affects, which is the larger finding of the two.
+    assert counts["untagged_default"] == 456
+    assert sum(counts.values()) == report["height_source_attribution"]["way_count"]
+    assert any(
+        "neither height nor building:levels" in reason
+        for reason in report["blocking_reasons"]
+    )
+
+
+def test_the_snapshot_is_dated_to_the_event_and_carries_no_geometry() -> None:
+    snapshot = json.loads(BUILDING_TAGS.read_text(encoding="utf-8"))
+
+    assert snapshot["snapshot_utc"] == "2024-10-05T10:20:00Z"
+    assert snapshot["licence"] == "ODbL 1.0"
+    assert snapshot["geometry_omitted"] is True
+    assert snapshot["elements"]
+    assert all("geometry" not in element for element in snapshot["elements"])
+    assert all(
+        element["tags"].get("building") or element["tags"].get("building:part")
+        for element in snapshot["elements"]
+    )
+
+
+def test_the_audit_still_runs_without_the_snapshot(tmp_path: Path) -> None:
+    # The attribution is evidence layered on top, not a hard dependency: the
+    # module and shader checks must still work on a checkout that lacks it.
+    report = build_report(
+        SHADER,
+        SCENE_MODULE,
+        SCENE_ASSET,
+        EVIDENCE,
+        ATTRIBUTION,
+        tmp_path / "absent.json",
+    )
+
+    assert report["height_source_attribution"] is None
+    assert report["coverage"]["styles_consistent"]
+    assert not report["storey_height_consistency"]["storey_heights_agree"]
 
 
 def test_the_style_constants_and_landmark_heights_still_parse() -> None:

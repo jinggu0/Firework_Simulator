@@ -83,8 +83,14 @@
       "height_source_url": "https://rshp.com/projects/mixed-use/parc-1/",
       "basis": "The architect's record publishes the completed heights and identifies the red exterior columns, both of which the scene uses. It does not publish the curtain-wall module, so the bay and floor spacings are reconstruction.",
       "landmarks": [
-        {"landmark_key": "parc1_tower1", "height_basis": "RSHP project record"},
-        {"landmark_key": "parc1_tower2", "height_basis": "RSHP project record"}
+        {
+          "landmark_key": "parc1_tower1",
+          "height_basis": "RSHP project record"
+        },
+        {
+          "landmark_key": "parc1_tower2",
+          "height_basis": "RSHP project record"
+        }
       ]
     },
     {
@@ -97,7 +103,10 @@
       "height_source_url": "https://rshp.com/projects/mixed-use/parc-1/",
       "basis": "Narrow bays matching guest-room widths. The cited record publishes the 101 m hotel height only; the room module is assumed.",
       "landmarks": [
-        {"landmark_key": "parc1_hotel", "height_basis": "RSHP project record"}
+        {
+          "landmark_key": "parc1_hotel",
+          "height_basis": "RSHP project record"
+        }
       ]
     },
     {
@@ -110,7 +119,10 @@
       "height_source_url": "https://www.smithgill.com/work/fki/",
       "basis": "The architect's record publishes the 240 m height and the 30-degree photovoltaic spandrel over 15-degree vision panel arrangement, and the shader reproduces that alternating normal field per floor. The floor pitch the pattern repeats on is itself unsourced, so the published angles sit on an assumed spacing.",
       "landmarks": [
-        {"landmark_key": "fki", "height_basis": "Adrian Smith + Gordon Gill project record"}
+        {
+          "landmark_key": "fki",
+          "height_basis": "Adrian Smith + Gordon Gill project record"
+        }
       ]
     },
     {
@@ -165,8 +177,10 @@
       "evidence_grade": "D",
       "basis": "A flat fallback standing in for an unknown building. Roughly four storeys at the assumed 3.2 m."
     },
-    "known_inconsistency": "The importer derives heights at 3.2 m per storey while the shader paints storey bands at each family's own floor height, 3.05 m to 4.8 m. For any building whose height came from building:levels the rendered band count therefore contradicts the floor count that produced the height, by -33.3% for the FKI family down to +4.9% for residential. The landmark families mostly receive explicit heights instead, so the practical impact concentrates in the generic and residential families where the disagreement is smallest, 1.5% and 4.9%. Which buildings took which path cannot currently be determined because the building tags are not archived.",
-    "not_reconciled_because": "Making the two agree would move every untagged building's mass or every family's storey banding, and no held evidence says which value is right. It is reported rather than silently changed."
+    "known_inconsistency": "The importer derives heights at 3.2 m per storey while the shader paints storey bands at each family's own floor height, 3.05 m to 4.8 m. For any building whose height came from building:levels the rendered band count therefore contradicts the floor count that produced the height, by -33.3% for the FKI family down to +4.9% for residential.",
+    "not_reconciled_because": "Making the two agree would move every untagged building's mass or every family's storey banding, and no held evidence says which value is right. It is reported rather than silently changed.",
+    "measured_exposure": "Attributed against the dated building snapshot. Of 1,314 ways, 652 carry a height tag, 206 take the levels path and 456 have neither. Only the 206 are exposed, and 202 of them sit in families that disagree by no more than 5% (172 residential at +4.9%, 30 generic at -1.5%). The two worst-disagreeing families, FKI and Parc.1, hold no buildings on the levels path at all, so the -33.3% figure describes nothing in the scene. The other four are 2 glass-blue at -30.0%, 1 assembly at -11.1% and 1 hotel at -9.9%.",
+    "larger_finding": "456 of 1,314 ways, 34.7%, carry neither height nor building:levels, so their mass comes from the 12.0 m default alone. That single unsourced constant sets more building masses than the storey disagreement affects."
   },
   "photo_registration": {
     "registerable_viewpoint_count": 0,
@@ -184,6 +198,6 @@
     "a published overall height for the IFC towers; the scene currently takes theirs from OSM tags with no separate citation",
     "surveyed or published floor-to-floor heights for the residential and institutional families, which together cover most wall area in the scene",
     "a photograph with a solvable camera pose, or an architectural elevation, for any named landmark",
-    "a dated OSM building snapshot. Roads are archived as assets/yeouido_road_osm_2024-10-05.json but buildings are downloaded live and their tags discarded at import, so building:levels and height cannot be checked per building and the storey-height inconsistency above cannot be attributed to the buildings it actually affects"
+    "published floor counts remain the open item for raising the grade-D module dimensions to B; the dated OSM snapshot supplies building:levels for 206 ways but OSM is a community dataset, so it caps at grade B and covers none of the named landmark towers"
   ]
 }

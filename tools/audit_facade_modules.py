@@ -37,6 +37,7 @@ DEFAULT_SCENE_MODULE = Path("simulator/scene.py")
 DEFAULT_SCENE_ASSET = Path("assets/yeouido_scene.npz")
 DEFAULT_EVIDENCE = Path("assets/yeouido_facade_module_evidence.json")
 DEFAULT_ATTRIBUTION = Path("assets/ATTRIBUTION.md")
+DEFAULT_BUILDING_TAGS = Path("assets/yeouido_building_osm_2024-10-05.json")
 DEFAULT_OUTPUT = Path(
     "docs/validation/facade_modules_v3/facade_module_report.json"
 )
@@ -211,6 +212,49 @@ def import_storey_heights(scene_module: str) -> dict[str, float | None]:
     }
 
 
+def height_source_attribution(snapshot_path: Path) -> dict[str, Any]:
+    """Which rule actually set each building's height, from the dated tags.
+
+    This mirrors the branch order in `simulator.scene._height`. The facade
+    family comes from that module directly rather than being restated here, so
+    the two cannot drift apart; `test_facade_modules` checks the branch
+    classification against `_height` itself.
+    """
+
+    from simulator.scene import _facade_style
+
+    snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    elements = snapshot["elements"]
+    totals: dict[str, int] = {
+        "height_tag": 0,
+        "levels_times_assumed": 0,
+        "untagged_default": 0,
+    }
+    per_family: dict[float, dict[str, int]] = {}
+    for element in elements:
+        tags = element["tags"]
+        raw = tags.get("height", "").lower().replace("m", "").strip()
+        try:
+            float(raw)
+            source = "height_tag"
+        except ValueError:
+            try:
+                float(tags.get("building:levels", ""))
+                source = "levels_times_assumed"
+            except ValueError:
+                source = "untagged_default"
+        totals[source] += 1
+        family = round(float(_facade_style(tags)), 3)
+        per_family.setdefault(family, dict.fromkeys(totals, 0))[source] += 1
+    return {
+        "snapshot": snapshot_path.name,
+        "snapshot_utc": snapshot.get("snapshot_utc"),
+        "way_count": len(elements),
+        "height_source_counts": totals,
+        "per_family": {str(key): value for key, value in sorted(per_family.items())},
+    }
+
+
 def scene_style_usage(asset: Path) -> dict[float, dict[str, int]]:
     """Wall and roof vertex counts per style in the built asset."""
 
@@ -236,6 +280,7 @@ def build_report(
     scene_asset_path: Path = DEFAULT_SCENE_ASSET,
     evidence_path: Path = DEFAULT_EVIDENCE,
     attribution_path: Path = DEFAULT_ATTRIBUTION,
+    building_tags_path: Path | None = DEFAULT_BUILDING_TAGS,
 ) -> dict[str, Any]:
     shader = shader_path.read_text(encoding="utf-8")
     scene_module = scene_module_path.read_text(encoding="utf-8")
@@ -368,9 +413,40 @@ def build_report(
                     ),
                 }
             )
+    attribution = (
+        height_source_attribution(building_tags_path)
+        if building_tags_path is not None and building_tags_path.is_file()
+        else None
+    )
+    if attribution is not None:
+        # Only buildings whose height came from the level count are exposed to
+        # the disagreement at all, so weight each family by how many of those it
+        # actually holds. Without this the worst family reads as a scene-wide
+        # error when it may cover no buildings.
+        exposed_total = 0
+        for row in storey_rows:
+            counts = attribution["per_family"].get(str(row["facade_style"]), {})
+            exposed = int(counts.get("levels_times_assumed", 0))
+            row["buildings_on_the_levels_path"] = exposed
+            exposed_total += exposed
+        attribution["exposed_building_count"] = exposed_total
+        attribution["exposed_within_5_percent"] = sum(
+            row["buildings_on_the_levels_path"]
+            for row in storey_rows
+            if abs(row["relative_error"]) <= 0.05
+        )
     worst = (
         max(storey_rows, key=lambda row: abs(row["relative_error"]))
         if storey_rows
+        else None
+    )
+    worst_exposed = (
+        max(
+            (row for row in storey_rows if row.get("buildings_on_the_levels_path")),
+            key=lambda row: abs(row["relative_error"]),
+            default=None,
+        )
+        if attribution is not None
         else None
     )
     storey_heights_agree = bool(
@@ -420,13 +496,31 @@ def build_report(
             "dimensions, so no surveyed-fidelity claim may be made"
         )
     if worst and not storey_heights_agree:
+        exposure = ""
+        if worst_exposed is not None:
+            exposure = (
+                f"; the worst family that actually holds such buildings is "
+                f"{worst_exposed['name']} at "
+                f"{abs(worst_exposed['relative_error']) * 100:.1f}% over "
+                f"{worst_exposed['buildings_on_the_levels_path']} buildings"
+            )
         blockers.append(
             "the importer derives heights at "
             f"{worst['import_storey_height_m']} m per storey while the shader "
             f"paints {worst['name']} at {worst['painted_floor_height_m']} m, a "
             f"{abs(worst['relative_error']) * 100:.1f}% disagreement, so "
             "rendered storey bands contradict the source floor count"
+            + exposure
         )
+    if attribution is not None:
+        untagged = attribution["height_source_counts"]["untagged_default"]
+        if untagged:
+            blockers.append(
+                f"{untagged} of {attribution['way_count']} dated building ways "
+                f"({untagged / attribution['way_count'] * 100:.1f}%) carry "
+                "neither height nor building:levels, so their mass comes from "
+                f"the {storey['untagged_default_height_m']} m default alone"
+            )
 
     return {
         "schema_version": 1,
@@ -472,8 +566,10 @@ def build_report(
         "storey_height_consistency": {
             "storey_heights_agree": storey_heights_agree,
             "worst_family": worst,
+            "worst_family_with_exposed_buildings": worst_exposed,
             "rows": storey_rows,
         },
+        "height_source_attribution": attribution,
         "implied_floor_counts": implied,
         "checks": {
             "styles_consistent": styles_consistent,
@@ -510,6 +606,9 @@ def main() -> None:
     parser.add_argument("--scene-asset", type=Path, default=DEFAULT_SCENE_ASSET)
     parser.add_argument("--evidence", type=Path, default=DEFAULT_EVIDENCE)
     parser.add_argument("--attribution", type=Path, default=DEFAULT_ATTRIBUTION)
+    parser.add_argument(
+        "--building-tags", type=Path, default=DEFAULT_BUILDING_TAGS
+    )
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     arguments = parser.parse_args()
     report = build_report(
@@ -518,6 +617,7 @@ def main() -> None:
         arguments.scene_asset,
         arguments.evidence,
         arguments.attribution,
+        arguments.building_tags,
     )
     output = arguments.output
     if not output.is_absolute():

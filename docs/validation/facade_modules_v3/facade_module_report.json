@@ -9,7 +9,7 @@
     "scene_asset": "assets/yeouido_scene.npz",
     "scene_asset_sha256": "c8b9d2720f935de3532a9401c74d37a55470d23645c06d32c24ff923c3291518",
     "evidence": "assets/yeouido_facade_module_evidence.json",
-    "evidence_sha256": "e8231f0c0e5953091b57c1079bc7d8d296e18657a6780ba27fb650920e550368",
+    "evidence_sha256": "abbefd6f605824b4df19ecfb5eb1f0f5d679fc8b6c2dc0064576e61903e62b1e",
     "attribution": "assets/ATTRIBUTION.md",
     "attribution_sha256": "ce53e6b3237d07b7277e2cc692b8f1ee37221e1e2d13848ddb6b0e32836a83c0"
   },
@@ -189,7 +189,17 @@
       "import_storey_height_m": 3.2,
       "painted_floor_height_m": 4.8,
       "painted_bands_per_source_storey": 0.6667,
-      "relative_error": -0.3333
+      "relative_error": -0.3333,
+      "buildings_on_the_levels_path": 0
+    },
+    "worst_family_with_exposed_buildings": {
+      "facade_style": 1.0,
+      "name": "FACADE_GLASS_BLUE",
+      "import_storey_height_m": 3.2,
+      "painted_floor_height_m": 4.57,
+      "painted_bands_per_source_storey": 0.7002,
+      "relative_error": -0.2998,
+      "buildings_on_the_levels_path": 2
     },
     "rows": [
       {
@@ -198,7 +208,8 @@
         "import_storey_height_m": 3.2,
         "painted_floor_height_m": 3.25,
         "painted_bands_per_source_storey": 0.9846,
-        "relative_error": -0.0154
+        "relative_error": -0.0154,
+        "buildings_on_the_levels_path": 30
       },
       {
         "facade_style": 1.0,
@@ -206,7 +217,8 @@
         "import_storey_height_m": 3.2,
         "painted_floor_height_m": 4.57,
         "painted_bands_per_source_storey": 0.7002,
-        "relative_error": -0.2998
+        "relative_error": -0.2998,
+        "buildings_on_the_levels_path": 2
       },
       {
         "facade_style": 2.0,
@@ -214,7 +226,8 @@
         "import_storey_height_m": 3.2,
         "painted_floor_height_m": 4.0,
         "painted_bands_per_source_storey": 0.8,
-        "relative_error": -0.2
+        "relative_error": -0.2,
+        "buildings_on_the_levels_path": 0
       },
       {
         "facade_style": 3.0,
@@ -222,7 +235,8 @@
         "import_storey_height_m": 3.2,
         "painted_floor_height_m": 3.05,
         "painted_bands_per_source_storey": 1.0492,
-        "relative_error": 0.0492
+        "relative_error": 0.0492,
+        "buildings_on_the_levels_path": 172
       },
       {
         "facade_style": 4.0,
@@ -230,7 +244,8 @@
         "import_storey_height_m": 3.2,
         "painted_floor_height_m": 3.8,
         "painted_bands_per_source_storey": 0.8421,
-        "relative_error": -0.1579
+        "relative_error": -0.1579,
+        "buildings_on_the_levels_path": 0
       },
       {
         "facade_style": 5.0,
@@ -238,7 +253,8 @@
         "import_storey_height_m": 3.2,
         "painted_floor_height_m": 4.65,
         "painted_bands_per_source_storey": 0.6882,
-        "relative_error": -0.3118
+        "relative_error": -0.3118,
+        "buildings_on_the_levels_path": 0
       },
       {
         "facade_style": 6.0,
@@ -246,7 +262,8 @@
         "import_storey_height_m": 3.2,
         "painted_floor_height_m": 3.55,
         "painted_bands_per_source_storey": 0.9014,
-        "relative_error": -0.0986
+        "relative_error": -0.0986,
+        "buildings_on_the_levels_path": 1
       },
       {
         "facade_style": 7.0,
@@ -254,7 +271,8 @@
         "import_storey_height_m": 3.2,
         "painted_floor_height_m": 4.8,
         "painted_bands_per_source_storey": 0.6667,
-        "relative_error": -0.3333
+        "relative_error": -0.3333,
+        "buildings_on_the_levels_path": 0
       },
       {
         "facade_style": 8.0,
@@ -262,9 +280,69 @@
         "import_storey_height_m": 3.2,
         "painted_floor_height_m": 3.6,
         "painted_bands_per_source_storey": 0.8889,
-        "relative_error": -0.1111
+        "relative_error": -0.1111,
+        "buildings_on_the_levels_path": 1
       }
     ]
+  },
+  "height_source_attribution": {
+    "snapshot": "yeouido_building_osm_2024-10-05.json",
+    "snapshot_utc": "2024-10-05T10:20:00Z",
+    "way_count": 1314,
+    "height_source_counts": {
+      "height_tag": 652,
+      "levels_times_assumed": 206,
+      "untagged_default": 456
+    },
+    "per_family": {
+      "0.0": {
+        "height_tag": 358,
+        "levels_times_assumed": 30,
+        "untagged_default": 325
+      },
+      "1.0": {
+        "height_tag": 50,
+        "levels_times_assumed": 2,
+        "untagged_default": 0
+      },
+      "2.0": {
+        "height_tag": 2,
+        "levels_times_assumed": 0,
+        "untagged_default": 0
+      },
+      "3.0": {
+        "height_tag": 145,
+        "levels_times_assumed": 172,
+        "untagged_default": 121
+      },
+      "4.0": {
+        "height_tag": 84,
+        "levels_times_assumed": 0,
+        "untagged_default": 9
+      },
+      "5.0": {
+        "height_tag": 2,
+        "levels_times_assumed": 0,
+        "untagged_default": 0
+      },
+      "6.0": {
+        "height_tag": 9,
+        "levels_times_assumed": 1,
+        "untagged_default": 1
+      },
+      "7.0": {
+        "height_tag": 2,
+        "levels_times_assumed": 0,
+        "untagged_default": 0
+      },
+      "8.0": {
+        "height_tag": 0,
+        "levels_times_assumed": 1,
+        "untagged_default": 0
+      }
+    },
+    "exposed_building_count": 206,
+    "exposed_within_5_percent": 202
   },
   "implied_floor_counts": [
     {
@@ -341,10 +419,12 @@
     "a published curtain-wall module or typical bay dimension for any Yeouido landmark",
     "a published overall height for the IFC towers; the scene currently takes theirs from OSM tags with no separate citation",
     "surveyed or published floor-to-floor heights for the residential and institutional families, which together cover most wall area in the scene",
-    "a photograph with a solvable camera pose, or an architectural elevation, for any named landmark"
+    "a photograph with a solvable camera pose, or an architectural elevation, for any named landmark",
+    "published floor counts remain the open item for raising the grade-D module dimensions to B; the dated OSM snapshot supplies building:levels for 206 ways but OSM is a community dataset, so it caps at grade B and covers none of the named landmark towers"
   ],
   "blocking_reasons": [
     "9 facade families carry unsurveyed module dimensions, so no surveyed-fidelity claim may be made",
-    "the importer derives heights at 3.2 m per storey while the shader paints FACADE_FKI at 4.8 m, a 33.3% disagreement, so rendered storey bands contradict the source floor count"
+    "the importer derives heights at 3.2 m per storey while the shader paints FACADE_FKI at 4.8 m, a 33.3% disagreement, so rendered storey bands contradict the source floor count; the worst family that actually holds such buildings is FACADE_GLASS_BLUE at 30.0% over 2 buildings",
+    "456 of 1314 dated building ways (34.7%) carry neither height nor building:levels, so their mass comes from the 12.0 m default alone"
   ]
 }
