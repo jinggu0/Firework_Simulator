@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "stage": "V3-1e",
+  "request_asset": "assets/yeouido_building_register_request.json",
+  "request_sha256": "d50ec0c56558be370ff40a7c2e17673a00fd31af2d394e5714d1221f9f843c29",
+  "response_asset": null,
+  "checks": {
+    "route_verified": true,
+    "codes_reconstruct_the_verified_value": true,
+    "credential_like_values_found": [],
+    "no_credential_committed": true,
+    "response_recorded": false
+  },
+  "route": {
+    "portal_url": "https://www.data.go.kr/data/15134735/openapi.do",
+    "base_url": "https://apis.data.go.kr/1613000/BldRgstHubService",
+    "endpoint": "/getBrTitleInfo",
+    "approval": "개발단계 자동승인 / 운영단계 자동승인",
+    "cost": "무료",
+    "use_scope": "이용허락범위 제한 없음",
+    "sigunguCd": "11560",
+    "bjdongCd": "11000"
+  },
+  "join_assessment": {
+    "question": "can register records be matched to individual OSM building ways?",
+    "finding": "weakly, for a small minority",
+    "measured_against": "assets/yeouido_building_osm_2024-10-05.json",
+    "untagged_height_ways": 456,
+    "untagged_ways_with_any_addr_tag": 20,
+    "untagged_ways_with_addr_housenumber": 17,
+    "untagged_ways_with_a_name": 152,
+    "obstacle": "The register is keyed by 지번 (bun/ji). OSM here carries 도로명 style addr:street and addr:housenumber for 5.9% and 5.3% of ways respectively, which is a different addressing system, and only 17 of the 456 buildings that actually need a height have a house number at all.",
+    "consequence": "Per-building attribution is not the realistic first use. The population statistics are: the register gives the true height and floor-count distribution for 여의도동, which is exactly the kind of quantity the 12.0 m default and the nine assumed floor heights are standing in for.",
+    "stronger_join_candidate": {
+      "dataset": "국토교통부_GIS건물통합정보(WMS/WFS)",
+      "portal_url": "https://www.data.go.kr/data/15123970/openapi.do",
+      "why": "It publishes building footprints already joined to 세움터 register attributes, which would allow a spatial match to OSM footprints instead of an address match. Not assessed in detail yet."
+    }
+  },
+  "derivation": null,
+  "application_gates": {
+    "route_ready_for_key_issue": true,
+    "register_data_recorded": false,
+    "grade_a_upgrade_available": false,
+    "scene_vertices_modified": 0,
+    "runtime_geometry_changed_by_this_stage": false
+  },
+  "blocking_reasons": [
+    "no register response is recorded, so height and floor count remain unavailable and the facade dimensions stay at grade D"
+  ],
+  "next_evidence_gate": "Issuing the service key is the project owner's action; the dataset auto-approves, is free and carries no use-scope restriction. Once a response is recorded, heit / grndFlrCnt supplies floor-to-floor heights from two official values and replaces the grade-D assumptions."
+}

@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "stage": "V3-1e",
+  "target_event_date": "2024-10-05",
+  "prepared_at": "2026-08-04",
+  "status": "ready_for_user_key_issue_not_requested",
+  "purpose": "The building module dimensions and the untagged height default are currently grade D or a grade-C candidate derived from OSM's own statistics. The official building register publishes both height and above-ground floor count, which is the only route to grade A. This records the route as verified, not as assumed.",
+  "verified_route": {
+    "dataset": "국토교통부_건축HUB_건축물대장정보 서비스",
+    "portal_url": "https://www.data.go.kr/data/15134735/openapi.do",
+    "base_url": "https://apis.data.go.kr/1613000/BldRgstHubService",
+    "endpoint": "/getBrTitleInfo",
+    "endpoint_title": "건축HUB_건축물대장 표제부 조회",
+    "provider": "국토교통부",
+    "managing_department": "건축문화경관과",
+    "api_type": "REST",
+    "formats": ["JSON", "XML"],
+    "browser_verified_utc": "2026-08-04T05:04:12Z",
+    "terms": {
+      "cost": "무료",
+      "use_scope": "이용허락범위 제한 없음",
+      "approval": "개발단계 자동승인 / 운영단계 자동승인",
+      "development_quota_per_day": 10000,
+      "note": "Auto-approval and an unrestricted use scope mean this needs no provider correspondence, unlike the NGII DEM request in V1-11 or the S-Map enquiry in V2-2f. The only gate is issuing a service key, which requires the project owner's portal account."
+    }
+  },
+  "request_parameters": {
+    "required": ["serviceKey", "sigunguCd", "bjdongCd"],
+    "optional": ["platGbCd", "bun", "ji", "startDate", "endDate", "_type", "numOfRows", "pageNo"],
+    "significance_of_optional_lot_number": "bun and ji are optional, so a query keyed on the district and legal-dong codes alone returns every 표제부 record in that dong. That is what makes a population statistic possible without solving the per-building join.",
+    "sigunguCd": "11560",
+    "bjdongCd": "11000",
+    "code_basis": {
+      "bjdong_code_10_digit": "1156011000",
+      "name": "서울특별시 영등포구 여의도동",
+      "source": "행정표준코드관리시스템 법정동코드목록조회, https://www.code.go.kr/stdcode/regCodeL.do",
+      "browser_verified_utc": "2026-08-04T05:04:12Z",
+      "split_rule": "The 10-digit legal-dong code splits into a 5-digit 시군구코드 and a 5-digit 법정동코드. The split is applied here and must be confirmed against the first non-empty response rather than trusted."
+    }
+  },
+  "fields_that_unlock_the_gates": {
+    "heit": "building height in metres, official record",
+    "grndFlrCnt": "above-ground floor count, official record",
+    "ugrndFlrCnt": "below-ground floor count",
+    "derivation": "heit / grndFlrCnt gives a floor-to-floor height from two grade-A inputs. That is the measurement the nine facade families currently assume, and the quantity the 12.0 m untagged default is a stand-in for.",
+    "verified_from": "the response model published on the portal's own API page"
+  },
+  "join_assessment": {
+    "question": "can register records be matched to individual OSM building ways?",
+    "finding": "weakly, for a small minority",
+    "measured_against": "assets/yeouido_building_osm_2024-10-05.json",
+    "untagged_height_ways": 456,
+    "untagged_ways_with_any_addr_tag": 20,
+    "untagged_ways_with_addr_housenumber": 17,
+    "untagged_ways_with_a_name": 152,
+    "obstacle": "The register is keyed by 지번 (bun/ji). OSM here carries 도로명 style addr:street and addr:housenumber for 5.9% and 5.3% of ways respectively, which is a different addressing system, and only 17 of the 456 buildings that actually need a height have a house number at all.",
+    "consequence": "Per-building attribution is not the realistic first use. The population statistics are: the register gives the true height and floor-count distribution for 여의도동, which is exactly the kind of quantity the 12.0 m default and the nine assumed floor heights are standing in for.",
+    "stronger_join_candidate": {
+      "dataset": "국토교통부_GIS건물통합정보(WMS/WFS)",
+      "portal_url": "https://www.data.go.kr/data/15123970/openapi.do",
+      "why": "It publishes building footprints already joined to 세움터 register attributes, which would allow a spatial match to OSM footprints instead of an address match. Not assessed in detail yet."
+    }
+  },
+  "credential_handling": {
+    "service_key_required": true,
+    "service_key_committed": false,
+    "issued_by": "project owner's data.go.kr account",
+    "agent_may_enter_credentials": false,
+    "note": "The key is a credential. It must not be committed, and the audit fails if one appears in this package."
+  },
+  "acceptance_gate": {
+    "register_data_recorded": false,
+    "scene_vertices_modified": 0,
+    "runtime_geometry_changed_by_this_stage": false,
+    "blocking_reasons": [
+      "no service key has been issued, so no register record has been retrieved",
+      "the sigunguCd and bjdongCd split is derived from the verified 10-digit code and is unconfirmed against a live response"
+    ]
+  }
+}
