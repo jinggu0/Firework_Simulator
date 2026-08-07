@@ -32,9 +32,11 @@ from simulator.config import SimulationConfig
 from simulator.passes.post import DisplayMode
 from simulator.scenario import DEFAULT_SCENARIO_PATH
 from simulator.validation.capture import (
+    compare_coverage,
     compare_display_sdr,
     compare_linear_hdr,
     coverage_statistics,
+    load_coverage_mask,
     display_sdr_statistics,
     linear_hdr_statistics,
     read_display_sdr,
@@ -236,12 +238,26 @@ def compare_capture_directories(reference_dir: Path, candidate_dir: Path) -> dic
             sdr_candidate = np.asarray(image.convert("RGB")).copy()
         hdr = compare_linear_hdr(hdr_reference, hdr_candidate)
         sdr = compare_display_sdr(sdr_reference, sdr_candidate)
+        # Coverage predates neither capture unconditionally: a directory
+        # written before masks existed still compares on colour alone rather
+        # than failing for a file it could not have produced.
+        coverage = None
+        if "coverage" in first and "coverage" in second:
+            coverage = compare_coverage(
+                load_coverage_mask(reference_dir / first["coverage"]["path"]),
+                load_coverage_mask(candidate_dir / second["coverage"]["path"]),
+            )
         comparisons.append(
             {
                 "view_id": view_id,
-                "passed": bool(hdr["passed"] and sdr["passed"]),
+                "passed": bool(
+                    hdr["passed"]
+                    and sdr["passed"]
+                    and (coverage is None or coverage["passed"])
+                ),
                 "hdr": hdr,
                 "sdr": sdr,
+                "coverage": coverage,
             }
         )
     return {

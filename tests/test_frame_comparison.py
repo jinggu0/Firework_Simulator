@@ -364,6 +364,45 @@ def test_a_capture_without_masks_still_reports(tmp_path) -> None:
     assert report["views"]["view"]["edges"]["mean_displacement_px"] > 0.0
 
 
+def test_the_coverage_gate_catches_a_mask_that_stopped_being_written() -> None:
+    # The failure the colour comparison cannot see: an empty or missing mask
+    # leaves HDR and SDR untouched, so without this it would pass unnoticed.
+    from simulator.validation.capture import compare_coverage
+
+    reference = np.zeros((100, 100), dtype=bool)
+    reference[:50] = True
+
+    assert compare_coverage(reference, reference.copy())["passed"]
+    empty = compare_coverage(reference, np.zeros((100, 100), dtype=bool))
+    assert not empty["passed"]
+    assert empty["metrics"]["changed_pixel_fraction"] == 0.5
+    assert empty["metrics"]["candidate_coverage_fraction"] == 0.0
+
+
+def test_the_coverage_gate_tolerates_only_raster_edge_scale_movement() -> None:
+    from simulator.validation.capture import (
+        DEFAULT_COVERAGE_REGRESSION_LIMITS,
+        compare_coverage,
+    )
+
+    # At the capture resolution the limit allows a handful of boundary pixels,
+    # which is the scale of a triangle edge falling the other side of a sample
+    # point, and nothing beyond that.
+    pixels = 1280 * 720
+    allowed = int(DEFAULT_COVERAGE_REGRESSION_LIMITS["changed_pixel_fraction"] * pixels)
+    assert 5 <= allowed <= 20
+
+    reference = np.zeros((720, 1280), dtype=bool)
+    reference[:360] = True
+    within = reference.copy()
+    within.flat[np.arange(allowed) + 360 * 1280] = True
+    beyond = reference.copy()
+    beyond.flat[np.arange(allowed * 4) + 360 * 1280] = True
+
+    assert compare_coverage(reference, within)["passed"]
+    assert not compare_coverage(reference, beyond)["passed"]
+
+
 def test_mismatched_shapes_are_rejected() -> None:
     with pytest.raises(ValueError):
         tone_distribution_shift(_flat(100), _flat(100, (32, 32)))

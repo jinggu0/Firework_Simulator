@@ -29,6 +29,12 @@ DEFAULT_SDR_REGRESSION_LIMITS = {
     "changed_pixel_fraction": 1.0e-5,
     "mean_absolute_error_rgb8": 5.0e-4,
 }
+#: Coverage is a boolean mask, so a differing pixel is a triangle edge landing
+#: on the other side of a sample point rather than a shading difference. The
+#: same bound as the colour targets applies for the same reason.
+DEFAULT_COVERAGE_REGRESSION_LIMITS = {
+    "changed_pixel_fraction": 1.0e-5,
+}
 
 
 def read_linear_hdr(renderer: Any) -> np.ndarray:
@@ -197,6 +203,41 @@ def save_display_sdr(frame: np.ndarray, path: Path) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     Image.fromarray(rgb, mode="RGB").save(path)
     return path
+
+
+def compare_coverage(
+    reference: np.ndarray,
+    candidate: np.ndarray,
+    *,
+    limits: dict[str, float] | None = None,
+) -> dict[str, object]:
+    """Compare two geometry coverage masks.
+
+    Recorded alongside the colour targets because it fails differently. A mask
+    that stopped being written, or came back empty, leaves the colour
+    comparison untouched and would otherwise pass unnoticed; conversely a
+    silhouette that moved is visible here at a pixel count rather than buried
+    in a shading difference.
+    """
+
+    first = np.asarray(reference, dtype=bool)
+    second = np.asarray(candidate, dtype=bool)
+    if first.shape != second.shape or first.ndim != 2:
+        raise ValueError("coverage masks must have the same (height, width) shape")
+    thresholds = dict(DEFAULT_COVERAGE_REGRESSION_LIMITS)
+    if limits:
+        thresholds.update(limits)
+    changed = first != second
+    metrics = {
+        "changed_pixel_count": int(changed.sum()),
+        "changed_pixel_fraction": float(changed.mean()),
+        "reference_coverage_fraction": float(first.mean()),
+        "candidate_coverage_fraction": float(second.mean()),
+    }
+    passed = all(
+        metrics[key] <= value for key, value in thresholds.items()
+    )
+    return {"passed": bool(passed), "limits": thresholds, "metrics": metrics}
 
 
 def compare_linear_hdr(
