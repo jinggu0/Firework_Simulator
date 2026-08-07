@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "stage": "V0-4",
+  "inputs": {
+    "appearance_reference": "assets/yeouido_2024-10-05_appearance_reference.json",
+    "appearance_reference_sha256": "d73a4960a8146320da1da4481a59f430c6729f7a5ecd3308d870a57165f8ea76",
+    "public_controls": "assets/yeouido_ngii_public_controls_2017.json",
+    "public_controls_sha256": "59a1977aba497b96b83a2d75274b0f764e88cab369657bea06bc7e7ea972b040"
+  },
+  "requirement": {
+    "viewpoints": 3,
+    "minimum_control_points_per_view": 6,
+    "solver": "simulator.photogrammetry.fit_camera_pose"
+  },
+  "sources": [
+    {
+      "source_id": "commons_mobile_203051",
+      "license": "CC0 1.0",
+      "camera": "Samsung Galaxy A34 5G",
+      "focal_length_mm": 4.65,
+      "full_frame_equivalent_mm": 25.0,
+      "intrinsics_available": true,
+      "pixels_available_to_the_project": true,
+      "blockers": []
+    },
+    {
+      "source_id": "commons_mobile_203729",
+      "license": "CC0 1.0",
+      "camera": "Samsung Galaxy A34 5G",
+      "focal_length_mm": 4.65,
+      "full_frame_equivalent_mm": 25.0,
+      "intrinsics_available": true,
+      "pixels_available_to_the_project": true,
+      "blockers": []
+    },
+    {
+      "source_id": "news1_night_wide",
+      "license": "Copyright News1; do not redistribute",
+      "camera": null,
+      "focal_length_mm": null,
+      "full_frame_equivalent_mm": null,
+      "intrinsics_available": false,
+      "pixels_available_to_the_project": false,
+      "blockers": [
+        "no published focal length or sensor equivalent",
+        "licence forbids redistribution and no pixels are held"
+      ]
+    },
+    {
+      "source_id": "news1_day_site",
+      "license": "Copyright News1; do not redistribute",
+      "camera": null,
+      "focal_length_mm": null,
+      "full_frame_equivalent_mm": null,
+      "intrinsics_available": false,
+      "pixels_available_to_the_project": false,
+      "blockers": [
+        "no published focal length or sensor equivalent",
+        "licence forbids redistribution and no pixels are held"
+      ]
+    },
+    {
+      "source_id": "newsis_night_river",
+      "license": "Copyright Newsis; do not redistribute",
+      "camera": null,
+      "focal_length_mm": null,
+      "full_frame_equivalent_mm": null,
+      "intrinsics_available": false,
+      "pixels_available_to_the_project": false,
+      "blockers": [
+        "no published focal length or sensor equivalent",
+        "licence forbids redistribution and no pixels are held"
+      ]
+    }
+  ],
+  "control_points": {
+    "candidates": [
+      {
+        "family": "NGII public control points",
+        "count": 4,
+        "usable_count": 0,
+        "uncertainty_m": null,
+        "reason": "every published point is recorded as destroyed, so none can be identified in a photograph regardless of its coordinates"
+      },
+      {
+        "family": "OSM building corners",
+        "count": null,
+        "usable_count": null,
+        "uncertainty_m": [
+          1.0,
+          3.0
+        ],
+        "reason": "the best-covered identifiable features in the scene, but at the 1 to 3 m planimetric accuracy this project established for OSM in V-05"
+      },
+      {
+        "family": "Seogang Bridge published dimensions",
+        "count": null,
+        "usable_count": 0,
+        "uncertainty_m": null,
+        "reason": "grade A as published dimensions, but the source drawings are not georegistered to the project's EUS frame, so they yield no control coordinates in it"
+      }
+    ],
+    "points_meeting_target_uncertainty": 0,
+    "best_available_uncertainty_m": 1.0,
+    "target_uncertainty_m": 1.0,
+    "minimum_required_points": 6,
+    "sufficient": false
+  },
+  "counts": {
+    "source_count": 5,
+    "with_intrinsics": 2,
+    "with_usable_pixels": 2,
+    "camera_ready": 2,
+    "registerable": 0
+  },
+  "determination": {
+    "registerable_viewpoint_count": 0,
+    "meets_v0_requirement": false,
+    "limiting_factor": "control points",
+    "finding": "The blocker is not that poses are unpublished — a pose can be solved. It is that the scene offers nothing to solve against: the published control points are all destroyed, the bridge dimensions are not georegistered to the project frame, and OSM building corners carry 1 to 3 m planimetric uncertainty. A registration built on those would inherit their error, so its accuracy could not be stated."
+  },
+  "application_gates": {
+    "photo_registration_available": false,
+    "scene_vertices_modified": 0,
+    "runtime_geometry_changed_by_this_stage": false
+  },
+  "blocking_reasons": [
+    "no 6 scene features have coordinates at or below 1.0 m, so no photograph can be registered to a statable accuracy",
+    "only 2 of 5 sources carry both intrinsics and usable pixels, against the 3 viewpoints V0 asks for"
+  ],
+  "missing_data": [
+    "at least six scene features with coordinates at or below 1 m in the project's EUS frame that are identifiable in a night photograph",
+    "a georegistration of the Seogang Bridge published dimensions into the project frame, which would turn grade-A dimensions into usable control",
+    "published camera intrinsics for any of the three press sources, which would still not help until control exists"
+  ]
+}

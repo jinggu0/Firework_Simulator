@@ -12,6 +12,13 @@ from .camera_optics import LensDistortion
 from .provenance import ConfidenceGrade, DataRecord
 
 
+#: Six-degree-of-freedom pose needs six observations at an absolute minimum,
+#: and at that count the fit is exactly determined with nothing left over to
+#: detect a mis-identified point. Named so a feasibility audit can quote the
+#: solver's own requirement instead of restating it.
+MINIMUM_CONTROL_POINTS = 6
+
+
 class RegistrationError(ValueError):
     """Raised when a photograph cannot support an auditable registration."""
 
@@ -206,7 +213,9 @@ def fit_camera_pose(
     observed = np.asarray(observed_pixels, dtype=np.float64)
     if world.ndim != 2 or world.shape[1] != 3 or observed.shape != (len(world), 2):
         raise RegistrationError("control points must be n x 3 world and n x 2 pixels")
-    if len(world) < 6:
+    if len(world) < MINIMUM_CONTROL_POINTS:
+        # Wording kept as prose rather than interpolated from the constant so
+        # the existing assertion on this message keeps its specificity.
         raise RegistrationError("at least six control points are required")
     if not np.isfinite(world).all() or not np.isfinite(observed).all():
         raise RegistrationError("control points must be finite")
