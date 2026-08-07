@@ -11,6 +11,12 @@ animates and every target drifts legitimately, which buries the thing being
 looked for. Passing ``frame_dt_s = 0`` holds the scene still so any remaining
 difference is the renderer disagreeing with itself.
 
+Row numbers here are **OpenGL rows, counted from the bottom**, because that is
+how the targets come back and flipping them would misplace the depth against
+the colour. The capture tools report image rows counted from the top, so the
+same pixels appear at ``height - 1 - row`` there. Mixing the two silently
+points any follow-up analysis at the wrong geometry.
+
 Example::
 
     python -m tools.probe_render_determinism --view water_reflection
