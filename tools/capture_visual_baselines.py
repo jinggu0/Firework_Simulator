@@ -113,8 +113,8 @@ def capture_view(
     scenario_path: Path,
     frames: int,
     display_mode: str,
-) -> tuple[object, object, dict]:
-    """Render one independent static view and return HDR, SDR and context."""
+) -> tuple[object, object, object, dict]:
+    """Render one static view and return HDR, SDR, coverage and context."""
 
     base = SimulationConfig()
     config = replace(
