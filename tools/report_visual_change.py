@@ -27,6 +27,7 @@ from typing import Any
 import numpy as np
 from PIL import Image
 
+from simulator.validation.capture import load_coverage_mask
 from simulator.validation.frame_comparison import (
     DEFAULT_EDGE_THRESHOLD,
     compare_frames,
@@ -39,6 +40,15 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 def _load_sdr(path: Path) -> np.ndarray:
     with Image.open(path) as image:
         return np.asarray(image.convert("RGB"), dtype=np.uint8)
+
+
+def _load_coverage(directory: Path, view_id: str) -> np.ndarray | None:
+    """The captured geometry mask, or nothing if this capture predates them."""
+
+    path = directory / f"{view_id}.coverage.png"
+    if not path.is_file():
+        return None
+    return load_coverage_mask(path)
 
 
 def _view_ids(directory: Path) -> dict[str, Path]:
@@ -85,7 +95,15 @@ def build_report(
                 ),
             }
             continue
-        result = compare_frames(reference, candidate, edge_threshold=edge_threshold)
+        reference_coverage = _load_coverage(before, view_id)
+        candidate_coverage = _load_coverage(after, view_id)
+        result = compare_frames(
+            reference,
+            candidate,
+            reference_coverage=reference_coverage,
+            candidate_coverage=candidate_coverage,
+            edge_threshold=edge_threshold,
+        )
         result["comparable"] = True
         result["unchanged"] = bool(np.array_equal(reference, candidate))
         views[view_id] = result

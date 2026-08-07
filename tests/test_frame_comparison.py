@@ -263,6 +263,107 @@ def test_a_resolution_change_is_reported_rather_than_compared(tmp_path) -> None:
     assert report["changed_view_ids"] == []
 
 
+class _StubTexture:
+    def __init__(self, depth: np.ndarray) -> None:
+        self._depth = np.asarray(depth, dtype=np.float32)
+        self.size = (self._depth.shape[1], self._depth.shape[0])
+
+    def read(self) -> bytes:
+        return self._depth.tobytes()
+
+
+class _StubRenderer:
+    def __init__(self, depth: np.ndarray) -> None:
+        self.scene_depth_texture = _StubTexture(depth)
+
+
+def test_reading_coverage_corrects_the_opengl_row_order() -> None:
+    from simulator.validation.capture import read_scene_coverage
+
+    # OpenGL row 0 is the bottom of the frame. Geometry written to the bottom
+    # of the image must come back at the bottom, not flipped to the top, or
+    # every silhouette would be upside down while still looking plausible.
+    depth = np.ones((4, 3), dtype=np.float32)
+    depth[0, :] = 0.25  # GL bottom row
+
+    mask = read_scene_coverage(_StubRenderer(depth))
+
+    assert mask.shape == (4, 3)
+    assert mask[-1].all()
+    assert not mask[0].any()
+
+
+def test_reading_coverage_rejects_a_truncated_depth_buffer() -> None:
+    from simulator.validation.capture import read_scene_coverage
+
+    renderer = _StubRenderer(np.ones((4, 3), dtype=np.float32))
+    renderer.scene_depth_texture.size = (3, 5)
+
+    with pytest.raises(ValueError, match="depth samples"):
+        read_scene_coverage(renderer)
+
+
+def test_a_renderer_without_a_depth_target_says_so() -> None:
+    from simulator.validation.capture import read_scene_coverage
+
+    with pytest.raises(AttributeError, match="scene_depth_texture"):
+        read_scene_coverage(object())
+
+
+def test_a_coverage_mask_round_trips_losslessly(tmp_path) -> None:
+    from simulator.validation.capture import (
+        coverage_statistics,
+        load_coverage_mask,
+        save_coverage_mask,
+    )
+
+    mask = np.zeros((32, 48), dtype=bool)
+    mask[8:24, 10:30] = True
+
+    path = save_coverage_mask(mask, tmp_path / "view.coverage.png")
+    restored = load_coverage_mask(path)
+
+    assert np.array_equal(mask, restored)
+    assert coverage_statistics(mask)["coverage_fraction"] == pytest.approx(
+        320 / (32 * 48)
+    )
+
+
+def test_the_report_uses_captured_masks_when_they_exist(tmp_path) -> None:
+    from simulator.validation.capture import save_coverage_mask
+    from tools.report_visual_change import build_report
+
+    before = _capture_directory(tmp_path, "before", {"view": 40})
+    after = _capture_directory(tmp_path, "after", {"view": 40})
+    reference = np.zeros((64, 96), dtype=bool)
+    reference[:32] = True
+    candidate = np.zeros((64, 96), dtype=bool)
+    candidate[:48] = True
+    save_coverage_mask(reference, before / "view.coverage.png")
+    save_coverage_mask(candidate, after / "view.coverage.png")
+
+    report = build_report(before, after)
+    silhouette = report["views"]["view"]["silhouette"]
+
+    assert silhouette is not None
+    assert silhouette["intersection_over_union"] == pytest.approx(32 / 48)
+    assert silhouette["added_fraction"] == pytest.approx(16 / 64)
+    assert silhouette["removed_fraction"] == 0.0
+
+
+def test_a_capture_without_masks_still_reports(tmp_path) -> None:
+    # Directories captured before masks existed must not break the report.
+    from tools.report_visual_change import build_report
+
+    before = _capture_directory(tmp_path, "before", {"view": 40})
+    after = _capture_directory(tmp_path, "after", {"view": 46})
+
+    report = build_report(before, after)
+
+    assert report["views"]["view"]["silhouette"] is None
+    assert report["views"]["view"]["edges"]["mean_displacement_px"] > 0.0
+
+
 def test_mismatched_shapes_are_rejected() -> None:
     with pytest.raises(ValueError):
         tone_distribution_shift(_flat(100), _flat(100, (32, 32)))

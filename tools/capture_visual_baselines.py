@@ -34,10 +34,13 @@ from simulator.scenario import DEFAULT_SCENARIO_PATH
 from simulator.validation.capture import (
     compare_display_sdr,
     compare_linear_hdr,
+    coverage_statistics,
     display_sdr_statistics,
     linear_hdr_statistics,
     read_display_sdr,
     read_linear_hdr,
+    read_scene_coverage,
+    save_coverage_mask,
     save_display_sdr,
     save_linear_hdr,
 )
@@ -134,6 +137,7 @@ def capture_view(
         app.ctx.finish()
         hdr = read_linear_hdr(app.renderer)
         sdr = read_display_sdr(app.ctx)
+        coverage = read_scene_coverage(app.renderer)
         context = {
             "view_id": view.view_id,
             "subject": view.subject,
@@ -146,7 +150,7 @@ def capture_view(
             "synthetic_firework_present": False,
             **surface,
         }
-        return hdr, sdr, context
+        return hdr, sdr, coverage, context
     finally:
         app.audio_executor.shutdown(wait=True, cancel_futures=True)
         pygame.quit()
@@ -157,13 +161,17 @@ def write_capture(
     view: VisualRegressionView,
     hdr,
     sdr,
+    coverage,
     context: dict,
 ) -> dict:
-    """Persist one lossless pair plus a compact machine-readable report."""
+    """Persist one lossless set plus a compact machine-readable report."""
 
     output_dir.mkdir(parents=True, exist_ok=True)
     hdr_path = save_linear_hdr(hdr, output_dir / f"{view.view_id}.hdr.npy")
     sdr_path = save_display_sdr(sdr, output_dir / f"{view.view_id}.sdr.png")
+    coverage_path = save_coverage_mask(
+        coverage, output_dir / f"{view.view_id}.coverage.png"
+    )
     report = {
         **context,
         "notes": view.notes,
@@ -176,6 +184,11 @@ def write_capture(
             "path": sdr_path.name,
             "sha256": _file_sha256(sdr_path),
             "statistics": display_sdr_statistics(sdr),
+        },
+        "coverage": {
+            "path": coverage_path.name,
+            "sha256": _file_sha256(coverage_path),
+            "statistics": coverage_statistics(coverage),
         },
     }
     report_path = output_dir / f"{view.view_id}.json"
@@ -281,12 +294,12 @@ def main() -> int:
         display_mode = arguments.display_mode or suite.display_mode
         results = []
         for view in views:
-            hdr, sdr, context = capture_view(
+            hdr, sdr, coverage, context = capture_view(
                 view, arguments.scenario, arguments.frames, display_mode
             )
             results.append(
                 write_capture(
-                    arguments.output_dir, view, hdr, sdr, context
+                    arguments.output_dir, view, hdr, sdr, coverage, context
                 )
             )
     except (OSError, VisualViewError) as error:

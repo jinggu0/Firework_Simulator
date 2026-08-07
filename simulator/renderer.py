@@ -306,6 +306,12 @@ class Renderer:
         return self.targets.hdr_texture
 
     @property
+    def scene_depth_texture(self) -> moderngl.Texture:
+        """Depth of the main scene pass, for capturing a geometry silhouette."""
+
+        return self.targets.scene_depth_texture
+
+    @property
     def frame_index(self) -> int:
         return self.post.frame_index
 

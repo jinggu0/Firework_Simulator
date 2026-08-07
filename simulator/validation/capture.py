@@ -57,6 +57,63 @@ def read_linear_hdr(renderer: Any) -> np.ndarray:
     return np.flipud(frame).copy()
 
 
+def read_scene_coverage(renderer: Any) -> np.ndarray:
+    """Read the scene depth target as a boolean geometry-versus-sky mask.
+
+    The depth attachment clears to the far plane before the scene pass, so any
+    fragment nearer than that is geometry. Taking the silhouette from depth
+    rather than from the display frame matters: segmenting sky out of a graded
+    image would let an exposure change masquerade as a change in shape, which
+    is exactly what the silhouette measure exists to rule out.
+    """
+
+    texture = getattr(renderer, "scene_depth_texture", None)
+    if texture is None:
+        raise AttributeError(
+            "renderer has no scene_depth_texture; coverage capture requires "
+            "the depth attachment created by Renderer.__init__"
+        )
+    width, height = texture.size
+    raw = np.frombuffer(texture.read(), dtype=np.float32)
+    expected = width * height
+    if raw.size != expected:
+        raise ValueError(
+            f"expected {expected} depth samples, received {raw.size}"
+        )
+    depth = np.flipud(raw.reshape(height, width))
+    from .frame_comparison import coverage_mask
+
+    return coverage_mask(depth)
+
+
+def coverage_statistics(mask: np.ndarray) -> dict[str, float]:
+    values = np.asarray(mask, dtype=bool)
+    if values.ndim != 2:
+        raise ValueError("coverage mask must have shape (height, width)")
+    return {
+        "width": int(values.shape[1]),
+        "height": int(values.shape[0]),
+        "coverage_fraction": float(values.mean()),
+    }
+
+
+def save_coverage_mask(mask: np.ndarray, path: Path) -> Path:
+    """Persist a coverage mask losslessly as a 1-bit PNG."""
+
+    values = np.asarray(mask, dtype=bool)
+    if values.ndim != 2:
+        raise ValueError("coverage mask must have shape (height, width)")
+    path = Path(path).with_suffix(".png")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    Image.fromarray(values).save(path, bits=1, optimize=True)
+    return path
+
+
+def load_coverage_mask(path: Path) -> np.ndarray:
+    with Image.open(path) as image:
+        return np.asarray(image.convert("1"), dtype=bool)
+
+
 def linear_hdr_statistics(frame: np.ndarray) -> dict[str, float]:
     """Summarise a linear HDR frame without applying any display transform."""
 
