@@ -1,0 +1,248 @@
+{
+  "schema_version": 1,
+  "probe": "standalone_facade_shader_v0_11",
+  "target": {
+    "size": [
+      2,
+      4
+    ],
+    "format": "RGBA16F"
+  },
+  "iterations_per_stage": 4096,
+  "gpu": {
+    "GL_VENDOR": "Intel",
+    "GL_RENDERER": "Intel(R) Arc(TM) 140V GPU (16GB)",
+    "GL_VERSION": "3.3.0 - Build 32.0.101.8626",
+    "GL_SHADING_LANGUAGE_VERSION": "unknown"
+  },
+  "captured_input_bounds": {
+    "world_normal": [
+      [
+        -0.98124694,
+        0.0,
+        -0.1928711
+      ],
+      [
+        -0.98124694,
+        0.0,
+        -0.1928711
+      ]
+    ],
+    "world_position_m": [
+      [
+        814.0,
+        20.0,
+        -749.0
+      ],
+      [
+        814.0,
+        26.0,
+        -746.0
+      ]
+    ],
+    "reflectance": [
+      [
+        0.36328125,
+        0.0,
+        0.84619141,
+        0.0
+      ],
+      [
+        0.41992188,
+        0.0,
+        0.859375,
+        0.0
+      ]
+    ],
+    "facade_linear_rgb": [
+      [
+        0.1529541,
+        0.17248535,
+        0.20336914
+      ],
+      [
+        0.18359375,
+        0.20397949,
+        0.23474121
+      ]
+    ]
+  },
+  "zero_light_counts": {
+    "static": 0,
+    "dynamic": 0
+  },
+  "stages": {
+    "raw_normal": {
+      "bit_deterministic": true,
+      "unique_states": 1,
+      "differing_iterations": 0,
+      "states": [
+        {
+          "sha256": "8240ec4ca213ff15aa7fd6ab9703117e767d9df8293139f8a7b7e7308c993d93",
+          "count": 4096
+        }
+      ],
+      "first_rgb_min": [
+        0.00937652587890625,
+        0.5,
+        0.403564453125
+      ],
+      "first_rgb_max": [
+        0.00937652587890625,
+        0.5,
+        0.403564453125
+      ]
+    },
+    "view_direction": {
+      "bit_deterministic": true,
+      "unique_states": 1,
+      "differing_iterations": 0,
+      "states": [
+        {
+          "sha256": "3d9bcc357236fd95a5ca8838ac2a570389e021a3e6bc3f81af098cc58f599300",
+          "count": 4096
+        }
+      ],
+      "first_rgb_min": [
+        0.1636962890625,
+        0.494873046875,
+        0.86962890625
+      ],
+      "first_rgb_max": [
+        0.164306640625,
+        0.4970703125,
+        0.8701171875
+      ]
+    },
+    "n_dot_v": {
+      "bit_deterministic": true,
+      "unique_states": 1,
+      "differing_iterations": 0,
+      "states": [
+        {
+          "sha256": "966933e6815b6d39c2122bf9820fb2848c486ea38abd10399f521fb86359c32c",
+          "count": 4096
+        }
+      ],
+      "first_rgb_min": [
+        0.515625,
+        0.515625,
+        0.515625
+      ],
+      "first_rgb_max": [
+        0.5166015625,
+        0.5166015625,
+        0.5166015625
+      ]
+    },
+    "grazing_fresnel": {
+      "bit_deterministic": true,
+      "unique_states": 1,
+      "differing_iterations": 0,
+      "states": [
+        {
+          "sha256": "da87fc082b5e0010fa23d1eb2201c10d19f10e4ae833a060a3253470e093d85d",
+          "count": 4096
+        }
+      ],
+      "first_rgb_min": [
+        0.065185546875,
+        0.065185546875,
+        0.065185546875
+      ],
+      "first_rgb_max": [
+        0.06549072265625,
+        0.06549072265625,
+        0.06549072265625
+      ]
+    },
+    "environment_inline": {
+      "bit_deterministic": true,
+      "unique_states": 1,
+      "differing_iterations": 0,
+      "states": [
+        {
+          "sha256": "805116527629ca7650739dd8636808c90789b777afe25f41cdac268537f4d07a",
+          "count": 4096
+        }
+      ],
+      "first_rgb_min": [
+        0.0006031990051269531,
+        0.0006661415100097656,
+        0.0007662773132324219
+      ],
+      "first_rgb_max": [
+        0.0007047653198242188,
+        0.0007719993591308594,
+        0.0008730888366699219
+      ]
+    },
+    "environment_helper": {
+      "bit_deterministic": true,
+      "unique_states": 1,
+      "differing_iterations": 0,
+      "states": [
+        {
+          "sha256": "805116527629ca7650739dd8636808c90789b777afe25f41cdac268537f4d07a",
+          "count": 4096
+        }
+      ],
+      "first_rgb_min": [
+        0.0006031990051269531,
+        0.0006661415100097656,
+        0.0007662773132324219
+      ],
+      "first_rgb_max": [
+        0.0007047653198242188,
+        0.0007719993591308594,
+        0.0008730888366699219
+      ]
+    },
+    "full_helper_zero_lights": {
+      "bit_deterministic": true,
+      "unique_states": 1,
+      "differing_iterations": 0,
+      "states": [
+        {
+          "sha256": "805116527629ca7650739dd8636808c90789b777afe25f41cdac268537f4d07a",
+          "count": 4096
+        }
+      ],
+      "first_rgb_min": [
+        0.0006031990051269531,
+        0.0006661415100097656,
+        0.0007662773132324219
+      ],
+      "first_rgb_max": [
+        0.0007047653198242188,
+        0.0007719993591308594,
+        0.0008730888366699219
+      ]
+    },
+    "final_facade": {
+      "bit_deterministic": true,
+      "unique_states": 1,
+      "differing_iterations": 0,
+      "states": [
+        {
+          "sha256": "45f74ddd803aca2b4490ffe6bc0b33ba7940451b81c3fe0ae2410a4ae0345b5d",
+          "count": 4096
+        }
+      ],
+      "first_rgb_min": [
+        0.0009031295776367188,
+        0.0008664131164550781,
+        0.0008664131164550781
+      ],
+      "first_rgb_max": [
+        0.0019044876098632812,
+        0.0014715194702148438,
+        0.0011730194091796875
+      ]
+    }
+  },
+  "verdict": {
+    "all_stages_bit_deterministic": true,
+    "first_varying_stage": null
+  }
+}
