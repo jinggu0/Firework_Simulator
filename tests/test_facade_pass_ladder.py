@@ -6,6 +6,7 @@ import pytest
 from tools.probe_facade_pass_ladder import (
     REGION_HALF_OPEN,
     STAGES,
+    _state_differences,
     ladder_fragment_source,
     locate_residual_quad,
 )
@@ -67,3 +68,20 @@ def test_ladder_source_transform_fails_closed_on_v0_11_drift(monkeypatch) -> Non
 
     with pytest.raises(RuntimeError, match="source contract changed"):
         ladder_fragment_source(interpolated=False)
+
+
+def test_state_differences_reports_pixel_extent_and_fp16_delta() -> None:
+    reference = np.zeros((4, 2, 4), dtype=np.float16)
+    candidate = reference.copy()
+    candidate[:, :, 0] = np.float16(0.001204)
+
+    differences = _state_differences(
+        [reference.tobytes(), reference.tobytes(), candidate.tobytes()]
+    )
+
+    assert len(differences) == 1
+    assert differences[0]["count"] == 1
+    assert differences[0]["differing_pixels"] == 8
+    assert differences[0]["max_abs_rgb"] == pytest.approx(0.001204, abs=1e-6)
+    assert differences[0]["local_rows"] == [0, 3]
+    assert differences[0]["local_columns"] == [0, 1]

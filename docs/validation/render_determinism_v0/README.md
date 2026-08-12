@@ -48,6 +48,20 @@ trigger is therefore after the single-quad/full-program boundary. The next
 ladder should add the complete building VAO, all scene VAOs, the preceding
 land/sky draws, and per-frame uniform rewrites in that order.
 
+V0-13 implements that batch ladder in `tools/probe_facade_batch_ladder.py`.
+The six-vertex quad remained stable in V0-12, while drawing the complete
+115,446-vertex building VAO with the same program and target produced the
+minority state in two independent 2,048-draw runs (6 and 1 occurrences).
+Additional scene VAOs, preceding land/sky draws, and uniform rewrites are not
+required. Their zero-hit stages do not demonstrate stabilisation because the
+rare event rate changes between runs.
+
+The minority state changes all eight pixels. Its isolated scene-output maximum
+RGB delta is `1.572609e-3`; later full-frame composition leaves the established
+`1.204e-3` B residual. `batch_ladder_intel_arc_140v.json` records state hashes,
+counts, pixel extents, and deltas. The next probe should distinguish full-buffer
+offset from processed vertex count and binary-search the building draw length.
+
 Representative commands:
 
 ```powershell
@@ -57,6 +71,7 @@ python -m tools.probe_render_determinism --view water_reflection --iterations 19
 python -m tools.probe_render_determinism --view water_reflection --iterations 192 --scene-term radiance_after_dynamic --static-light-count 0
 python -m tools.probe_facade_shader_reproducer --iterations 4096 --output docs/validation/render_determinism_v0/standalone_intel_arc_140v.json
 python -m tools.probe_facade_pass_ladder --iterations 1024 --output docs/validation/render_determinism_v0/pass_ladder_intel_arc_140v.json
+python -m tools.probe_facade_batch_ladder --iterations 2048 --output docs/validation/render_determinism_v0/batch_ladder_intel_arc_140v.json
 ```
 
 Rows are OpenGL rows counted from the bottom. Image-order captures use

@@ -14,7 +14,9 @@ Example::
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 from dataclasses import dataclass, replace
+from hashlib import sha256
 import json
 import os
 from pathlib import Path
@@ -246,6 +248,36 @@ def _read_region(framebuffer: moderngl.Framebuffer) -> bytes:
     )
 
 
+def _state_differences(states: list[bytes]) -> list[dict[str, Any]]:
+    """Describe every minority fp16 state relative to the dominant state."""
+
+    counts = Counter(states)
+    ordered = sorted(counts.items(), key=lambda item: (-item[1], item[0]))
+    if len(ordered) <= 1:
+        return []
+    reference = np.frombuffer(ordered[0][0], dtype=np.float16).reshape(4, 2, 4)
+    details: list[dict[str, Any]] = []
+    for raw, count in ordered[1:]:
+        candidate = np.frombuffer(raw, dtype=np.float16).reshape(4, 2, 4)
+        delta = np.abs(
+            candidate[:, :, :3].astype(np.float32)
+            - reference[:, :, :3].astype(np.float32)
+        )
+        mask = delta.max(axis=2) > 0.0
+        rows, columns = np.nonzero(mask)
+        details.append(
+            {
+                "sha256": sha256(raw).hexdigest(),
+                "count": count,
+                "differing_pixels": int(mask.sum()),
+                "max_abs_rgb": float(delta.max()),
+                "local_rows": [int(rows.min()), int(rows.max())],
+                "local_columns": [int(columns.min()), int(columns.max())],
+            }
+        )
+    return details
+
+
 def _measure_draws(
     ctx: moderngl.Context,
     iterations: int,
@@ -278,6 +310,7 @@ def _measure_draws(
             if first is None:
                 first = np.frombuffer(raw, dtype=np.float16).reshape(4, 2, 4)
         summary = _summarize_states(states, iterations)
+        summary["differences_from_dominant"] = _state_differences(states)
         assert first is not None
         summary["first_rgb_min"] = (
             first[:, :, :3].min(axis=(0, 1)).astype(float).tolist()
