@@ -36,6 +36,18 @@ isolation ladder should add the 1280x720 viewport and original pixel location,
 actual facade triangle interpolation, depth attachment/test, and the complete
 scene program in that order.
 
+V0-12 implements that ladder in `tools/probe_facade_pass_ladder.py`. The tool
+projects the source building mesh and locks the frontmost covering pair to
+triangles 34588-34589 (vertices 103764-103769), then cumulatively adds the
+original viewport coordinates, triangle interpolation, depth, and complete
+production scene program. All five stages remained single-state over 1,024
+draws each. A full-scene contrast run still varied in 50 of 63 comparisons.
+
+The machine-readable result is `pass_ladder_intel_arc_140v.json`. The remaining
+trigger is therefore after the single-quad/full-program boundary. The next
+ladder should add the complete building VAO, all scene VAOs, the preceding
+land/sky draws, and per-frame uniform rewrites in that order.
+
 Representative commands:
 
 ```powershell
@@ -44,6 +56,7 @@ python -m tools.probe_render_determinism --view water_reflection --iterations 19
 python -m tools.probe_render_determinism --view water_reflection --iterations 192 --scene-term radiance_environment
 python -m tools.probe_render_determinism --view water_reflection --iterations 192 --scene-term radiance_after_dynamic --static-light-count 0
 python -m tools.probe_facade_shader_reproducer --iterations 4096 --output docs/validation/render_determinism_v0/standalone_intel_arc_140v.json
+python -m tools.probe_facade_pass_ladder --iterations 1024 --output docs/validation/render_determinism_v0/pass_ladder_intel_arc_140v.json
 ```
 
 Rows are OpenGL rows counted from the bottom. Image-order captures use

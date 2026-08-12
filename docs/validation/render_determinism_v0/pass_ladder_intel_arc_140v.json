@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "probe": "facade_pass_state_ladder_v0_12",
+  "iterations_per_stage": 1024,
+  "frame_size": [
+    1280,
+    720
+  ],
+  "region_gl": [
+    598,
+    380,
+    600,
+    384
+  ],
+  "gpu": {
+    "GL_VENDOR": "Intel",
+    "GL_RENDERER": "Intel(R) Arc(TM) 140V GPU (16GB)",
+    "GL_VERSION": "4.3.0 - Build 32.0.101.8626",
+    "GL_SHADING_LANGUAGE_VERSION": "unknown"
+  },
+  "quad": {
+    "triangle_indices": [
+      34588,
+      34589
+    ],
+    "vertex_range": [
+      103764,
+      103770
+    ],
+    "source_normal": [
+      -0.98124098777771,
+      0.0,
+      -0.1927851289510727
+    ],
+    "screen_xy": [
+      [
+        [
+          600.2599678986589,
+          377.23211251957906
+        ],
+        [
+          598.2179768520853,
+          377.2597059496289
+        ],
+        [
+          598.2115987175179,
+          384.7850988370307
+        ]
+      ],
+      [
+        [
+          600.2599678986589,
+          377.23211251957906
+        ],
+        [
+          598.2115987175179,
+          384.7850988370307
+        ],
+        [
+          600.2538781687609,
+          384.7864179495713
+        ]
+      ]
+    ]
+  },
+  "stages": {
+    "viewport_constants": {
+      "bit_deterministic": true,
+      "unique_states": 1,
+      "differing_iterations": 0,
+      "states": [
+        {
+          "sha256": "45f74ddd803aca2b4490ffe6bc0b33ba7940451b81c3fe0ae2410a4ae0345b5d",
+          "count": 1024
+        }
+      ],
+      "first_rgb_min": [
+        0.0009031295776367188,
+        0.0008664131164550781,
+        0.0008664131164550781
+      ],
+      "first_rgb_max": [
+        0.0019044876098632812,
+        0.0014715194702148438,
+        0.0011730194091796875
+      ]
+    },
+    "triangle_interpolation": {
+      "bit_deterministic": true,
+      "unique_states": 1,
+      "differing_iterations": 0,
+      "states": [
+        {
+          "sha256": "24b0d86b011daf085ba599972aa2a98ae444c3786b0cd218c3b47c246d111ca7",
+          "count": 1024
+        }
+      ],
+      "first_rgb_min": [
+        0.0009031295776367188,
+        0.000865936279296875,
+        0.000865936279296875
+      ],
+      "first_rgb_max": [
+        0.0019044876098632812,
+        0.0014715194702148438,
+        0.0011720657348632812
+      ]
+    },
+    "triangle_depth": {
+      "bit_deterministic": true,
+      "unique_states": 1,
+      "differing_iterations": 0,
+      "states": [
+        {
+          "sha256": "24b0d86b011daf085ba599972aa2a98ae444c3786b0cd218c3b47c246d111ca7",
+          "count": 1024
+        }
+      ],
+      "first_rgb_min": [
+        0.0009031295776367188,
+        0.000865936279296875,
+        0.000865936279296875
+      ],
+      "first_rgb_max": [
+        0.0019044876098632812,
+        0.0014715194702148438,
+        0.0011720657348632812
+      ]
+    },
+    "production_program": {
+      "bit_deterministic": true,
+      "unique_states": 1,
+      "differing_iterations": 0,
+      "states": [
+        {
+          "sha256": "c85f6aac8a8e49952c7d9c4bb7c8b76231742d727acaa818525b8aff3b114e6d",
+          "count": 1024
+        }
+      ],
+      "first_rgb_min": [
+        0.0006113052368164062,
+        0.0006761550903320312,
+        0.0007772445678710938
+      ],
+      "first_rgb_max": [
+        0.000705718994140625,
+        0.0007672309875488281,
+        0.0008645057678222656
+      ]
+    },
+    "production_program_depth": {
+      "bit_deterministic": true,
+      "unique_states": 1,
+      "differing_iterations": 0,
+      "states": [
+        {
+          "sha256": "c85f6aac8a8e49952c7d9c4bb7c8b76231742d727acaa818525b8aff3b114e6d",
+          "count": 1024
+        }
+      ],
+      "first_rgb_min": [
+        0.0006113052368164062,
+        0.0006761550903320312,
+        0.0007772445678710938
+      ],
+      "first_rgb_max": [
+        0.000705718994140625,
+        0.0007672309875488281,
+        0.0008645057678222656
+      ]
+    }
+  },
+  "verdict": {
+    "first_varying_stage": null,
+    "all_stages_bit_deterministic": true
+  }
+}
