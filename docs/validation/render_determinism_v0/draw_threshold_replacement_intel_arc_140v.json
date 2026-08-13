@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "probe": "facade_draw_threshold_v0_14",
+  "iterations_per_stage": 4096,
+  "measurement_scope": "all",
+  "region_gl": [
+    598,
+    380,
+    600,
+    384
+  ],
+  "gpu": {
+    "GL_VENDOR": "Intel",
+    "GL_RENDERER": "Intel(R) Arc(TM) 140V GPU (16GB)",
+    "GL_VERSION": "4.3.0 - Build 32.0.101.8626",
+    "GL_SHADING_LANGUAGE_VERSION": "unknown"
+  },
+  "target_vertex_range": [
+    103764,
+    103770
+  ],
+  "boundaries": {
+    "original_building_vertices": 103866,
+    "full_building_vertices": 115446
+  },
+  "stages": {
+    "boundary_original_data": {
+      "bit_deterministic": false,
+      "unique_states": 2,
+      "differing_iterations": 9,
+      "states": [
+        {
+          "sha256": "c85f6aac8a8e49952c7d9c4bb7c8b76231742d727acaa818525b8aff3b114e6d",
+          "count": 4087
+        },
+        {
+          "sha256": "ec5e576ac2c320b857d74d5286ac6506e94a5189be1c8fcda54fba4d8495bcb0",
+          "count": 9
+        }
+      ],
+      "differences_from_dominant": [
+        {
+          "sha256": "ec5e576ac2c320b857d74d5286ac6506e94a5189be1c8fcda54fba4d8495bcb0",
+          "count": 9,
+          "differing_pixels": 8,
+          "max_abs_rgb": 0.0015726089477539062,
+          "local_rows": [
+            0,
+            3
+          ],
+          "local_columns": [
+            0,
+            1
+          ]
+        }
+      ],
+      "first_rgb_min": [
+        0.0006113052368164062,
+        0.0006761550903320312,
+        0.0007772445678710938
+      ],
+      "first_rgb_max": [
+        0.000705718994140625,
+        0.0007672309875488281,
+        0.0008645057678222656
+      ],
+      "draw": {
+        "first": 0,
+        "vertices": 115197,
+        "end": 115197,
+        "compact_buffer": false,
+        "last_triangle_replaced_with_previous": false
+      }
+    },
+    "boundary_replaced_data": {
+      "bit_deterministic": true,
+      "unique_states": 1,
+      "differing_iterations": 0,
+      "states": [
+        {
+          "sha256": "c85f6aac8a8e49952c7d9c4bb7c8b76231742d727acaa818525b8aff3b114e6d",
+          "count": 4096
+        }
+      ],
+      "differences_from_dominant": [],
+      "first_rgb_min": [
+        0.0006113052368164062,
+        0.0006761550903320312,
+        0.0007772445678710938
+      ],
+      "first_rgb_max": [
+        0.000705718994140625,
+        0.0007672309875488281,
+        0.0008645057678222656
+      ],
+      "draw": {
+        "first": 0,
+        "vertices": 115197,
+        "end": 115197,
+        "compact_buffer": false,
+        "last_triangle_replaced_with_previous": true
+      }
+    }
+  },
+  "verdict": {
+    "first_varying_stage": "boundary_original_data",
+    "varying_stages": [
+      "boundary_original_data"
+    ],
+    "full_vbo_offset_is_sufficient": null,
+    "compact_quad_is_deterministic": null
+  }
+}

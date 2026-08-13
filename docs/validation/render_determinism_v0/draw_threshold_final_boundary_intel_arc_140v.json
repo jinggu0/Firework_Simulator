@@ -1,0 +1,401 @@
+{
+  "schema_version": 1,
+  "probe": "facade_draw_threshold_v0_14",
+  "iterations_per_stage": 8192,
+  "measurement_scope": "final_rooftop_boundary",
+  "region_gl": [
+    598,
+    380,
+    600,
+    384
+  ],
+  "gpu": {
+    "GL_VENDOR": "Intel",
+    "GL_RENDERER": "Intel(R) Arc(TM) 140V GPU (16GB)",
+    "GL_VERSION": "4.3.0 - Build 32.0.101.8626",
+    "GL_SHADING_LANGUAGE_VERSION": "unknown"
+  },
+  "target_vertex_range": [
+    103764,
+    103770
+  ],
+  "boundaries": {
+    "original_building_vertices": 103866,
+    "full_building_vertices": 115446
+  },
+  "stages": {
+    "rooftop_extra_11217": {
+      "bit_deterministic": true,
+      "unique_states": 1,
+      "differing_iterations": 0,
+      "states": [
+        {
+          "sha256": "c85f6aac8a8e49952c7d9c4bb7c8b76231742d727acaa818525b8aff3b114e6d",
+          "count": 8192
+        }
+      ],
+      "differences_from_dominant": [],
+      "first_rgb_min": [
+        0.0006113052368164062,
+        0.0006761550903320312,
+        0.0007772445678710938
+      ],
+      "first_rgb_max": [
+        0.000705718994140625,
+        0.0007672309875488281,
+        0.0008645057678222656
+      ],
+      "draw": {
+        "first": 0,
+        "vertices": 115083,
+        "end": 115083,
+        "compact_buffer": false
+      }
+    },
+    "rooftop_extra_11307": {
+      "bit_deterministic": true,
+      "unique_states": 1,
+      "differing_iterations": 0,
+      "states": [
+        {
+          "sha256": "c85f6aac8a8e49952c7d9c4bb7c8b76231742d727acaa818525b8aff3b114e6d",
+          "count": 8192
+        }
+      ],
+      "differences_from_dominant": [],
+      "first_rgb_min": [
+        0.0006113052368164062,
+        0.0006761550903320312,
+        0.0007772445678710938
+      ],
+      "first_rgb_max": [
+        0.000705718994140625,
+        0.0007672309875488281,
+        0.0008645057678222656
+      ],
+      "draw": {
+        "first": 0,
+        "vertices": 115173,
+        "end": 115173,
+        "compact_buffer": false
+      }
+    },
+    "rooftop_extra_11310": {
+      "bit_deterministic": true,
+      "unique_states": 1,
+      "differing_iterations": 0,
+      "states": [
+        {
+          "sha256": "c85f6aac8a8e49952c7d9c4bb7c8b76231742d727acaa818525b8aff3b114e6d",
+          "count": 8192
+        }
+      ],
+      "differences_from_dominant": [],
+      "first_rgb_min": [
+        0.0006113052368164062,
+        0.0006761550903320312,
+        0.0007772445678710938
+      ],
+      "first_rgb_max": [
+        0.000705718994140625,
+        0.0007672309875488281,
+        0.0008645057678222656
+      ],
+      "draw": {
+        "first": 0,
+        "vertices": 115176,
+        "end": 115176,
+        "compact_buffer": false
+      }
+    },
+    "rooftop_extra_11313": {
+      "bit_deterministic": true,
+      "unique_states": 1,
+      "differing_iterations": 0,
+      "states": [
+        {
+          "sha256": "c85f6aac8a8e49952c7d9c4bb7c8b76231742d727acaa818525b8aff3b114e6d",
+          "count": 8192
+        }
+      ],
+      "differences_from_dominant": [],
+      "first_rgb_min": [
+        0.0006113052368164062,
+        0.0006761550903320312,
+        0.0007772445678710938
+      ],
+      "first_rgb_max": [
+        0.000705718994140625,
+        0.0007672309875488281,
+        0.0008645057678222656
+      ],
+      "draw": {
+        "first": 0,
+        "vertices": 115179,
+        "end": 115179,
+        "compact_buffer": false
+      }
+    },
+    "rooftop_extra_11316": {
+      "bit_deterministic": true,
+      "unique_states": 1,
+      "differing_iterations": 0,
+      "states": [
+        {
+          "sha256": "c85f6aac8a8e49952c7d9c4bb7c8b76231742d727acaa818525b8aff3b114e6d",
+          "count": 8192
+        }
+      ],
+      "differences_from_dominant": [],
+      "first_rgb_min": [
+        0.0006113052368164062,
+        0.0006761550903320312,
+        0.0007772445678710938
+      ],
+      "first_rgb_max": [
+        0.000705718994140625,
+        0.0007672309875488281,
+        0.0008645057678222656
+      ],
+      "draw": {
+        "first": 0,
+        "vertices": 115182,
+        "end": 115182,
+        "compact_buffer": false
+      }
+    },
+    "rooftop_extra_11319": {
+      "bit_deterministic": true,
+      "unique_states": 1,
+      "differing_iterations": 0,
+      "states": [
+        {
+          "sha256": "c85f6aac8a8e49952c7d9c4bb7c8b76231742d727acaa818525b8aff3b114e6d",
+          "count": 8192
+        }
+      ],
+      "differences_from_dominant": [],
+      "first_rgb_min": [
+        0.0006113052368164062,
+        0.0006761550903320312,
+        0.0007772445678710938
+      ],
+      "first_rgb_max": [
+        0.000705718994140625,
+        0.0007672309875488281,
+        0.0008645057678222656
+      ],
+      "draw": {
+        "first": 0,
+        "vertices": 115185,
+        "end": 115185,
+        "compact_buffer": false
+      }
+    },
+    "rooftop_extra_11322": {
+      "bit_deterministic": true,
+      "unique_states": 1,
+      "differing_iterations": 0,
+      "states": [
+        {
+          "sha256": "c85f6aac8a8e49952c7d9c4bb7c8b76231742d727acaa818525b8aff3b114e6d",
+          "count": 8192
+        }
+      ],
+      "differences_from_dominant": [],
+      "first_rgb_min": [
+        0.0006113052368164062,
+        0.0006761550903320312,
+        0.0007772445678710938
+      ],
+      "first_rgb_max": [
+        0.000705718994140625,
+        0.0007672309875488281,
+        0.0008645057678222656
+      ],
+      "draw": {
+        "first": 0,
+        "vertices": 115188,
+        "end": 115188,
+        "compact_buffer": false
+      }
+    },
+    "rooftop_extra_11325": {
+      "bit_deterministic": true,
+      "unique_states": 1,
+      "differing_iterations": 0,
+      "states": [
+        {
+          "sha256": "c85f6aac8a8e49952c7d9c4bb7c8b76231742d727acaa818525b8aff3b114e6d",
+          "count": 8192
+        }
+      ],
+      "differences_from_dominant": [],
+      "first_rgb_min": [
+        0.0006113052368164062,
+        0.0006761550903320312,
+        0.0007772445678710938
+      ],
+      "first_rgb_max": [
+        0.000705718994140625,
+        0.0007672309875488281,
+        0.0008645057678222656
+      ],
+      "draw": {
+        "first": 0,
+        "vertices": 115191,
+        "end": 115191,
+        "compact_buffer": false
+      }
+    },
+    "rooftop_extra_11328": {
+      "bit_deterministic": true,
+      "unique_states": 1,
+      "differing_iterations": 0,
+      "states": [
+        {
+          "sha256": "c85f6aac8a8e49952c7d9c4bb7c8b76231742d727acaa818525b8aff3b114e6d",
+          "count": 8192
+        }
+      ],
+      "differences_from_dominant": [],
+      "first_rgb_min": [
+        0.0006113052368164062,
+        0.0006761550903320312,
+        0.0007772445678710938
+      ],
+      "first_rgb_max": [
+        0.000705718994140625,
+        0.0007672309875488281,
+        0.0008645057678222656
+      ],
+      "draw": {
+        "first": 0,
+        "vertices": 115194,
+        "end": 115194,
+        "compact_buffer": false
+      }
+    },
+    "rooftop_extra_11331": {
+      "bit_deterministic": false,
+      "unique_states": 3,
+      "differing_iterations": 59,
+      "states": [
+        {
+          "sha256": "c85f6aac8a8e49952c7d9c4bb7c8b76231742d727acaa818525b8aff3b114e6d",
+          "count": 8133
+        },
+        {
+          "sha256": "ec5e576ac2c320b857d74d5286ac6506e94a5189be1c8fcda54fba4d8495bcb0",
+          "count": 58
+        },
+        {
+          "sha256": "7b2a0771687dd1e75f1e8bb473bbd0dbe3677a23e988136e916677af3b466dcc",
+          "count": 1
+        }
+      ],
+      "differences_from_dominant": [
+        {
+          "sha256": "ec5e576ac2c320b857d74d5286ac6506e94a5189be1c8fcda54fba4d8495bcb0",
+          "count": 58,
+          "differing_pixels": 8,
+          "max_abs_rgb": 0.0015726089477539062,
+          "local_rows": [
+            0,
+            3
+          ],
+          "local_columns": [
+            0,
+            1
+          ]
+        },
+        {
+          "sha256": "7b2a0771687dd1e75f1e8bb473bbd0dbe3677a23e988136e916677af3b466dcc",
+          "count": 1,
+          "differing_pixels": 4,
+          "max_abs_rgb": 0.0015726089477539062,
+          "local_rows": [
+            0,
+            3
+          ],
+          "local_columns": [
+            1,
+            1
+          ]
+        }
+      ],
+      "first_rgb_min": [
+        0.0006113052368164062,
+        0.0006761550903320312,
+        0.0007772445678710938
+      ],
+      "first_rgb_max": [
+        0.000705718994140625,
+        0.0007672309875488281,
+        0.0008645057678222656
+      ],
+      "draw": {
+        "first": 0,
+        "vertices": 115197,
+        "end": 115197,
+        "compact_buffer": false
+      }
+    },
+    "full_with_rooftops": {
+      "bit_deterministic": false,
+      "unique_states": 2,
+      "differing_iterations": 115,
+      "states": [
+        {
+          "sha256": "c85f6aac8a8e49952c7d9c4bb7c8b76231742d727acaa818525b8aff3b114e6d",
+          "count": 8077
+        },
+        {
+          "sha256": "ec5e576ac2c320b857d74d5286ac6506e94a5189be1c8fcda54fba4d8495bcb0",
+          "count": 115
+        }
+      ],
+      "differences_from_dominant": [
+        {
+          "sha256": "ec5e576ac2c320b857d74d5286ac6506e94a5189be1c8fcda54fba4d8495bcb0",
+          "count": 115,
+          "differing_pixels": 8,
+          "max_abs_rgb": 0.0015726089477539062,
+          "local_rows": [
+            0,
+            3
+          ],
+          "local_columns": [
+            0,
+            1
+          ]
+        }
+      ],
+      "first_rgb_min": [
+        0.0006113052368164062,
+        0.0006761550903320312,
+        0.0007772445678710938
+      ],
+      "first_rgb_max": [
+        0.000705718994140625,
+        0.0007672309875488281,
+        0.0008645057678222656
+      ],
+      "draw": {
+        "first": 0,
+        "vertices": 115446,
+        "end": 115446,
+        "compact_buffer": false
+      }
+    }
+  },
+  "verdict": {
+    "first_varying_stage": "rooftop_extra_11331",
+    "varying_stages": [
+      "rooftop_extra_11331",
+      "full_with_rooftops"
+    ],
+    "full_vbo_offset_is_sufficient": null,
+    "compact_quad_is_deterministic": null
+  }
+}

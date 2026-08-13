@@ -62,6 +62,26 @@ RGB delta is `1.572609e-3`; later full-frame composition leaves the established
 counts, pixel extents, and deltas. The next probe should distinguish full-buffer
 offset from processed vertex count and binary-search the building draw length.
 
+V0-14 implements that search in `tools/probe_facade_draw_threshold.py`. A full
+VBO with only the target six vertices drawn, every prefix through the original
+103,866 building vertices, and the first 11,328 rooftop-detail vertices were
+stable. Adding the next three vertices (115,197 total) changed the target block
+in 59 of 8,192 draws. That rooftop side triangle projects near `(1245, 375)`,
+far from the target `(598-599, 380-383)`.
+
+The boundary is data-sensitive, not merely a vertex-count threshold: replacing
+the triangle with its predecessor changed 9/4,096 occurrences to 0/4,096.
+Omitting it from the full batch left 1/4,096, so it is a strong amplifier rather
+than an absolute requirement. Splitting the building into two draws did not
+stabilise it. Finally, a compact nine-vertex VBO containing only the rooftop
+triangle and target facade quad reproduced both states, while the target quad
+alone stayed stable over 8,192 draws. Independent runs reversed which draw
+order had the higher rate, so order frequency is not treated as causal.
+
+The `draw_threshold_*_intel_arc_140v.json` reports preserve the complete search.
+The next step is to neutralise each trigger-triangle attribute and shrink the
+production fragment shader around this nine-vertex reproducer.
+
 Representative commands:
 
 ```powershell
@@ -72,6 +92,8 @@ python -m tools.probe_render_determinism --view water_reflection --iterations 19
 python -m tools.probe_facade_shader_reproducer --iterations 4096 --output docs/validation/render_determinism_v0/standalone_intel_arc_140v.json
 python -m tools.probe_facade_pass_ladder --iterations 1024 --output docs/validation/render_determinism_v0/pass_ladder_intel_arc_140v.json
 python -m tools.probe_facade_batch_ladder --iterations 2048 --output docs/validation/render_determinism_v0/batch_ladder_intel_arc_140v.json
+python -m tools.probe_facade_draw_threshold --iterations 4096 --output docs/validation/render_determinism_v0/draw_threshold_intel_arc_140v.json
+python -m tools.probe_facade_draw_threshold --compare-compact-order --iterations 8192 --output docs/validation/render_determinism_v0/draw_threshold_compact_order_intel_arc_140v.json
 ```
 
 Rows are OpenGL rows counted from the bottom. Image-order captures use
