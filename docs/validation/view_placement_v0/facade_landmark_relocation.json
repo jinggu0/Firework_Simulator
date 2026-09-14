@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "stage": "V2-3c",
+  "generated_utc": "2026-09-14T05:36:08Z",
+  "coordinate_system": "local East-Up-South metres",
+  "units": "metres and degrees",
+  "confidence_grade": "C",
+  "confidence_note": "Project-defined engineering camera, not a historical observer position. The enclosure is a geometric fact of the shipped scene asset.",
+  "scene_asset": {
+    "path": "assets/yeouido_scene.npz",
+    "sha256": "c8b9d2720f935de3532a9401c74d37a55470d23645c06d32c24ff923c3291518"
+  },
+  "views_asset": {
+    "path": "assets/visual_regression_views.json",
+    "sha256_before": "bc3c1272e0cea891c214b0ddeb794839923d822d16acdb97ce68646f9cc23200",
+    "sha256_after": "54aa2c58b4074ff7738a9a06e70d2ad7c257a07420a3248cca89fbbd0fa75072"
+  },
+  "defect": {
+    "view_id": "facade_landmark",
+    "defined_in_commit": "2ed48cb (2026-08-03)",
+    "scene_asset_last_changed_in_commit": "5d6c8ef, before the view was defined",
+    "position_eus_m": [
+      -650.0,
+      28.8274,
+      900.0
+    ],
+    "building_faces_overhead_m": [
+      31.1726
+    ],
+    "terrain_clearance_m": 18.0,
+    "why_the_existing_gate_passed_it": "The capture gate measured clearance to the terrain only, and 18 m above the ground inside a closed shell passes that.",
+    "rendered": {
+      "coverage_fraction": 1.0,
+      "geometry_distance_percentiles_m": {
+        "0": 21.87922102179016,
+        "5": 23.39486320767476,
+        "50": 29.551480384095704,
+        "95": 37.76327062215082,
+        "100": 39.69959128428074
+      },
+      "gl": {
+        "GL_VENDOR": "Intel",
+        "GL_RENDERER": "Intel(R) Arc(TM) 140V GPU (16GB)",
+        "GL_VERSION": "4.3.0 - Build 32.0.101.8626"
+      }
+    }
+  },
+  "rule": {
+    "statement": "Advance along the horizontal bearing to the declared target in whole metres, holding the target and the terrain clearance, to the first metre at which no building face lies overhead and every building face is at least the camera collision radius away.",
+    "lens_clearance_m": 0.12,
+    "lens_clearance_source": "CameraConfig.camera_collision_radius_m, the radius the interactive camera already keeps from terrain",
+    "implementation": "simulator.validation.view_placement.advance_out_of_buildings",
+    "pinned_by_test": "tests/test_view_placement.py::test_the_shipped_facade_camera_is_the_rule_applied_to_the_enclosed_one",
+    "positions_refused": [
+      {
+        "advance_m": 0,
+        "building_faces_overhead_m": [
+          31.172588348388672
+        ],
+        "nearest_building_face_m": 0.17826698021289963
+      },
+      {
+        "advance_m": 34,
+        "building_faces_overhead_m": [
+          31.357166290283203
+        ],
+        "nearest_building_face_m": 0.786217251175972
+      },
+      {
+        "advance_m": 35,
+        "building_faces_overhead_m": [],
+        "nearest_building_face_m": 0.08886057004103923
+      }
+    ],
+    "advance_m": 36,
+    "position_eus_m": [
+      -635.8189,
+      28.632,
+      866.9108
+    ],
+    "yaw_deg": [
+      23.19859051364819,
+      23.198589833646764
+    ],
+    "pitch_deg": [
+      2.564865669865933,
+      2.658304320129685
+    ],
+    "target_distance_m": [
+      1143.5115368857282,
+      1107.5578360419152
+    ],
+    "rendered": {
+      "coverage_fraction": 0.9723480902777778,
+      "geometry_distance_percentiles_m": {
+        "0": 40.94452944542214,
+        "5": 42.961712291796,
+        "50": 59.45153771341531,
+        "95": 163.78072992905638,
+        "100": 693.268037088394
+      },
+      "gl": {
+        "GL_VENDOR": "Intel",
+        "GL_RENDERER": "Intel(R) Arc(TM) 140V GPU (16GB)",
+        "GL_VERSION": "4.3.0 - Build 32.0.101.8626"
+      }
+    },
+    "checks_after_not_part_of_the_rule": {
+      "enclosing_building_visible_on_frustum_rays": "0 of 627",
+      "frustum_ray_grid": "33 x 19 over the 24 mm, 36 x 20.25 mm frame",
+      "enclosing_building_selection": "building triangles whose centroid lies in the enclosing footprint bounding box x -665.6..-592.1, z 861.4..942.6",
+      "sightline_building_crossings_m": [
+        54.7,
+        100.0
+      ],
+      "inside_terrain_priority_area_bounds": true,
+      "source": "exploratory ray cast with the production ray_crossings_m, not a committed tool"
+    }
+  },
+  "canonical_views_after": {
+    "terrain_shoreline": {
+      "building_faces_overhead_m": [],
+      "nearest_building_face_m": 21.237938841443455,
+      "terrain_clearance_m": 1.679999961853028
+    },
+    "grass_close": {
+      "building_faces_overhead_m": [],
+      "nearest_building_face_m": 2.181059647144949,
+      "terrain_clearance_m": 1.6799647033691407
+    },
+    "road_ground": {
+      "building_faces_overhead_m": [],
+      "nearest_building_face_m": 82.46988596537132,
+      "terrain_clearance_m": 1.7851037979125977
+    },
+    "facade_landmark": {
+      "building_faces_overhead_m": [],
+      "nearest_building_face_m": 0.9639296007195518,
+      "terrain_clearance_m": 18.000022918701173
+    },
+    "bridge_structure": {
+      "building_faces_overhead_m": [],
+      "nearest_building_face_m": 109.6004297104595,
+      "terrain_clearance_m": 30.000000805664065
+    },
+    "water_reflection": {
+      "building_faces_overhead_m": [],
+      "nearest_building_face_m": 34.6143102631469,
+      "terrain_clearance_m": 2.199954820251465
+    }
+  },
+  "not_checked": [
+    "Whether each view shows its declared subject well. The centre sightline of bridge_structure meets a Parc.1 tower at 270.6 m of 1443.5 m, and half of the rendered road_ground pixels are dark surfaces within 1.1 m. Neither camera is inside a building; judging them needs a subject-visibility criterion that does not exist yet.",
+    "Geometry outside building_vertices (bridges, rooftop details, stairs) is not part of the enclosure test."
+  ]
+}

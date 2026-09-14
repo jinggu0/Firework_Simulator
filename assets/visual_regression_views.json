@@ -43,11 +43,11 @@
     {
       "view_id": "facade_landmark",
       "subject": "facade_landmark",
-      "position_eus_m": [-650.0, 28.8274, 900.0],
+      "position_eus_m": [-635.8189, 28.632, 866.9108],
       "target_eus_m": [-200.0, 80.0, -150.0],
       "expected_surface": "land",
       "minimum_ground_clearance_m": 17.5,
-      "notes": "Elevated facade view that exposes window, mullion, roof and temporal aliasing."
+      "notes": "Elevated facade view that exposes window, mullion, roof and temporal aliasing. V2-3c: the camera defined on 2026-08-03 at (-650.0, 28.8274, 900.0) stood inside a 49 m building, so it rendered the inside of that shell; it was advanced 36 m along the same bearing, holding the same 18 m terrain clearance and target, to the first whole metre clear of every building face by the camera collision radius."
     },
     {
       "view_id": "bridge_structure",

@@ -31,6 +31,7 @@ from simulator.app import SimulatorApp
 from simulator.config import SimulationConfig
 from simulator.passes.post import DisplayMode
 from simulator.scenario import DEFAULT_SCENARIO_PATH
+from simulator.scene import load_scene
 from simulator.validation.capture import (
     compare_coverage,
     compare_display_sdr,
@@ -48,6 +49,7 @@ from simulator.validation.capture import (
     save_linear_hdr,
     select_residuals,
 )
+from simulator.validation.view_placement import validate_view_placement
 from simulator.validation.views import (
     DEFAULT_VISUAL_VIEWS_PATH,
     VisualRegressionSuite,
@@ -72,6 +74,27 @@ def select_views(
         raise VisualViewError(f"unknown visual-regression view(s): {unknown}")
     selected = set(requested)
     return tuple(view for view in suite.views if view.view_id in selected)
+
+
+def validate_placements(
+    suite: VisualRegressionSuite, views: tuple[VisualRegressionView, ...]
+) -> dict[str, dict]:
+    """Refuse a camera standing inside a building, before anything renders.
+
+    Terrain clearance alone passes a camera inside a closed shell, which is how
+    `facade_landmark` captured the inside of a building from 2026-08-03 until
+    V2-3c. The lens clearance is the collision radius the interactive camera
+    already keeps from the ground, so no new tolerance is introduced here.
+    """
+
+    scene = load_scene(suite.verify_scene_asset())
+    lens_clearance_m = SimulationConfig().camera.camera_collision_radius_m
+    return {
+        view.view_id: validate_view_placement(
+            view, scene.building_vertices, lens_clearance_m
+        )
+        for view in views
+    }
 
 
 def _file_sha256(path: Path) -> str:
@@ -327,12 +350,16 @@ def main() -> int:
         suite = load_visual_regression_suite(arguments.views)
         suite.verify_scene_asset()
         views = select_views(suite, arguments.view)
+        # Every selected camera is checked before the first render, so a bad
+        # one fails the run at once rather than after the views ahead of it.
+        placements = validate_placements(suite, views)
         display_mode = arguments.display_mode or suite.display_mode
         results = []
         for view in views:
             hdr, sdr, coverage, context = capture_view(
                 view, arguments.scenario, arguments.frames, display_mode
             )
+            context["building_placement"] = placements[view.view_id]
             results.append(
                 write_capture(
                     arguments.output_dir, view, hdr, sdr, coverage, context

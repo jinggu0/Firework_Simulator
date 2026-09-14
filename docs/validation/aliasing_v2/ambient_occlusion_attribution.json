@@ -1,0 +1,341 @@
+{
+  "schema_version": 1,
+  "stage": "V2-3c",
+  "probe": "aliasing_vs_supersampled_reference_with_ambient_occlusion_ablated",
+  "gl": {
+    "GL_VENDOR": "Intel",
+    "GL_RENDERER": "Intel(R) Arc(TM) 140V GPU (16GB)",
+    "GL_VERSION": "4.3.0 - Build 32.0.101.8626"
+  },
+  "method": "tools.measure_aliasing.measure_view run unchanged except that RenderConfig.ambient_occlusion_strength is 0 in both the 1x and the 4x render. No shader or render path was edited. Ambient-occlusion-on values are the committed measurements named per view; the renderer has not changed since, and water_reflection reproduced its baseline exactly in V2-3b.",
+  "ablation_cross_check": {
+    "question": "Does strength 0 remove the pass, or leave something behind?",
+    "finding": "Strength 0 is not bit-identical to skipping the pass. In the facade_landmark HDR, 242,538 pixels (689,149 channels) differ, every one of them darker under strength 0, by at most 6.1035e-05 absolute and 0.146% relative. The cause was not isolated. Keeping the pass's GL state changes while drawing nothing reproduces the same 242,538 pixels, so leftover blend or depth state is not it.",
+    "effect_on_this_measurement": {
+      "view_id": "facade_landmark",
+      "strength_zero": {
+        "mean_abs_error": 0.0002818362206906184,
+        "p95_abs_error": 0.0007763113826513004,
+        "visibly_wrong_fraction": 0.16244032118055557
+      },
+      "pass_skipped_state_kept": {
+        "mean_abs_error": 0.0002817720483694251,
+        "p95_abs_error": 0.0007762908935546875,
+        "visibly_wrong_fraction": 0.16242621527777779
+      }
+    },
+    "conclusion": "The residue is 34 times below the 5% threshold and moves the visibly wrong fraction by 0.0014 percentage points, so the attribution does not depend on which ablation is used."
+  },
+  "frames": 8,
+  "supersample": 4,
+  "relative_threshold": 0.05,
+  "views": [
+    {
+      "view_id": "terrain_shoreline",
+      "ambient_occlusion_on_source": "docs/validation/aliasing_v2/aliasing_baseline.json",
+      "ambient_occlusion_on": {
+        "mean_abs_error": 0.00014816462269664043,
+        "p95_abs_error": 0.00024209991097450152,
+        "visibly_wrong_fraction": 0.24620768229166667
+      },
+      "ambient_occlusion_off": {
+        "mean_abs_error": 0.0001311041556255077,
+        "p95_abs_error": 0.00012040138244628906,
+        "visibly_wrong_fraction": 0.06719618055555555
+      },
+      "visibly_wrong_points_attributed_to_ambient_occlusion": 17.901150173611114,
+      "mean_abs_error_ratio_off_over_on": 0.8848546518013064,
+      "excluded_residuals": [],
+      "ambient_occlusion_off_worst_blocks": [
+        {
+          "row": 336,
+          "col": 1008,
+          "size": 16,
+          "mean_abs_error": 0.007407774741295725
+        },
+        {
+          "row": 352,
+          "col": 576,
+          "size": 16,
+          "mean_abs_error": 0.0066334800503682345
+        },
+        {
+          "row": 336,
+          "col": 1152,
+          "size": 16,
+          "mean_abs_error": 0.005632550048176199
+        },
+        {
+          "row": 336,
+          "col": 480,
+          "size": 16,
+          "mean_abs_error": 0.005400059628300369
+        },
+        {
+          "row": 336,
+          "col": 784,
+          "size": 16,
+          "mean_abs_error": 0.005257056327536702
+        }
+      ]
+    },
+    {
+      "view_id": "grass_close",
+      "ambient_occlusion_on_source": "docs/validation/aliasing_v2/aliasing_baseline.json",
+      "ambient_occlusion_on": {
+        "mean_abs_error": 0.00016507415212901023,
+        "p95_abs_error": 0.00018334388732910156,
+        "visibly_wrong_fraction": 0.3517035590277778
+      },
+      "ambient_occlusion_off": {
+        "mean_abs_error": 8.46673365433364e-05,
+        "p95_abs_error": 3.927946090698242e-05,
+        "visibly_wrong_fraction": 0.04425455729166667
+      },
+      "visibly_wrong_points_attributed_to_ambient_occlusion": 30.74490017361111,
+      "mean_abs_error_ratio_off_over_on": 0.5129048700317808,
+      "excluded_residuals": [],
+      "ambient_occlusion_off_worst_blocks": [
+        {
+          "row": 96,
+          "col": 704,
+          "size": 16,
+          "mean_abs_error": 0.004069572198204696
+        },
+        {
+          "row": 96,
+          "col": 864,
+          "size": 16,
+          "mean_abs_error": 0.003901146032148972
+        },
+        {
+          "row": 160,
+          "col": 1136,
+          "size": 16,
+          "mean_abs_error": 0.0038184954319149256
+        },
+        {
+          "row": 96,
+          "col": 752,
+          "size": 16,
+          "mean_abs_error": 0.003618792281486094
+        },
+        {
+          "row": 96,
+          "col": 720,
+          "size": 16,
+          "mean_abs_error": 0.0032737080473452806
+        }
+      ]
+    },
+    {
+      "view_id": "road_ground",
+      "ambient_occlusion_on_source": "docs/validation/aliasing_v2/aliasing_baseline.json",
+      "ambient_occlusion_on": {
+        "mean_abs_error": 8.92479866403543e-06,
+        "p95_abs_error": 3.738701343536377e-05,
+        "visibly_wrong_fraction": 0.10939887152777777
+      },
+      "ambient_occlusion_off": {
+        "mean_abs_error": 3.986600091189353e-06,
+        "p95_abs_error": 6.854534149169922e-06,
+        "visibly_wrong_fraction": 0.011236979166666666
+      },
+      "visibly_wrong_points_attributed_to_ambient_occlusion": 9.81618923611111,
+      "mean_abs_error_ratio_off_over_on": 0.4466879580437252,
+      "excluded_residuals": [],
+      "ambient_occlusion_off_worst_blocks": [
+        {
+          "row": 352,
+          "col": 496,
+          "size": 16,
+          "mean_abs_error": 0.00031553031294606626
+        },
+        {
+          "row": 336,
+          "col": 208,
+          "size": 16,
+          "mean_abs_error": 0.00019624247215688229
+        },
+        {
+          "row": 336,
+          "col": 96,
+          "size": 16,
+          "mean_abs_error": 0.00018779985839501023
+        },
+        {
+          "row": 336,
+          "col": 272,
+          "size": 16,
+          "mean_abs_error": 0.00017825100803747773
+        },
+        {
+          "row": 336,
+          "col": 112,
+          "size": 16,
+          "mean_abs_error": 0.0001782391918823123
+        }
+      ]
+    },
+    {
+      "view_id": "facade_landmark",
+      "ambient_occlusion_on_source": "docs/validation/aliasing_v2/facade_landmark_relocated.json",
+      "ambient_occlusion_on": {
+        "mean_abs_error": 0.0004534725704312829,
+        "p95_abs_error": 0.002763302251696554,
+        "visibly_wrong_fraction": 0.572138671875
+      },
+      "ambient_occlusion_off": {
+        "mean_abs_error": 0.0002818362206906184,
+        "p95_abs_error": 0.0007763113826513004,
+        "visibly_wrong_fraction": 0.16244032118055557
+      },
+      "visibly_wrong_points_attributed_to_ambient_occlusion": 40.96983506944444,
+      "mean_abs_error_ratio_off_over_on": 0.6215066556783648,
+      "excluded_residuals": [],
+      "ambient_occlusion_off_worst_blocks": [
+        {
+          "row": 80,
+          "col": 736,
+          "size": 16,
+          "mean_abs_error": 0.006464034842792898
+        },
+        {
+          "row": 112,
+          "col": 672,
+          "size": 16,
+          "mean_abs_error": 0.005043951387051493
+        },
+        {
+          "row": 224,
+          "col": 1152,
+          "size": 16,
+          "mean_abs_error": 0.004701605736045167
+        },
+        {
+          "row": 304,
+          "col": 672,
+          "size": 16,
+          "mean_abs_error": 0.004694119095802307
+        },
+        {
+          "row": 368,
+          "col": 1184,
+          "size": 16,
+          "mean_abs_error": 0.004382997256470844
+        }
+      ]
+    },
+    {
+      "view_id": "bridge_structure",
+      "ambient_occlusion_on_source": "docs/validation/aliasing_v2/aliasing_baseline.json",
+      "ambient_occlusion_on": {
+        "mean_abs_error": 0.00029818095744202664,
+        "p95_abs_error": 0.0006161503493785827,
+        "visibly_wrong_fraction": 0.37244791666666666
+      },
+      "ambient_occlusion_off": {
+        "mean_abs_error": 0.00026927325395566487,
+        "p95_abs_error": 0.0005742318928241719,
+        "visibly_wrong_fraction": 0.17615125868055556
+      },
+      "visibly_wrong_points_attributed_to_ambient_occlusion": 19.62966579861111,
+      "mean_abs_error_ratio_off_over_on": 0.903053153580466,
+      "excluded_residuals": [],
+      "ambient_occlusion_off_worst_blocks": [
+        {
+          "row": 368,
+          "col": 320,
+          "size": 16,
+          "mean_abs_error": 0.005807772555272095
+        },
+        {
+          "row": 352,
+          "col": 256,
+          "size": 16,
+          "mean_abs_error": 0.005745053509599529
+        },
+        {
+          "row": 352,
+          "col": 288,
+          "size": 16,
+          "mean_abs_error": 0.005652806503348984
+        },
+        {
+          "row": 288,
+          "col": 1248,
+          "size": 16,
+          "mean_abs_error": 0.005274987226584926
+        },
+        {
+          "row": 368,
+          "col": 288,
+          "size": 16,
+          "mean_abs_error": 0.005149693737621419
+        }
+      ]
+    },
+    {
+      "view_id": "water_reflection",
+      "ambient_occlusion_on_source": "docs/validation/aliasing_v2/aliasing_baseline.json",
+      "ambient_occlusion_on": {
+        "mean_abs_error": 0.00019976829046274285,
+        "p95_abs_error": 0.0003185868263244629,
+        "visibly_wrong_fraction": 0.1711044920145224
+      },
+      "ambient_occlusion_off": {
+        "mean_abs_error": 0.00019561623548410204,
+        "p95_abs_error": 0.0003193646669387776,
+        "visibly_wrong_fraction": 0.07826387447526877
+      },
+      "visibly_wrong_points_attributed_to_ambient_occlusion": 9.284061753925364,
+      "mean_abs_error_ratio_off_over_on": 0.9792156454409106,
+      "excluded_residuals": [
+        "reflection_borne_water_patch",
+        "facade_window_grid_quad"
+      ],
+      "ambient_occlusion_off_worst_blocks": [
+        {
+          "row": 336,
+          "col": 1136,
+          "size": 16,
+          "mean_abs_error": 0.005565748491790146
+        },
+        {
+          "row": 352,
+          "col": 32,
+          "size": 16,
+          "mean_abs_error": 0.005333952678483911
+        },
+        {
+          "row": 352,
+          "col": 256,
+          "size": 16,
+          "mean_abs_error": 0.005257593453279696
+        },
+        {
+          "row": 320,
+          "col": 512,
+          "size": 16,
+          "mean_abs_error": 0.005212856165599078
+        },
+        {
+          "row": 352,
+          "col": 240,
+          "size": 16,
+          "mean_abs_error": 0.005159143314813264
+        }
+      ]
+    }
+  ],
+  "interpretation": [
+    "In every view most pixels counted as visibly wrong stop being wrong when ambient occlusion is removed from both renders.",
+    "The ambient occlusion pass takes 8 samples per half-resolution texel with a per-texel random rotation from hash12(floor(gl_FragCoord.xy)), and nothing smooths it beyond a 2x2 joint bilateral upsample. The 1x frame has 0.25 occlusion texels per output pixel; the 4x reference averages 4 into each, sixteen times as many independent rotations, so most of the difference is estimator noise the 1x frame displays rather than geometric aliasing.",
+    "The rotation is tied to the screen, not the surface, so under camera motion the noise pattern does not move with the scene. This is a candidate temporal shimmer source and is not yet measured under motion.",
+    "water_reflection shows why the fraction and the mean must be read together: removing ambient occlusion more than halves its visibly wrong fraction but moves its mean absolute error by 2%. That is consistent with the noise landing on dim near-field pixels, where a small absolute error is a large relative one (occlusion runs only within 320 m), but where the noise lands was not measured."
+  ],
+  "limitations": [
+    "One deterministic render pair per view and setting on one GPU; the fractions cover 921,600 pixels each but there is no across-device sample.",
+    "Ablating a pass removes its signal as well as its noise, so the ambient-occlusion-off figure is not an achievable target, only an attribution."
+  ]
+}
