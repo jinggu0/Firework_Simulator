@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "stage": "V2-3d",
+  "generated_utc": "2026-09-14T07:56:41Z",
+  "finding": "Renderer._update_camera builds the view with _look_at(position, position + forward), and _look_at recovers the direction as target - eye in float32. At positions hundreds of metres from the origin that subtraction rounds the direction to the float32 spacing of the position, so the camera turns in uneven steps. The same camera placed at the origin is exact to about 1e-8 rad.",
+  "method": "For each canonical view and each frame of the measured pan, the direction encoded in the view matrix (minus its third row) is compared with the direction computed in float64 from yaw and pitch, as atan2(|a x b|, a . b).",
+  "focal_length_px": 853.3333333333335,
+  "views": [
+    {
+      "view_id": "terrain_shoreline",
+      "largest_position_component_m": 330.0,
+      "direction_error_at_position_rad_max": 1.2280933562872013e-05,
+      "direction_error_at_position_px_max": 0.010479729973650787,
+      "direction_error_at_origin_rad_max": 3.335754856039085e-08
+    },
+    {
+      "view_id": "grass_close",
+      "largest_position_component_m": 800.0,
+      "direction_error_at_position_rad_max": 1.001628159726039e-05,
+      "direction_error_at_position_px_max": 0.008547226962995536,
+      "direction_error_at_origin_rad_max": 1.0900426146990584e-08
+    },
+    {
+      "view_id": "road_ground",
+      "largest_position_component_m": 1100.0,
+      "direction_error_at_position_rad_max": 3.8635635360827554e-05,
+      "direction_error_at_position_px_max": 0.03296907550790618,
+      "direction_error_at_origin_rad_max": 2.3147800001534538e-08
+    },
+    {
+      "view_id": "facade_landmark",
+      "largest_position_component_m": 866.9108276367188,
+      "direction_error_at_position_rad_max": 2.898553572954885e-05,
+      "direction_error_at_position_px_max": 0.024734323822548355,
+      "direction_error_at_origin_rad_max": 1.9730624717341816e-08
+    },
+    {
+      "view_id": "bridge_structure",
+      "largest_position_component_m": 900.0,
+      "direction_error_at_position_rad_max": 1.2657282639095628e-05,
+      "direction_error_at_position_px_max": 0.010800881185361605,
+      "direction_error_at_origin_rad_max": 7.979779140317344e-09
+    },
+    {
+      "view_id": "water_reflection",
+      "largest_position_component_m": 260.0,
+      "direction_error_at_position_rad_max": 1.2450309494379062e-05,
+      "direction_error_at_position_px_max": 0.010624264101870135,
+      "direction_error_at_origin_rad_max": 3.1634935288495254e-08
+    }
+  ],
+  "effect_on_the_shimmer_measurement": "None. tools.measure_temporal_shimmer builds the same float32 matrices, so the predicted motion includes the rounding; the per-pair centre motion ranges in the report are that unevenness.",
+  "not_fixed_because": "Computing the view from the direction instead of from a subtracted target changes rendered output for every camera away from the origin, which is a render change with its own before-and-after capture, not part of adding a measurement."
+}

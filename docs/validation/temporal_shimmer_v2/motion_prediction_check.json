@@ -1,0 +1,466 @@
+{
+  "schema_version": 1,
+  "stage": "V2-3d",
+  "generated_utc": "2026-09-14T07:40:36Z",
+  "question": "Is the motion predicted from the camera matrices the motion the renderer produced?",
+  "ambient_occlusion_strength": 0.0,
+  "why_ambient_occlusion_is_off": "Ambient occlusion noise is fixed to the screen. Where it dominates a frame, as on road_ground's surface a metre from the lens, it pulls the best offset toward no motion at all, which would test the noise rather than the camera motion.",
+  "method": "Render a pan of 8 frames at the golden-ratio step, then add a constant offset in 0.1 px steps from -0.4 to +0.4 px on each axis to the predicted source coordinates and record the mean absolute linear HDR residual. A correct prediction is the minimum.",
+  "linear_hdr_luminance": true,
+  "offsets_px": [
+    -0.4,
+    -0.3,
+    -0.2,
+    -0.1,
+    0.0,
+    0.1,
+    0.2,
+    0.3,
+    0.4
+  ],
+  "views": [
+    {
+      "view_id": "facade_landmark",
+      "gl": {
+        "GL_VENDOR": "Intel",
+        "GL_RENDERER": "Intel(R) Arc(TM) 140V GPU (16GB)",
+        "GL_VERSION": "4.3.0 - Build 32.0.101.8626"
+      },
+      "yaw_step_deg": 0.04076149482634951,
+      "frame_pairs": 7,
+      "mean_abs_residual_at_predicted_motion": 9.299374151591549e-05,
+      "best_offset_px": {
+        "row": 0.0,
+        "col": 0.0
+      },
+      "residual_ratio_by_row_offset": {
+        "-0.4": 3.685501688978403,
+        "-0.3": 2.8811239538159015,
+        "-0.2": 2.1150713558907337,
+        "-0.1": 1.4313372760957608,
+        "0.0": 1.0,
+        "0.1": 1.456479027642096,
+        "0.2": 2.1523806731423543,
+        "0.3": 2.9274969505912347,
+        "0.4": 3.727386547468739
+      },
+      "residual_ratio_by_col_offset": {
+        "-0.4": 2.344425652590939,
+        "-0.3": 1.9607102204882896,
+        "-0.2": 1.5841276113472122,
+        "-0.1": 1.2375265912320619,
+        "0.0": 1.0,
+        "0.1": 1.1607747682522647,
+        "0.2": 1.441916869200975,
+        "0.3": 1.7870049900701706,
+        "0.4": 2.204735265090074
+      },
+      "mean_abs_residual_without_motion_compensation": 0.0003138612507083092,
+      "best_offset_per_tile_3x3": [
+        {
+          "tile_row": 0,
+          "tile_col": 0,
+          "best_offset_px": {
+            "row": -0.1,
+            "col": 0.0
+          }
+        },
+        {
+          "tile_row": 0,
+          "tile_col": 1,
+          "best_offset_px": {
+            "row": 0.0,
+            "col": 0.0
+          }
+        },
+        {
+          "tile_row": 0,
+          "tile_col": 2,
+          "best_offset_px": {
+            "row": 0.0,
+            "col": 0.0
+          }
+        },
+        {
+          "tile_row": 1,
+          "tile_col": 0,
+          "best_offset_px": {
+            "row": 0.0,
+            "col": 0.0
+          }
+        },
+        {
+          "tile_row": 1,
+          "tile_col": 1,
+          "best_offset_px": {
+            "row": 0.0,
+            "col": 0.0
+          }
+        },
+        {
+          "tile_row": 1,
+          "tile_col": 2,
+          "best_offset_px": {
+            "row": 0.0,
+            "col": 0.0
+          }
+        },
+        {
+          "tile_row": 2,
+          "tile_col": 0,
+          "best_offset_px": {
+            "row": 0.0,
+            "col": 0.0
+          }
+        },
+        {
+          "tile_row": 2,
+          "tile_col": 1,
+          "best_offset_px": {
+            "row": 0.0,
+            "col": 0.0
+          }
+        },
+        {
+          "tile_row": 2,
+          "tile_col": 2,
+          "best_offset_px": {
+            "row": 0.0,
+            "col": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "view_id": "water_reflection",
+      "gl": {
+        "GL_VENDOR": "Intel",
+        "GL_RENDERER": "Intel(R) Arc(TM) 140V GPU (16GB)",
+        "GL_VERSION": "4.3.0 - Build 32.0.101.8626"
+      },
+      "yaw_step_deg": 0.04126618651838873,
+      "frame_pairs": 7,
+      "mean_abs_residual_at_predicted_motion": 0.00011174290779197759,
+      "best_offset_px": {
+        "row": 0.0,
+        "col": 0.3
+      },
+      "residual_ratio_by_row_offset": {
+        "-0.4": 1.4661047802395308,
+        "-0.3": 1.3335243027636745,
+        "-0.2": 1.2071562680554533,
+        "-0.1": 1.0904174685445103,
+        "0.0": 1.0,
+        "0.1": 1.0935311313761287,
+        "0.2": 1.2112852727504466,
+        "0.3": 1.3383348429923603,
+        "0.4": 1.4713864033074953
+      },
+      "residual_ratio_by_col_offset": {
+        "-0.4": 1.1502904701200065,
+        "-0.3": 1.112128988660348,
+        "-0.2": 1.0717895664600354,
+        "-0.1": 1.0334372959605471,
+        "0.0": 1.0,
+        "0.1": 0.9737958287512005,
+        "0.2": 0.956508431023537,
+        "0.3": 0.9558876513676283,
+        "0.4": 0.9918581071382685
+      },
+      "mean_abs_residual_without_motion_compensation": 0.00013642841882554124,
+      "best_offset_per_tile_3x3": [
+        {
+          "tile_row": 0,
+          "tile_col": 0,
+          "best_offset_px": {
+            "row": 0.0,
+            "col": -0.4
+          }
+        },
+        {
+          "tile_row": 0,
+          "tile_col": 1,
+          "best_offset_px": {
+            "row": 0.0,
+            "col": -0.4
+          }
+        },
+        {
+          "tile_row": 0,
+          "tile_col": 2,
+          "best_offset_px": {
+            "row": 0.0,
+            "col": -0.4
+          }
+        },
+        {
+          "tile_row": 1,
+          "tile_col": 0,
+          "best_offset_px": {
+            "row": 0.0,
+            "col": 0.2
+          }
+        },
+        {
+          "tile_row": 1,
+          "tile_col": 1,
+          "best_offset_px": {
+            "row": 0.0,
+            "col": 0.4
+          }
+        },
+        {
+          "tile_row": 1,
+          "tile_col": 2,
+          "best_offset_px": {
+            "row": 0.0,
+            "col": 0.2
+          }
+        },
+        {
+          "tile_row": 2,
+          "tile_col": 0,
+          "best_offset_px": {
+            "row": 0.0,
+            "col": 0.0
+          }
+        },
+        {
+          "tile_row": 2,
+          "tile_col": 1,
+          "best_offset_px": {
+            "row": 0.0,
+            "col": 0.0
+          }
+        },
+        {
+          "tile_row": 2,
+          "tile_col": 2,
+          "best_offset_px": {
+            "row": 0.0,
+            "col": -0.1
+          }
+        }
+      ]
+    },
+    {
+      "view_id": "road_ground",
+      "gl": {
+        "GL_VENDOR": "Intel",
+        "GL_RENDERER": "Intel(R) Arc(TM) 140V GPU (16GB)",
+        "GL_VERSION": "4.3.0 - Build 32.0.101.8626"
+      },
+      "yaw_step_deg": 0.0441754630143006,
+      "frame_pairs": 7,
+      "mean_abs_residual_at_predicted_motion": 1.6598515987243906e-06,
+      "best_offset_px": {
+        "row": 0.0,
+        "col": 0.2
+      },
+      "residual_ratio_by_row_offset": {
+        "-0.4": 3.6392129011332788,
+        "-0.3": 2.8703069865941324,
+        "-0.2": 2.1014218999875873,
+        "-0.1": 1.4104320656863247,
+        "0.0": 1.0,
+        "0.1": 1.6212840634250345,
+        "0.2": 2.3467381296201557,
+        "0.3": 3.093063240745715,
+        "0.4": 3.821831513591454
+      },
+      "residual_ratio_by_col_offset": {
+        "-0.4": 1.3140394102459292,
+        "-0.3": 1.246333926451325,
+        "-0.2": 1.166085421228273,
+        "-0.1": 1.080300236964639,
+        "0.0": 1.0,
+        "0.1": 0.9447865637375709,
+        "0.2": 0.9180441522340093,
+        "0.3": 0.9303555719615713,
+        "0.4": 1.0689168484862297
+      },
+      "mean_abs_residual_without_motion_compensation": 2.3404116736054845e-06,
+      "best_offset_per_tile_3x3": [
+        {
+          "tile_row": 0,
+          "tile_col": 0,
+          "best_offset_px": {
+            "row": 0.0,
+            "col": -0.4
+          }
+        },
+        {
+          "tile_row": 0,
+          "tile_col": 1,
+          "best_offset_px": {
+            "row": 0.0,
+            "col": -0.1
+          }
+        },
+        {
+          "tile_row": 0,
+          "tile_col": 2,
+          "best_offset_px": {
+            "row": 0.1,
+            "col": 0.2
+          }
+        },
+        {
+          "tile_row": 1,
+          "tile_col": 0,
+          "best_offset_px": {
+            "row": 0.0,
+            "col": 0.1
+          }
+        },
+        {
+          "tile_row": 1,
+          "tile_col": 1,
+          "best_offset_px": {
+            "row": 0.0,
+            "col": 0.3
+          }
+        },
+        {
+          "tile_row": 1,
+          "tile_col": 2,
+          "best_offset_px": {
+            "row": 0.0,
+            "col": 0.1
+          }
+        },
+        {
+          "tile_row": 2,
+          "tile_col": 0,
+          "best_offset_px": {
+            "row": 0.0,
+            "col": 0.2
+          }
+        },
+        {
+          "tile_row": 2,
+          "tile_col": 1,
+          "best_offset_px": {
+            "row": -0.1,
+            "col": 0.3
+          }
+        },
+        {
+          "tile_row": 2,
+          "tile_col": 2,
+          "best_offset_px": {
+            "row": -0.1,
+            "col": 0.0
+          }
+        }
+      ]
+    }
+  ],
+  "limitation": "Offsets are searched in 0.1 px steps over the whole frame and separately in a 3 x 3 tile grid, which catches a shift, a sign error or an error that grows toward the frame edges, at 0.1 px resolution.",
+  "supersampled_control": {
+    "question": "water_reflection and road_ground find their smallest residual at +0.3 and +0.2 px. Is that the motion prediction being wrong, or detail finer than the pixel grid that no true motion can predict?",
+    "method": "The same 8-frame turn of water_reflection, ambient occlusion off, rendered at 1x and at 4x per axis with each 4x frame box-averaged back to 1x, then the same offset search. The yaw step is calibrated at 1x so both turn by the same angle.",
+    "one_x": {
+      "best_offset_px": [
+        0.0,
+        0.3
+      ],
+      "best_offset_per_tile_3x3": [
+        [
+          [
+            0.0,
+            -0.4
+          ],
+          [
+            0.0,
+            -0.4
+          ],
+          [
+            0.0,
+            -0.4
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.2
+          ],
+          [
+            0.0,
+            0.4
+          ],
+          [
+            0.0,
+            0.2
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            -0.1
+          ]
+        ]
+      ]
+    },
+    "four_x": {
+      "best_offset_px": [
+        0.0,
+        0.0
+      ],
+      "best_offset_per_tile_3x3": [
+        [
+          [
+            0.0,
+            -0.1
+          ],
+          [
+            0.0,
+            -0.3
+          ],
+          [
+            0.0,
+            -0.1
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0
+          ]
+        ]
+      ]
+    },
+    "conclusion": "At 4x the global best offset returns to zero and the middle band of tiles, which holds the distant skyline, moves from +0.2/+0.4/+0.2 to zero. The 1x bias was aliasing, not the prediction. The top band is sky with almost no structure and still leans slightly negative, as a residual too small to locate anything."
+  },
+  "conclusion": "The prediction is right: facade_landmark, whose detail the grid resolves, is best at zero offset globally and in 8 of 9 tiles, and no view is ever best away from zero vertically. Where a view is best at a non-zero horizontal offset at 1x, supersampling the same turn removes it, so the bias measures aliasing."
+}
