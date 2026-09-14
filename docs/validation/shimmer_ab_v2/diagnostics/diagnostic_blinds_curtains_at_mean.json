@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "candidate_id": "diagnostic_blinds_curtains_at_mean",
+  "hypothesis": "Diagnostic, not a fix: blinds (11 slats per floor) and curtain edges alias long before the window cells do; replacing both with their means at every distance shows how much of the visible shimmer they carry.",
+  "provenance": {
+    "origin": "V2-3e attribution diagnostic",
+    "note": "The means are the whole-cell expectations V2-3b wrote down. Over the pane, where these factors are seen, the true curtain mean differs, so brightness shifts and the guard result is not meaningful for this diagnostic."
+  },
+  "replacements": [
+    {
+      "file": "scene.frag",
+      "old": "    float blinds = mix(.52, 1.0, smoothstep(.16, .31, blind_phase));\n    float curtain_split = abs(room_within.x - .5);\n    float curtains = mix(.58, 1.0, smoothstep(.16, .28, curtain_split));\n",
+      "new": "    float blinds = mix(.52, 1.0, 1.0 - (.16 + .31) * .5);\n    float curtain_split = abs(room_within.x - .5);\n    float curtains = mix(.58, 1.0, ((.5 - .28) + (.28 - .16) * .5) / .5);\n"
+    }
+  ]
+}

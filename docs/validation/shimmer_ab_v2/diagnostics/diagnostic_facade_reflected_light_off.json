@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "candidate_id": "diagnostic_facade_reflected_light_off",
+  "hypothesis": "Diagnostic, not a fix: with facades showing only their window emission and no reflected light, what remains of the visible shimmer comes from the window pattern itself.",
+  "provenance": {
+    "origin": "V2-3e attribution diagnostic; changes brightness on purpose, so its guard result is not meaningful"
+  },
+  "replacements": [
+    {
+      "file": "scene.frag",
+      "old": "    frag_color = vec4(\n        reflected_radiance(n, facade, reflectance)\n        + emission * landmark_emission_scale, 1.0\n    );\n}",
+      "new": "    frag_color = vec4(emission * landmark_emission_scale, 1.0);\n}"
+    }
+  ]
+}

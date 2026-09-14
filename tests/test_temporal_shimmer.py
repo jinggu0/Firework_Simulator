@@ -10,6 +10,7 @@ from simulator.renderer import FAR_PLANE_M, NEAR_PLANE_M, _look_at, _perspective
 from simulator.validation.temporal_shimmer import (
     MINIMUM_FRAME_PAIRS,
     pan_source_coordinates,
+    shimmer_scores,
     shimmer_statistics,
 )
 
@@ -206,6 +207,19 @@ def test_the_worst_block_is_where_the_shimmer_is() -> None:
 
     worst = stats["worst_blocks"][0]
     assert (worst["row"], worst["col"]) == (16, 64)
+
+
+def test_per_pixel_scores_agree_with_the_statistics() -> None:
+    frames = _point_sampled(_stripes(0.08))
+    frames[:, 16:32, 64:80] = _point_sampled(_stripes(0.8))[:, 16:32, 64:80]
+    coordinates = _translation_coordinates(SPEED_PX)
+
+    score, scored = shimmer_scores(frames, coordinates, relative=True)
+    stats = _relative(frames, coordinates)
+
+    assert score.shape == scored.shape == (HEIGHT, WIDTH)
+    assert (score[scored] > 0.05).mean() == stats["unstable_pixel_fraction"]
+    assert scored.mean() == stats["valid_pixel_fraction"]
 
 
 def _view_projection(yaw_deg: float, pitch_deg: float) -> np.ndarray:

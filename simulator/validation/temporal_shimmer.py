@@ -108,6 +108,68 @@ def _worst_blocks(score: np.ndarray, count: int = 5) -> list[dict[str, Any]]:
     return located
 
 
+def _validated(frames: np.ndarray, source_coordinates: np.ndarray):
+    values = np.asarray(frames, dtype=np.float64)
+    coordinates = np.asarray(source_coordinates, dtype=np.float64)
+    if values.ndim != 3:
+        raise ValueError("frames must have shape (n, height, width)")
+    pairs, height, width = values.shape[0] - 1, values.shape[1], values.shape[2]
+    if pairs < MINIMUM_FRAME_PAIRS:
+        raise ValueError(
+            f"temporal shimmer needs at least {MINIMUM_FRAME_PAIRS} frame pairs, "
+            f"got {max(pairs, 0)}"
+        )
+    if coordinates.shape != (pairs, 2, height, width):
+        raise ValueError(
+            "source_coordinates must have shape (frames - 1, 2, height, width)"
+        )
+    return values, coordinates
+
+
+def _residuals(values: np.ndarray, coordinates: np.ndarray):
+    pairs, height, width = values.shape[0] - 1, values.shape[1], values.shape[2]
+    residuals = np.empty((pairs, height, width))
+    scored = np.ones((height, width), dtype=bool)
+    for pair in range(pairs):
+        predicted = map_coordinates(
+            values[pair],
+            coordinates[pair],
+            order=INTERPOLATION_ORDER,
+            mode="nearest",
+        )
+        residuals[pair] = values[pair + 1] - predicted
+        scored &= _inside(coordinates[pair], height, width)
+    return residuals, scored
+
+
+def _score(
+    residuals: np.ndarray, values: np.ndarray, relative: bool, magnitude_floor: float
+) -> np.ndarray:
+    root_mean_square = np.sqrt(np.mean(residuals**2, axis=0))
+    if not relative:
+        return root_mean_square
+    magnitude = np.maximum(np.abs(values[1:]).mean(axis=0), magnitude_floor)
+    return root_mean_square / magnitude
+
+
+def shimmer_scores(
+    frames: np.ndarray,
+    source_coordinates: np.ndarray,
+    *,
+    relative: bool,
+    magnitude_floor: float = 1e-6,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Each pixel's score and whether it could be scored, as two images.
+
+    For asking where a change acted: the statistics below summarise the same
+    scores over the whole frame.
+    """
+
+    values, coordinates = _validated(frames, source_coordinates)
+    residuals, scored = _residuals(values, coordinates)
+    return _score(residuals, values, relative, magnitude_floor), scored
+
+
 def shimmer_statistics(
     frames: np.ndarray,
     source_coordinates: np.ndarray,
@@ -127,41 +189,12 @@ def shimmer_statistics(
     earlier frame, clear of the interpolation border, are scored.
     """
 
-    values = np.asarray(frames, dtype=np.float64)
-    coordinates = np.asarray(source_coordinates, dtype=np.float64)
-    if values.ndim != 3:
-        raise ValueError("frames must have shape (n, height, width)")
-    pairs, height, width = values.shape[0] - 1, values.shape[1], values.shape[2]
-    if pairs < MINIMUM_FRAME_PAIRS:
-        raise ValueError(
-            f"temporal shimmer needs at least {MINIMUM_FRAME_PAIRS} frame pairs, "
-            f"got {max(pairs, 0)}"
-        )
-    if coordinates.shape != (pairs, 2, height, width):
-        raise ValueError(
-            "source_coordinates must have shape (frames - 1, 2, height, width)"
-        )
-
-    residuals = np.empty((pairs, height, width))
-    scored = np.ones((height, width), dtype=bool)
-    for pair in range(pairs):
-        predicted = map_coordinates(
-            values[pair],
-            coordinates[pair],
-            order=INTERPOLATION_ORDER,
-            mode="nearest",
-        )
-        residuals[pair] = values[pair + 1] - predicted
-        scored &= _inside(coordinates[pair], height, width)
+    values, coordinates = _validated(frames, source_coordinates)
+    residuals, scored = _residuals(values, coordinates)
     if exclude is not None:
         scored &= ~np.asarray(exclude, dtype=bool)
-
-    root_mean_square = np.sqrt(np.mean(residuals**2, axis=0))
-    if relative:
-        magnitude = np.maximum(np.abs(values[1:]).mean(axis=0), magnitude_floor)
-        score = root_mean_square / magnitude
-    else:
-        score = root_mean_square
+    score = _score(residuals, values, relative, magnitude_floor)
+    pairs = values.shape[0] - 1
     samples = np.abs(residuals[:, scored])
     return {
         "frame_pairs": int(pairs),

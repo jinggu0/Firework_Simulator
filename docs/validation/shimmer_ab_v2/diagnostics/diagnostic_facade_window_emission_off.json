@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "candidate_id": "diagnostic_facade_window_emission_off",
+  "hypothesis": "Diagnostic, not a fix: with every facade window's emitted light removed, what remains of the visible shimmer comes from reflected light, geometry and ambient occlusion.",
+  "provenance": {
+    "origin": "V2-3e attribution diagnostic; changes brightness on purpose, so its guard result is not meaningful"
+  },
+  "replacements": [
+    {
+      "file": "scene.frag",
+      "old": "    vec3 emission = window_color * pane * occupied * blinds * curtains\n                  * window_radiance_w_m2_sr * .72;\n",
+      "new": "    vec3 emission = vec3(0.0);\n"
+    }
+  ]
+}

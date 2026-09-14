@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "probe": "shader_candidate_ab_for_temporal_shimmer",
+  "candidate_id": "diagnostic_blinds_curtains_at_mean",
+  "candidate_file": "docs/validation/shimmer_ab_v2/diagnostics/diagnostic_blinds_curtains_at_mean.json",
+  "candidate_file_sha256": "2baa97a0dd85e0504956f6db1d723e1c30851e8d9a1d144ab0aaf468a756dd1a",
+  "hypothesis": "Diagnostic, not a fix: blinds (11 slats per floor) and curtain edges alias long before the window cells do; replacing both with their means at every distance shows how much of the visible shimmer they carry.",
+  "shipped_shader_sha256": {
+    "scene.frag": "de02c67b45a9a814079d3b2135d7cb218c6b66b976fdf4fe37963417089fd272"
+  },
+  "frames": 24,
+  "pixels_per_frame_at_centre": 0.6180339887498949,
+  "supersample": 4,
+  "guard_scales_px": [
+    4,
+    16
+  ],
+  "rule": "Accepted only if, in every view, the candidate is no less stable than the shipped shader beyond noise in the display frame and in linear HDR, and no further from the supersampled reference at any guard scale beyond noise; and more stable in the display frame beyond noise in at least one view. Noise is the difference between two separate runs of the shipped shader.",
+  "views": [
+    {
+      "view_id": "facade_landmark",
+      "gl": {
+        "GL_VENDOR": "Intel",
+        "GL_RENDERER": "Intel(R) Arc(TM) 140V GPU (16GB)",
+        "GL_VERSION": "4.3.0 - Build 32.0.101.8626"
+      },
+      "yaw_step_deg": 0.04076149482634951,
+      "shipped": {
+        "display_unstable": 0.1801525211059294,
+        "hdr_unstable": 0.40715465496613074,
+        "guard": {
+          "4": 0.09019448684245143,
+          "16": 0.03493262164276764
+        }
+      },
+      "repeat": {
+        "display_unstable": 0.18015700636121332,
+        "hdr_unstable": 0.40715465496613074,
+        "guard": {
+          "4": 0.09019448684245143,
+          "16": 0.03493262164276764
+        }
+      },
+      "candidate": {
+        "display_unstable": 0.16002045276409463,
+        "hdr_unstable": 0.37909377659616217,
+        "guard": {
+          "4": 0.22099443091735307,
+          "16": 0.14147324881048876
+        }
+      },
+      "verdict": {
+        "noise": {
+          "display_unstable": 4.4852552839314e-06,
+          "hdr_unstable": 0.0,
+          "guard": {
+            "4": 0.0,
+            "16": 0.0
+          }
+        },
+        "more_stable": true,
+        "not_less_stable": true,
+        "guard_held": {
+          "4": false,
+          "16": false
+        }
+      },
+      "changed_pixel_fraction": 0.08755533854166667,
+      "share_of_shipped_display_unstable_pixels_the_candidate_changed": 0.355958471822833,
+      "within_changed_pixels": {
+        "pixels": 79860,
+        "shipped_display_unstable": 0.7161157024793389,
+        "candidate_display_unstable": 0.5581392436764337,
+        "shipped_hdr_unstable": 0.5805534685699975,
+        "candidate_hdr_unstable": 0.38153017781116955
+      },
+      "candidate_shader_sha256": {
+        "scene.frag": "85d6e47eb3a9ca34f5b89d35e9a983efee90c351a70ddc48ebe5d0dd795c6dd4"
+      }
+    },
+    {
+      "view_id": "bridge_structure",
+      "gl": {
+        "GL_VENDOR": "Intel",
+        "GL_RENDERER": "Intel(R) Arc(TM) 140V GPU (16GB)",
+        "GL_VERSION": "4.3.0 - Build 32.0.101.8626"
+      },
+      "yaw_step_deg": 0.04143342185691262,
+      "shipped": {
+        "display_unstable": 0.2283969859388666,
+        "hdr_unstable": 0.39818236863941153,
+        "guard": {
+          "4": 0.1008395475991482,
+          "16": 0.05655389382633952
+        }
+      },
+      "repeat": {
+        "display_unstable": 0.2283969859388666,
+        "hdr_unstable": 0.39818236863941153,
+        "guard": {
+          "4": 0.1008395475991482,
+          "16": 0.05655389382633952
+        }
+      },
+      "candidate": {
+        "display_unstable": 0.22291605929447647,
+        "hdr_unstable": 0.38425915543495326,
+        "guard": {
+          "4": 0.12371249302730689,
+          "16": 0.07169776205110305
+        }
+      },
+      "verdict": {
+        "noise": {
+          "display_unstable": 0.0,
+          "hdr_unstable": 0.0,
+          "guard": {
+            "4": 0.0,
+            "16": 0.0
+          }
+        },
+        "more_stable": true,
+        "not_less_stable": true,
+        "guard_held": {
+          "4": false,
+          "16": false
+        }
+      },
+      "changed_pixel_fraction": 0.04510308159722222,
+      "share_of_shipped_display_unstable_pixels_the_candidate_changed": 0.1914143620912273,
+      "within_changed_pixels": {
+        "pixels": 40430,
+        "shipped_display_unstable": 0.9643581498886965,
+        "candidate_display_unstable": 0.9189215928765768,
+        "shipped_hdr_unstable": 0.954983922829582,
+        "candidate_hdr_unstable": 0.8123423200593619
+      },
+      "candidate_shader_sha256": {
+        "scene.frag": "85d6e47eb3a9ca34f5b89d35e9a983efee90c351a70ddc48ebe5d0dd795c6dd4"
+      }
+    }
+  ],
+  "verdict": {
+    "accepted": false,
+    "reasons": [
+      "facade_landmark: further from the reference at 4 px blocks beyond noise",
+      "facade_landmark: further from the reference at 16 px blocks beyond noise",
+      "bridge_structure: further from the reference at 4 px blocks beyond noise",
+      "bridge_structure: further from the reference at 16 px blocks beyond noise"
+    ]
+  }
+}

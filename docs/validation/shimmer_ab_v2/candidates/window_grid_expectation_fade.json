@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "candidate_id": "window_grid_expectation_fade",
+  "hypothesis": "Distant window cells smaller than two pixels are point-sampled per cell, so which cell a pixel lands in changes as the camera moves. Fading each per-cell random to its expected value once the footprint passes half a cell per pixel should reduce the visible shimmer on distant facades without moving block-average brightness.",
+  "provenance": {
+    "origin": "The V2-3b diagnostic edit to scene.frag of 2026-09-11, reverted at the time and recovered verbatim from the session transcript. V2-3b measured it only on a camera later found inside a building, so it was never judged on a valid view.",
+    "changes_from_origin": [
+      "The expected occupancy is clamped to [0, 1]. The original 1 - occupancy_threshold is -0.1 for the National Assembly facade, whose 1.1 threshold means never lit, and would have emitted negative light wherever the fade engaged."
+    ],
+    "known_approximations": [
+      "The expected curtain and blind factors assume their phases are uniform over the whole cell, but they only matter where the pane covers the cell, so the product of the separate means is not exactly the mean of the product."
+    ]
+  },
+  "replacements": [
+    {
+      "file": "scene.frag",
+      "old": "    vec2 grid = surface_uv / vec2(bay_width, floor_height);\n    vec2 within = fract(grid);\n    vec2 aa = min(fwidth(grid) * 1.25, vec2(.12));\n    float pane = interval(within.x, pane_bounds.x, pane_bounds.y, aa.x)\n               * interval(within.y, pane_bounds.z, pane_bounds.w, aa.y);\n    vec2 cell = floor(grid);\n    float occupancy_sample = hash21(cell + facade_style * 31.7);\n    float occupied = step(occupancy_threshold, occupancy_sample);",
+      "new": "    vec2 grid = surface_uv / vec2(bay_width, floor_height);\n    vec2 within = fract(grid);\n    vec2 aa = min(fwidth(grid) * 1.25, vec2(.12));\n    // Cells the pixel footprint spans. Below two pixels per cell the window\n    // pattern is past Nyquist: which cell a pixel lands in stops describing the\n    // building and starts describing where the pixel centre happened to fall,\n    // which is exactly what makes a distant facade sparkle as the camera moves.\n    // Past that point each per-cell random is faded to its own expectation, so\n    // the wall converges to the average window instead of one arbitrary one.\n    // Either axis being undersampled spoils the cell index, so the worst wins.\n    float cells_per_pixel = max(fwidth(grid.x), fwidth(grid.y));\n    float cell_detail = 1.0 - smoothstep(.5, 1.0, cells_per_pixel);\n    float pane_detail = interval(within.x, pane_bounds.x, pane_bounds.y, aa.x)\n                      * interval(within.y, pane_bounds.z, pane_bounds.w, aa.y);\n    // A pane's mean over its cell is just the fraction of the cell it covers.\n    float pane_mean = max(pane_bounds.y - pane_bounds.x, 0.0)\n                    * max(pane_bounds.w - pane_bounds.z, 0.0);\n    float pane = mix(pane_mean, pane_detail, cell_detail);\n    vec2 cell = floor(grid);\n    float occupancy_sample = hash21(cell + facade_style * 31.7);\n    // hash21 is uniform on [0,1), so E[step(t, u)] is 1 - t, and never below\n    // zero: a threshold above one means a facade whose windows are never lit.\n    float occupied = mix(\n        clamp(1.0 - occupancy_threshold, 0.0, 1.0),\n        step(occupancy_threshold, occupancy_sample),\n        cell_detail\n    );"
+    },
+    {
+      "file": "scene.frag",
+      "old": "    float room_dimmer = mix(\n        .24, 1.0, hash21(cell * vec2(1.31, 2.17) + facade_style * 9.1)\n    );\n    float floor_blackout = step(\n        .12, hash21(vec2(floor(cell.y / 3.0), facade_style * 13.7))\n    );\n    occupied *= room_dimmer * floor_blackout;\n    float temperature = hash21(cell + facade_style * 17.0 + 11.3);",
+      "new": "    const float DIM_LOW = .24;\n    float room_dimmer = mix(\n        (DIM_LOW + 1.0) * .5,\n        mix(DIM_LOW, 1.0, hash21(cell * vec2(1.31, 2.17) + facade_style * 9.1)),\n        cell_detail\n    );\n    const float BLACKOUT_THRESHOLD = .12;\n    float floor_blackout = mix(\n        1.0 - BLACKOUT_THRESHOLD,\n        step(\n            BLACKOUT_THRESHOLD,\n            hash21(vec2(floor(cell.y / 3.0), facade_style * 13.7))\n        ),\n        cell_detail\n    );\n    occupied *= room_dimmer * floor_blackout;\n    float temperature = mix(\n        .5, hash21(cell + facade_style * 17.0 + 11.3), cell_detail\n    );"
+    },
+    {
+      "file": "scene.frag",
+      "old": "    float blind_phase = fract(room_within.y * 11.0 + temperature * .37);\n    float blinds = mix(.52, 1.0, smoothstep(.16, .31, blind_phase));\n    float curtain_split = abs(room_within.x - .5);\n    float curtains = mix(.58, 1.0, smoothstep(.16, .28, curtain_split));",
+      "new": "    // Blind and curtain phases repeat within a cell, so they are finer than the\n    // cell and fade on the same footprint test. Their means come from the same\n    // edges the smoothsteps use rather than being written down separately: for\n    // a phase uniform on [0,1), E[smoothstep(a,b,u)] is 1 - (a+b)/2, and the\n    // curtain split is uniform on [0,0.5), which halves the interval it spans.\n    const vec2 BLIND_EDGES = vec2(.16, .31);\n    const vec2 CURTAIN_EDGES = vec2(.16, .28);\n    float blind_phase = fract(room_within.y * 11.0 + temperature * .37);\n    float blind_shape = mix(\n        1.0 - (BLIND_EDGES.x + BLIND_EDGES.y) * .5,\n        smoothstep(BLIND_EDGES.x, BLIND_EDGES.y, blind_phase),\n        cell_detail\n    );\n    float blinds = mix(.52, 1.0, blind_shape);\n    float curtain_split = abs(room_within.x - .5);\n    float curtain_shape = mix(\n        ((.5 - CURTAIN_EDGES.y) + (CURTAIN_EDGES.y - CURTAIN_EDGES.x) * .5) / .5,\n        smoothstep(CURTAIN_EDGES.x, CURTAIN_EDGES.y, curtain_split),\n        cell_detail\n    );\n    float curtains = mix(.58, 1.0, curtain_shape);"
+    }
+  ]
+}
