@@ -8,10 +8,11 @@ to clear. A supersampled reference of the first pose, rendered by the shipped
 shader, anchors the detail guard (`simulator.validation.detail_guard`).
 
 The rule is fixed before anything is measured. A candidate is accepted only if
-in every view it is no less stable than the shipped shader beyond noise, in the
-display frame and in linear HDR, and no further from the reference at any guard
-scale beyond noise — and if it is more stable in the display frame beyond noise
-in at least one view.
+in every view its display excess flicker is no higher than the shipped shader's
+and it is no further from the reference at any guard scale, each beyond a
+tolerance of measured noise or a one percent margin — and if its display excess
+flicker is lower beyond that tolerance in at least one view. Revised in V2-3g,
+before re-judging, because the share of pixels over the threshold saturated.
 
 Example::
 
@@ -47,6 +48,7 @@ from simulator.validation.detail_guard import GUARD_SCALES_PX, detail_guard
 from simulator.validation.frame_comparison import LUMINANCE_WEIGHTS
 from simulator.validation.temporal_shimmer import (
     BORDER_MARGIN_PX,
+    excess_flicker,
     pan_source_coordinates,
     shimmer_scores,
 )
@@ -74,7 +76,20 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CANDIDATE = DEFAULT_CANDIDATE_DIRECTORY / "window_grid_expectation_fade.json"
 #: The same supersample the static aliasing baseline used.
 SUPERSAMPLE = 4
-STABILITY_KEYS = ("display_unstable", "hdr_unstable")
+#: Stability is decided in the display frame by excess flicker: how far past
+#: the visibility threshold each pixel flickers (V2-3g). The share of pixels
+#: over the threshold saturated where fixes act (V2-3f), and linear HDR's
+#: relative score has no ceiling on near-black pixels, so both are reported
+#: beside it without deciding.
+DECIDING_KEY = "display_excess"
+REPORTED_KEYS = ("display_excess", "hdr_excess")
+#: Non-inferiority margin, declared in V2-3g before any candidate was re-judged.
+#: Renders are deterministic almost everywhere, so measured noise is often
+#: exactly zero and a candidate that touches a dozen pixels of a view would fail
+#: it on that alone. A difference under one percent of the shipped value counts
+#: as no difference, for stability and for the guard. It is a policy choice,
+#: not a measured quantity.
+EQUIVALENCE_MARGIN = 0.01
 
 
 def portable_path(path: Path) -> str:
@@ -87,27 +102,36 @@ def portable_path(path: Path) -> str:
         return resolved.as_posix()
 
 
+def _tolerance(shipped: float, repeat: float) -> float:
+    """The larger of the measured noise and the equivalence margin."""
+
+    return max(abs(shipped - repeat), EQUIVALENCE_MARGIN * abs(shipped))
+
+
 def view_verdict(
     shipped: dict[str, Any], repeat: dict[str, Any], candidate: dict[str, Any]
 ) -> dict[str, Any]:
     """Compare one view's candidate with the shipped shader, beyond noise."""
 
-    noise = {key: abs(shipped[key] - repeat[key]) for key in STABILITY_KEYS}
+    noise = {key: abs(shipped[key] - repeat[key]) for key in REPORTED_KEYS}
     guard_noise = {
         scale: abs(shipped["guard"][scale] - repeat["guard"][scale])
         for scale in shipped["guard"]
     }
+    tolerance = _tolerance(shipped[DECIDING_KEY], repeat[DECIDING_KEY])
     return {
         "noise": {**noise, "guard": guard_noise},
-        "more_stable": bool(
-            candidate["display_unstable"]
-            < shipped["display_unstable"] - noise["display_unstable"]
-        ),
+        "tolerance": tolerance,
+        "more_stable": bool(candidate[DECIDING_KEY] < shipped[DECIDING_KEY] - tolerance),
         "not_less_stable": bool(
-            all(candidate[key] <= shipped[key] + noise[key] for key in STABILITY_KEYS)
+            candidate[DECIDING_KEY] <= shipped[DECIDING_KEY] + tolerance
         ),
         "guard_held": {
-            scale: bool(candidate["guard"][scale] <= shipped["guard"][scale] + guard_noise[scale])
+            scale: bool(
+                candidate["guard"][scale]
+                <= shipped["guard"][scale]
+                + _tolerance(shipped["guard"][scale], repeat["guard"][scale])
+            )
             for scale in shipped["guard"]
         },
     }
@@ -119,14 +143,19 @@ def candidate_verdict(views: dict[str, dict[str, Any]]) -> dict[str, Any]:
     reasons = []
     for name, verdict in views.items():
         if not verdict["not_less_stable"]:
-            reasons.append(f"{name}: less stable than the shipped shader beyond noise")
+            reasons.append(
+                f"{name}: less stable than the shipped shader beyond noise and margin"
+            )
         for scale, held in verdict["guard_held"].items():
             if not held:
                 reasons.append(
-                    f"{name}: further from the reference at {scale} px blocks beyond noise"
+                    f"{name}: further from the reference at {scale} px blocks "
+                    "beyond noise and margin"
                 )
     if not any(verdict["more_stable"] for verdict in views.values()):
-        reasons.append("no view is more stable in the display frame beyond noise")
+        reasons.append(
+            "no view is more stable in the display frame beyond noise and margin"
+        )
     return {"accepted": not reasons, "reasons": reasons}
 
 
@@ -190,6 +219,8 @@ def score_run(pan: dict[str, Any], residuals: list[dict]) -> dict[str, Any]:
     hdr_score, _ = shimmer_scores(pan["linear_hdr"], coordinates, relative=True)
     scored = scored & ~exclude
     return {
+        "display_score": display_score,
+        "hdr_score": hdr_score,
         "display_unstable_map": (display_score > DISPLAY_THRESHOLD_CODE_VALUES) & scored,
         "hdr_unstable_map": (hdr_score > RELATIVE_THRESHOLD) & scored,
         "scored": scored,
@@ -199,9 +230,18 @@ def score_run(pan: dict[str, Any], residuals: list[dict]) -> dict[str, Any]:
     }
 
 
-def _stability(run: dict[str, Any]) -> dict[str, Any]:
-    scored = run["scored"]
+def _stability(run: dict[str, Any], mask: np.ndarray | None = None) -> dict[str, Any]:
+    scored = run["scored"] if mask is None else run["scored"] & mask
+    if not scored.any():
+        return {
+            "display_excess": 0.0, "hdr_excess": 0.0,
+            "display_unstable": 0.0, "hdr_unstable": 0.0,
+        }
     return {
+        "display_excess": excess_flicker(
+            run["display_score"], scored, DISPLAY_THRESHOLD_CODE_VALUES
+        ),
+        "hdr_excess": excess_flicker(run["hdr_score"], scored, RELATIVE_THRESHOLD),
         "display_unstable": float(run["display_unstable_map"][scored].mean()),
         "hdr_unstable": float(run["hdr_unstable_map"][scored].mean()),
     }
@@ -238,14 +278,8 @@ def measure_view(view, display_mode, frames, record, candidate) -> dict[str, Any
     shipped_unstable = shipped["display_unstable_map"]
     within = {
         "pixels": int(region.sum()),
-        "shipped_display_unstable": float(shipped_unstable[region].mean()) if region.any() else 0.0,
-        "candidate_display_unstable": (
-            float(candidate_run["display_unstable_map"][region].mean()) if region.any() else 0.0
-        ),
-        "shipped_hdr_unstable": float(shipped["hdr_unstable_map"][region].mean()) if region.any() else 0.0,
-        "candidate_hdr_unstable": (
-            float(candidate_run["hdr_unstable_map"][region].mean()) if region.any() else 0.0
-        ),
+        "shipped": _stability(shipped, region),
+        "candidate": _stability(candidate_run, region),
     }
     shipped_unstable_count = int(shipped_unstable.sum())
     return {
@@ -304,12 +338,20 @@ def main() -> None:
         "supersample": SUPERSAMPLE,
         "guard_scales_px": list(GUARD_SCALES_PX),
         "rule": (
-            "Accepted only if, in every view, the candidate is no less stable than the "
-            "shipped shader beyond noise in the display frame and in linear HDR, and no "
-            "further from the supersampled reference at any guard scale beyond noise; and "
-            "more stable in the display frame beyond noise in at least one view. Noise is "
-            "the difference between two separate runs of the shipped shader."
+            "Accepted only if, in every view, the candidate's display excess flicker is not "
+            "higher than the shipped shader's by more than the tolerance, and it is no further "
+            "from the supersampled reference at any guard scale by more than the tolerance; "
+            "and its display excess flicker is lower by more than the tolerance in at least "
+            "one view. The tolerance is the larger of the difference between two separate "
+            "runs of the shipped shader and one percent of the shipped value."
         ),
+        "rule_revision": (
+            "V2-3g: excess flicker replaced the share of pixels over two code values, which "
+            "saturated where fixes act (V2-3f); linear HDR is reported without deciding; a "
+            "one percent equivalence margin was added; frame cost is not part of acceptance "
+            "while performance work is deferred. All declared before any candidate was re-judged."
+        ),
+        "equivalence_margin": EQUIVALENCE_MARGIN,
         "views": results,
         "verdict": verdict,
     }
@@ -323,8 +365,8 @@ def main() -> None:
     print(json.dumps(verdict, indent=2))
     for result in results:
         print(
-            f"  {result['view_id']:18} display {result['shipped']['display_unstable'] * 100:6.2f}% -> "
-            f"{result['candidate']['display_unstable'] * 100:6.2f}%  changed {result['changed_pixel_fraction'] * 100:5.2f}%  "
+            f"  {result['view_id']:18} excess {result['shipped']['display_excess']:.4f} -> "
+            f"{result['candidate']['display_excess']:.4f}  changed {result['changed_pixel_fraction'] * 100:5.2f}%  "
             f"guard4 {result['shipped']['guard']['4']:.4f} -> {result['candidate']['guard']['4']:.4f}  "
             f"guard16 {result['shipped']['guard']['16']:.4f} -> {result['candidate']['guard']['16']:.4f}"
         )

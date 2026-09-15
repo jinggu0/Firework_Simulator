@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 from tools.ab_shader_candidate import (
+    EQUIVALENCE_MARGIN,
     REPOSITORY_ROOT,
     candidate_verdict,
     changed_pixel_mask,
@@ -14,16 +15,20 @@ from tools.ab_shader_candidate import (
 
 def _run(display: float, hdr: float, guard4: float, guard16: float) -> dict:
     return {
-        "display_unstable": display,
-        "hdr_unstable": hdr,
+        "display_excess": display,
+        "hdr_excess": hdr,
         "guard": {"4": guard4, "16": guard16},
     }
 
 
+def test_the_equivalence_margin_is_one_percent() -> None:
+    assert EQUIVALENCE_MARGIN == pytest.approx(0.01)
+
+
 def test_a_more_stable_candidate_that_keeps_the_guard_is_accepted() -> None:
-    shipped = _run(0.20, 0.30, 0.10, 0.05)
-    repeat = _run(0.2001, 0.3001, 0.1001, 0.0501)
-    candidate = _run(0.15, 0.25, 0.08, 0.04)
+    shipped = _run(0.50, 0.30, 0.10, 0.05)
+    repeat = _run(0.5001, 0.3001, 0.1001, 0.0501)
+    candidate = _run(0.30, 0.25, 0.08, 0.04)
 
     verdict = candidate_verdict({"view": view_verdict(shipped, repeat, candidate)})
 
@@ -32,11 +37,10 @@ def test_a_more_stable_candidate_that_keeps_the_guard_is_accepted() -> None:
 
 
 def test_moving_away_from_the_reference_rejects_even_a_more_stable_candidate() -> None:
-    shipped = _run(0.20, 0.30, 0.10, 0.05)
-    repeat = _run(0.20, 0.30, 0.10, 0.05)
-    candidate = _run(0.10, 0.20, 0.13, 0.05)
+    shipped = _run(0.50, 0.30, 0.10, 0.05)
+    candidate = _run(0.20, 0.20, 0.13, 0.05)
 
-    verdict = candidate_verdict({"facade": view_verdict(shipped, repeat, candidate)})
+    verdict = candidate_verdict({"facade": view_verdict(shipped, shipped, candidate)})
 
     assert verdict["accepted"] is False
     assert any("facade" in reason and "4 px" in reason for reason in verdict["reasons"])
@@ -55,9 +59,29 @@ def test_an_improvement_inside_the_noise_is_not_an_improvement() -> None:
     assert any("no view" in reason for reason in verdict["reasons"])
 
 
+def test_an_improvement_inside_the_margin_is_not_an_improvement() -> None:
+    shipped = _run(1.000, 0.30, 0.10, 0.05)
+    candidate = _run(0.995, 0.30, 0.10, 0.05)
+
+    assert view_verdict(shipped, shipped, candidate)["more_stable"] is False
+
+
+def test_a_change_inside_the_margin_is_not_less_stable_or_further_away() -> None:
+    # With deterministic renders the noise is exactly zero, and a candidate that
+    # touches a dozen pixels of a view must not fail it on that alone.
+    shipped = _run(1.000, 0.30, 0.10, 0.05)
+    candidate = _run(1.005, 0.30, 0.1005, 0.0502)
+
+    single = view_verdict(shipped, shipped, candidate)
+
+    assert single["not_less_stable"] is True
+    assert single["guard_held"] == {"4": True, "16": True}
+
+
 def test_becoming_less_stable_in_any_view_rejects_the_candidate() -> None:
-    better = view_verdict(_run(0.2, 0.3, 0.1, 0.05), _run(0.2, 0.3, 0.1, 0.05), _run(0.1, 0.2, 0.1, 0.05))
-    worse = view_verdict(_run(0.2, 0.3, 0.1, 0.05), _run(0.2, 0.3, 0.1, 0.05), _run(0.25, 0.3, 0.1, 0.05))
+    base = _run(0.5, 0.3, 0.1, 0.05)
+    better = view_verdict(base, base, _run(0.3, 0.3, 0.1, 0.05))
+    worse = view_verdict(base, base, _run(0.6, 0.3, 0.1, 0.05))
 
     verdict = candidate_verdict({"better": better, "worse": worse})
 
@@ -65,19 +89,25 @@ def test_becoming_less_stable_in_any_view_rejects_the_candidate() -> None:
     assert any("worse" in reason and "less stable" in reason for reason in verdict["reasons"])
 
 
-def test_linear_hdr_instability_counts_as_well_as_the_display() -> None:
-    shipped = _run(0.20, 0.30, 0.10, 0.05)
-    candidate = _run(0.10, 0.40, 0.10, 0.05)
+def test_the_display_decides_while_linear_hdr_is_only_reported() -> None:
+    # Linear HDR's relative score has no ceiling on near-black pixels, which is
+    # not what a viewer sees; the display frame decides and the guard still
+    # holds brightness to the reference.
+    shipped = _run(0.50, 0.30, 0.10, 0.05)
+    candidate = _run(0.30, 0.90, 0.10, 0.05)
 
     single = view_verdict(shipped, shipped, candidate)
 
-    assert single["not_less_stable"] is False
+    assert single["not_less_stable"] is True
+    assert single["more_stable"] is True
 
 
 def test_the_noise_comes_from_the_repeated_shipped_run() -> None:
-    single = view_verdict(_run(0.20, 0.30, 0.10, 0.05), _run(0.23, 0.30, 0.10, 0.05), _run(0.18, 0.30, 0.10, 0.05))
+    single = view_verdict(
+        _run(0.20, 0.30, 0.10, 0.05), _run(0.23, 0.30, 0.10, 0.05), _run(0.18, 0.30, 0.10, 0.05)
+    )
 
-    assert single["noise"]["display_unstable"] == pytest.approx(0.03)
+    assert single["noise"]["display_excess"] == pytest.approx(0.03)
     assert single["more_stable"] is False
 
 

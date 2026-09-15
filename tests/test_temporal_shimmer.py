@@ -9,6 +9,7 @@ from simulator.camera import FreeCamera
 from simulator.renderer import FAR_PLANE_M, NEAR_PLANE_M, _look_at, _perspective
 from simulator.validation.temporal_shimmer import (
     MINIMUM_FRAME_PAIRS,
+    excess_flicker,
     pan_source_coordinates,
     shimmer_scores,
     shimmer_statistics,
@@ -220,6 +221,67 @@ def test_per_pixel_scores_agree_with_the_statistics() -> None:
     assert score.shape == scored.shape == (HEIGHT, WIDTH)
     assert (score[scored] > 0.05).mean() == stats["unstable_pixel_fraction"]
     assert scored.mean() == stats["valid_pixel_fraction"]
+
+
+def _flickering(amplitudes: np.ndarray) -> np.ndarray:
+    """A locked-off sequence whose pixels alternate by `amplitudes` code values."""
+
+    frames = np.repeat(np.full((1, HEIGHT, WIDTH), 100.0), FRAMES, axis=0)
+    frames[1::2] += amplitudes[None]
+    return frames
+
+
+def _scores(amplitudes: np.ndarray):
+    return shimmer_scores(
+        _flickering(amplitudes), _translation_coordinates(0.0), relative=False
+    )
+
+
+def test_excess_flicker_sees_a_smaller_flicker_that_the_unstable_fraction_cannot() -> None:
+    strong, scored = _scores(np.full((HEIGHT, WIDTH), 40.0))
+    weaker, _ = _scores(np.full((HEIGHT, WIDTH), 10.0))
+
+    # Every pixel stays over the two-code threshold, so the fraction is blind.
+    assert (strong[scored] > 2.0).mean() == (weaker[scored] > 2.0).mean() == 1.0
+    assert excess_flicker(strong, scored, 2.0) == pytest.approx(38.0)
+    assert excess_flicker(weaker, scored, 2.0) == pytest.approx(8.0)
+
+
+def test_excess_flicker_ignores_flicker_below_the_threshold() -> None:
+    faint, scored = _scores(np.full((HEIGHT, WIDTH), 1.5))
+
+    assert excess_flicker(faint, scored, 2.0) == 0.0
+
+
+def test_a_strong_flicker_outweighs_a_faint_one_over_twice_the_area() -> None:
+    amplitudes_strong = np.zeros((HEIGHT, WIDTH))
+    amplitudes_strong[:, :WIDTH // 10] = 40.0
+    amplitudes_faint = np.zeros((HEIGHT, WIDTH))
+    amplitudes_faint[:, :WIDTH // 5] = 3.0
+    strong, scored = _scores(amplitudes_strong)
+    faint, _ = _scores(amplitudes_faint)
+
+    # The fraction ranks the faint, wider flicker as worse; the excess does not.
+    assert (faint[scored] > 2.0).mean() > (strong[scored] > 2.0).mean()
+    assert excess_flicker(strong, scored, 2.0) > excess_flicker(faint, scored, 2.0)
+
+
+def test_excess_flicker_never_drops_when_a_pixel_flickers_more() -> None:
+    generator = np.random.default_rng(5)
+    amplitudes = generator.uniform(0.0, 30.0, (HEIGHT, WIDTH))
+    before, scored = _scores(amplitudes)
+    louder = amplitudes.copy()
+    louder[20, 60] += 25.0
+    after, _ = _scores(louder)
+
+    assert excess_flicker(after, scored, 2.0) >= excess_flicker(before, scored, 2.0)
+
+
+def test_excess_flicker_counts_only_scored_pixels() -> None:
+    score = np.array([[50.0, 3.0], [3.0, 3.0]])
+    scored = np.array([[False, True], [True, True]])
+
+    assert excess_flicker(score, scored, 2.0) == pytest.approx(1.0)
 
 
 def _view_projection(yaw_deg: float, pitch_deg: float) -> np.ndarray:

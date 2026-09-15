@@ -212,3 +212,20 @@ def shimmer_statistics(
         "mean_score": float(score[scored].mean()) if scored.any() else 0.0,
         "worst_blocks": _worst_blocks(np.where(scored, score, 0.0)),
     }
+
+
+def excess_flicker(score: np.ndarray, scored: np.ndarray, threshold: float) -> float:
+    """Mean amount by which the scored pixels flicker past `threshold`.
+
+    The unstable fraction counts a pixel once it crosses the threshold, so a
+    flicker that shrinks from forty code values to ten reads as no change, and
+    a faint flicker over a wide area reads as worse than a strong one over a
+    small area. This counts how far past the threshold each pixel goes: nothing
+    below it, which is where flicker stops being visible, and more the harder
+    a pixel flickers.
+    """
+
+    values = np.asarray(score, dtype=np.float64)[np.asarray(scored, dtype=bool)]
+    if not values.size:
+        return 0.0
+    return float(np.maximum(values - threshold, 0.0).mean())
