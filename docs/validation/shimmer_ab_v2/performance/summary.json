@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "stage": "V2-3f",
+  "contract": "V9: frame p95 below 1000/60 ms in each of three 360-frame integrated runs",
+  "budget_ms": 16.666666666666668,
+  "order": "shipped and candidate alternated, each run in its own process, 2026-09-15",
+  "runs": {
+    "shipped": [
+      {
+        "run": 1,
+        "file": "integrated_shipped_run1.json",
+        "frame_p95_ms": 18.52587996982038,
+        "frame_p99_ms": 19.819213958689947,
+        "visual_p95_ms": 14.280234993202612,
+        "physics_p95_ms": 5.773435067385435
+      },
+      {
+        "run": 2,
+        "file": "integrated_shipped_run2.json",
+        "frame_p95_ms": 18.33359999000095,
+        "frame_p99_ms": 24.139333992498077,
+        "visual_p95_ms": 14.237855025567114,
+        "physics_p95_ms": 5.388465046416968
+      },
+      {
+        "run": 3,
+        "file": "integrated_shipped_run3.json",
+        "frame_p95_ms": 28.01968005951494,
+        "frame_p99_ms": 32.45333202066833,
+        "visual_p95_ms": 20.727409922983497,
+        "physics_p95_ms": 9.61885006981902
+      }
+    ],
+    "candidate": [
+      {
+        "run": 1,
+        "file": "integrated_candidate_run1.json",
+        "frame_p95_ms": 19.75637501454912,
+        "frame_p99_ms": 22.40824106265793,
+        "visual_p95_ms": 15.370090008946136,
+        "physics_p95_ms": 5.785270035266876
+      },
+      {
+        "run": 2,
+        "file": "integrated_candidate_run2.json",
+        "frame_p95_ms": 20.582770020700995,
+        "frame_p99_ms": 26.31090600858443,
+        "visual_p95_ms": 16.510449978522956,
+        "physics_p95_ms": 5.604469956597313
+      },
+      {
+        "run": 3,
+        "file": "integrated_candidate_run3.json",
+        "frame_p95_ms": 19.2680100153666,
+        "frame_p99_ms": 23.75810301397003,
+        "visual_p95_ms": 14.892709976993503,
+        "physics_p95_ms": 6.075124931521714
+      }
+    ]
+  },
+  "valid_as_a_v9_measurement": false,
+  "why_not_valid": "The shipped shader itself measured 18.33, 18.53 and 28.02 ms frame p95 against the recorded 13.475 ms, and physics p95 rose from the recorded 4.10 ms to 5.39-9.62 ms although the physics path did not change. The machine was running about 22 Chrome, 24 VS Code, 7 Steam web helper and 4 codex processes at the time, so background CPU load, not the renderer, dominates the spread. Neither a regression of the shipped renderer nor the candidate's cost can be read from these runs.",
+  "indicative_only": {
+    "median_frame_p95_ms": {
+      "shipped": 18.52587996982038,
+      "candidate": 19.75637501454912
+    },
+    "median_visual_p95_ms": {
+      "shipped": 14.280234993202612,
+      "candidate": 15.370090008946136
+    }
+  }
+}

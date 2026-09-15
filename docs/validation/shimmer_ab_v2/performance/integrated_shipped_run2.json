@@ -1,0 +1,52 @@
+{
+  "frames": 360,
+  "integrated": {
+    "case": "integrated_blocking",
+    "fluid_backend": "gpu_compute_mac_3d",
+    "frame_mean_ms": 15.313511667449752,
+    "frame_p95_ms": 18.33359999000095,
+    "frame_p99_ms": 24.139333992498077,
+    "physics_mean_ms": 3.207478334338197,
+    "physics_p95_ms": 5.388465046416968,
+    "physics_p99_ms": 7.190700998762651,
+    "visual_mean_ms": 12.10402305102131,
+    "visual_p95_ms": 14.237855025567114,
+    "visual_p99_ms": 17.230774023337315,
+    "physics_breakdown": {
+      "world_update": {
+        "mean_all_frames_ms": 1.9377538927882496,
+        "p95_all_frames_ms": 2.84174497355707,
+        "active_frames": 360,
+        "mean_active_ms": 1.9377538927882496,
+        "p95_active_ms": 2.84174497355707
+      },
+      "emission_build": {
+        "mean_all_frames_ms": 0.33592499643822926,
+        "p95_all_frames_ms": 0.8828149701002985,
+        "active_frames": 180,
+        "mean_active_ms": 0.6718499928764585,
+        "p95_active_ms": 0.9977849957067503
+      },
+      "emission_inject": {
+        "mean_all_frames_ms": 0.47282777668442577,
+        "p95_all_frames_ms": 1.2029350735247137,
+        "active_frames": 180,
+        "mean_active_ms": 0.9456555533688515,
+        "p95_active_ms": 1.476430066395551
+      },
+      "smoke_step_submit": {
+        "mean_all_frames_ms": 0.4414211111401932,
+        "p95_all_frames_ms": 1.082455087453127,
+        "active_frames": 180,
+        "mean_active_ms": 0.8828422222803864,
+        "p95_active_ms": 1.1761051020585
+      },
+      "smoke_step_gpu": {
+        "active_frames": 180,
+        "mean_active_ms": 0.47928746666666666,
+        "p95_active_ms": 0.5228157999999999
+      }
+    }
+  },
+  "note": "Run GPU and CPU backends in separate processes to avoid cross-context driver contamination."
+}

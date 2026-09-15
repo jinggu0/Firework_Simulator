@@ -1,0 +1,58 @@
+{
+  "frames": 360,
+  "integrated": {
+    "case": "integrated_blocking",
+    "fluid_backend": "gpu_compute_mac_3d",
+    "frame_mean_ms": 16.21993916956449,
+    "frame_p95_ms": 20.582770020700995,
+    "frame_p99_ms": 26.31090600858443,
+    "physics_mean_ms": 3.251498610350407,
+    "physics_p95_ms": 5.604469956597313,
+    "physics_p99_ms": 7.25432294071652,
+    "visual_mean_ms": 12.966106668399233,
+    "visual_p95_ms": 16.510449978522956,
+    "visual_p99_ms": 20.076217986643346,
+    "physics_breakdown": {
+      "world_update": {
+        "mean_all_frames_ms": 1.9976258319931932,
+        "p95_all_frames_ms": 3.0842351377941686,
+        "active_frames": 360,
+        "mean_active_ms": 1.9976258319931932,
+        "p95_active_ms": 3.0842351377941686
+      },
+      "emission_build": {
+        "mean_all_frames_ms": 0.32388638582132345,
+        "p95_all_frames_ms": 0.9621049917768688,
+        "active_frames": 180,
+        "mean_active_ms": 0.6477727716426469,
+        "p95_active_ms": 1.0854951047804202
+      },
+      "emission_inject": {
+        "mean_all_frames_ms": 0.47263361274316495,
+        "p95_all_frames_ms": 1.308505062479526,
+        "active_frames": 180,
+        "mean_active_ms": 0.9452672254863299,
+        "p95_active_ms": 1.5381449542474
+      },
+      "smoke_step_submit": {
+        "mean_all_frames_ms": 0.4347080549147601,
+        "p95_all_frames_ms": 1.0702849947847426,
+        "active_frames": 180,
+        "mean_active_ms": 0.8694161098295202,
+        "p95_active_ms": 1.2102250999305382
+      },
+      "smoke_step_gpu": {
+        "active_frames": 180,
+        "mean_active_ms": 0.4726904,
+        "p95_active_ms": 0.514488
+      }
+    }
+  },
+  "note": "Run GPU and CPU backends in separate processes to avoid cross-context driver contamination.",
+  "candidate": {
+    "candidate_id": "window_emission_footprint_average",
+    "shader_sha256": {
+      "scene.frag": "aa27310a6115e25d181c417eb36721f5056a69fc0aff6fff737faa22f00650d4"
+    }
+  }
+}

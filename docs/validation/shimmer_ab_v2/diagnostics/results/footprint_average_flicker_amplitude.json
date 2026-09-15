@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "stage": "V2-3f",
+  "generated_utc": "2026-09-15T05:47:43Z",
+  "question": "The A/B rule counts pixels over 2 code values. Where most target pixels are over it in both renders, did the candidate shrink the flicker itself?",
+  "candidate": "docs/validation/shimmer_ab_v2/candidates/window_emission_footprint_average.json",
+  "units": "display luma code values, RMS prediction residual over 23 frame pairs",
+  "changed_pixels": "pixels whose first-pose linear HDR differs between shipped and candidate",
+  "views": [
+    {
+      "view_id": "water_reflection",
+      "whole_frame": {
+        "shipped": {
+          "pixels": 891823,
+          "mean_rms_code_values": 1.92516357069734,
+          "p50_rms_code_values": 0.0018604074303911922,
+          "p90_rms_code_values": 0.6807870738803373,
+          "p99_rms_code_values": 44.60603326944784,
+          "fraction_above": {
+            "2.0": 0.08427457017816316,
+            "5.0": 0.06786660581752209,
+            "10.0": 0.055049040000089706,
+            "20.0": 0.040737904270241966
+          }
+        },
+        "candidate": {
+          "pixels": 891823,
+          "mean_rms_code_values": 1.186348983819591,
+          "p50_rms_code_values": 0.0018594683661355782,
+          "p90_rms_code_values": 0.7089227241582386,
+          "p99_rms_code_values": 25.685741709273536,
+          "fraction_above": {
+            "2.0": 0.08689056012235612,
+            "5.0": 0.06962368093220292,
+            "10.0": 0.04222362509152601,
+            "20.0": 0.017142415030785257
+          }
+        }
+      },
+      "changed_pixels": {
+        "shipped": {
+          "pixels": 37555,
+          "mean_rms_code_values": 24.80278845229585,
+          "p50_rms_code_values": 23.72362565361559,
+          "p90_rms_code_values": 47.27153817574144,
+          "p99_rms_code_values": 71.54191095377767,
+          "fraction_above": {
+            "2.0": 0.9324191186260152,
+            "5.0": 0.8526960457994941,
+            "10.0": 0.7663426973771801,
+            "20.0": 0.5781121022500333
+          }
+        },
+        "candidate": {
+          "pixels": 37555,
+          "mean_rms_code_values": 13.01804915734796,
+          "p50_rms_code_values": 9.987204878165132,
+          "p90_rms_code_values": 25.907933522274156,
+          "p99_rms_code_values": 46.13491531306728,
+          "fraction_above": {
+            "2.0": 0.978511516442551,
+            "5.0": 0.8639062708028226,
+            "10.0": 0.4992411130342165,
+            "20.0": 0.1858607375848755
+          }
+        }
+      },
+      "note": "known driver residual regions are not excluded here; they cover at most a few hundred pixels"
+    },
+    {
+      "view_id": "facade_landmark",
+      "whole_frame": {
+        "shipped": {
+          "pixels": 891811,
+          "mean_rms_code_values": 1.5725051991196595,
+          "p50_rms_code_values": 0.6772383764599061,
+          "p90_rms_code_values": 3.664829536746507,
+          "p99_rms_code_values": 14.707749680716777,
+          "fraction_above": {
+            "2.0": 0.18014467190918254,
+            "5.0": 0.06851675971702524,
+            "10.0": 0.018559986364823935,
+            "20.0": 0.006559685852719915
+          }
+        },
+        "candidate": {
+          "pixels": 891811,
+          "mean_rms_code_values": 1.5250954941909818,
+          "p50_rms_code_values": 0.677935653876257,
+          "p90_rms_code_values": 3.7143037959252885,
+          "p99_rms_code_values": 12.730134988714337,
+          "fraction_above": {
+            "2.0": 0.18239178480642199,
+            "5.0": 0.06849994000971057,
+            "10.0": 0.016730002208988227,
+            "20.0": 0.004147739823796746
+          }
+        }
+      },
+      "changed_pixels": {
+        "shipped": {
+          "pixels": 25218,
+          "mean_rms_code_values": 6.531460007709371,
+          "p50_rms_code_values": 4.955365943566407,
+          "p90_rms_code_values": 12.478022670936827,
+          "p99_rms_code_values": 29.612865316979573,
+          "fraction_above": {
+            "2.0": 0.8902767864223967,
+            "5.0": 0.4951225315251011,
+            "10.0": 0.1585772067570783,
+            "20.0": 0.04147830914426204
+          }
+        },
+        "candidate": {
+          "pixels": 25218,
+          "mean_rms_code_values": 6.552988418585823,
+          "p50_rms_code_values": 5.276904867105749,
+          "p90_rms_code_values": 12.449240261519046,
+          "p99_rms_code_values": 25.24365099144379,
+          "fraction_above": {
+            "2.0": 0.9128400348957094,
+            "5.0": 0.5322388769926243,
+            "10.0": 0.16662701245142358,
+            "20.0": 0.027757950670156236
+          }
+        }
+      }
+    },
+    {
+      "view_id": "bridge_structure",
+      "whole_frame": {
+        "shipped": {
+          "pixels": 891820,
+          "mean_rms_code_values": 2.783954390291606,
+          "p50_rms_code_values": 0.39611442710474715,
+          "p90_rms_code_values": 6.994153491023595,
+          "p99_rms_code_values": 38.11383817527762,
+          "fraction_above": {
+            "2.0": 0.2283969859388666,
+            "5.0": 0.1371195981251822,
+            "10.0": 0.07242268619228096,
+            "20.0": 0.03763539727747752
+          }
+        },
+        "candidate": {
+          "pixels": 891820,
+          "mean_rms_code_values": 2.228295477212416,
+          "p50_rms_code_values": 0.3964436135324068,
+          "p90_rms_code_values": 6.402423911960354,
+          "p99_rms_code_values": 28.067252938480724,
+          "fraction_above": {
+            "2.0": 0.22811553901011414,
+            "5.0": 0.13306160435962414,
+            "10.0": 0.05467358884079747,
+            "20.0": 0.019438900226503106
+          }
+        }
+      },
+      "changed_pixels": {
+        "shipped": {
+          "pixels": 47761,
+          "mean_rms_code_values": 15.775893736079233,
+          "p50_rms_code_values": 11.252701308008627,
+          "p90_rms_code_values": 34.72924929738571,
+          "p99_rms_code_values": 59.53201869913355,
+          "fraction_above": {
+            "2.0": 0.9617889072674358,
+            "5.0": 0.809949540420008,
+            "10.0": 0.5518100542283453,
+            "20.0": 0.28508615816251753
+          }
+        },
+        "candidate": {
+          "pixels": 47761,
+          "mean_rms_code_values": 10.530114266440103,
+          "p50_rms_code_values": 7.966245210566502,
+          "p90_rms_code_values": 21.747832662343647,
+          "p99_rms_code_values": 39.81256596420163,
+          "fraction_above": {
+            "2.0": 0.9594020225707167,
+            "5.0": 0.7527480580389858,
+            "10.0": 0.37197713615711564,
+            "20.0": 0.11905110864512887
+          }
+        }
+      }
+    }
+  ]
+}

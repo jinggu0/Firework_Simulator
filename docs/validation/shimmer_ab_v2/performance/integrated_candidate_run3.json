@@ -1,0 +1,58 @@
+{
+  "frames": 360,
+  "integrated": {
+    "case": "integrated_blocking",
+    "fluid_backend": "gpu_compute_mac_3d",
+    "frame_mean_ms": 16.66631749669452,
+    "frame_p95_ms": 19.2680100153666,
+    "frame_p99_ms": 23.75810301397003,
+    "physics_mean_ms": 3.63259055884555,
+    "physics_p95_ms": 6.075124931521714,
+    "physics_p99_ms": 7.616270980797713,
+    "visual_mean_ms": 13.030754164275196,
+    "visual_p95_ms": 14.892709976993503,
+    "visual_p99_ms": 18.501334007596608,
+    "physics_breakdown": {
+      "world_update": {
+        "mean_all_frames_ms": 2.2677777761903903,
+        "p95_all_frames_ms": 3.4895600168965757,
+        "active_frames": 360,
+        "mean_active_ms": 2.2677777761903903,
+        "p95_active_ms": 3.4895600168965757
+      },
+      "emission_build": {
+        "mean_all_frames_ms": 0.36787083275460947,
+        "p95_all_frames_ms": 0.9851550450548531,
+        "active_frames": 180,
+        "mean_active_ms": 0.7357416655092189,
+        "p95_active_ms": 1.477454928681253
+      },
+      "emission_inject": {
+        "mean_all_frames_ms": 0.4992483322793204,
+        "p95_all_frames_ms": 1.2754850322380666,
+        "active_frames": 180,
+        "mean_active_ms": 0.9984966645586408,
+        "p95_active_ms": 1.485885010333731
+      },
+      "smoke_step_submit": {
+        "mean_all_frames_ms": 0.47355388750373906,
+        "p95_all_frames_ms": 1.2500400829594585,
+        "active_frames": 180,
+        "mean_active_ms": 0.9471077750074781,
+        "p95_active_ms": 1.51998509536497
+      },
+      "smoke_step_gpu": {
+        "active_frames": 180,
+        "mean_active_ms": 0.46314753333333336,
+        "p95_active_ms": 0.5035238
+      }
+    }
+  },
+  "note": "Run GPU and CPU backends in separate processes to avoid cross-context driver contamination.",
+  "candidate": {
+    "candidate_id": "window_emission_footprint_average",
+    "shader_sha256": {
+      "scene.frag": "aa27310a6115e25d181c417eb36721f5056a69fc0aff6fff737faa22f00650d4"
+    }
+  }
+}

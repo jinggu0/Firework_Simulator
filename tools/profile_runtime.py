@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 from dataclasses import replace
 import json
+from pathlib import Path
 import time
 
 import numpy as np
@@ -10,6 +11,7 @@ import pygame
 
 from simulator.app import SimulatorApp
 from simulator.config import SimulationConfig
+from tools.shader_candidate import load_candidate, shader_variant
 
 
 def _prepare_populated_app(fluid_backend: str = "3d") -> SimulatorApp:
@@ -241,17 +243,43 @@ def main() -> None:
         action="store_true",
         help="Run only the coupled blocking case for clean A/B comparison.",
     )
+    parser.add_argument(
+        "--candidate",
+        type=Path,
+        help=(
+            "Serve a shader candidate (tools.shader_candidate) in memory for "
+            "the integrated case, so its frame cost can be compared with the "
+            "shipped shader run in another process."
+        ),
+    )
     args = parser.parse_args()
-    integrated = _profile_integrated(args.frames, args.fluid_backend)
+    if args.candidate is not None and not args.integrated_only:
+        parser.error(
+            "--candidate needs --integrated-only, the case compared across processes"
+        )
+    candidate_record = None
+    if args.candidate is not None:
+        candidate = load_candidate(args.candidate)
+        with shader_variant(candidate.replacements) as digests:
+            integrated = _profile_integrated(args.frames, args.fluid_backend)
+        candidate_record = {
+            "candidate_id": candidate.candidate_id,
+            "shader_sha256": digests,
+        }
+    else:
+        integrated = _profile_integrated(args.frames, args.fluid_backend)
     if args.integrated_only:
-        print(json.dumps({
+        output = {
             "frames": args.frames,
             "integrated": integrated,
             "note": (
                 "Run GPU and CPU backends in separate processes to avoid "
                 "cross-context driver contamination."
             ),
-        }, indent=2))
+        }
+        if candidate_record is not None:
+            output["candidate"] = candidate_record
+        print(json.dumps(output, indent=2))
         return
     cases = [
         _profile_case(

@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "probe": "renderer_gpu_time_on_facade_heavy_views",
+  "frames": 240,
+  "method": "GL timestamp query around Renderer.render at 1280x720, camera turning 0.04 deg per frame from each view's pose, first 8 of 240 frames dropped; shipped and candidate in separate applications.",
+  "candidate": "docs/validation/shimmer_ab_v2/candidates/window_emission_footprint_average.json",
+  "views": {
+    "facade_landmark": {
+      "shipped": {
+        "gpu_mean_ms": 7.437638672413794,
+        "gpu_p95_ms": 8.5267572
+      },
+      "candidate": {
+        "gpu_mean_ms": 10.966078948275863,
+        "gpu_p95_ms": 12.1140344
+      }
+    },
+    "bridge_structure": {
+      "shipped": {
+        "gpu_mean_ms": 6.639158051724137,
+        "gpu_p95_ms": 7.72694
+      },
+      "candidate": {
+        "gpu_mean_ms": 12.968351275862068,
+        "gpu_p95_ms": 20.487311
+      }
+    },
+    "water_reflection": {
+      "shipped": {
+        "gpu_mean_ms": 7.231733689655173,
+        "gpu_p95_ms": 8.2304326
+      },
+      "candidate": {
+        "gpu_mean_ms": 7.226787413793104,
+        "gpu_p95_ms": 9.3318758
+      }
+    }
+  },
+  "not_a_gate": "Supplementary. The V9 contract is the integrated profile; these views bound the cost where the average engages most."
+}
