@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "candidate_id": "diagnostic_window_blinds_at_mean",
+  "hypothesis": "Diagnostic, not a fix: the venetian blinds are the only term of the window light with no antialiasing at all. Their profile is a smoothstep over 0.15 of a slat period and fract() closes the period with a hard step, so both edges stay a fixed fraction of the slat however far away the facade is. Replacing the blinds with their exact area mean, in both the single sample and the footprint average, shows how much of the visible shimmer they carry.",
+  "provenance": {
+    "origin": "V2-3h attribution diagnostic, after the bloom hypothesis was disproved",
+    "note": "0.765 is the mean of smoothstep(.16, .31, p) over one period: (1 - .31) + (.31 - .16) / 2. Using the area mean rather than zero keeps mean brightness close to the shipped render, so the ACES slope stays where it was and a dimming cannot be read as a fix."
+  },
+  "replacements": [
+    {
+      "file": "scene.frag",
+      "old": "    float blind_phase = fract(room_within.y * 11.0 + temperature * .37);\n    float blinds = mix(.52, 1.0, smoothstep(.16, .31, blind_phase));\n    float curtains = mix(\n",
+      "new": "    float blind_phase = fract(room_within.y * 11.0 + temperature * .37);\n    float blinds = mix(.52, 1.0, .765);\n    float curtains = mix(\n"
+    },
+    {
+      "file": "scene.frag",
+      "old": "    float blind_phase = fract(room_within.y * 11.0 + temperature * .37);\n    float blinds = mix(.52, 1.0, smoothstep(.16, .31, blind_phase));\n    float curtain_split = abs(room_within.x - .5);\n",
+      "new": "    float blind_phase = fract(room_within.y * 11.0 + temperature * .37);\n    float blinds = mix(.52, 1.0, .765);\n    float curtain_split = abs(room_within.x - .5);\n"
+    }
+  ]
+}

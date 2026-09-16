@@ -148,21 +148,58 @@ def residual_exclusion_mask(
     return mask
 
 
+def box_downsample(frame: np.ndarray, factor: int) -> np.ndarray:
+    """Average each `factor` by `factor` block of a frame back to one pixel."""
+
+    values = np.asarray(frame)
+    if factor == 1:
+        return values
+    height, width = values.shape
+    if height % factor or width % factor:
+        raise ValueError("a supersampled frame must divide by its factor")
+    return values.reshape(
+        height // factor, factor, width // factor, factor
+    ).mean(axis=(1, 3))
+
+
 def render_pan(
     view,
     display_mode: str,
     frames: int,
     pixels_per_frame: float,
     ambient_occlusion_strength: float | None = None,
+    render_overrides: dict[str, Any] | None = None,
+    supersample: int = 1,
 ) -> dict[str, Any]:
-    """Render one view along the pan and return both luminance sequences."""
+    """Render one view along the pan and return both luminance sequences.
 
+    `render_overrides` replaces named `RenderConfig` fields, which is how a
+    diagnostic removes one stage of the display transform. An unknown field
+    raises rather than being ignored, so a typo cannot silently measure the
+    shipped renderer twice.
+
+    `supersample` renders the pan that many times finer in each axis and box
+    averages it back, which is what the scene would look like with that much
+    antialiasing. The pan still moves the same number of presented pixels. The
+    linear HDR frames stay comparable with a 1x pan; the display frames do not,
+    because bloom and the glare tail are measured in rendered pixels and a
+    finer grid makes them narrower on the scene.
+    """
+
+    if supersample < 1:
+        raise ValueError("supersample must be at least 1")
     base = SimulationConfig()
-    render = replace(base.render, vsync=False, target_fps=0)
+    overrides = dict(render_overrides or {})
     if ambient_occlusion_strength is not None:
-        render = replace(
-            render, ambient_occlusion_strength=ambient_occlusion_strength
-        )
+        overrides["ambient_occlusion_strength"] = ambient_occlusion_strength
+    render = replace(
+        base.render,
+        vsync=False,
+        target_fps=0,
+        width=base.render.width * supersample,
+        height=base.render.height * supersample,
+        **overrides,
+    )
     app = SimulatorApp(
         replace(base, render=render), scenario_path=DEFAULT_SCENARIO_PATH
     )
@@ -174,6 +211,15 @@ def render_pan(
         for _ in range(WARMUP_FRAMES):
             app.renderer.render(app.world, app.camera, app.celestial, 1.0 / 60.0, None)
         width, height = app.renderer.hdr_texture.size
+        if supersample > 1 and tuple(app.ctx.screen.size) != (width, height):
+            raise RuntimeError(
+                "the display framebuffer is not the rendered size "
+                f"{app.ctx.screen.size} != {(width, height)}; a supersampled "
+                "pan cannot be read back on this platform"
+            )
+        # The pan covers the same ground however finely it is sampled, so the
+        # step is set on the presented grid rather than the rendered one.
+        width, height = width // supersample, height // supersample
         projection = app.renderer.projection
         yaw0 = app.camera.yaw_deg
         step_deg = (
@@ -191,11 +237,17 @@ def render_pan(
             app.renderer.render(app.world, app.camera, app.celestial, 0.0, None)
             app.ctx.finish()
             hdr.append(
-                read_linear_hdr(app.renderer)[:, :, :3].astype(np.float64)
-                @ LUMINANCE_WEIGHTS
+                box_downsample(
+                    read_linear_hdr(app.renderer)[:, :, :3].astype(np.float64)
+                    @ LUMINANCE_WEIGHTS,
+                    supersample,
+                )
             )
             display.append(
-                read_display_sdr(app.ctx).astype(np.float64) @ LUMINANCE_WEIGHTS
+                box_downsample(
+                    read_display_sdr(app.ctx).astype(np.float64) @ LUMINANCE_WEIGHTS,
+                    supersample,
+                )
             )
             matrices.append(
                 camera_view_projection(
@@ -209,6 +261,7 @@ def render_pan(
             "display_luma": np.stack(display),
             "matrices": matrices,
             "yaw_step_deg": step_deg,
+            "supersample": supersample,
             "gl": {
                 key: info.get(key)
                 for key in ("GL_VENDOR", "GL_RENDERER", "GL_VERSION")

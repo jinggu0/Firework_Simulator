@@ -1,0 +1,275 @@
+{
+  "schema_version": 1,
+  "probe": "shimmer_attribution",
+  "frames": 24,
+  "pixels_per_frame_at_centre": 0.6180339887498949,
+  "note": "Diagnostics may change brightness; the detail guard is not run and mean display code is reported so a dimming is not read as a fix.",
+  "views": [
+    {
+      "view_id": "facade_landmark",
+      "gl": {
+        "GL_VENDOR": "Intel",
+        "GL_RENDERER": "Intel(R) Arc(TM) 140V GPU (16GB)",
+        "GL_VERSION": "4.3.0 - Build 32.0.101.8626"
+      },
+      "yaw_step_deg": 0.04076149482634951,
+      "shipped": {
+        "display_excess": 0.6254256504971099,
+        "hdr_excess": 0.035488948351561925,
+        "display_unstable": 0.18239178480642199,
+        "hdr_unstable": 0.40952959763896163,
+        "mean_display_code": 36.38608055416109,
+        "pixels": 891811
+      },
+      "diagnostics": [
+        {
+          "diagnostic_id": "diagnostic_window_footprint_average_always",
+          "source": "docs/validation/shimmer_ab_v2/diagnostics/diagnostic_window_footprint_average_always.json",
+          "hypothesis": "Diagnostic, not a fix: the shipped footprint average only fades in where a floor spans under about 31 pixels, so a near facade is still drawn from one sample per pixel. Forcing the average on everywhere supersamples the window light sixteen times at every distance. If the remaining shimmer is point sampling of the window pattern \u2014 pane edges above all, since the blinds and curtains were measured to carry little \u2014 this removes most of it; if it does not, the cause is not in the window light's sampling.",
+          "render_overrides": {},
+          "shader_sha256": {
+            "scene.frag": "4377d6f2af99863d1baa5debeb1e5253b1a9d05da891a46e91932f8872836017"
+          },
+          "whole_frame": {
+            "display_excess": 0.7785848027144692,
+            "hdr_excess": 0.042608349134600286,
+            "display_unstable": 0.18487549491988772,
+            "hdr_unstable": 0.4212854517380925,
+            "mean_display_code": 36.23609476781808,
+            "pixels": 891811
+          },
+          "carried_share_of_display_excess": -0.2448878649214709,
+          "changed_pixel_fraction": 0.05478841145833333,
+          "share_of_shipped_display_unstable_pixels_changed": 0.21909639183813992,
+          "within_changed_pixels": {
+            "shipped": {
+              "display_excess": 2.1436881234192366,
+              "hdr_excess": 0.057088743312129805,
+              "display_unstable": 0.7065144125926807,
+              "hdr_unstable": 0.5577891439673288,
+              "mean_display_code": 141.7539864481462,
+              "pixels": 50442
+            },
+            "diagnostic": {
+              "display_excess": 3.111561911554315,
+              "hdr_excess": 0.11534100431085452,
+              "display_unstable": 0.6946393878117442,
+              "hdr_unstable": 0.5910947226517584,
+              "mean_display_code": 140.7742824020011,
+              "pixels": 50442
+            }
+          }
+        },
+        {
+          "diagnostic_id": "diagnostic_window_footprint_average_always_64",
+          "source": "docs/validation/shimmer_ab_v2/diagnostics/diagnostic_window_footprint_average_always_64.json",
+          "hypothesis": "Diagnostic, not a fix: the sixteen point average is itself an estimate, and its sample offsets are fixed to the pixel grid, so the estimate changes as the scene slides under them. Quadrupling the samples cuts that estimator noise by about half. Whatever separates this from the sixteen sample diagnostic is the average's own noise; whatever both leave behind is not in the window light's sampling at all.",
+          "render_overrides": {},
+          "shader_sha256": {
+            "scene.frag": "daa918e515def0a9891e11c7f71821608c4c057a0d0bc3ed367516bbe8664094"
+          },
+          "whole_frame": {
+            "display_excess": 0.7462963516247971,
+            "hdr_excess": 0.04166361956870337,
+            "display_unstable": 0.18324174068272314,
+            "hdr_unstable": 0.418789407172596,
+            "mean_display_code": 36.242262848586606,
+            "pixels": 891811
+          },
+          "carried_share_of_display_excess": -0.19326150283669222,
+          "changed_pixel_fraction": 0.07013671875,
+          "share_of_shipped_display_unstable_pixels_changed": 0.29698940728763856,
+          "within_changed_pixels": {
+            "shipped": {
+              "display_excess": 2.882125147307504,
+              "hdr_excess": 0.08833722395042888,
+              "display_unstable": 0.7546238440389903,
+              "hdr_unstable": 0.6294051487128218,
+              "mean_display_code": 130.6638342523065,
+              "pixels": 64016
+            },
+            "diagnostic": {
+              "display_excess": 3.437239164591398,
+              "hdr_excess": 0.1281245343256951,
+              "display_unstable": 0.7290364908772807,
+              "hdr_unstable": 0.637168832791802,
+              "mean_display_code": 129.6049597967356,
+              "pixels": 64016
+            }
+          }
+        },
+        {
+          "diagnostic_id": "render:ambient_occlusion_strength=0.0",
+          "source": "render config override",
+          "hypothesis": "Removing ambient_occlusion_strength shows how much shimmer that stage carries.",
+          "render_overrides": {
+            "ambient_occlusion_strength": 0.0
+          },
+          "shader_sha256": {},
+          "whole_frame": {
+            "display_excess": 0.5618951648360433,
+            "hdr_excess": 0.02685071473350187,
+            "display_unstable": 0.14558690126046886,
+            "hdr_unstable": 0.2411183535524904,
+            "mean_display_code": 37.90936735099799,
+            "pixels": 891811
+          },
+          "carried_share_of_display_excess": 0.10157959720802999,
+          "changed_pixel_fraction": 0.6539181857638889,
+          "share_of_shipped_display_unstable_pixels_changed": 0.7027216446676791,
+          "within_changed_pixels": {
+            "shipped": {
+              "display_excess": 0.5168662671436225,
+              "hdr_excess": 0.02967912861970836,
+              "display_unstable": 0.1949668584996094,
+              "hdr_unstable": 0.4754022863029914,
+              "mean_display_code": 38.073067814589145,
+              "pixels": 586274
+            },
+            "diagnostic": {
+              "display_excess": 0.43093618447944465,
+              "hdr_excess": 0.01729294731261841,
+              "display_unstable": 0.14189440432289338,
+              "hdr_unstable": 0.22643166846900936,
+              "mean_display_code": 40.225118232311914,
+              "pixels": 586274
+            }
+          }
+        }
+      ]
+    },
+    {
+      "view_id": "bridge_structure",
+      "gl": {
+        "GL_VENDOR": "Intel",
+        "GL_RENDERER": "Intel(R) Arc(TM) 140V GPU (16GB)",
+        "GL_VERSION": "4.3.0 - Build 32.0.101.8626"
+      },
+      "yaw_step_deg": 0.04143342185691262,
+      "shipped": {
+        "display_excess": 1.4958655629221196,
+        "hdr_excess": 0.08524125835162275,
+        "display_unstable": 0.22811553901011414,
+        "hdr_unstable": 0.3996097867282635,
+        "mean_display_code": 28.4155711948697,
+        "pixels": 891820
+      },
+      "diagnostics": [
+        {
+          "diagnostic_id": "diagnostic_window_footprint_average_always",
+          "source": "docs/validation/shimmer_ab_v2/diagnostics/diagnostic_window_footprint_average_always.json",
+          "hypothesis": "Diagnostic, not a fix: the shipped footprint average only fades in where a floor spans under about 31 pixels, so a near facade is still drawn from one sample per pixel. Forcing the average on everywhere supersamples the window light sixteen times at every distance. If the remaining shimmer is point sampling of the window pattern \u2014 pane edges above all, since the blinds and curtains were measured to carry little \u2014 this removes most of it; if it does not, the cause is not in the window light's sampling.",
+          "render_overrides": {},
+          "shader_sha256": {
+            "scene.frag": "4377d6f2af99863d1baa5debeb1e5253b1a9d05da891a46e91932f8872836017"
+          },
+          "whole_frame": {
+            "display_excess": 1.4958830110470593,
+            "hdr_excess": 0.08524484409854231,
+            "display_unstable": 0.22811890291762912,
+            "hdr_unstable": 0.3996097867282635,
+            "mean_display_code": 28.41553215929711,
+            "pixels": 891820
+          },
+          "carried_share_of_display_excess": -1.166423331898352e-05,
+          "changed_pixel_fraction": 1.0850694444444444e-06,
+          "share_of_shipped_display_unstable_pixels_changed": 4.915502511821784e-06,
+          "within_changed_pixels": {
+            "shipped": {
+              "display_excess": 2.469427196957521,
+              "hdr_excess": 0.02476634296423595,
+              "display_unstable": 1.0,
+              "hdr_unstable": 1.0,
+              "mean_display_code": 127.09922608695649,
+              "pixels": 1
+            },
+            "diagnostic": {
+              "display_excess": 2.469427196957521,
+              "hdr_excess": 0.02476627654734867,
+              "display_unstable": 1.0,
+              "hdr_unstable": 1.0,
+              "mean_display_code": 127.09922608695649,
+              "pixels": 1
+            }
+          }
+        },
+        {
+          "diagnostic_id": "diagnostic_window_footprint_average_always_64",
+          "source": "docs/validation/shimmer_ab_v2/diagnostics/diagnostic_window_footprint_average_always_64.json",
+          "hypothesis": "Diagnostic, not a fix: the sixteen point average is itself an estimate, and its sample offsets are fixed to the pixel grid, so the estimate changes as the scene slides under them. Quadrupling the samples cuts that estimator noise by about half. Whatever separates this from the sixteen sample diagnostic is the average's own noise; whatever both leave behind is not in the window light's sampling at all.",
+          "render_overrides": {},
+          "shader_sha256": {
+            "scene.frag": "daa918e515def0a9891e11c7f71821608c4c057a0d0bc3ed367516bbe8664094"
+          },
+          "whole_frame": {
+            "display_excess": 1.4313041848388561,
+            "hdr_excess": 0.08311034439438443,
+            "display_unstable": 0.2274494853221502,
+            "hdr_unstable": 0.3977147854948308,
+            "mean_display_code": 28.425343090065944,
+            "pixels": 891820
+          },
+          "carried_share_of_display_excess": 0.043159879927408135,
+          "changed_pixel_fraction": 0.05176974826388889,
+          "share_of_shipped_display_unstable_pixels_changed": 0.22151220519273684,
+          "within_changed_pixels": {
+            "shipped": {
+              "display_excess": 8.831230093779679,
+              "hdr_excess": 0.2981070044513621,
+              "display_unstable": 0.9694518544015145,
+              "hdr_unstable": 0.9687634454866191,
+              "mean_display_code": 68.719217849433,
+              "pixels": 46484
+            },
+            "diagnostic": {
+              "display_excess": 8.190352916458862,
+              "hdr_excess": 0.28036044006637106,
+              "display_unstable": 0.9632346613888649,
+              "hdr_unstable": 0.9477239480251269,
+              "mean_display_code": 68.56659872139268,
+              "pixels": 46484
+            }
+          }
+        },
+        {
+          "diagnostic_id": "render:ambient_occlusion_strength=0.0",
+          "source": "render config override",
+          "hypothesis": "Removing ambient_occlusion_strength shows how much shimmer that stage carries.",
+          "render_overrides": {
+            "ambient_occlusion_strength": 0.0
+          },
+          "shader_sha256": {},
+          "whole_frame": {
+            "display_excess": 1.5222189047619161,
+            "hdr_excess": 0.08067131495280257,
+            "display_unstable": 0.2280639590948846,
+            "hdr_unstable": 0.35061223116772444,
+            "mean_display_code": 29.077028700644405,
+            "pixels": 891820
+          },
+          "carried_share_of_display_excess": -0.017617453394886795,
+          "changed_pixel_fraction": 0.3770062934027778,
+          "share_of_shipped_display_unstable_pixels_changed": 0.4090877810438561,
+          "within_changed_pixels": {
+            "shipped": {
+              "display_excess": 1.0870179727481164,
+              "hdr_excess": 0.09649332039796744,
+              "display_unstable": 0.244717450497233,
+              "hdr_unstable": 0.599290759287466,
+              "mean_display_code": 22.72603358054566,
+              "pixels": 340082
+            },
+            "diagnostic": {
+              "display_excess": 1.155006842883088,
+              "hdr_excess": 0.08595519783216836,
+              "display_unstable": 0.24530260348974658,
+              "hdr_unstable": 0.48067524891055685,
+              "mean_display_code": 24.32927143131465,
+              "pixels": 340082
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

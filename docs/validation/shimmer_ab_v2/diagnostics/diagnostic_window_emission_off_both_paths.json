@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "candidate_id": "diagnostic_window_emission_off_both_paths",
+  "hypothesis": "Diagnostic, not a fix: with every facade window's emitted light removed, what remains of the visible shimmer comes from reflected light, geometry and ambient occlusion. This is the V2-3e diagnostic repeated on the shipped shader, which now has a second path for the same light.",
+  "provenance": {
+    "origin": "V2-3h, replacing diagnostic_facade_window_emission_off.json",
+    "note": "The older file removed only the single-sample emission. Since V2-3g the facade mixes in a footprint average of the same light, so removing one path left the other emitting; both are removed here."
+  },
+  "replacements": [
+    {
+      "file": "scene.frag",
+      "old": "    return window_color * pane * occupied * room_dimmer * floor_blackout\n         * blinds * curtains;\n",
+      "new": "    return vec3(0.0);\n"
+    },
+    {
+      "file": "scene.frag",
+      "old": "    vec3 emission = window_color * pane * occupied * blinds * curtains\n                  * window_radiance_w_m2_sr * .72;\n",
+      "new": "    vec3 emission = vec3(0.0);\n"
+    }
+  ]
+}

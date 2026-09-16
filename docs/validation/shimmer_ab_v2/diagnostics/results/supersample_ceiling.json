@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "probe": "shimmer_attribution",
+  "frames": 24,
+  "pixels_per_frame_at_centre": 0.6180339887498949,
+  "note": "Diagnostics may change brightness; the detail guard is not run and mean display code is reported so a dimming is not read as a fix.",
+  "views": [
+    {
+      "view_id": "facade_landmark",
+      "gl": {
+        "GL_VENDOR": "Intel",
+        "GL_RENDERER": "Intel(R) Arc(TM) 140V GPU (16GB)",
+        "GL_VERSION": "4.3.0 - Build 32.0.101.8626"
+      },
+      "yaw_step_deg": 0.04076149482634951,
+      "shipped": {
+        "display_excess": 0.6253935696358465,
+        "hdr_excess": 0.035487186999459186,
+        "display_unstable": 0.18238729955113808,
+        "hdr_unstable": 0.40952959763896163,
+        "mean_display_code": 36.38607502123792,
+        "pixels": 891811
+      },
+      "diagnostics": [
+        {
+          "diagnostic_id": "supersample:2x",
+          "source": "supersampled render",
+          "hypothesis": "Rendering 2 times finer in each axis and box averaging back bounds what antialiasing the scene could remove. Read the linear HDR only: bloom and the glare tail are measured in rendered pixels, so a finer grid narrows them on the scene and the display frame is no longer the same transform.",
+          "render_overrides": {},
+          "supersample": 2,
+          "display_frame_comparable": false,
+          "shader_sha256": {},
+          "whole_frame": {
+            "display_excess": 0.502445104851359,
+            "hdr_excess": 0.04146617545999343,
+            "display_unstable": 0.19234344496759964,
+            "hdr_unstable": 0.4924451481311623,
+            "mean_display_code": 35.827315742027224,
+            "pixels": 891811
+          },
+          "carried_share_of_display_excess": 0.19659374632853646,
+          "changed_pixel_fraction": 0.9987630208333333,
+          "share_of_shipped_display_unstable_pixels_changed": 0.9978912421997479,
+          "within_changed_pixels": {
+            "shipped": {
+              "display_excess": 0.6231735368239055,
+              "hdr_excess": 0.035359216359481103,
+              "display_unstable": 0.1822211145314805,
+              "hdr_unstable": 0.409386780908501,
+              "mean_display_code": 36.39451829504527,
+              "pixels": 890742
+            },
+            "diagnostic": {
+              "display_excess": 0.5013260372455904,
+              "hdr_excess": 0.04139063927695968,
+              "display_unstable": 0.19222962429075985,
+              "hdr_unstable": 0.492499511643102,
+              "mean_display_code": 35.83545703103851,
+              "pixels": 890742
+            }
+          }
+        }
+      ]
+    },
+    {
+      "view_id": "bridge_structure",
+      "gl": {
+        "GL_VENDOR": "Intel",
+        "GL_RENDERER": "Intel(R) Arc(TM) 140V GPU (16GB)",
+        "GL_VERSION": "4.3.0 - Build 32.0.101.8626"
+      },
+      "yaw_step_deg": 0.04143342185691262,
+      "shipped": {
+        "display_excess": 1.4958496202433855,
+        "hdr_excess": 0.08524132757844734,
+        "display_unstable": 0.22811553901011414,
+        "hdr_unstable": 0.3996097867282635,
+        "mean_display_code": 28.41556417536001,
+        "pixels": 891820
+      },
+      "diagnostics": [
+        {
+          "diagnostic_id": "supersample:2x",
+          "source": "supersampled render",
+          "hypothesis": "Rendering 2 times finer in each axis and box averaging back bounds what antialiasing the scene could remove. Read the linear HDR only: bloom and the glare tail are measured in rendered pixels, so a finer grid narrows them on the scene and the display frame is no longer the same transform.",
+          "render_overrides": {},
+          "supersample": 2,
+          "display_frame_comparable": false,
+          "shader_sha256": {},
+          "whole_frame": {
+            "display_excess": 0.8399312599951662,
+            "hdr_excess": 0.05571456558802095,
+            "display_unstable": 0.17507232401157183,
+            "hdr_unstable": 0.37014868471216167,
+            "mean_display_code": 28.270685017124237,
+            "pixels": 891820
+          },
+          "carried_share_of_display_excess": 0.4384921795424173,
+          "changed_pixel_fraction": 0.992060546875,
+          "share_of_shipped_display_unstable_pixels_changed": 0.9968688248999695,
+          "within_changed_pixels": {
+            "shipped": {
+              "display_excess": 1.5030903620361535,
+              "hdr_excess": 0.08569863894683559,
+              "display_unstable": 0.22923681923047795,
+              "hdr_unstable": 0.40190057636724735,
+              "mean_display_code": 28.374259627945623,
+              "pixels": 884679
+            },
+            "diagnostic": {
+              "display_excess": 0.8440168672683855,
+              "hdr_excess": 0.05600796914285287,
+              "display_unstable": 0.17595195545502945,
+              "hdr_unstable": 0.3722649684235751,
+              "mean_display_code": 28.22884473249128,
+              "pixels": 884679
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

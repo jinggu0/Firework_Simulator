@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "candidate_id": "diagnostic_window_pane_at_mean",
+  "hypothesis": "Diagnostic, not a fix: the pane rectangle is the one window term that already antialiases against the pixel footprint, so it should carry little shimmer. Replacing the pane the emission is multiplied by with its exact area fraction tests that. Only the emitted light is changed; the facade material keeps its own pane so the diagnostic does not move the wall, glass, mullion and reveal with it.",
+  "provenance": {
+    "origin": "V2-3h attribution diagnostic",
+    "note": "The area fraction of the pane within a cell is (pane_bounds.y - pane_bounds.x) * (pane_bounds.w - pane_bounds.z), exact for the box the interval() pair draws."
+  },
+  "replacements": [
+    {
+      "file": "scene.frag",
+      "old": "    float pane = interval(within.x, pane_bounds.x, pane_bounds.y, antialias.x)\n               * interval(within.y, pane_bounds.z, pane_bounds.w, antialias.y);\n",
+      "new": "    float pane = (pane_bounds.y - pane_bounds.x) * (pane_bounds.w - pane_bounds.z);\n"
+    },
+    {
+      "file": "scene.frag",
+      "old": "    vec3 emission = window_color * pane * occupied * blinds * curtains\n                  * window_radiance_w_m2_sr * .72;\n",
+      "new": "    vec3 emission = window_color\n                  * ((pane_bounds.y - pane_bounds.x) * (pane_bounds.w - pane_bounds.z))\n                  * occupied * blinds * curtains\n                  * window_radiance_w_m2_sr * .72;\n"
+    }
+  ]
+}

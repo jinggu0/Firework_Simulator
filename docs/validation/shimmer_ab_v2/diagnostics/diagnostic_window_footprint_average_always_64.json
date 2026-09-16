@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "candidate_id": "diagnostic_window_footprint_average_always_64",
+  "hypothesis": "Diagnostic, not a fix: the sixteen point average is itself an estimate, and its sample offsets are fixed to the pixel grid, so the estimate changes as the scene slides under them. Quadrupling the samples cuts that estimator noise by about half. Whatever separates this from the sixteen sample diagnostic is the average's own noise; whatever both leave behind is not in the window light's sampling at all.",
+  "provenance": {
+    "origin": "V2-3h attribution diagnostic",
+    "note": "The offsets stay on the same plastic-number (R2) sequence, which is low discrepancy at any count."
+  },
+  "replacements": [
+    {
+      "file": "scene.frag",
+      "old": "    float footprint_average = smoothstep(\n        .35, .5, max(grid_footprint.x, grid_footprint.y) * 11.0\n    );\n",
+      "new": "    float footprint_average = 1.0;\n"
+    },
+    {
+      "file": "scene.frag",
+      "old": "        for (int i = 0; i < 16; ++i) {\n",
+      "new": "        for (int i = 0; i < 64; ++i) {\n"
+    },
+    {
+      "file": "scene.frag",
+      "old": "            averaged / 16.0 * window_radiance_w_m2_sr * .72,\n",
+      "new": "            averaged / 64.0 * window_radiance_w_m2_sr * .72,\n"
+    }
+  ]
+}

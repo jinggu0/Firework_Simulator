@@ -1,0 +1,427 @@
+{
+  "schema_version": 1,
+  "probe": "shimmer_attribution",
+  "frames": 24,
+  "pixels_per_frame_at_centre": 0.6180339887498949,
+  "note": "Diagnostics may change brightness; the detail guard is not run and mean display code is reported so a dimming is not read as a fix.",
+  "views": [
+    {
+      "view_id": "facade_landmark",
+      "gl": {
+        "GL_VENDOR": "Intel",
+        "GL_RENDERER": "Intel(R) Arc(TM) 140V GPU (16GB)",
+        "GL_VERSION": "4.3.0 - Build 32.0.101.8626"
+      },
+      "yaw_step_deg": 0.04076149482634951,
+      "shipped": {
+        "display_excess": 0.6254256504971099,
+        "hdr_excess": 0.035488948351561925,
+        "display_unstable": 0.18239178480642199,
+        "hdr_unstable": 0.40952959763896163,
+        "mean_display_code": 36.38608055416109,
+        "pixels": 891811
+      },
+      "diagnostics": [
+        {
+          "diagnostic_id": "diagnostic_window_emission_off_both_paths",
+          "source": "docs/validation/shimmer_ab_v2/diagnostics/diagnostic_window_emission_off_both_paths.json",
+          "hypothesis": "Diagnostic, not a fix: with every facade window's emitted light removed, what remains of the visible shimmer comes from reflected light, geometry and ambient occlusion. This is the V2-3e diagnostic repeated on the shipped shader, which now has a second path for the same light.",
+          "render_overrides": {},
+          "shader_sha256": {
+            "scene.frag": "023584777956ffcaabfe4f734157de94abd1a126598ae55276c80d32e0caec1e"
+          },
+          "whole_frame": {
+            "display_excess": 0.09531064681718443,
+            "hdr_excess": 0.019545834831774554,
+            "display_unstable": 0.07123370310525437,
+            "hdr_unstable": 0.3721909687142231,
+            "mean_display_code": 21.254705292528104,
+            "pixels": 891811
+          },
+          "carried_share_of_display_excess": 0.8476067511119374,
+          "changed_pixel_fraction": 0.08604926215277778,
+          "share_of_shipped_display_unstable_pixels_changed": 0.3494488469743451,
+          "within_changed_pixels": {
+            "shipped": {
+              "display_excess": 2.7226330474129448,
+              "hdr_excess": 0.07613440206775796,
+              "display_unstable": 0.7231219388079638,
+              "hdr_unstable": 0.5898098085363527,
+              "mean_display_code": 138.86097303767048,
+              "pixels": 78605
+            },
+            "diagnostic": {
+              "display_excess": 0.0696254357675065,
+              "hdr_excess": 0.01843632284301069,
+              "display_unstable": 0.0538006488136887,
+              "hdr_unstable": 0.39487309967559314,
+              "mean_display_code": 20.452071173257593,
+              "pixels": 78605
+            }
+          }
+        },
+        {
+          "diagnostic_id": "diagnostic_window_blinds_at_mean",
+          "source": "docs/validation/shimmer_ab_v2/diagnostics/diagnostic_window_blinds_at_mean.json",
+          "hypothesis": "Diagnostic, not a fix: the venetian blinds are the only term of the window light with no antialiasing at all. Their profile is a smoothstep over 0.15 of a slat period and fract() closes the period with a hard step, so both edges stay a fixed fraction of the slat however far away the facade is. Replacing the blinds with their exact area mean, in both the single sample and the footprint average, shows how much of the visible shimmer they carry.",
+          "render_overrides": {},
+          "shader_sha256": {
+            "scene.frag": "a74c36f65e9cf7d4f86964f4230d9590b9f4c67f4aa376727e9325f981cf30fd"
+          },
+          "whole_frame": {
+            "display_excess": 0.5676149126012792,
+            "hdr_excess": 0.03281976871752925,
+            "display_unstable": 0.17269690551024824,
+            "hdr_unstable": 0.3920875611536525,
+            "mean_display_code": 36.44625707119753,
+            "pixels": 891811
+          },
+          "carried_share_of_display_excess": 0.09243422915238722,
+          "changed_pixel_fraction": 0.08593641493055555,
+          "share_of_shipped_display_unstable_pixels_changed": 0.3490000553304766,
+          "within_changed_pixels": {
+            "shipped": {
+              "display_excess": 2.7219200812562896,
+              "hdr_excess": 0.0759434935853096,
+              "display_unstable": 0.7231223886680933,
+              "hdr_unstable": 0.589473147865077,
+              "mean_display_code": 138.95057509736418,
+              "pixels": 78504
+            },
+            "diagnostic": {
+              "display_excess": 2.223621006621536,
+              "hdr_excess": 0.05903019450965387,
+              "display_unstable": 0.6288596759400795,
+              "hdr_unstable": 0.4479389585244064,
+              "mean_display_code": 140.02717340440142,
+              "pixels": 78504
+            }
+          }
+        },
+        {
+          "diagnostic_id": "diagnostic_window_curtains_at_mean",
+          "source": "docs/validation/shimmer_ab_v2/diagnostics/diagnostic_window_curtains_at_mean.json",
+          "hypothesis": "Diagnostic, not a fix: the curtain split is a smoothstep 0.12 of a bay wide, an order of magnitude wider than a blind edge but still fixed in surface units rather than in pixels. Replacing the curtains with their exact area mean, in both the single sample and the footprint average, separates their share from the blinds.",
+          "render_overrides": {},
+          "shader_sha256": {
+            "scene.frag": "addd165aa0d59c90cf2e79c0c5764a4158fc22fdb2cae3daa2ac8f0be245604c"
+          },
+          "whole_frame": {
+            "display_excess": 0.5823068779487478,
+            "hdr_excess": 0.03442108226492542,
+            "display_unstable": 0.17579173165614687,
+            "hdr_unstable": 0.4078263219448964,
+            "mean_display_code": 37.023329125536584,
+            "pixels": 891811
+          },
+          "carried_share_of_display_excess": 0.06894308302528009,
+          "changed_pixel_fraction": 0.08596028645833333,
+          "share_of_shipped_display_unstable_pixels_changed": 0.34912301194523515,
+          "within_changed_pixels": {
+            "shipped": {
+              "display_excess": 2.723430265067045,
+              "hdr_excess": 0.07605236128873967,
+              "display_unstable": 0.7231836994587711,
+              "hdr_unstable": 0.589582935370901,
+              "mean_display_code": 138.93719769588748,
+              "pixels": 78525
+            },
+            "diagnostic": {
+              "display_excess": 2.4517067047456305,
+              "hdr_excess": 0.07048356826121405,
+              "display_unstable": 0.685730659025788,
+              "hdr_unstable": 0.5787456224132442,
+              "mean_display_code": 143.5039713616544,
+              "pixels": 78525
+            }
+          }
+        },
+        {
+          "diagnostic_id": "diagnostic_window_pane_at_mean",
+          "source": "docs/validation/shimmer_ab_v2/diagnostics/diagnostic_window_pane_at_mean.json",
+          "hypothesis": "Diagnostic, not a fix: the pane rectangle is the one window term that already antialiases against the pixel footprint, so it should carry little shimmer. Replacing the pane the emission is multiplied by with its exact area fraction tests that. Only the emitted light is changed; the facade material keeps its own pane so the diagnostic does not move the wall, glass, mullion and reveal with it.",
+          "render_overrides": {},
+          "shader_sha256": {
+            "scene.frag": "4dc67139c2c55310b549bac72b992806f6ea95c83b2d9c5f2f6e7571207415a4"
+          },
+          "whole_frame": {
+            "display_excess": 1.720028486443509,
+            "hdr_excess": 0.06104482022271595,
+            "display_unstable": 0.2800918580282145,
+            "hdr_unstable": 0.4504665226152178,
+            "mean_display_code": 46.637040170268094,
+            "pixels": 891811
+          },
+          "carried_share_of_display_excess": -1.7501725985756598,
+          "changed_pixel_fraction": 0.20343532986111112,
+          "share_of_shipped_display_unstable_pixels_changed": 0.5397918344512139,
+          "within_changed_pixels": {
+            "shipped": {
+              "display_excess": 1.6521222524865102,
+              "hdr_excess": 0.05186535454423898,
+              "display_unstable": 0.4763795975280911,
+              "hdr_unstable": 0.5290568658408885,
+              "mean_display_code": 86.4377735592464,
+              "pixels": 184311
+            },
+            "diagnostic": {
+              "display_excess": 4.165428301409264,
+              "hdr_excess": 0.08957521005400114,
+              "display_unstable": 0.7371724964869162,
+              "hdr_unstable": 0.5804048591782368,
+              "mean_display_code": 124.34688219273991,
+              "pixels": 184311
+            }
+          }
+        },
+        {
+          "diagnostic_id": "render:bloom_strength=0.0",
+          "source": "render config override",
+          "hypothesis": "Removing bloom_strength shows how much shimmer that stage carries.",
+          "render_overrides": {
+            "bloom_strength": 0.0
+          },
+          "shader_sha256": {},
+          "whole_frame": {
+            "display_excess": 0.6811078079507389,
+            "hdr_excess": 0.035488948351561925,
+            "display_unstable": 0.17815882513223094,
+            "hdr_unstable": 0.40952959763896163,
+            "mean_display_code": 35.52897822151145,
+            "pixels": 891811
+          },
+          "carried_share_of_display_excess": -0.08903081830649405,
+          "changed_pixel_fraction": 0.0,
+          "share_of_shipped_display_unstable_pixels_changed": 0.0,
+          "within_changed_pixels": {
+            "shipped": {
+              "display_excess": 0.0,
+              "hdr_excess": 0.0,
+              "display_unstable": 0.0,
+              "hdr_unstable": 0.0,
+              "mean_display_code": 0.0,
+              "pixels": 0
+            },
+            "diagnostic": {
+              "display_excess": 0.0,
+              "hdr_excess": 0.0,
+              "display_unstable": 0.0,
+              "hdr_unstable": 0.0,
+              "mean_display_code": 0.0,
+              "pixels": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "view_id": "bridge_structure",
+      "gl": {
+        "GL_VENDOR": "Intel",
+        "GL_RENDERER": "Intel(R) Arc(TM) 140V GPU (16GB)",
+        "GL_VERSION": "4.3.0 - Build 32.0.101.8626"
+      },
+      "yaw_step_deg": 0.04143342185691262,
+      "shipped": {
+        "display_excess": 1.4958441912198985,
+        "hdr_excess": 0.08524128406721168,
+        "display_unstable": 0.22811553901011414,
+        "hdr_unstable": 0.3996097867282635,
+        "mean_display_code": 28.415557162539137,
+        "pixels": 891820
+      },
+      "diagnostics": [
+        {
+          "diagnostic_id": "diagnostic_window_emission_off_both_paths",
+          "source": "docs/validation/shimmer_ab_v2/diagnostics/diagnostic_window_emission_off_both_paths.json",
+          "hypothesis": "Diagnostic, not a fix: with every facade window's emitted light removed, what remains of the visible shimmer comes from reflected light, geometry and ambient occlusion. This is the V2-3e diagnostic repeated on the shipped shader, which now has a second path for the same light.",
+          "render_overrides": {},
+          "shader_sha256": {
+            "scene.frag": "023584777956ffcaabfe4f734157de94abd1a126598ae55276c80d32e0caec1e"
+          },
+          "whole_frame": {
+            "display_excess": 0.5545204545270677,
+            "hdr_excess": 0.05653081595848943,
+            "display_unstable": 0.15919468054091632,
+            "hdr_unstable": 0.3773227781390864,
+            "mean_display_code": 23.15307243614182,
+            "pixels": 891820
+          },
+          "carried_share_of_display_excess": 0.6292926377079138,
+          "changed_pixel_fraction": 0.05091905381944444,
+          "share_of_shipped_display_unstable_pixels_changed": 0.21844001612284825,
+          "within_changed_pixels": {
+            "shipped": {
+              "display_excess": 8.796048251787807,
+              "hdr_excess": 0.29522656067839403,
+              "display_unstable": 0.9713018010141633,
+              "hdr_unstable": 0.9690505333100192,
+              "mean_display_code": 69.2255091295605,
+              "pixels": 45752
+            },
+            "diagnostic": {
+              "display_excess": 1.8967755183423436,
+              "hdr_excess": 0.13537061446065107,
+              "display_unstable": 0.4228886168910649,
+              "hdr_unstable": 0.8018665850673194,
+              "mean_display_code": 24.40937963785855,
+              "pixels": 45752
+            }
+          }
+        },
+        {
+          "diagnostic_id": "diagnostic_window_blinds_at_mean",
+          "source": "docs/validation/shimmer_ab_v2/diagnostics/diagnostic_window_blinds_at_mean.json",
+          "hypothesis": "Diagnostic, not a fix: the venetian blinds are the only term of the window light with no antialiasing at all. Their profile is a smoothstep over 0.15 of a slat period and fract() closes the period with a hard step, so both edges stay a fixed fraction of the slat however far away the facade is. Replacing the blinds with their exact area mean, in both the single sample and the footprint average, shows how much of the visible shimmer they carry.",
+          "render_overrides": {},
+          "shader_sha256": {
+            "scene.frag": "a74c36f65e9cf7d4f86964f4230d9590b9f4c67f4aa376727e9325f981cf30fd"
+          },
+          "whole_frame": {
+            "display_excess": 1.4872809119929356,
+            "hdr_excess": 0.08466070017197347,
+            "display_unstable": 0.2280886277499944,
+            "hdr_unstable": 0.39751070843892267,
+            "mean_display_code": 28.431675179686287,
+            "pixels": 891820
+          },
+          "carried_share_of_display_excess": 0.00572471336067389,
+          "changed_pixel_fraction": 0.05068142361111111,
+          "share_of_shipped_display_unstable_pixels_changed": 0.2175011551430903,
+          "within_changed_pixels": {
+            "shipped": {
+              "display_excess": 8.787760297928042,
+              "hdr_excess": 0.2949951114875662,
+              "display_unstable": 0.971522669886925,
+              "hdr_unstable": 0.9692611702711604,
+              "mean_display_code": 69.25124253528521,
+              "pixels": 45545
+            },
+            "diagnostic": {
+              "display_excess": 8.70421575029446,
+              "hdr_excess": 0.28990147775089153,
+              "display_unstable": 0.9712811505104841,
+              "hdr_unstable": 0.9451311889340213,
+              "mean_display_code": 69.38672780575351,
+              "pixels": 45545
+            }
+          }
+        },
+        {
+          "diagnostic_id": "diagnostic_window_curtains_at_mean",
+          "source": "docs/validation/shimmer_ab_v2/diagnostics/diagnostic_window_curtains_at_mean.json",
+          "hypothesis": "Diagnostic, not a fix: the curtain split is a smoothstep 0.12 of a bay wide, an order of magnitude wider than a blind edge but still fixed in surface units rather than in pixels. Replacing the curtains with their exact area mean, in both the single sample and the footprint average, separates their share from the blinds.",
+          "render_overrides": {},
+          "shader_sha256": {
+            "scene.frag": "addd165aa0d59c90cf2e79c0c5764a4158fc22fdb2cae3daa2ac8f0be245604c"
+          },
+          "whole_frame": {
+            "display_excess": 1.4462203144458203,
+            "hdr_excess": 0.08219688257800516,
+            "display_unstable": 0.22598282164562356,
+            "hdr_unstable": 0.39654190307461146,
+            "mean_display_code": 28.659159361023328,
+            "pixels": 891820
+          },
+          "carried_share_of_display_excess": 0.033174495756545797,
+          "changed_pixel_fraction": 0.05078993055555556,
+          "share_of_shipped_display_unstable_pixels_changed": 0.21794846587166605,
+          "within_changed_pixels": {
+            "shipped": {
+              "display_excess": 8.79635889291041,
+              "hdr_excess": 0.29532134837610696,
+              "display_unstable": 0.9714943032427695,
+              "hdr_unstable": 0.9691279579316389,
+              "mean_display_code": 69.26365457245743,
+              "pixels": 45640
+            },
+            "diagnostic": {
+              "display_excess": 8.521241710971415,
+              "hdr_excess": 0.2754123546139714,
+              "display_unstable": 0.9643733567046451,
+              "hdr_unstable": 0.9406003505696757,
+              "mean_display_code": 71.08121429447851,
+              "pixels": 45640
+            }
+          }
+        },
+        {
+          "diagnostic_id": "diagnostic_window_pane_at_mean",
+          "source": "docs/validation/shimmer_ab_v2/diagnostics/diagnostic_window_pane_at_mean.json",
+          "hypothesis": "Diagnostic, not a fix: the pane rectangle is the one window term that already antialiases against the pixel footprint, so it should carry little shimmer. Replacing the pane the emission is multiplied by with its exact area fraction tests that. Only the emitted light is changed; the facade material keeps its own pane so the diagnostic does not move the wall, glass, mullion and reveal with it.",
+          "render_overrides": {},
+          "shader_sha256": {
+            "scene.frag": "4dc67139c2c55310b549bac72b992806f6ea95c83b2d9c5f2f6e7571207415a4"
+          },
+          "whole_frame": {
+            "display_excess": 1.650976202041238,
+            "hdr_excess": 0.08312665855411888,
+            "display_unstable": 0.23661725460294677,
+            "hdr_unstable": 0.39905922719831355,
+            "mean_display_code": 29.99626742267157,
+            "pixels": 891820
+          },
+          "carried_share_of_display_excess": -0.10370866948035903,
+          "changed_pixel_fraction": 0.06646050347222222,
+          "share_of_shipped_display_unstable_pixels_changed": 0.2755974793303119,
+          "within_changed_pixels": {
+            "shipped": {
+              "display_excess": 7.918163919045068,
+              "hdr_excess": 0.2771580370826985,
+              "display_unstable": 0.9401693636287415,
+              "hdr_unstable": 0.9677370671585478,
+              "mean_display_code": 63.685286620273324,
+              "pixels": 59635
+            },
+            "diagnostic": {
+              "display_excess": 8.525255253097034,
+              "hdr_excess": 0.24566552911995285,
+              "display_unstable": 0.9728515133730192,
+              "hdr_unstable": 0.9339146474385848,
+              "mean_display_code": 75.67450776338669,
+              "pixels": 59635
+            }
+          }
+        },
+        {
+          "diagnostic_id": "render:bloom_strength=0.0",
+          "source": "render config override",
+          "hypothesis": "Removing bloom_strength shows how much shimmer that stage carries.",
+          "render_overrides": {
+            "bloom_strength": 0.0
+          },
+          "shader_sha256": {},
+          "whole_frame": {
+            "display_excess": 1.476460741209087,
+            "hdr_excess": 0.08524134262102535,
+            "display_unstable": 0.22220066829629298,
+            "hdr_unstable": 0.3996097867282635,
+            "mean_display_code": 28.24270431923775,
+            "pixels": 891820
+          },
+          "carried_share_of_display_excess": 0.012958201211453541,
+          "changed_pixel_fraction": 0.0,
+          "share_of_shipped_display_unstable_pixels_changed": 0.0,
+          "within_changed_pixels": {
+            "shipped": {
+              "display_excess": 0.0,
+              "hdr_excess": 0.0,
+              "display_unstable": 0.0,
+              "hdr_unstable": 0.0,
+              "mean_display_code": 0.0,
+              "pixels": 0
+            },
+            "diagnostic": {
+              "display_excess": 0.0,
+              "hdr_excess": 0.0,
+              "display_unstable": 0.0,
+              "hdr_unstable": 0.0,
+              "mean_display_code": 0.0,
+              "pixels": 0
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

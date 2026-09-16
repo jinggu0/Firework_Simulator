@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "candidate_id": "diagnostic_window_footprint_average_always",
+  "hypothesis": "Diagnostic, not a fix: the shipped footprint average only fades in where a floor spans under about 31 pixels, so a near facade is still drawn from one sample per pixel. Forcing the average on everywhere supersamples the window light sixteen times at every distance. If the remaining shimmer is point sampling of the window pattern — pane edges above all, since the blinds and curtains were measured to carry little — this removes most of it; if it does not, the cause is not in the window light's sampling.",
+  "provenance": {
+    "origin": "V2-3h attribution diagnostic",
+    "note": "An average preserves the mean by construction, so this diagnostic does not move brightness and its flicker comparison is not confounded by the ACES slope. It is not a candidate: the loop already costs 47 to 95 percent of render GPU time where it runs, and running it everywhere costs more."
+  },
+  "replacements": [
+    {
+      "file": "scene.frag",
+      "old": "    float footprint_average = smoothstep(\n        .35, .5, max(grid_footprint.x, grid_footprint.y) * 11.0\n    );\n",
+      "new": "    float footprint_average = 1.0;\n"
+    }
+  ]
+}

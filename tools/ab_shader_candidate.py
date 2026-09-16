@@ -230,7 +230,7 @@ def score_run(pan: dict[str, Any], residuals: list[dict]) -> dict[str, Any]:
     }
 
 
-def _stability(run: dict[str, Any], mask: np.ndarray | None = None) -> dict[str, Any]:
+def stability(run: dict[str, Any], mask: np.ndarray | None = None) -> dict[str, Any]:
     scored = run["scored"] if mask is None else run["scored"] & mask
     if not scored.any():
         return {
@@ -265,7 +265,7 @@ def measure_view(view, display_mode, frames, record, candidate) -> dict[str, Any
     shipped_frame = runs["shipped"]["first_frame"]
     against_candidate = detail_guard(shipped_frame, runs["candidate"]["first_frame"], reference)
     against_repeat = detail_guard(shipped_frame, runs["repeat"]["first_frame"], reference)
-    summaries = {label: _stability(run) for label, run in runs.items()}
+    summaries = {label: stability(run) for label, run in runs.items()}
     for scale in against_candidate["scales"]:
         summaries["shipped"].setdefault("guard", {})[scale] = against_candidate["scales"][scale]["baseline"]
         summaries["repeat"].setdefault("guard", {})[scale] = against_repeat["scales"][scale]["candidate"]
@@ -278,8 +278,8 @@ def measure_view(view, display_mode, frames, record, candidate) -> dict[str, Any
     shipped_unstable = shipped["display_unstable_map"]
     within = {
         "pixels": int(region.sum()),
-        "shipped": _stability(shipped, region),
-        "candidate": _stability(candidate_run, region),
+        "shipped": stability(shipped, region),
+        "candidate": stability(candidate_run, region),
     }
     shipped_unstable_count = int(shipped_unstable.sum())
     return {

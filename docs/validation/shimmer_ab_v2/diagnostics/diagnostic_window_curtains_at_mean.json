@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "candidate_id": "diagnostic_window_curtains_at_mean",
+  "hypothesis": "Diagnostic, not a fix: the curtain split is a smoothstep 0.12 of a bay wide, an order of magnitude wider than a blind edge but still fixed in surface units rather than in pixels. Replacing the curtains with their exact area mean, in both the single sample and the footprint average, separates their share from the blinds.",
+  "provenance": {
+    "origin": "V2-3h attribution diagnostic",
+    "note": "0.56 is the mean of smoothstep(.16, .28, |x - .5|) over one bay: |x - .5| is uniform on [0, .5], so the mean is 2 * ((.5 - .28) + (.28 - .16) / 2)."
+  },
+  "replacements": [
+    {
+      "file": "scene.frag",
+      "old": "    float curtains = mix(\n        .58, 1.0, smoothstep(.16, .28, abs(room_within.x - .5))\n    );\n",
+      "new": "    float curtains = mix(.58, 1.0, .56);\n"
+    },
+    {
+      "file": "scene.frag",
+      "old": "    float curtains = mix(.58, 1.0, smoothstep(.16, .28, curtain_split));\n",
+      "new": "    float curtains = mix(.58, 1.0, .56);\n"
+    }
+  ]
+}
