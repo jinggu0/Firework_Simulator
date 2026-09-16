@@ -10,7 +10,9 @@ import tools.profile_runtime as profile_runtime
 from tools.shader_candidate import DEFAULT_CANDIDATE_DIRECTORY
 
 
-CANDIDATE = DEFAULT_CANDIDATE_DIRECTORY / "window_emission_footprint_average.json"
+# The expectation fade was rejected and never shipped, so its marker shows
+# whether the candidate or the shipped shader was served.
+CANDIDATE = DEFAULT_CANDIDATE_DIRECTORY / "window_grid_expectation_fade.json"
 
 
 def _run_main(monkeypatch, capsys, arguments: list[str]) -> tuple[dict, list[str]]:
@@ -32,8 +34,8 @@ def test_a_candidate_is_profiled_with_its_shader_served(monkeypatch, capsys) -> 
         ["--frames", "3", "--integrated-only", "--candidate", str(CANDIDATE)],
     )
 
-    assert "window_emission_at(" in seen[0]
-    assert report["candidate"]["candidate_id"] == "window_emission_footprint_average"
+    assert "cell_detail" in seen[0]
+    assert report["candidate"]["candidate_id"] == "window_grid_expectation_fade"
     assert len(report["candidate"]["shader_sha256"]["scene.frag"]) == 64
 
 
@@ -51,7 +53,7 @@ def test_the_shipped_shader_is_back_after_profiling_a_candidate(monkeypatch, cap
 def test_without_a_candidate_the_shipped_shader_is_profiled(monkeypatch, capsys) -> None:
     report, seen = _run_main(monkeypatch, capsys, ["--frames", "3", "--integrated-only"])
 
-    assert "window_emission_at(" not in seen[0]
+    assert "cell_detail" not in seen[0]
     assert "candidate" not in report
 
 

@@ -23,5 +23,11 @@
       "old": "    vec3 emission = window_color * pane * occupied * blinds * curtains\n                  * window_radiance_w_m2_sr * .72;\n",
       "new": "    vec3 emission = window_color * pane * occupied * blinds * curtains\n                  * window_radiance_w_m2_sr * .72;\n    // The blinds are the finest thing in the window light: eleven slats a floor\n    // reach two pixels per slat, the sampling limit, when a floor spans 22\n    // pixels. From about there down the light is averaged over sixteen points\n    // of the pixel footprint laid out on the plastic-number sequence, which\n    // never locks onto a periodic pattern the way a regular grid can. Both\n    // derivatives are taken before the branch, where they are still defined,\n    // and the average fades in so the facade shows no line where it starts.\n    vec2 grid_dx = dFdx(grid);\n    vec2 grid_dy = dFdy(grid);\n    vec2 grid_footprint = abs(grid_dx) + abs(grid_dy);\n    float footprint_average = smoothstep(\n        .35, .5, max(grid_footprint.x, grid_footprint.y) * 11.0\n    );\n    if (footprint_average > 0.0) {\n        vec2 sample_antialias = min(grid_footprint * 1.25 * .25, vec2(.12));\n        vec3 averaged = vec3(0.0);\n        for (int i = 0; i < 16; ++i) {\n            vec2 offset = fract(\n                vec2(.5) + float(i) * vec2(.7548776662, .5698402910)\n            ) - .5;\n            averaged += window_emission_at(\n                grid + grid_dx * offset.x + grid_dy * offset.y,\n                room_parallax, pane_bounds, sample_antialias,\n                occupancy_threshold, facade_style\n            );\n        }\n        emission = mix(\n            emission,\n            averaged / 16.0 * window_radiance_w_m2_sr * .72,\n            footprint_average\n        );\n    }\n"
     }
-  ]
+  ],
+  "status": "adopted",
+  "adopted": {
+    "stage": "V2-3g",
+    "verdict": "docs/validation/shimmer_ab_v2/rejudged/window_emission_footprint_average_ab.json",
+    "note": "Applied verbatim to simulator/shaders/scene.frag; the replacements now describe shipped code."
+  }
 }

@@ -22,7 +22,7 @@
     },
     "road_shader": {
       "asset": "simulator/shaders/scene.frag",
-      "sha256": "e938368609d5cf79e89bd12b511c3f5b146ac38ad15b688d359c4b25b1b2917c"
+      "sha256": "58590989fee0884bc48372a230206ce5b0b903627a4d4e08c5bf328aaa9a71ba"
     },
     "material_table": {
       "asset": "simulator/materials.py",

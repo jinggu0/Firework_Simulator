@@ -89,6 +89,41 @@ float interval(float value, float lower, float upper, float antialias) {
          * (1.0 - smoothstep(upper - antialias, upper + antialias, value));
 }
 
+// Window light at one point of the facade grid, the same terms the facade
+// multiplies together inline. It exists as a function so the facade can average
+// it over the pixel footprint: the blinds repeat eleven times a floor and every
+// cell draws its own occupancy, dimmer and colour, so one sample decides which
+// slat and which room a pixel shows by where its centre happens to land, and
+// that choice changes from frame to frame as the camera moves.
+vec3 window_emission_at(
+    vec2 grid, vec2 room_parallax, vec4 pane_bounds, vec2 antialias,
+    float occupancy_threshold, float style
+) {
+    vec2 within = fract(grid);
+    float pane = interval(within.x, pane_bounds.x, pane_bounds.y, antialias.x)
+               * interval(within.y, pane_bounds.z, pane_bounds.w, antialias.y);
+    vec2 cell = floor(grid);
+    float occupied = step(occupancy_threshold, hash21(cell + style * 31.7));
+    float room_dimmer = mix(
+        .24, 1.0, hash21(cell * vec2(1.31, 2.17) + style * 9.1)
+    );
+    float floor_blackout = step(
+        .12, hash21(vec2(floor(cell.y / 3.0), style * 13.7))
+    );
+    float temperature = hash21(cell + style * 17.0 + 11.3);
+    vec3 window_color = mix(
+        vec3(1.0, .42, .12), vec3(.55, .72, 1.0), temperature
+    );
+    vec2 room_within = fract(grid + room_parallax);
+    float blind_phase = fract(room_within.y * 11.0 + temperature * .37);
+    float blinds = mix(.52, 1.0, smoothstep(.16, .31, blind_phase));
+    float curtains = mix(
+        .58, 1.0, smoothstep(.16, .28, abs(room_within.x - .5))
+    );
+    return window_color * pane * occupied * room_dimmer * floor_blackout
+         * blinds * curtains;
+}
+
 // Derivative cotangent frame: works on roads, horizontal park surfaces and
 // vertical facility walls without storing tangent vectors in the city mesh.
 mat3 cotangent_frame(vec3 n, vec3 position, vec2 texture_uv) {
@@ -685,6 +720,38 @@ void main() {
     facade *= mix(.94, 1.035, weathering);
     vec3 emission = window_color * pane * occupied * blinds * curtains
                   * window_radiance_w_m2_sr * .72;
+    // The blinds are the finest thing in the window light: eleven slats a floor
+    // reach two pixels per slat, the sampling limit, when a floor spans 22
+    // pixels. From about there down the light is averaged over sixteen points
+    // of the pixel footprint laid out on the plastic-number sequence, which
+    // never locks onto a periodic pattern the way a regular grid can. Both
+    // derivatives are taken before the branch, where they are still defined,
+    // and the average fades in so the facade shows no line where it starts.
+    vec2 grid_dx = dFdx(grid);
+    vec2 grid_dy = dFdy(grid);
+    vec2 grid_footprint = abs(grid_dx) + abs(grid_dy);
+    float footprint_average = smoothstep(
+        .35, .5, max(grid_footprint.x, grid_footprint.y) * 11.0
+    );
+    if (footprint_average > 0.0) {
+        vec2 sample_antialias = min(grid_footprint * 1.25 * .25, vec2(.12));
+        vec3 averaged = vec3(0.0);
+        for (int i = 0; i < 16; ++i) {
+            vec2 offset = fract(
+                vec2(.5) + float(i) * vec2(.7548776662, .5698402910)
+            ) - .5;
+            averaged += window_emission_at(
+                grid + grid_dx * offset.x + grid_dy * offset.y,
+                room_parallax, pane_bounds, sample_antialias,
+                occupancy_threshold, facade_style
+            );
+        }
+        emission = mix(
+            emission,
+            averaged / 16.0 * window_radiance_w_m2_sr * .72,
+            footprint_average
+        );
+    }
 
     if (facade_style > 2.5 && facade_style < 3.5) {
         float balcony = 1.0 - smoothstep(

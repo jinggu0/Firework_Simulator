@@ -152,24 +152,23 @@ def test_the_window_grid_candidate_compiles_against_the_production_vertex_shader
         ctx.release()
 
 
-def _patched_scene(candidate_path: Path) -> str:
-    candidate = load_candidate(candidate_path)
-    return apply_replacements(shaders.source("scene.frag"), candidate.replacements)
+def test_the_adopted_footprint_average_is_in_the_shipped_shader() -> None:
+    # Adopted in V2-3g after passing the revised A/B rule; its replacements now
+    # describe shipped code, so each one must appear exactly once as written.
+    payload = json.loads(FOOTPRINT_AVERAGE.read_text(encoding="utf-8"))
+    source = shaders.source("scene.frag")
 
-
-def test_the_footprint_average_candidate_applies_to_the_shipped_shader() -> None:
-    patched = _patched_scene(FOOTPRINT_AVERAGE)
-
-    assert "window_emission_at(" in patched
-    assert patched.count("window_emission_at(") == 2
+    assert payload["status"] == "adopted"
+    for replacement in load_candidate(FOOTPRINT_AVERAGE).replacements:
+        assert source.count(replacement.new) == 1
 
 
 def test_the_footprint_average_takes_its_derivatives_before_branching() -> None:
     # Derivatives inside a branch that differs between neighbouring pixels are
     # undefined in GLSL, so every screen derivative the average needs has to be
     # taken before the branch that decides whether to average.
-    patched = _patched_scene(FOOTPRINT_AVERAGE)
-    main = patched[patched.index("void main()"):]
+    source = shaders.source("scene.frag")
+    main = source[source.index("void main()"):]
     branch = main.index("if (footprint_average > 0.0)")
     body = main[branch:main.index("emission = mix(", branch)]
 
@@ -179,26 +178,22 @@ def test_the_footprint_average_takes_its_derivatives_before_branching() -> None:
 
 
 def test_the_footprint_average_leaves_the_single_sample_emission_in_place() -> None:
-    original = shaders.source("scene.frag")
-    patched = _patched_scene(FOOTPRINT_AVERAGE)
     single = (
         "    vec3 emission = window_color * pane * occupied * blinds * curtains\n"
         "                  * window_radiance_w_m2_sr * .72;\n"
     )
 
-    assert original.count(single) == 1 and patched.count(single) == 1
+    assert shaders.source("scene.frag").count(single) == 1
 
 
 @pytest.mark.opengl
-def test_the_footprint_average_candidate_compiles() -> None:
+def test_the_shipped_scene_shader_with_the_footprint_average_compiles() -> None:
     try:
         ctx = moderngl.create_standalone_context(require=330)
     except Exception as error:
         pytest.skip(f"OpenGL unavailable: {error}")
-    candidate = load_candidate(FOOTPRINT_AVERAGE)
     try:
-        with shader_variant(candidate.replacements):
-            program = shaders.program(ctx, "scene.vert", "scene.frag")
+        program = shaders.program(ctx, "scene.vert", "scene.frag")
         try:
             assert "window_radiance_w_m2_sr" in program
         finally:
