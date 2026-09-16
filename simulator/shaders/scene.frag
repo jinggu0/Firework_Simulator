@@ -1,9 +1,9 @@
 #version 330
-in vec3 world_position;
-in vec3 world_normal;
-in float surface;
-in vec2 surface_uv;
-in float facade_style;
+centroid in vec3 world_position;
+centroid in vec3 world_normal;
+centroid in float surface;
+centroid in vec2 surface_uv;
+centroid in float facade_style;
 uniform vec3 camera_position;
 uniform float ambient_irradiance_w_m2;
 uniform float window_radiance_w_m2_sr;

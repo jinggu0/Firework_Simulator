@@ -31,6 +31,7 @@ from .passes import (
     AmbientOcclusionPass,
     HazePass,
     LandPass,
+    MultisampleResolvePass,
     ParticlePass,
     PostProcessPass,
     RenderTargets,
@@ -192,6 +193,13 @@ class Renderer:
         self.smoke = SmokePass(ctx, smoke_config)
         self.haze = HazePass(ctx, self.quad_buffer)
         self.targets = RenderTargets(ctx, render_config)
+        # Built only when there is something to resolve, so a single-sample
+        # renderer compiles and binds exactly what it did before.
+        self.resolve = (
+            MultisampleResolvePass(ctx, self.quad_buffer)
+            if self.targets.samples > 1
+            else None
+        )
         self.ambient_occlusion = AmbientOcclusionPass(
             ctx,
             render_config,
@@ -603,8 +611,9 @@ class Renderer:
         self.ctx.disable(moderngl.DEPTH_TEST)
         self.sky.draw_airlight(self.targets.airlight_fbo)
 
-        self.targets.hdr_fbo.use()
-        self.targets.hdr_fbo.clear(0, 0, 0, 1, depth=1)
+        scene_fbo = self.targets.scene_fbo
+        scene_fbo.use()
+        scene_fbo.clear(0, 0, 0, 1, depth=1)
         self.sky.draw()
         self.ctx.enable(moderngl.DEPTH_TEST)
         self.water_mask_texture.use(WATER_MASK_UNIT)
@@ -612,6 +621,10 @@ class Renderer:
         self.land.draw()
         self.scene.draw()
         self.water.draw(self.time_s, self.targets.reflection_texture)
+        # Everything below reads the single-sample colour and depth textures,
+        # so the multisampled scene is resolved into them first.
+        if self.resolve is not None:
+            self.resolve.resolve(self.targets)
         self.ambient_occlusion.draw(self.targets)
         # Aerial perspective closes over the opaque scene before anything
         # emissive is added: the stars and the plume carry their own path

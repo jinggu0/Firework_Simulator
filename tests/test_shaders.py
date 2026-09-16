@@ -31,6 +31,8 @@ EXPECTED = {
     # multiplicative resolve.
     "ambient_occlusion.frag",
     "ambient_occlusion_apply.frag",
+    # Multisample antialiasing: colour resolves with a blit, depth cannot.
+    "depth_resolve.frag",
 }
 
 EXPECTED_INCLUDES = {"air_extinction.glsl"}

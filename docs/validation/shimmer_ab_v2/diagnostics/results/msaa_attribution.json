@@ -1,0 +1,207 @@
+{
+  "schema_version": 1,
+  "probe": "shimmer_attribution",
+  "frames": 24,
+  "pixels_per_frame_at_centre": 0.6180339887498949,
+  "note": "Diagnostics may change brightness; the detail guard is not run and mean display code is reported so a dimming is not read as a fix.",
+  "views": [
+    {
+      "view_id": "facade_landmark",
+      "gl": {
+        "GL_VENDOR": "Intel",
+        "GL_RENDERER": "Intel(R) Arc(TM) 140V GPU (16GB)",
+        "GL_VERSION": "4.3.0 - Build 32.0.101.8626"
+      },
+      "yaw_step_deg": 0.04076149482634951,
+      "shipped": {
+        "display_excess": 0.6254256504971099,
+        "hdr_excess": 0.035488948351561925,
+        "display_unstable": 0.18239178480642199,
+        "hdr_unstable": 0.40952959763896163,
+        "mean_display_code": 36.38608055416109,
+        "pixels": 891811
+      },
+      "diagnostics": [
+        {
+          "diagnostic_id": "render:msaa_samples=4",
+          "source": "render config override",
+          "hypothesis": "Removing msaa_samples shows how much shimmer that stage carries.",
+          "render_overrides": {
+            "msaa_samples": 4
+          },
+          "supersample": 1,
+          "display_frame_comparable": true,
+          "shader_sha256": {},
+          "whole_frame": {
+            "display_excess": 0.5153243549785556,
+            "hdr_excess": 0.028057960741842372,
+            "display_unstable": 0.17235714742249197,
+            "hdr_unstable": 0.4000253416923541,
+            "mean_display_code": 36.40581734571075,
+            "pixels": 891811
+          },
+          "carried_share_of_display_excess": 0.17604218092277155,
+          "changed_pixel_fraction": 0.6838758680555556,
+          "share_of_shipped_display_unstable_pixels_changed": 0.7003178428491507,
+          "within_changed_pixels": {
+            "shipped": {
+              "display_excess": 0.5601662170190227,
+              "hdr_excess": 0.03366216489417321,
+              "display_unstable": 0.18694182325428735,
+              "hdr_unstable": 0.44052679084270124,
+              "mean_display_code": 35.69024105389563,
+              "pixels": 609350
+            },
+            "diagnostic": {
+              "display_excess": 0.4750495212233303,
+              "hdr_excess": 0.027759633971442876,
+              "display_unstable": 0.17786493804874046,
+              "hdr_unstable": 0.433110691720686,
+              "mean_display_code": 35.70475891911909,
+              "pixels": 609350
+            }
+          }
+        },
+        {
+          "diagnostic_id": "render:msaa_samples=8",
+          "source": "render config override",
+          "hypothesis": "Removing msaa_samples shows how much shimmer that stage carries.",
+          "render_overrides": {
+            "msaa_samples": 8
+          },
+          "supersample": 1,
+          "display_frame_comparable": true,
+          "shader_sha256": {},
+          "whole_frame": {
+            "display_excess": 0.50021175313529,
+            "hdr_excess": 0.026842664118185595,
+            "display_unstable": 0.16705893961837207,
+            "hdr_unstable": 0.39830412497715323,
+            "mean_display_code": 36.40693304756082,
+            "pixels": 891811
+          },
+          "carried_share_of_display_excess": 0.20020588740211653,
+          "changed_pixel_fraction": 0.6272938368055555,
+          "share_of_shipped_display_unstable_pixels_changed": 0.5823717101420763,
+          "within_changed_pixels": {
+            "shipped": {
+              "display_excess": 0.5325385070115621,
+              "hdr_excess": 0.03043899794619805,
+              "display_unstable": 0.16896675353307256,
+              "hdr_unstable": 0.4004380778087548,
+              "mean_display_code": 36.40847927747252,
+              "pixels": 560631
+            },
+            "diagnostic": {
+              "display_excess": 0.44181668758751513,
+              "hdr_excess": 0.023720608506801723,
+              "display_unstable": 0.1568518330238606,
+              "hdr_unstable": 0.391227028116533,
+              "mean_display_code": 36.424202117412264,
+              "pixels": 560631
+            }
+          }
+        }
+      ]
+    },
+    {
+      "view_id": "bridge_structure",
+      "gl": {
+        "GL_VENDOR": "Intel",
+        "GL_RENDERER": "Intel(R) Arc(TM) 140V GPU (16GB)",
+        "GL_VERSION": "4.3.0 - Build 32.0.101.8626"
+      },
+      "yaw_step_deg": 0.04143342185691262,
+      "shipped": {
+        "display_excess": 1.4958500255856673,
+        "hdr_excess": 0.08524133542349155,
+        "display_unstable": 0.22811553901011414,
+        "hdr_unstable": 0.3996097867282635,
+        "mean_display_code": 28.415564014906497,
+        "pixels": 891820
+      },
+      "diagnostics": [
+        {
+          "diagnostic_id": "render:msaa_samples=4",
+          "source": "render config override",
+          "hypothesis": "Removing msaa_samples shows how much shimmer that stage carries.",
+          "render_overrides": {
+            "msaa_samples": 4
+          },
+          "supersample": 1,
+          "display_frame_comparable": true,
+          "shader_sha256": {},
+          "whole_frame": {
+            "display_excess": 1.1497303030187465,
+            "hdr_excess": 0.060093724097130194,
+            "display_unstable": 0.20840864748491847,
+            "hdr_unstable": 0.3937554663497118,
+            "mean_display_code": 28.58623683739066,
+            "pixels": 891820
+          },
+          "carried_share_of_display_excess": 0.23138664748921284,
+          "changed_pixel_fraction": 0.6063368055555556,
+          "share_of_shipped_display_unstable_pixels_changed": 0.7261475240613848,
+          "within_changed_pixels": {
+            "shipped": {
+              "display_excess": 1.673659132241148,
+              "hdr_excess": 0.10502964471038849,
+              "display_unstable": 0.2714269177980256,
+              "hdr_unstable": 0.5143746428617363,
+              "mean_display_code": 25.72110263325886,
+              "pixels": 544257
+            },
+            "diagnostic": {
+              "display_excess": 1.2711289229095015,
+              "hdr_excess": 0.07311309620543799,
+              "display_unstable": 0.24354119469294838,
+              "hdr_unstable": 0.5074293945691098,
+              "mean_display_code": 25.959766793197364,
+              "pixels": 544257
+            }
+          }
+        },
+        {
+          "diagnostic_id": "render:msaa_samples=8",
+          "source": "render config override",
+          "hypothesis": "Removing msaa_samples shows how much shimmer that stage carries.",
+          "render_overrides": {
+            "msaa_samples": 8
+          },
+          "supersample": 1,
+          "display_frame_comparable": true,
+          "shader_sha256": {},
+          "whole_frame": {
+            "display_excess": 1.0944023679775403,
+            "hdr_excess": 0.05477451565264575,
+            "display_unstable": 0.18935099011011192,
+            "hdr_unstable": 0.38797403063398445,
+            "mean_display_code": 28.597434458991042,
+            "pixels": 891820
+          },
+          "carried_share_of_display_excess": 0.2683742693061418,
+          "changed_pixel_fraction": 0.5362098524305555,
+          "share_of_shipped_display_unstable_pixels_changed": 0.6609777917596515,
+          "within_changed_pixels": {
+            "shipped": {
+              "display_excess": 1.7029864750175434,
+              "hdr_excess": 0.10615771836807125,
+              "display_unstable": 0.27924169395718385,
+              "hdr_unstable": 0.5178996027386735,
+              "mean_display_code": 25.792428484465056,
+              "pixels": 481547
+            },
+            "diagnostic": {
+              "display_excess": 1.2135111462513157,
+              "hdr_excess": 0.06610956687125562,
+              "display_unstable": 0.22058075328057283,
+              "hdr_unstable": 0.5024701638677014,
+              "mean_display_code": 26.075094299179426,
+              "pixels": 481547
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -51,6 +51,7 @@ DEFAULT_OUTPUT = Path("docs/validation/shimmer_ab_v2/diagnostics/results/attribu
 OVERRIDE_FIELDS = {
     "bloom_strength": float,
     "ambient_occlusion_strength": float,
+    "msaa_samples": int,
     "simulate_fixed_gaze_peripheral_acuity": lambda text: {
         "true": True, "false": False
     }[text.strip().lower()],

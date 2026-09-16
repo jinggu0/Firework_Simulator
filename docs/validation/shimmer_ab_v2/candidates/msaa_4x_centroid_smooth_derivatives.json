@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "candidate_id": "msaa_4x_centroid_smooth_derivatives",
+  "hypothesis": "Qualifying surface_uv centroid fixed the detail guard and cost water_reflection 2.4 percent of its display stability, and narrowing the qualifier to surface_uv alone changed neither number, so the whole effect is in that one varying. A centroid varying is sampled wherever the covered samples happen to sit, which differs between neighbouring pixels and between frames, so its screen derivatives jump — and those derivatives set the facade's antialias width and the footprint average's whole extent. Carrying the same coordinate twice, centroid for the value and smooth for the derivatives, should keep the correct cell without the jitter.",
+  "provenance": {
+    "origin": "V2-3i, after msaa_4x_centroid and msaa_4x_centroid_surface_uv were both rejected on water_reflection alone",
+    "measurement": "docs/validation/shimmer_ab_v2/msaa_4x_centroid_surface_uv_probe.json",
+    "note": "The two earlier candidates scored 0.8773 and 0.8777 display excess flicker on water_reflection against a shipped 0.8569, and identical guard distances, which is what says the varying rather than its breadth is responsible."
+  },
+  "render_overrides": {
+    "msaa_samples": 4
+  },
+  "replacements": [
+    {
+      "file": "scene.vert",
+      "old": "out vec2 surface_uv;\n",
+      "new": "out vec2 surface_uv;\ncentroid out vec2 surface_uv_centroid;\n"
+    },
+    {
+      "file": "scene.vert",
+      "old": "            surface_uv = in_surface_uv;\n",
+      "new": "            surface_uv = in_surface_uv;\n            surface_uv_centroid = in_surface_uv;\n"
+    },
+    {
+      "file": "scene.vert",
+      "old": "\n    surface_uv = in_surface_uv;\n",
+      "new": "\n    surface_uv = in_surface_uv;\n    surface_uv_centroid = in_surface_uv;\n"
+    },
+    {
+      "file": "scene.frag",
+      "old": "in vec2 surface_uv;\n",
+      "new": "in vec2 surface_uv;\ncentroid in vec2 surface_uv_centroid;\n"
+    },
+    {
+      "file": "scene.frag",
+      "old": "    vec2 grid = surface_uv / vec2(bay_width, floor_height);\n",
+      "new": "    vec2 grid = surface_uv_centroid / vec2(bay_width, floor_height);\n    // Derivatives are taken from the smooth copy. A centroid varying is read\n    // wherever the covered samples sit, which differs between neighbouring\n    // pixels and between frames, and these derivatives set both the antialias\n    // width and the extent the footprint average covers.\n    vec2 grid_gradient = surface_uv / vec2(bay_width, floor_height);\n"
+    },
+    {
+      "file": "scene.frag",
+      "old": "    vec2 aa = min(fwidth(grid) * 1.25, vec2(.12));\n",
+      "new": "    vec2 aa = min(fwidth(grid_gradient) * 1.25, vec2(.12));\n"
+    },
+    {
+      "file": "scene.frag",
+      "old": "    vec2 grid_dx = dFdx(grid);\n    vec2 grid_dy = dFdy(grid);\n",
+      "new": "    vec2 grid_dx = dFdx(grid_gradient);\n    vec2 grid_dy = dFdy(grid_gradient);\n"
+    }
+  ]
+}

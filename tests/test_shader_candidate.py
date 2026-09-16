@@ -19,6 +19,7 @@ from tools.shader_candidate import (
 
 WINDOW_FADE = DEFAULT_CANDIDATE_DIRECTORY / "window_grid_expectation_fade.json"
 FOOTPRINT_AVERAGE = DEFAULT_CANDIDATE_DIRECTORY / "window_emission_footprint_average.json"
+MSAA = DEFAULT_CANDIDATE_DIRECTORY / "msaa_4x.json"
 GRID_LINE = "    vec2 grid = surface_uv / vec2(bay_width, floor_height);\n"
 
 
@@ -200,3 +201,63 @@ def test_the_shipped_scene_shader_with_the_footprint_average_compiles() -> None:
             program.release()
     finally:
         ctx.release()
+
+
+def _bare(payload: dict, tmp_path: Path) -> Path:
+    path = tmp_path / "candidate.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    return path
+
+
+def _skeleton(**extra) -> dict:
+    return {
+        "schema_version": 1,
+        "candidate_id": "config_only",
+        "hypothesis": "a config change can be judged by the same rule",
+        "provenance": {"origin": "test"},
+        **extra,
+    }
+
+
+def test_a_candidate_may_be_render_overrides_with_no_shader_edit(tmp_path: Path) -> None:
+    # Some fixes are not in a shader at all — a sample count, a buffer scale —
+    # and they have to face the same acceptance rule as one that is.
+    path = _bare(_skeleton(render_overrides={"msaa_samples": 4}), tmp_path)
+
+    candidate = load_candidate(path)
+
+    assert candidate.render_overrides == {"msaa_samples": 4}
+    assert candidate.replacements == ()
+
+
+def test_a_candidate_that_changes_nothing_is_refused(tmp_path: Path) -> None:
+    path = _bare(_skeleton(), tmp_path)
+
+    with pytest.raises(ValueError, match="replacements or render_overrides"):
+        load_candidate(path)
+
+
+def test_a_render_override_naming_no_config_field_is_refused(tmp_path: Path) -> None:
+    # Caught on load rather than three minutes into a render.
+    path = _bare(_skeleton(render_overrides={"msaa_sampels": 4}), tmp_path)
+
+    with pytest.raises(ValueError, match="no such RenderConfig field"):
+        load_candidate(path)
+
+
+def test_render_overrides_must_be_an_object(tmp_path: Path) -> None:
+    path = _bare(_skeleton(render_overrides=["msaa_samples"]), tmp_path)
+
+    with pytest.raises(ValueError, match="object of config fields"):
+        load_candidate(path)
+
+
+def test_a_shader_candidate_carries_no_render_overrides() -> None:
+    assert load_candidate(WINDOW_FADE).render_overrides == {}
+
+
+def test_the_msaa_candidate_asks_for_four_samples_and_no_shader_edit() -> None:
+    candidate = load_candidate(MSAA)
+
+    assert candidate.render_overrides == {"msaa_samples": 4}
+    assert candidate.replacements == ()

@@ -23,6 +23,11 @@ class RenderTargets:
         "scene_depth_texture",
         "hdr_fbo",
         "composite_fbo",
+        "samples",
+        "multisample_colour",
+        "multisample_depth",
+        "multisample_fbo",
+        "depth_resolve_fbo",
         "reflection_texture",
         "reflection_depth",
         "reflection_fbo",
@@ -66,6 +71,35 @@ class RenderTargets:
         # smoke composites both sample the depth they would otherwise be bound
         # to, which would be a texture feedback loop.
         self.composite_fbo = ctx.framebuffer([self.hdr_texture])
+
+        # Multisample antialiasing. The opaque scene is drawn into these and
+        # resolved into the buffers above, so every pass after the resolve —
+        # ambient occlusion, haze, particles, smoke and the whole display
+        # transform — reads exactly what it read before MSAA existed.
+        self.samples = max(int(config.msaa_samples), 1)
+        self.multisample_colour = None
+        self.multisample_depth = None
+        self.multisample_fbo = None
+        self.depth_resolve_fbo = None
+        if self.samples > 1:
+            if self.samples > ctx.max_samples:
+                raise ValueError(
+                    f"msaa_samples={self.samples} is above this context's "
+                    f"maximum of {ctx.max_samples}"
+                )
+            self.multisample_colour = ctx.texture(
+                size, components=4, dtype="f2", samples=self.samples
+            )
+            self.multisample_depth = ctx.depth_texture(size, samples=self.samples)
+            self.multisample_fbo = ctx.framebuffer(
+                [self.multisample_colour], self.multisample_depth
+            )
+            # Depth only. The resolve writes gl_FragDepth into the sampleable
+            # depth texture; binding the colour target as well would make the
+            # blit that already resolved it a second, redundant write.
+            self.depth_resolve_fbo = ctx.framebuffer(
+                color_attachments=[], depth_attachment=self.scene_depth_texture
+            )
 
         self.reflection_size = (
             max(int(config.width * config.reflection_scale), 1),
@@ -175,6 +209,16 @@ class RenderTargets:
             # divide by it on the first frame.
             framebuffer.clear(1.0, 1.0, 1.0, 0.0)
         self.adaptation_index = 0
+
+    @property
+    def scene_fbo(self) -> moderngl.Framebuffer:
+        """Where the opaque scene is drawn — multisampled when MSAA is on.
+
+        The same object as `hdr_fbo` when it is off, so the single-sample path
+        is not merely equivalent but identical.
+        """
+
+        return self.multisample_fbo if self.multisample_fbo is not None else self.hdr_fbo
 
     @property
     def current_adaptation(self) -> moderngl.Texture:

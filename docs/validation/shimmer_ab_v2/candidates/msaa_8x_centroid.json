@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "candidate_id": "msaa_8x_centroid",
+  "hypothesis": "The centroid candidate at four samples improved the detail guard in every view and display stability in five, failing only water_reflection at +2.4 percent. Coverage is quantised into four steps there, so the shading point jumps in quarters as an edge sweeps a pixel. Eight samples halve that step and sample the edges more finely at the same time, which should move water_reflection below the shipped value without giving the guard back.",
+  "provenance": {
+    "origin": "V2-3i, third variant after two rejections on water_reflection alone",
+    "measurement": "docs/validation/shimmer_ab_v2/msaa_4x_centroid_ab.json",
+    "disproved": "Narrowing the qualifier to surface_uv alone changed nothing (0.8777 against 0.8773), and taking the derivatives from a smooth copy gave the stability back but lost the guard exactly as if there were no centroid at all (16 px 0.0554 against 0.0555). So the guard fix is the centroid derivative widening the facade filter at partially covered pixels, not the centroid value choosing the right cell.",
+    "note": "Same four shader stages as msaa_4x_centroid; only the sample count differs."
+  },
+  "render_overrides": {
+    "msaa_samples": 8
+  },
+  "replacements": [
+    {
+      "file": "scene.vert",
+      "old": "out vec3 world_position;\nout vec3 world_normal;\nout float surface;\nout vec2 surface_uv;\nout float facade_style;\n",
+      "new": "centroid out vec3 world_position;\ncentroid out vec3 world_normal;\ncentroid out float surface;\ncentroid out vec2 surface_uv;\ncentroid out float facade_style;\n"
+    },
+    {
+      "file": "scene.frag",
+      "old": "in vec3 world_position;\nin vec3 world_normal;\nin float surface;\nin vec2 surface_uv;\nin float facade_style;\n",
+      "new": "centroid in vec3 world_position;\ncentroid in vec3 world_normal;\ncentroid in float surface;\ncentroid in vec2 surface_uv;\ncentroid in float facade_style;\n"
+    },
+    {
+      "file": "land.vert",
+      "old": "out vec3 world_position;\nout vec3 world_normal;\n",
+      "new": "centroid out vec3 world_position;\ncentroid out vec3 world_normal;\n"
+    },
+    {
+      "file": "land.frag",
+      "old": "in vec3 world_position;\nin vec3 world_normal;\n",
+      "new": "centroid in vec3 world_position;\ncentroid in vec3 world_normal;\n"
+    }
+  ],
+  "status": "adopted",
+  "adopted": {
+    "stage": "V2-3i",
+    "verdict": "docs/validation/shimmer_ab_v2/msaa_8x_centroid_ab.json",
+    "note": "Applied verbatim to the four shader stages, and RenderConfig.msaa_samples defaults to 8; the replacements now describe shipped code."
+  }
+}

@@ -1,6 +1,6 @@
 #version 330
-in vec3 world_position;
-in vec3 world_normal;
+centroid in vec3 world_position;
+centroid in vec3 world_normal;
 uniform sampler2D water_mask;
 uniform vec4 water_mask_bounds;
 uniform float sky_ambient_scale;

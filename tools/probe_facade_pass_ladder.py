@@ -88,8 +88,8 @@ _INTERPOLATING_VERTEX_SHADER = """#version 330
 in vec3 in_position;
 in vec3 in_normal;
 uniform mat4 view_projection;
-out vec3 ladder_world_position;
-out vec3 ladder_world_normal;
+centroid out vec3 ladder_world_position;
+centroid out vec3 ladder_world_normal;
 void main() {
     ladder_world_position = in_position;
     ladder_world_normal = in_normal;
@@ -201,8 +201,12 @@ def ladder_fragment_source(*, interpolated: bool, stage: str = "final_facade") -
     if interpolated:
         source = source.replace(
             "out vec4 frag_color;",
-            "in vec3 ladder_world_position;\n"
-            "in vec3 ladder_world_normal;\n"
+            # The production vertex shader qualifies these `centroid` (V2-3i)
+            # and GLSL 330 links a varying only when both sides agree. The
+            # rename in `probe_facade_input_reduction.reduced_sources` carries
+            # the qualifier across, so the fragment side carries it too.
+            "centroid in vec3 ladder_world_position;\n"
+            "centroid in vec3 ladder_world_normal;\n"
             "out vec4 frag_color;",
             1,
         )

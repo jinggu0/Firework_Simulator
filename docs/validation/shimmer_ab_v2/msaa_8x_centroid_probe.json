@@ -1,0 +1,194 @@
+{
+  "schema_version": 1,
+  "probe": "shader_candidate_ab_for_temporal_shimmer",
+  "candidate_id": "msaa_8x_centroid",
+  "candidate_file": "docs/validation/shimmer_ab_v2/candidates/msaa_8x_centroid.json",
+  "candidate_file_sha256": "f21cb31003182cf4c704abdfc8497e2cc63441c2238dffffee46b3524fe436c7",
+  "hypothesis": "The centroid candidate at four samples improved the detail guard in every view and display stability in five, failing only water_reflection at +2.4 percent. Coverage is quantised into four steps there, so the shading point jumps in quarters as an edge sweeps a pixel. Eight samples halve that step and sample the edges more finely at the same time, which should move water_reflection below the shipped value without giving the guard back.",
+  "shipped_shader_sha256": {
+    "land.frag": "fadf8353e56c509850558162e7fee14ad0f5a860b17a2617f0c7a11ed575e869",
+    "land.vert": "39bce9d67ac271ef575b00652b632bcc868975fa95acaa3fe7e10ec9b04a4abd",
+    "scene.frag": "aa27310a6115e25d181c417eb36721f5056a69fc0aff6fff737faa22f00650d4",
+    "scene.vert": "45b57ec52e893d271a594ebba4b95e33af63e4e590dc624162bc30e4af4ba915"
+  },
+  "frames": 24,
+  "pixels_per_frame_at_centre": 0.6180339887498949,
+  "supersample": 4,
+  "guard_scales_px": [
+    4,
+    16
+  ],
+  "rule": "Accepted only if, in every view, the candidate's display excess flicker is not higher than the shipped shader's by more than the tolerance, and it is no further from the supersampled reference at any guard scale by more than the tolerance; and its display excess flicker is lower by more than the tolerance in at least one view. The tolerance is the larger of the difference between two separate runs of the shipped shader and one percent of the shipped value.",
+  "rule_revision": "V2-3g: excess flicker replaced the share of pixels over two code values, which saturated where fixes act (V2-3f); linear HDR is reported without deciding; a one percent equivalence margin was added; frame cost is not part of acceptance while performance work is deferred. All declared before any candidate was re-judged.",
+  "equivalence_margin": 0.01,
+  "views": [
+    {
+      "view_id": "terrain_shoreline",
+      "gl": {
+        "GL_VENDOR": "Intel",
+        "GL_RENDERER": "Intel(R) Arc(TM) 140V GPU (16GB)",
+        "GL_VERSION": "4.3.0 - Build 32.0.101.8626"
+      },
+      "yaw_step_deg": 0.041214069668056845,
+      "shipped": {
+        "display_excess": 0.6787660440996107,
+        "hdr_excess": 0.02741012136196811,
+        "display_unstable": 0.08304889754032185,
+        "hdr_unstable": 0.14011621127038518,
+        "guard": {
+          "4": 0.06754604659946406,
+          "16": 0.03400719816651297
+        }
+      },
+      "repeat": {
+        "display_excess": 0.6787726772774446,
+        "hdr_excess": 0.02740993743533445,
+        "display_unstable": 0.08304889754032185,
+        "hdr_unstable": 0.1401195751628124,
+        "guard": {
+          "4": 0.06754577401609618,
+          "16": 0.03400692558314511
+        }
+      },
+      "candidate": {
+        "display_excess": 0.6079315191159844,
+        "hdr_excess": 0.02189455862806966,
+        "display_unstable": 0.07115865910762662,
+        "hdr_unstable": 0.13682296058415114,
+        "guard": {
+          "4": 0.06103511160395682,
+          "16": 0.030595450999509735
+        }
+      },
+      "verdict": {
+        "noise": {
+          "display_excess": 6.63317783389239e-06,
+          "hdr_excess": 1.8392663365951467e-07,
+          "guard": {
+            "4": 2.7258336787738813e-07,
+            "16": 2.7258336786351034e-07
+          }
+        },
+        "tolerance": 0.006787660440996108,
+        "more_stable": true,
+        "not_less_stable": true,
+        "guard_held": {
+          "4": true,
+          "16": true
+        }
+      },
+      "changed_pixel_fraction": 0.42467122395833334,
+      "share_of_shipped_display_unstable_pixels_the_candidate_changed": 0.6851684331330588,
+      "within_changed_pixels": {
+        "pixels": 383215,
+        "shipped": {
+          "display_excess": 1.0883685774007779,
+          "hdr_excess": 0.042965454267519895,
+          "display_unstable": 0.13242435708414338,
+          "hdr_unstable": 0.21741320146653967
+        },
+        "candidate": {
+          "display_excess": 0.9821130285386173,
+          "hdr_excess": 0.03378526523870143,
+          "display_unstable": 0.11189802069334447,
+          "hdr_unstable": 0.21334759860652636
+        }
+      },
+      "candidate_shader_sha256": {
+        "scene.vert": "3ccc02c4f51cb057062caac854dd2897be2bf3534b8ab43b2ad010932b32f207",
+        "scene.frag": "9bd986f7d5c85433bbb883831dfb7320fb80d9aeb77f10efd74d8d6654bf53d2",
+        "land.vert": "80d7aa00e0975b630e11b079ce56fb8cb76d518fed03e93f7b05119173992eb0",
+        "land.frag": "a885b686b4eec25099388e9f4f80f65c5a5bb9323e5b82b7702b11b49368f660"
+      },
+      "candidate_render_overrides": {
+        "msaa_samples": 8
+      }
+    },
+    {
+      "view_id": "water_reflection",
+      "gl": {
+        "GL_VENDOR": "Intel",
+        "GL_RENDERER": "Intel(R) Arc(TM) 140V GPU (16GB)",
+        "GL_VERSION": "4.3.0 - Build 32.0.101.8626"
+      },
+      "yaw_step_deg": 0.04126618651838873,
+      "shipped": {
+        "display_excess": 0.8569012936144361,
+        "hdr_excess": 0.029005916860138214,
+        "display_unstable": 0.0777148973480147,
+        "hdr_unstable": 0.08871226699764294,
+        "guard": {
+          "4": 0.07527167141950761,
+          "16": 0.039061588855689965
+        }
+      },
+      "repeat": {
+        "display_excess": 0.8569026129725189,
+        "hdr_excess": 0.02900594656581823,
+        "display_unstable": 0.0777148973480147,
+        "hdr_unstable": 0.08871226699764294,
+        "guard": {
+          "4": 0.07527167141950761,
+          "16": 0.039061588855689965
+        }
+      },
+      "candidate": {
+        "display_excess": 0.8240336922750442,
+        "hdr_excess": 0.025409982195390663,
+        "display_unstable": 0.07620386923401008,
+        "hdr_unstable": 0.09038726500495325,
+        "guard": {
+          "4": 0.06730182493696643,
+          "16": 0.03514746258268587
+        }
+      },
+      "verdict": {
+        "noise": {
+          "display_excess": 1.3193580827852713e-06,
+          "hdr_excess": 2.970568001650631e-08,
+          "guard": {
+            "4": 0.0,
+            "16": 0.0
+          }
+        },
+        "tolerance": 0.00856901293614436,
+        "more_stable": true,
+        "not_less_stable": true,
+        "guard_held": {
+          "4": true,
+          "16": true
+        }
+      },
+      "changed_pixel_fraction": 0.3486197916666667,
+      "share_of_shipped_display_unstable_pixels_the_candidate_changed": 0.679076923076923,
+      "within_changed_pixels": {
+        "pixels": 303060,
+        "shipped": {
+          "display_excess": 1.7215075409581593,
+          "hdr_excess": 0.05673609056941218,
+          "display_unstable": 0.1529301128489408,
+          "hdr_unstable": 0.17910974724477002
+        },
+        "candidate": {
+          "display_excess": 1.6763449606794594,
+          "hdr_excess": 0.04869073358353492,
+          "display_unstable": 0.15017818253811127,
+          "hdr_unstable": 0.18366000131987065
+        }
+      },
+      "candidate_shader_sha256": {
+        "scene.vert": "3ccc02c4f51cb057062caac854dd2897be2bf3534b8ab43b2ad010932b32f207",
+        "scene.frag": "9bd986f7d5c85433bbb883831dfb7320fb80d9aeb77f10efd74d8d6654bf53d2",
+        "land.vert": "80d7aa00e0975b630e11b079ce56fb8cb76d518fed03e93f7b05119173992eb0",
+        "land.frag": "a885b686b4eec25099388e9f4f80f65c5a5bb9323e5b82b7702b11b49368f660"
+      },
+      "candidate_render_overrides": {
+        "msaa_samples": 8
+      }
+    }
+  ],
+  "verdict": {
+    "accepted": true,
+    "reasons": []
+  }
+}

@@ -15,6 +15,7 @@ from .haze import HazePass, set_air_extinction
 from .land import LandPass, initialise_static_lights
 from .particles import STRIDE, ParticlePass
 from .post import PostProcessPass
+from .resolve import MultisampleResolvePass
 from .scene import SceneData, ScenePass
 from .sky import SkyPass
 from .smoke import SmokePass
@@ -25,6 +26,7 @@ __all__ = [
     "HazePass",
     "AmbientOcclusionPass",
     "LandPass",
+    "MultisampleResolvePass",
     "ParticlePass",
     "PostProcessPass",
     "RenderTargets",

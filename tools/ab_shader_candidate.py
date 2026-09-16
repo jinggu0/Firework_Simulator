@@ -251,12 +251,20 @@ def measure_view(view, display_mode, frames, record, candidate) -> dict[str, Any
     runs = {}
     digests: dict[str, str] = {}
     for label in ("shipped", "repeat", "candidate"):
+        is_candidate = label == "candidate"
         variant = (
-            shader_variant(candidate.replacements) if label == "candidate" else nullcontext({})
+            shader_variant(candidate.replacements)
+            if is_candidate and candidate.replacements
+            else nullcontext({})
         )
         with variant as served:
-            pan = render_pan(view, display_mode, frames, PIXELS_PER_FRAME)
-        if label == "candidate":
+            pan = render_pan(
+                view, display_mode, frames, PIXELS_PER_FRAME,
+                render_overrides=(
+                    candidate.render_overrides if is_candidate else None
+                ) or None,
+            )
+        if is_candidate:
             digests = served
         residuals = select_residuals(record, view.view_id, pan["gl"])
         runs[label] = score_run(pan, residuals)
@@ -297,6 +305,7 @@ def measure_view(view, display_mode, frames, record, candidate) -> dict[str, Any
         ),
         "within_changed_pixels": within,
         "candidate_shader_sha256": digests,
+        "candidate_render_overrides": dict(candidate.render_overrides),
     }
 
 

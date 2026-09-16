@@ -209,6 +209,23 @@ class RenderConfig:
     ambient_occlusion_strength: float = 0.62
     default_human_vision: bool = True
     simulate_fixed_gaze_peripheral_acuity: bool = False
+    # Multisample antialiasing on the opaque scene pass. Geometry coverage is
+    # sampled this many times per pixel while shading still runs once, so the
+    # scene shaders keep the filter widths they derive from `fwidth` at the
+    # presented pixel and only the edges are antialiased. Adopted at eight in
+    # V2-3i: display excess flicker fell in all six regression views, by 3.8 to
+    # 80.5 percent, and every view moved closer to the supersampled reference
+    # at both guard scales.
+    #
+    # The scene and land varyings are `centroid` qualified, which is what makes
+    # this pass the guard. A partially covered pixel still shades once, and its
+    # centre can lie outside the primitive; the wider filter that a centroid
+    # varying's screen derivatives produce there is what stops the distant
+    # skyline from reading several times too bright. That widening moves with
+    # coverage, so it also flickers: at four samples, coverage in quarters left
+    # water_reflection 2.4 percent less stable and the candidate was rejected.
+    # Eight samples halve the step and it passes.
+    msaa_samples: int = 8
 
 
 @dataclass(frozen=True, slots=True)

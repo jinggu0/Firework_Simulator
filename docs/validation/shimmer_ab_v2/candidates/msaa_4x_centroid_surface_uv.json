@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "candidate_id": "msaa_4x_centroid_surface_uv",
+  "hypothesis": "Centroid interpolation on every scene and land varying fixed the detail guard but cost water_reflection 2.4 percent of its display stability, because the centroid of the covered samples moves as coverage changes from frame to frame and the shading point jitters with it. Only one varying actually needed it: an extrapolated surface_uv lands on a different facade cell, and a lit window is orders of magnitude brighter than the wall beside it. World position and the normal extrapolate along the surface, which moves the lighting a little rather than choosing different content. Qualifying surface_uv alone should keep the guard and give the stability back.",
+  "provenance": {
+    "origin": "V2-3i, after msaa_4x_centroid was rejected on one view",
+    "measurement": "docs/validation/shimmer_ab_v2/msaa_4x_centroid_ab.json",
+    "note": "The wider candidate improved the guard in all six views and display stability in five; water_reflection was the single failure at +2.4 percent against a 1 percent margin."
+  },
+  "render_overrides": {
+    "msaa_samples": 4
+  },
+  "replacements": [
+    {
+      "file": "scene.vert",
+      "old": "out vec2 surface_uv;\n",
+      "new": "centroid out vec2 surface_uv;\n"
+    },
+    {
+      "file": "scene.frag",
+      "old": "in vec2 surface_uv;\n",
+      "new": "centroid in vec2 surface_uv;\n"
+    }
+  ]
+}

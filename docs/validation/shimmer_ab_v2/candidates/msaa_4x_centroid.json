@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "candidate_id": "msaa_4x_centroid",
+  "hypothesis": "Multisampling alone was rejected because it moved the horizon skyline band of water_reflection far from the supersampled reference — 77 percent of the guard loss sat in one percent of the blocks, all at rows 336 to 352, five to sixteen times too bright. A partially covered pixel still shades once, at the pixel centre, and that centre can lie outside the triangle, so every varying is extrapolated. On a 1.5 km facade an extrapolated surface_uv lands on a different window cell, and a lit window is orders of magnitude brighter than the wall beside it. Interpolating at the centroid of the covered samples keeps the shading point inside the primitive.",
+  "provenance": {
+    "origin": "V2-3i, after the first MSAA candidate was rejected by the detail guard",
+    "measurement": "docs/validation/shimmer_ab_v2/msaa_4x_ab.json",
+    "disproved": "A nearest-of-four depth resolve was measured first and changed the water_reflection block distance by 0.0001 at both scales, so the depth resolve is not the cause.",
+    "note": "centroid is only distinguishable from the default when a pixel is partially covered, which cannot happen without multisampling, so at one sample this changes nothing. The qualifier has to match on both sides of the stage boundary."
+  },
+  "render_overrides": {
+    "msaa_samples": 4
+  },
+  "replacements": [
+    {
+      "file": "scene.vert",
+      "old": "out vec3 world_position;\nout vec3 world_normal;\nout float surface;\nout vec2 surface_uv;\nout float facade_style;\n",
+      "new": "centroid out vec3 world_position;\ncentroid out vec3 world_normal;\ncentroid out float surface;\ncentroid out vec2 surface_uv;\ncentroid out float facade_style;\n"
+    },
+    {
+      "file": "scene.frag",
+      "old": "in vec3 world_position;\nin vec3 world_normal;\nin float surface;\nin vec2 surface_uv;\nin float facade_style;\n",
+      "new": "centroid in vec3 world_position;\ncentroid in vec3 world_normal;\ncentroid in float surface;\ncentroid in vec2 surface_uv;\ncentroid in float facade_style;\n"
+    },
+    {
+      "file": "land.vert",
+      "old": "out vec3 world_position;\nout vec3 world_normal;\n",
+      "new": "centroid out vec3 world_position;\ncentroid out vec3 world_normal;\n"
+    },
+    {
+      "file": "land.frag",
+      "old": "in vec3 world_position;\nin vec3 world_normal;\n",
+      "new": "centroid in vec3 world_position;\ncentroid in vec3 world_normal;\n"
+    }
+  ]
+}

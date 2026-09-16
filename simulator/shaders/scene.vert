@@ -16,11 +16,11 @@ uniform vec3 camera_position;
 uniform float blade_full_detail_m;
 uniform float blade_cutoff_m;
 uniform float tree_sway_cutoff_m;
-out vec3 world_position;
-out vec3 world_normal;
-out float surface;
-out vec2 surface_uv;
-out float facade_style;
+centroid out vec3 world_position;
+centroid out vec3 world_normal;
+centroid out float surface;
+centroid out vec2 surface_uv;
+centroid out float facade_style;
 void main() {
     ivec2 terrain_dimensions = textureSize(terrain_height, 0);
     vec2 terrain_dimension_f = vec2(terrain_dimensions);

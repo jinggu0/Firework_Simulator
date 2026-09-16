@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "candidate_id": "msaa_4x",
+  "hypothesis": "V2-3h left most of both views' shimmer unattributed after window emission, ambient occlusion and the display transform were measured, and showed that finer sampling of the window light makes a near facade worse because the shipped analytic filters are already wider than a box filter. What no shader filter reaches is the geometry edge: the opaque scene is rendered into a single-sample buffer, so every silhouette is decided by one coverage test per pixel. Multisampling the opaque pass samples coverage four times per pixel while shading still runs once, which leaves every fwidth-derived filter at the width it has now and antialiases the edges alone.",
+  "provenance": {
+    "origin": "V2-3i, from the V2-3h attribution",
+    "measurement": "docs/validation/shimmer_ab_v2/diagnostics/results/msaa_attribution.json",
+    "note": "Measured at 4 and 8 samples before this candidate was written: display excess flicker fell 17.6% and 23.1% at four samples, 20.0% and 26.8% at eight, with mean display code unchanged (36.39 to 36.41, 28.42 to 28.59). Four is the candidate because it reaches about ninety percent of the eight-sample gain.",
+    "implementation": "simulator/passes/resolve.py resolves the multisampled colour with a blit and the depth by drawing sample zero, because GL refuses a depth blit between different sample counts and the ambient occlusion, haze and smoke passes read scene depth as a texture."
+  },
+  "render_overrides": {
+    "msaa_samples": 4
+  }
+}

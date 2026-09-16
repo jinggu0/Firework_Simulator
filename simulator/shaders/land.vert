@@ -3,8 +3,8 @@ in vec2 in_xz;
 uniform mat4 view_projection;
 uniform sampler2D terrain_height;
 uniform vec4 terrain_bounds;
-out vec3 world_position;
-out vec3 world_normal;
+centroid out vec3 world_position;
+centroid out vec3 world_normal;
 void main() {
     ivec2 dimensions = textureSize(terrain_height, 0);
     vec2 dimension_f = vec2(dimensions);
