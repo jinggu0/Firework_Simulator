@@ -1,7 +1,14 @@
 {
   "schema_version": 1,
   "candidate_id": "window_boundary_moment_filter",
-  "status": "proposed",
+  "status": "rejected",
+  "evaluation": {
+    "stage": "V2-3m",
+    "report": "docs/validation/shimmer_ab_v2/diagnostics/results/window_boundary_moment_filter_bridge_screen.json",
+    "measured_revision": "7e10786",
+    "measured_candidate_file_sha256": "8557491c0c8a6a524fe15259eb803f1577991317a4f655b08fb21c847e88dffa",
+    "note": "Status metadata was added after measurement. Replacements are unchanged. Rejected at the predeclared bridge screen: display excess improves, but both detail guards fail. No production edit or six-view adoption evaluation."
+  },
   "hypothesis": "V2-3l locates most facade residual energy at transitions or mixed support. The shipped 16-tap filter narrows the single-sample pane smoothing when it engages. Retaining that near path and matching its uncapped axis-aligned second moment with a centred, normalized, irregular 16-tap kernel may stabilize boundaries without an arbitrary dimming or global blur.",
   "provenance": {
     "origin": "V2-3h filter-width diagnosis and V2-3l pair-local support analysis",

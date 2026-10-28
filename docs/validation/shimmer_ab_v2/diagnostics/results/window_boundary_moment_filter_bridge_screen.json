@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "probe": "shader_candidate_ab_for_temporal_shimmer",
+  "candidate_id": "window_boundary_moment_filter",
+  "candidate_file": "docs/validation/shimmer_ab_v2/candidates/window_boundary_moment_filter.json",
+  "candidate_file_sha256": "8557491c0c8a6a524fe15259eb803f1577991317a4f655b08fb21c847e88dffa",
+  "hypothesis": "V2-3l locates most facade residual energy at transitions or mixed support. The shipped 16-tap filter narrows the single-sample pane smoothing when it engages. Retaining that near path and matching its uncapped axis-aligned second moment with a centred, normalized, irregular 16-tap kernel may stabilize boundaries without an arbitrary dimming or global blur.",
+  "shipped_shader_sha256": {
+    "scene.frag": "9bd986f7d5c85433bbb883831dfb7320fb80d9aeb77f10efd74d8d6654bf53d2"
+  },
+  "frames": 24,
+  "pixels_per_frame_at_centre": 0.6180339887498949,
+  "supersample": 4,
+  "guard_scales_px": [
+    4,
+    16
+  ],
+  "rule": "Accepted only if, in every view, the candidate's display excess flicker is not higher than the shipped shader's by more than the tolerance, and it is no further from the supersampled reference at any guard scale by more than the tolerance; and its display excess flicker is lower by more than the tolerance in at least one view. The tolerance is the larger of the difference between two separate runs of the shipped shader and one percent of the shipped value.",
+  "rule_revision": "V2-3g: excess flicker replaced the share of pixels over two code values, which saturated where fixes act (V2-3f); linear HDR is reported without deciding; a one percent equivalence margin was added; frame cost is not part of acceptance while performance work is deferred. All declared before any candidate was re-judged.",
+  "equivalence_margin": 0.01,
+  "views": [
+    {
+      "view_id": "bridge_structure",
+      "gl": {
+        "GL_VENDOR": "Intel",
+        "GL_RENDERER": "Intel(R) Arc(TM) 140V GPU (16GB)",
+        "GL_VERSION": "4.3.0 - Build 32.0.101.8626"
+      },
+      "yaw_step_deg": 0.04143342185691262,
+      "shipped": {
+        "display_excess": 1.1708851120283827,
+        "hdr_excess": 0.05766269000511929,
+        "display_unstable": 0.18509340449866565,
+        "hdr_unstable": 0.3841616021170191,
+        "mean_display_code": 28.540950567369315,
+        "mean_linear_hdr": 0.0011929611881435656,
+        "guard": {
+          "4": 0.06265370845016903,
+          "16": 0.0376524233583663
+        }
+      },
+      "repeat": {
+        "display_excess": 1.1708891281571079,
+        "hdr_excess": 0.057662823874663344,
+        "display_unstable": 0.18509340449866565,
+        "hdr_unstable": 0.3841616021170191,
+        "mean_display_code": 28.540948807870176,
+        "mean_linear_hdr": 0.0011929609571804253,
+        "guard": {
+          "4": 0.06265370845016903,
+          "16": 0.0376524233583663
+        }
+      },
+      "candidate": {
+        "display_excess": 1.0014668233326869,
+        "hdr_excess": 0.048947516602154996,
+        "display_unstable": 0.1838341817855621,
+        "hdr_unstable": 0.37870198022022383,
+        "mean_display_code": 28.913737082370883,
+        "mean_linear_hdr": 0.0011922167115711972,
+        "guard": {
+          "4": 0.0733334118496249,
+          "16": 0.0396752253611408
+        }
+      },
+      "verdict": {
+        "noise": {
+          "display_excess": 4.016128725137236e-06,
+          "hdr_excess": 1.3386954405419926e-07,
+          "guard": {
+            "4": 0.0,
+            "16": 0.0
+          }
+        },
+        "tolerance": 0.011708851120283827,
+        "more_stable": true,
+        "not_less_stable": true,
+        "guard_held": {
+          "4": false,
+          "16": false
+        }
+      },
+      "changed_pixel_fraction": 0.06287651909722222,
+      "share_of_shipped_display_unstable_pixels_the_candidate_changed": 0.3274004967589507,
+      "within_changed_pixels": {
+        "pixels": 56438,
+        "shipped": {
+          "display_excess": 7.762991914124878,
+          "hdr_excess": 0.25276092117867593,
+          "display_unstable": 0.9575817711470995,
+          "hdr_unstable": 0.9748750841631525
+        },
+        "candidate": {
+          "display_excess": 6.3854711762250504,
+          "hdr_excess": 0.19035912929295,
+          "display_unstable": 0.9479428753676601,
+          "hdr_unstable": 0.9336971543995181
+        }
+      },
+      "candidate_shader_sha256": {
+        "scene.frag": "4633f62cabd25b018695b24fd1f4aa0229f99abb124adf64364dc5427488eb19"
+      },
+      "candidate_render_overrides": {},
+      "render_configs": {
+        "shipped": {
+          "msaa_samples": 8,
+          "ambient_occlusion_strength": 0.62,
+          "bloom_strength": 0.72,
+          "simulate_fixed_gaze_peripheral_acuity": false
+        },
+        "repeat": {
+          "msaa_samples": 8,
+          "ambient_occlusion_strength": 0.62,
+          "bloom_strength": 0.72,
+          "simulate_fixed_gaze_peripheral_acuity": false
+        },
+        "candidate": {
+          "msaa_samples": 8,
+          "ambient_occlusion_strength": 0.62,
+          "bloom_strength": 0.72,
+          "simulate_fixed_gaze_peripheral_acuity": false
+        }
+      }
+    }
+  ],
+  "verdict": {
+    "accepted": false,
+    "reasons": [
+      "bridge_structure: further from the reference at 4 px blocks beyond noise and margin",
+      "bridge_structure: further from the reference at 16 px blocks beyond noise and margin"
+    ]
+  }
+}
