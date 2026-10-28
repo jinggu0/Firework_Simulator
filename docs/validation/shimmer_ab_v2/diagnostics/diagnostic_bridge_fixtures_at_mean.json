@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "candidate_id": "diagnostic_bridge_fixtures_at_mean",
+  "hypothesis": "After 8x MSAA, flatten only the bridge's periodic LED fixture phase at its exact period mean, retaining the edge envelope, tint, current antialias width and continuous light. A reduction attributes shimmer to the periodic fixture pattern. This is a diagnostic: spatial visibility weighting and view-dependent antialias width can still change the image mean.",
+  "provenance": {
+    "origin": "V2-3j, post-MSAA bridge shimmer attribution",
+    "note": "Integrate 1-smoothstep(lower, upper, abs(fract(u)-0.5)) over one period. The clipped cubic antiderivative remains valid when the widening transition extends beyond half a period. Do not use a fixed 0.068 duty cycle: the shipped width depends on fwidth."
+  },
+  "replacements": [
+    {
+      "file": "scene.frag",
+      "old": "float hash21(vec2 p) {",
+      "new": "float diagnostic_fixture_period_mean(float lower, float upper) {\n    float span = upper - lower;\n    float t = clamp((.5 - lower) / span, 0.0, 1.0);\n    float primitive = t * t * t - .5 * t * t * t * t;\n    return 1.0 - 2.0 * (span * primitive + max(.5 - upper, 0.0));\n}\n\nfloat hash21(vec2 p) {"
+    },
+    {
+      "file": "scene.frag",
+      "old": "            float fixture = 1.0 - smoothstep(\n                .018 + footprint, .050 + footprint * 2.0, phase\n            );",
+      "new": "            float fixture = diagnostic_fixture_period_mean(\n                .018 + footprint, .050 + footprint * 2.0\n            );"
+    }
+  ]
+}

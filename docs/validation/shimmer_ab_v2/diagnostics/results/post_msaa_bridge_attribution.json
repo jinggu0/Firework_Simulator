@@ -1,0 +1,246 @@
+{
+  "schema_version": 1,
+  "probe": "shimmer_attribution",
+  "frames": 24,
+  "pixels_per_frame_at_centre": 0.6180339887498949,
+  "shipped_shader_sha256": {
+    "adaptation.frag": "583f5d1e4895081b1377e14263667b11702aea0cf70470d0f9fa56e761729198",
+    "ambient_occlusion.frag": "fa587e852e9713cc9d1ae30943b5f93e3f33b3b6de04f8759169711e8c0e4736",
+    "ambient_occlusion_apply.frag": "79d7b3fec5302f76a72b1e3818bdb11cc4f218895b8fe741a8dc9806b6747c3a",
+    "background.frag": "acb1f84f620704eb510c523d28ece803a018601f6b4435e70677869d18a8f251",
+    "bloom_blur.frag": "f9ce703a9760bc812d16aec7e945cb27bfe8c59c637313d81d2edbb936164989",
+    "bloom_prefilter.frag": "0582bec9e72ce52ea460dbbab2ebce206e7cf42c34f2c01b49f06ff83756e519",
+    "depth_resolve.frag": "cffef20d57611bc330b3a662a5cbbbe5c05e35a52c8f66a69f4d85f23305978d",
+    "haze.frag": "0629145213abcff69be84ff4a40cc9e7a75049be515111d948da7879bcf02ad8",
+    "human_vision.frag": "b16164fa341c63af5c43d284d1091790e87ba591247b8f399b5ce502bd22cf6d",
+    "land.frag": "a885b686b4eec25099388e9f4f80f65c5a5bb9323e5b82b7702b11b49368f660",
+    "land.vert": "80d7aa00e0975b630e11b079ce56fb8cb76d518fed03e93f7b05119173992eb0",
+    "particle.frag": "04422c30355b54c62b893f6827204343cc0e238566a3b611664677108dc5a992",
+    "particle.geom": "529d8751204edace8c90a106d2729b129207276f9494e5c57c7a5e0738807789",
+    "particle.vert": "b1431b51c174da980dc968e5585eb73e2e33ed93ef10f337b8aae7ce48c89f93",
+    "quad.vert": "c5dc3dbe9364790c3528b85239578575d0a0cd2164f54f9aa21533527617d2b7",
+    "scene.frag": "9bd986f7d5c85433bbb883831dfb7320fb80d9aeb77f10efd74d8d6654bf53d2",
+    "scene.vert": "3ccc02c4f51cb057062caac854dd2897be2bf3534b8ab43b2ad010932b32f207",
+    "smoke.frag": "6cb0399c9769b822dd75198fa9fa85991aedd62901675e226c0ca402f9337633",
+    "smoke.vert": "59706b9eae0231248286438b70ccec35cdaad32f1598ee3165a94e93ce2ddb6c",
+    "tonemap.frag": "0605ae60c1ae81fdc949aecdeb539cb5bea66068cc3a0414896482a758d1ec8f",
+    "water.frag": "e09c196d91f29b5f3d91ece2afcb07ea872eb9694fd4419f9518acce19d60003",
+    "water.vert": "f3cceb1120f5e7e4870b73be0de7254f162b0a731386a734391bf9e03e55d685"
+  },
+  "note": "Diagnostics may change brightness; the detail guard is not run and mean display code is reported so a dimming is not read as a fix.",
+  "views": [
+    {
+      "view_id": "bridge_structure",
+      "gl": {
+        "GL_VENDOR": "Intel",
+        "GL_RENDERER": "Intel(R) Arc(TM) 140V GPU (16GB)",
+        "GL_VERSION": "4.3.0 - Build 32.0.101.8626"
+      },
+      "yaw_step_deg": 0.04143342185691262,
+      "render_config": {
+        "msaa_samples": 8,
+        "ambient_occlusion_strength": 0.62,
+        "bloom_strength": 0.72,
+        "simulate_fixed_gaze_peripheral_acuity": false
+      },
+      "shipped": {
+        "display_excess": 1.1708848052223684,
+        "hdr_excess": 0.05766279461359032,
+        "display_unstable": 0.18509340449866565,
+        "hdr_unstable": 0.3841616021170191,
+        "mean_display_code": 28.54094322191161,
+        "pixels": 891820
+      },
+      "diagnostics": [
+        {
+          "diagnostic_id": "diagnostic_bridge_fixtures_at_mean",
+          "source": "docs/validation/shimmer_ab_v2/diagnostics/diagnostic_bridge_fixtures_at_mean.json",
+          "hypothesis": "After 8x MSAA, flatten only the bridge's periodic LED fixture phase at its exact period mean, retaining the edge envelope, tint, current antialias width and continuous light. A reduction attributes shimmer to the periodic fixture pattern. This is a diagnostic: spatial visibility weighting and view-dependent antialias width can still change the image mean.",
+          "render_overrides": {},
+          "supersample": 1,
+          "display_frame_comparable": true,
+          "shader_sha256": {
+            "scene.frag": "323b282bdedcd10a521c5ceccb77bd8ce8e50e0da2ce05512f4b5fee26d4c4a7"
+          },
+          "whole_frame": {
+            "display_excess": 1.1587206417051754,
+            "hdr_excess": 0.057244553676138,
+            "display_unstable": 0.18510125361620058,
+            "hdr_unstable": 0.38414029736942434,
+            "mean_display_code": 28.53274062196212,
+            "pixels": 891820
+          },
+          "carried_share_of_display_excess": 0.010388864440753253,
+          "carried_share_of_hdr_excess": 0.007253220039976069,
+          "render_config": {
+            "msaa_samples": 8,
+            "ambient_occlusion_strength": 0.62,
+            "bloom_strength": 0.72,
+            "simulate_fixed_gaze_peripheral_acuity": false
+          },
+          "changed_pixel_fraction": 0.0030392795138888887,
+          "share_of_shipped_display_unstable_pixels_changed": 0.01672017931786515,
+          "within_changed_pixels": {
+            "shipped": {
+              "display_excess": 15.45694874546062,
+              "hdr_excess": 0.4150655119045439,
+              "display_unstable": 0.9864188706218727,
+              "hdr_unstable": 0.993566833452466,
+              "mean_display_code": 68.07053934798148,
+              "pixels": 2798
+            },
+            "diagnostic": {
+              "display_excess": 13.80723088027332,
+              "hdr_excess": 0.37187222645315043,
+              "display_unstable": 0.9878484631879915,
+              "hdr_unstable": 0.9921372408863474,
+              "mean_display_code": 67.08557997638064,
+              "pixels": 2798
+            }
+          }
+        },
+        {
+          "diagnostic_id": "diagnostic_window_emission_off_both_paths",
+          "source": "docs/validation/shimmer_ab_v2/diagnostics/diagnostic_window_emission_off_both_paths.json",
+          "hypothesis": "Diagnostic, not a fix: with every facade window's emitted light removed, what remains of the visible shimmer comes from reflected light, geometry and ambient occlusion. This is the V2-3e diagnostic repeated on the shipped shader, which now has a second path for the same light.",
+          "render_overrides": {},
+          "supersample": 1,
+          "display_frame_comparable": true,
+          "shader_sha256": {
+            "scene.frag": "16eb677e636aea6f5413f000f3913557e70301e65fb0f486ef0162ecadd0d066"
+          },
+          "whole_frame": {
+            "display_excess": 0.35489544462101924,
+            "hdr_excess": 0.034354051012019826,
+            "display_unstable": 0.11087663429840103,
+            "hdr_unstable": 0.36024982619811174,
+            "mean_display_code": 23.220363161497787,
+            "pixels": 891820
+          },
+          "carried_share_of_display_excess": 0.6968997778106623,
+          "carried_share_of_hdr_excess": 0.40422500778477616,
+          "render_config": {
+            "msaa_samples": 8,
+            "ambient_occlusion_strength": 0.62,
+            "bloom_strength": 0.72,
+            "simulate_fixed_gaze_peripheral_acuity": false
+          },
+          "changed_pixel_fraction": 0.053557942708333334,
+          "share_of_shipped_display_unstable_pixels_changed": 0.28214696795298966,
+          "within_changed_pixels": {
+            "shipped": {
+              "display_excess": 7.859718855934571,
+              "hdr_excess": 0.2501870552091408,
+              "display_unstable": 0.9688988745345233,
+              "hdr_unstable": 0.9753271339116687,
+              "mean_display_code": 68.94221609154232,
+              "pixels": 48069
+            },
+            "diagnostic": {
+              "display_excess": 1.6695299099738843,
+              "hdr_excess": 0.1056140554989196,
+              "display_unstable": 0.3950571054109717,
+              "hdr_unstable": 0.8010776175913791,
+              "mean_display_code": 24.781458301879454,
+              "pixels": 48069
+            }
+          }
+        },
+        {
+          "diagnostic_id": "render:ambient_occlusion_strength=0.0",
+          "source": "render config override",
+          "hypothesis": "Compare ambient_occlusion_strength=0.0 with the shipped setting, recording brightness alongside shimmer.",
+          "render_overrides": {
+            "ambient_occlusion_strength": 0.0
+          },
+          "supersample": 1,
+          "display_frame_comparable": true,
+          "shader_sha256": {},
+          "whole_frame": {
+            "display_excess": 1.1872855932129647,
+            "hdr_excess": 0.05316033828420865,
+            "display_unstable": 0.18450135677603105,
+            "hdr_unstable": 0.3245172792716019,
+            "mean_display_code": 29.204747097396336,
+            "pixels": 891820
+          },
+          "carried_share_of_display_excess": -0.014007174674609896,
+          "carried_share_of_hdr_excess": 0.07808252027244797,
+          "render_config": {
+            "msaa_samples": 8,
+            "ambient_occlusion_strength": 0.0,
+            "bloom_strength": 0.72,
+            "simulate_fixed_gaze_peripheral_acuity": false
+          },
+          "changed_pixel_fraction": 0.376875,
+          "share_of_shipped_display_unstable_pixels_changed": 0.3570666989761919,
+          "within_changed_pixels": {
+            "shipped": {
+              "display_excess": 0.7162558111136398,
+              "hdr_excess": 0.058411995686445485,
+              "display_unstable": 0.17340892508296654,
+              "hdr_unstable": 0.5782003907077459,
+              "mean_display_code": 22.79645885032864,
+              "pixels": 339896
+            },
+            "diagnostic": {
+              "display_excess": 0.7610859291644171,
+              "hdr_excess": 0.0481702498531649,
+              "display_unstable": 0.1729999764633888,
+              "hdr_unstable": 0.4361069268246758,
+              "mean_display_code": 24.40624324376459,
+              "pixels": 339896
+            }
+          }
+        },
+        {
+          "diagnostic_id": "render:msaa_samples=8",
+          "source": "render config override",
+          "hypothesis": "Compare msaa_samples=8 with the shipped setting, recording brightness alongside shimmer.",
+          "render_overrides": {
+            "msaa_samples": 8
+          },
+          "supersample": 1,
+          "display_frame_comparable": true,
+          "shader_sha256": {},
+          "whole_frame": {
+            "display_excess": 1.170873563510011,
+            "hdr_excess": 0.05766301177397678,
+            "display_unstable": 0.18509340449866565,
+            "hdr_unstable": 0.3841616021170191,
+            "mean_display_code": 28.540935610666214,
+            "pixels": 891820
+          },
+          "carried_share_of_display_excess": 9.601040433103075e-06,
+          "carried_share_of_hdr_excess": -3.766039920768565e-06,
+          "render_config": {
+            "msaa_samples": 8,
+            "ambient_occlusion_strength": 0.62,
+            "bloom_strength": 0.72,
+            "simulate_fixed_gaze_peripheral_acuity": false
+          },
+          "changed_pixel_fraction": 0.0,
+          "share_of_shipped_display_unstable_pixels_changed": 0.0,
+          "within_changed_pixels": {
+            "shipped": {
+              "display_excess": 0.0,
+              "hdr_excess": 0.0,
+              "display_unstable": 0.0,
+              "hdr_unstable": 0.0,
+              "mean_display_code": 0.0,
+              "pixels": 0
+            },
+            "diagnostic": {
+              "display_excess": 0.0,
+              "hdr_excess": 0.0,
+              "display_unstable": 0.0,
+              "hdr_unstable": 0.0,
+              "mean_display_code": 0.0,
+              "pixels": 0
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

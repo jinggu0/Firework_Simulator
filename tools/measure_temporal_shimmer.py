@@ -259,6 +259,12 @@ def render_pan(
         return {
             "linear_hdr": np.stack(hdr),
             "display_luma": np.stack(display),
+            "render_config": {
+                key: getattr(render, key) for key in (
+                    "msaa_samples", "ambient_occlusion_strength", "bloom_strength",
+                    "simulate_fixed_gaze_peripheral_acuity",
+                )
+            },
             "matrices": matrices,
             "yaw_step_deg": step_deg,
             "supersample": supersample,

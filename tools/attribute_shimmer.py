@@ -23,12 +23,14 @@ from __future__ import annotations
 
 import argparse
 from contextlib import nullcontext
+from hashlib import sha256
 import json
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 
+from simulator import shaders
 from simulator.validation.capture import load_known_residuals, select_residuals
 from simulator.validation.views import (
     DEFAULT_VISUAL_VIEWS_PATH,
@@ -129,10 +131,12 @@ def attribute_view(
     shipped_display_mean = display_mean_map(pan)
     shipped_summary = _summary(shipped, shipped_display_mean)
     gl, yaw_step = pan["gl"], pan["yaw_step_deg"]
+    render_config = pan["render_config"]
     del pan
 
     results = []
     for diagnostic in diagnostics:
+        print(f"  {diagnostic['diagnostic_id']}", flush=True)
         variant = (
             shader_variant(diagnostic["replacements"])
             if diagnostic["replacements"]
@@ -163,6 +167,10 @@ def attribute_view(
                     shipped_summary["display_excess"],
                     stability(ablated)["display_excess"],
                 ),
+                "carried_share_of_hdr_excess": carried_share(
+                    shipped_summary["hdr_excess"], stability(ablated)["hdr_excess"],
+                ),
+                "render_config": ablated_pan["render_config"],
                 "changed_pixel_fraction": float(changed.mean()),
                 "share_of_shipped_display_unstable_pixels_changed": (
                     float((shipped["display_unstable_map"] & changed).sum() / unstable)
@@ -179,6 +187,7 @@ def attribute_view(
         "view_id": view.view_id,
         "gl": gl,
         "yaw_step_deg": yaw_step,
+        "render_config": render_config,
         "shipped": shipped_summary,
         "diagnostics": results,
     }
@@ -206,7 +215,7 @@ def _load_diagnostics(
             {
                 "diagnostic_id": f"render:{field}={value}",
                 "source": "render config override",
-                "hypothesis": f"Removing {field} shows how much shimmer that stage carries.",
+                "hypothesis": f"Compare {field}={value} with the shipped setting, recording brightness alongside shimmer.",
                 "replacements": [],
                 "render_overrides": {field: value},
                 "supersample": 1,
@@ -273,6 +282,10 @@ def main() -> None:
         "probe": "shimmer_attribution",
         "frames": arguments.frames,
         "pixels_per_frame_at_centre": PIXELS_PER_FRAME,
+        "shipped_shader_sha256": {
+            name: sha256(shaders.source(name).encode("utf-8")).hexdigest()
+            for name in shaders.available()
+        },
         "note": (
             "Diagnostics may change brightness; the detail guard is not run and "
             "mean display code is reported so a dimming is not read as a fix."
