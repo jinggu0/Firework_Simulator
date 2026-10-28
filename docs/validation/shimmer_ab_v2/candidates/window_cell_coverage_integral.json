@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "candidate_id": "window_cell_coverage_integral",
+  "status": "proposed",
+  "hypothesis": "The current microfilter smooths a pane but multiplies it by only the centre cell's room constants. At a cell seam with nonzero pane tails this changes room colour/occupancy abruptly and discards the neighbouring pane contribution. Summing each intersecting cell's analytic pane coverage times its actual room light, without widening the filter or changing the near path, may remove that discontinuity while retaining the detail guard.",
+  "provenance": {
+    "origin": "V2-3l pair-local transition support and V2-3m rejected kernel broadening",
+    "design": [
+      "Only the helper called by the existing sixteen-point average changes. Keep all offsets, sample AA widths, fade thresholds, near single-sample emission and render settings unchanged.",
+      "A smoothstep edge is the integral of a normalized Epanechnikov kernel with the existing AA half-width. Because pane edges do not overlap at AA <= 0.12 for the authored styles, the existing interval product equals the difference of the edge CDFs. Evaluate it in each cell's unwrapped coordinates and sum the cell contributions.",
+      "The support half-width is capped at 0.12, so grid +/- AA spans at most two cells per axis. Enumerate those up to four cells without replacing occupancy, dimmer, blackout or temperature with expectations.",
+      "This analytically integrates rectangular pane coverage and per-room constants, not the entire light function. Interior blind/curtain modulation is still evaluated at the original sixteen sample locations for each contributing cell; spatially varying derivatives and facade silhouette clipping remain approximations. Phase-integrated aperture area conservation is not a guarantee of rendered brightness."
+    ],
+    "acceptance": "Unchanged V2-3g gates. Screen bridge_structure first; reject on any stability/detail failure, otherwise evaluate all six views before adoption. Same 24 frozen-time frames, independent shipped repeat, 4x reference, 4px/16px guards and measured-noise-or-1% margin. Performance remains deferred."
+  },
+  "replacements": [
+    {
+      "file": "scene.frag",
+      "old": "vec3 window_emission_at(\n    vec2 grid, vec2 room_parallax, vec4 pane_bounds, vec2 antialias,\n    float occupancy_threshold, float style\n) {\n    vec2 within = fract(grid);",
+      "new": "vec3 window_emission_in_cell(\n    vec2 grid, vec2 cell, vec2 room_parallax, vec4 pane_bounds, vec2 antialias,\n    float occupancy_threshold, float style\n) {\n    // Unwrapped: retain this cell's pane tail across the cell seam.\n    vec2 within = grid - cell;"
+    },
+    {
+      "file": "scene.frag",
+      "old": "    float pane = interval(within.x, pane_bounds.x, pane_bounds.y, antialias.x)\n               * interval(within.y, pane_bounds.z, pane_bounds.w, antialias.y);\n    vec2 cell = floor(grid);",
+      "new": "    float pane = interval(within.x, pane_bounds.x, pane_bounds.y, antialias.x)\n               * interval(within.y, pane_bounds.z, pane_bounds.w, antialias.y);\n    if (pane <= 0.0) return vec3(0.0);"
+    },
+    {
+      "file": "scene.frag",
+      "old": "         * blinds * curtains;\n}\n\n// Derivative cotangent frame:",
+      "new": "         * blinds * curtains;\n}\n\n// V2-3n: integrate each actual room's rectangular aperture with the same\n// microfilter, instead of assigning every filtered contribution to floor(grid).\nvec3 window_emission_at(\n    vec2 grid, vec2 room_parallax, vec4 pane_bounds, vec2 antialias,\n    float occupancy_threshold, float style\n) {\n    vec2 first_cell = floor(grid - antialias);\n    vec2 last_cell = floor(grid + antialias);\n    vec3 result = vec3(0.0);\n    // AA <= 0.12, so at most two source cells overlap in either axis.\n    for (int y = 0; y < 2; ++y) {\n        for (int x = 0; x < 2; ++x) {\n            vec2 cell = first_cell + vec2(float(x), float(y));\n            if (cell.x > last_cell.x || cell.y > last_cell.y) continue;\n            result += window_emission_in_cell(\n                grid, cell, room_parallax, pane_bounds, antialias,\n                occupancy_threshold, style\n            );\n        }\n    }\n    return result;\n}\n\n// Derivative cotangent frame:"
+    }
+  ]
+}

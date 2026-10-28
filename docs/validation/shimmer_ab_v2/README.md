@@ -700,3 +700,35 @@ python -m tools.ab_shader_candidate --candidate docs/validation/shimmer_ab_v2/ca
 결과: `diagnostics/results/window_boundary_moment_filter_bridge_screen.json`.
 다음 V2-3n은 화면 커널 폭 확대 대신 창·벽/방 셀 경계의 피복과 실제 셀별 발광을 함께
 적분하는 후보를 다룬다. 기존 근경 안정화 경로와 전 시점 세부 보존 게이트는 유지한다.
+
+## V2-3n — 셀 경계 피복 적분 후보: 측정 전 규칙
+
+`candidates/window_cell_coverage_integral.json`은 평균 경로의 보조 함수만 바꾼다. 표본 위치,
+미세 AA 폭/상한, 활성화 문턱, 근경 단일 표본, 반사 재질과 렌더 설정은 그대로다.
+기존 함수는 pane을 부드럽게 만들면서도 방의 점유·색·dimmer·층 소등은 `floor(grid)`
+하나에서만 가져왔다. 미세 AA가 방 경계를 넘으면 이웃 창의 꼬리는 잘리고 방 속성이
+중심 셀 전환에 맞춰 갑자기 바뀐다.
+
+새 함수는 `floor(grid-AA)`부터 `floor(grid+AA)`까지 각 셀의 **펼친 좌표**로 pane 피복을
+구하고 그 셀의 실제 발광 기여를 합한다. AA 반폭이 최대 0.12라 각 축 최대 두 셀,
+총 네 셀로 지원이 모두 포함된다. 양수 기여만 합산하며 점유나 밝기를 기대값으로 바꾸지 않는다.
+기존 smoothstep은 정규화된 Epanechnikov 경계 커널의 누적 적분이다. 모든 출하 pane의
+두 경계 간격이 `2×0.12`보다 넓으므로, 현재 interval 곱은 두 누적값의 차와 같아 사각 창의
+피복 적분으로 해석할 수 있다. 이웃 셀을 더해도 **커널 폭 자체는 늘리지 않는다.**
+
+정확히 적분하는 것은 pane 사각형과 셀별 상수 기여다. 블라인드/커튼은 각 기여 셀에 대해
+기존 16점 위치에서 평가하는 근사로 남는다. 따라서 전체 발광 함수의 정확한 픽셀 적분이나
+화면 평균 밝기 보존을 주장하지 않는다. 기울어진 발자국·centroid 미분·파사드 실루엣도 남는다.
+
+측정 전 검증은 GPU의 셀별 피복을 독립 커널 수치 적분과 비교하고, 소등/점등 방 경계의
+연속성, 지원이 겹치지 않을 때 기존 함수와 일치, 음수 좌표/양축 4셀, 주기적 pane 면적
+보존, 전체 생산 셰이더 링크를 확인한다. 제어된 해시로 적분 기능을 격리하며 생산 해시/방
+속성 계산 코드는 바꾸지 않는다. 후보는 검증 전 출하하지 않는다.
+
+기존 V2-3g 판정식과 24프레임 고정 시간·독립 출하 반복·4배 기준·4px/16px 보존 게이트를
+그대로 사용한다. 먼저 `bridge_structure`를 검사해 한 게이트라도 실패하면 기각하고,
+통과하면 여섯 시점 전체로 확대한다. 사전 검사 통과만으로 채택하지 않는다. 성능은 재지 않는다.
+
+```powershell
+python -m tools.ab_shader_candidate --candidate docs/validation/shimmer_ab_v2/candidates/window_cell_coverage_integral.json --view bridge_structure --output docs/validation/shimmer_ab_v2/diagnostics/results/window_cell_coverage_integral_bridge_screen.json
+```
