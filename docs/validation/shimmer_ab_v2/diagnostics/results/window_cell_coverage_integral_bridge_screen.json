@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "probe": "shader_candidate_ab_for_temporal_shimmer",
+  "candidate_id": "window_cell_coverage_integral",
+  "candidate_file": "docs/validation/shimmer_ab_v2/candidates/window_cell_coverage_integral.json",
+  "candidate_file_sha256": "45a0bf699dcc12073a640adb9c6c91dd32c148ff279de1d1092c76a1f8708cc0",
+  "hypothesis": "The current microfilter smooths a pane but multiplies it by only the centre cell's room constants. At a cell seam with nonzero pane tails this changes room colour/occupancy abruptly and discards the neighbouring pane contribution. Summing each intersecting cell's analytic pane coverage times its actual room light, without widening the filter or changing the near path, may remove that discontinuity while retaining the detail guard.",
+  "shipped_shader_sha256": {
+    "scene.frag": "9bd986f7d5c85433bbb883831dfb7320fb80d9aeb77f10efd74d8d6654bf53d2"
+  },
+  "frames": 24,
+  "pixels_per_frame_at_centre": 0.6180339887498949,
+  "supersample": 4,
+  "guard_scales_px": [
+    4,
+    16
+  ],
+  "rule": "Accepted only if, in every view, the candidate's display excess flicker is not higher than the shipped shader's by more than the tolerance, and it is no further from the supersampled reference at any guard scale by more than the tolerance; and its display excess flicker is lower by more than the tolerance in at least one view. The tolerance is the larger of the difference between two separate runs of the shipped shader and one percent of the shipped value.",
+  "rule_revision": "V2-3g: excess flicker replaced the share of pixels over two code values, which saturated where fixes act (V2-3f); linear HDR is reported without deciding; a one percent equivalence margin was added; frame cost is not part of acceptance while performance work is deferred. All declared before any candidate was re-judged.",
+  "equivalence_margin": 0.01,
+  "views": [
+    {
+      "view_id": "bridge_structure",
+      "gl": {
+        "GL_VENDOR": "Intel",
+        "GL_RENDERER": "Intel(R) Arc(TM) 140V GPU (16GB)",
+        "GL_VERSION": "4.3.0 - Build 32.0.101.8626"
+      },
+      "yaw_step_deg": 0.04143342185691262,
+      "shipped": {
+        "display_excess": 1.170885143095843,
+        "hdr_excess": 0.05766275205374621,
+        "display_unstable": 0.18509340449866565,
+        "hdr_unstable": 0.3841616021170191,
+        "mean_display_code": 28.540949538900907,
+        "mean_linear_hdr": 0.0011929610907484185,
+        "guard": {
+          "4": 0.06265367794670433,
+          "16": 0.03765239204130068
+        }
+      },
+      "repeat": {
+        "display_excess": 1.1708848856672764,
+        "hdr_excess": 0.057662790084786926,
+        "display_unstable": 0.18509340449866565,
+        "hdr_unstable": 0.3841616021170191,
+        "mean_display_code": 28.54094355965768,
+        "mean_linear_hdr": 0.0011929606242876444,
+        "guard": {
+          "4": 0.06265367794670433,
+          "16": 0.03765239204130068
+        }
+      },
+      "candidate": {
+        "display_excess": 1.170587837535337,
+        "hdr_excess": 0.05765060405313249,
+        "display_unstable": 0.18509340449866565,
+        "hdr_unstable": 0.3841616021170191,
+        "mean_display_code": 28.541450882455322,
+        "mean_linear_hdr": 0.0011930013902482922,
+        "guard": {
+          "4": 0.0626457413991425,
+          "16": 0.037647044354486424
+        }
+      },
+      "verdict": {
+        "noise": {
+          "display_excess": 2.5742856646360224e-07,
+          "hdr_excess": 3.803104071942176e-08,
+          "guard": {
+            "4": 0.0,
+            "16": 0.0
+          }
+        },
+        "tolerance": 0.01170885143095843,
+        "more_stable": false,
+        "not_less_stable": true,
+        "guard_held": {
+          "4": true,
+          "16": true
+        }
+      },
+      "changed_pixel_fraction": 0.0009971788194444444,
+      "share_of_shipped_display_unstable_pixels_the_candidate_changed": 0.0052402011267946936,
+      "within_changed_pixels": {
+        "pixels": 907,
+        "shipped": {
+          "display_excess": 11.162861756428919,
+          "hdr_excess": 0.4909938134614325,
+          "display_unstable": 0.9536934950385888,
+          "hdr_unstable": 0.9944873208379272
+        },
+        "candidate": {
+          "display_excess": 11.136370977745234,
+          "hdr_excess": 0.48903107819167385,
+          "display_unstable": 0.9525909592061742,
+          "hdr_unstable": 0.9944873208379272
+        }
+      },
+      "candidate_shader_sha256": {
+        "scene.frag": "ae7d986723ac02e02e1b7e1271dc475e98876f07c860c07f931dcca5bd8a176f"
+      },
+      "candidate_render_overrides": {},
+      "render_configs": {
+        "shipped": {
+          "msaa_samples": 8,
+          "ambient_occlusion_strength": 0.62,
+          "bloom_strength": 0.72,
+          "simulate_fixed_gaze_peripheral_acuity": false
+        },
+        "repeat": {
+          "msaa_samples": 8,
+          "ambient_occlusion_strength": 0.62,
+          "bloom_strength": 0.72,
+          "simulate_fixed_gaze_peripheral_acuity": false
+        },
+        "candidate": {
+          "msaa_samples": 8,
+          "ambient_occlusion_strength": 0.62,
+          "bloom_strength": 0.72,
+          "simulate_fixed_gaze_peripheral_acuity": false
+        }
+      }
+    }
+  ],
+  "verdict": {
+    "accepted": false,
+    "reasons": [
+      "no view is more stable in the display frame beyond noise and margin"
+    ]
+  }
+}

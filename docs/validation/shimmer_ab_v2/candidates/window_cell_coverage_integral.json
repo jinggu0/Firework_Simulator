@@ -1,7 +1,15 @@
 {
   "schema_version": 1,
   "candidate_id": "window_cell_coverage_integral",
-  "status": "proposed",
+  "status": "rejected",
+  "evaluation": {
+    "stage": "V2-3n",
+    "report": "docs/validation/shimmer_ab_v2/window_cell_coverage_integral_ab.json",
+    "screen_report": "docs/validation/shimmer_ab_v2/diagnostics/results/window_cell_coverage_integral_bridge_screen.json",
+    "measured_revision": "5c5966c",
+    "measured_candidate_file_sha256": "45a0bf699dcc12073a640adb9c6c91dd32c148ff279de1d1092c76a1f8708cc0",
+    "note": "Status metadata added after measurement; GLSL replacements are unchanged. All six views pass non-inferiority and both detail guards, but none improves display excess beyond the predeclared noise-or-1% margin. No production edit."
+  },
   "hypothesis": "The current microfilter smooths a pane but multiplies it by only the centre cell's room constants. At a cell seam with nonzero pane tails this changes room colour/occupancy abruptly and discards the neighbouring pane contribution. Summing each intersecting cell's analytic pane coverage times its actual room light, without widening the filter or changing the near path, may remove that discontinuity while retaining the detail guard.",
   "provenance": {
     "origin": "V2-3l pair-local transition support and V2-3m rejected kernel broadening",

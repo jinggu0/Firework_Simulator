@@ -732,3 +732,43 @@ python -m tools.ab_shader_candidate --candidate docs/validation/shimmer_ab_v2/ca
 ```powershell
 python -m tools.ab_shader_candidate --candidate docs/validation/shimmer_ab_v2/candidates/window_cell_coverage_integral.json --view bridge_structure --output docs/validation/shimmer_ab_v2/diagnostics/results/window_cell_coverage_integral_bridge_screen.json
 ```
+
+### V2-3n 결과 — 6시점 보존 게이트 통과, 개선 문턱 미달로 미채택
+
+측정 전 설계/절차는 `5c5966c`다. `bridge_structure` 사전 검사는 비악화와 두 세부 보존
+게이트를 통과했다. 표시 개선 0.0254%만으로는 채택할 수 없어 계획대로 전체 여섯 시점을
+다시 평가했다. 각 시점에 독립 출하 2회·후보 1회의 24프레임 팬과 4배 기준을 사용했다.
+장치는 Intel Arc 140V / `32.0.101.8626`, MSAA 8/AO 0.62/블룸 0.72로 기존과 같다.
+
+| 시점 | 출하 표시 초과 | 후보 표시 초과 | 변화 | 비악화·4px·16px 게이트 |
+|---|---:|---:|---:|---|
+| terrain_shoreline | 0.607936 | 0.607714 | −0.0365% | 모두 통과 |
+| grass_close | 0.099194 | 0.099194 | 0% | 모두 통과 |
+| road_ground | 0.008098 | 0.008098 | 0% | 모두 통과 |
+| facade_landmark | 0.510378 | 0.509488 | −0.1745% | 모두 통과 |
+| bridge_structure | 1.170883 | 1.170588 | −0.0252% | 모두 통과 |
+| water_reflection | 0.824035 | 0.823767 | −0.0325% | 모두 통과 |
+
+**미채택이다.** 게이트를 나쁘게 만들지는 않았지만, 어느 시점도 잡음/1% 중 큰 문턱을
+넘는 개선이 없다. 수학적으로 잘린 셀 기여를 복구하는 것과 현재 장면의 주된 깜빡임을
+낮추는 것은 달랐다. 실제 변화가 없다고 하거나 셀 경계가 일반적으로 원인이 아니라고
+단정하지 않는다. 통과 기준이나 허용치를 측정 뒤 완화하지 않았다.
+
+첫 HDR 프레임의 변경 영역은 0~0.0997%다. 선형 HDR 평균은 0~+0.00574%, 표시 평균
+차이는 최대 0.000552 코드값이다. 기준 블록 거리의 최대 악화도 0.0565%로 1% 허용
+이내다. 더 넓은 커널로 깜빡임을 줄였으나 보존 게이트를 실패했던 V2-3m과 달리 이번 영향은
+매우 국소적이었다.
+
+새 검사 8개와 A/B 도구 회귀를 포함해 관련 22개, 전체 pytest **992개**가 모두 통과했다
+(건너뜀 없음). 제어된 동일 방의 GPU 검사에서는
+주기적 창 피복 면적 0.92가 보존되고, 점등/소등 방 사이 경계가 연속이며, 독립 커널 수치
+적분과 일치했다. 내부 블라인드/커튼은 여전히 16점 근사이므로 전체 발광 적분의 증명은 아니다.
+
+결과는 `window_cell_coverage_integral_ab.json`, 사전 검사는
+`diagnostics/results/window_cell_coverage_integral_bridge_screen.json`이다. 후보의 상태만
+측정 후 `rejected`로 갱신했다. 두 보고서의 후보 파일 체크섬은 `5c5966c` 당시 원본을
+가리키고, GLSL 치환 내용은 변하지 않았다. 출하 셰이더와 설정은 그대로이고 성능은 재지 않았다.
+
+다음은 오래 남아 있던 대표시점 주제 가시성 기준과 후보 카메라 검증이다. 기존 6시점
+안정화 이력은 보존하고, 가시성 후보를 별도로 평가한다. 시점 변경을 필터 안정화 효과로
+바꾸어 읽지 않으며 잔여 창 깜빡임은 해결된 것으로 표시하지 않는다.
