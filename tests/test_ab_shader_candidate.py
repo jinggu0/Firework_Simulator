@@ -136,3 +136,28 @@ def test_a_candidate_outside_the_repository_is_recorded_absolute(tmp_path) -> No
     outside = tmp_path / "diagnostic.json"
 
     assert portable_path(outside) == outside.resolve().as_posix()
+
+
+def test_measure_view_records_nondeciding_brightness_and_effective_config(monkeypatch):
+    from types import SimpleNamespace
+    from tools import ab_shader_candidate as command
+
+    captures = []
+
+    def render(*args, **kwargs):
+        captures.append(kwargs)
+        return {"linear_hdr": np.full((21, 16, 16), 2.),
+                "display_luma": np.full((21, 16, 16), 98. if len(captures) == 3 else 100.),
+                "matrices": [np.eye(4)] * 21, "gl": {}, "yaw_step_deg": 0.,
+                "render_config": {"msaa_samples": 8}}
+
+    monkeypatch.setattr(command, "render_pan", render)
+    monkeypatch.setattr(command, "render_reference", lambda *args: np.full((16, 16), 2.))
+    monkeypatch.setattr(command, "select_residuals", lambda *args: [])
+    result = command.measure_view(SimpleNamespace(view_id="test"), "test", 21, [],
+                                  SimpleNamespace(replacements=(), render_overrides={}))
+    assert result["shipped"]["mean_display_code"] == 100.
+    assert result["candidate"]["mean_display_code"] == 98.
+    assert result["candidate"]["mean_linear_hdr"] == 2.
+    assert all(config == {"msaa_samples": 8} for config in result["render_configs"].values())
+    assert not result["verdict"]["more_stable"]

@@ -635,3 +635,34 @@ python -m tools.map_pair_shimmer --view bridge_structure
 다음 V2-3m은 밝기를 보존하는 창·벽 경계/발광 발자국 필터 후보를 기존 여섯 시점의
 표시 초과·4px/16px 세부 보존 게이트로 평가한다. 무조건적인 내부 흐림이나 기존 근경
 필터의 날카롭게 만들기를 개선으로 가정하지 않는다. 성능 측정은 계속 보류한다.
+
+## V2-3m — 경계 필터 후보: 측정 전 설계
+
+후보 `candidates/window_boundary_moment_filter.json`은 기존 16점 발광 평균의 **표본 위치만**
+바꾼다. 근경 단일 표본, 평균 활성화 문턱, 표본별 AA, 창 점유와 밝기 배율은 그대로다.
+R2 불규칙 표본 8개와 그 반대편 8개로 중심을 0에 맞추고, 두 축 공분산을 `75/256`으로
+맞췄다. 양수 동일 가중치의 합은 1이다. 화면 전체를 후처리로 흐리거나 기대 밝기로 치환하지 않는다.
+
+유도: smoothstep 경계의 도함수 커널은 반폭 `a`에서 분산 `a²/5`다. 축 정렬·AA 상한 미적용
+조건에서 기존 단일 표본의 `a=1.25`는 분산 `0.3125`, 평균 경로의 미세 AA `a=0.3125`는
+`0.01953125`이므로 표본 위치가 그 차이 `0.29296875`를 공급하도록 했다. **전체 커널 모양을
+동일하게 만든 것은 아니며**, 기울어진 발자국·0.12 상한·centroid 미분 변동에는 이 유도가
+그대로 성립하지 않는다. 주기 신호를 고정 커널로 이동 적분하면 평균은 보존되지만 유한한
+실제 파사드의 표시 밝기를 보장하지 않으므로, 기존 기준으로 검증하기 전에는 채택하지 않는다.
+
+채택 규칙은 기존 V2-3g와 같다. 여섯 시점의 표시 초과가 잡음 또는 1% 허용보다 나빠지지 않고,
+최소 한 시점에서 그 허용을 넘어 개선되며, 4px/16px 세부 보존 게이트를 모두 통과해야 한다.
+`ab_shader_candidate`가 평균 표시/선형 HDR 밝기와 실제 렌더 설정을 함께 기록하도록 보강했다.
+이 항목은 설명용이며 기존 판정식을 바꾸지 않는다. 성능은 측정하지 않는다.
+
+먼저 이번 진단의 대상인 `bridge_structure`에서 같은 게이트를 적용한다. 한 시점이라도
+실패하면 여섯 시점 모두 통과해야 한다는 규칙상 기각할 수 있으므로 나머지를 생략한다.
+사전 검사를 통과한 경우에만 전체 여섯 시점 평가로 확대하며, 사전 통과만으로 채택하지 않는다.
+
+```powershell
+python -m tools.ab_shader_candidate --candidate docs/validation/shimmer_ab_v2/candidates/window_boundary_moment_filter.json --view bridge_structure --output docs/validation/shimmer_ab_v2/diagnostics/results/window_boundary_moment_filter_bridge_screen.json
+```
+
+```powershell
+python -m tools.ab_shader_candidate --candidate docs/validation/shimmer_ab_v2/candidates/window_boundary_moment_filter.json --output docs/validation/shimmer_ab_v2/window_boundary_moment_filter_ab.json
+```

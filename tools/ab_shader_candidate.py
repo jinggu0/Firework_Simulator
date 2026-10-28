@@ -249,8 +249,11 @@ def stability(run: dict[str, Any], mask: np.ndarray | None = None) -> dict[str, 
 
 def measure_view(view, display_mode, frames, record, candidate) -> dict[str, Any]:
     runs = {}
+    brightness = {}
+    render_configs = {}
     digests: dict[str, str] = {}
     for label in ("shipped", "repeat", "candidate"):
+        print(f"  {view.view_id}: {label} pan", flush=True)
         is_candidate = label == "candidate"
         variant = (
             shader_variant(candidate.replacements)
@@ -268,12 +271,21 @@ def measure_view(view, display_mode, frames, record, candidate) -> dict[str, Any
             digests = served
         residuals = select_residuals(record, view.view_id, pan["gl"])
         runs[label] = score_run(pan, residuals)
+        scored = runs[label]["scored"]
+        brightness[label] = {
+            "mean_display_code": float(pan["display_luma"][1:].mean(axis=0)[scored].mean()) if scored.any() else None,
+            "mean_linear_hdr": float(pan["linear_hdr"][1:].mean(axis=0)[scored].mean()) if scored.any() else None,
+        }
+        render_configs[label] = pan["render_config"]
         del pan
+    print(f"  {view.view_id}: supersampled detail reference", flush=True)
     reference = render_reference(view, display_mode, SUPERSAMPLE)
     shipped_frame = runs["shipped"]["first_frame"]
     against_candidate = detail_guard(shipped_frame, runs["candidate"]["first_frame"], reference)
     against_repeat = detail_guard(shipped_frame, runs["repeat"]["first_frame"], reference)
     summaries = {label: stability(run) for label, run in runs.items()}
+    for label in summaries:
+        summaries[label].update(brightness[label])
     for scale in against_candidate["scales"]:
         summaries["shipped"].setdefault("guard", {})[scale] = against_candidate["scales"][scale]["baseline"]
         summaries["repeat"].setdefault("guard", {})[scale] = against_repeat["scales"][scale]["candidate"]
@@ -306,6 +318,7 @@ def measure_view(view, display_mode, frames, record, candidate) -> dict[str, Any
         "within_changed_pixels": within,
         "candidate_shader_sha256": digests,
         "candidate_render_overrides": dict(candidate.render_overrides),
+        "render_configs": render_configs,
     }
 
 
@@ -332,6 +345,9 @@ def main() -> None:
     for view in views:
         print(f"measuring {view.view_id}", flush=True)
         results.append(measure_view(view, suite.display_mode, arguments.frames, record, candidate))
+        result = results[-1]
+        print(f"  display excess {result['shipped']['display_excess']:.6f} -> "
+              f"{result['candidate']['display_excess']:.6f}; verdict {result['verdict']}", flush=True)
 
     verdict = candidate_verdict({result["view_id"]: result["verdict"] for result in results})
     report = {

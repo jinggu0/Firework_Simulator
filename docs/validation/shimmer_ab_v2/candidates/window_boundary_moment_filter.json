@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "candidate_id": "window_boundary_moment_filter",
+  "status": "proposed",
+  "hypothesis": "V2-3l locates most facade residual energy at transitions or mixed support. The shipped 16-tap filter narrows the single-sample pane smoothing when it engages. Retaining that near path and matching its uncapped axis-aligned second moment with a centred, normalized, irregular 16-tap kernel may stabilize boundaries without an arbitrary dimming or global blur.",
+  "provenance": {
+    "origin": "V2-3h filter-width diagnosis and V2-3l pair-local support analysis",
+    "design": [
+      "Change only the sixteen footprint offsets. Keep the single-sample emission, fade thresholds, per-sample AA, room occupancy and brightness factors unchanged.",
+      "Eight R2 points at indices 1 through 8 and their negatives give zero first moment. Whiten their covariance and scale it to 75/256 = 0.29296875 per axis; equal weights remain 1/16.",
+      "For an axis-aligned uncapped pane edge, the smoothstep derivative kernel with half-width a has variance a*a/5. Shipped single-sample a=1.25 pixels gives variance 0.3125; the microfilter a=0.3125 gives 0.01953125. Offsets supply their difference, 0.29296875.",
+      "This matches a second moment, not the full kernel. The 0.12 grid-unit clamp, skewed footprints, spatially varying centroid derivatives and the finite facade can invalidate that model. Positive normalized weights preserve a constant and phase-integrated brightness for a translation-invariant periodic signal; they do not guarantee the brightness of this rendered view."
+    ],
+    "acceptance": "Unchanged V2-3g rule across all six views: display excess, measured noise or 1% tolerance, 4px/16px reference guards. Record mean HDR and display luminance as non-deciding diagnostics. No performance measurement."
+  },
+  "replacements": [
+    {
+      "file": "scene.frag",
+      "old": "            vec2 offset = fract(\n                vec2(.5) + float(i) * vec2(.7548776662, .5698402910)\n            ) - .5;",
+      "new": "            // V2-3m: positive equal weights, zero centroid, matched\n            // uncapped axis-aligned legacy pane-filter second moment.\n            const vec2 boundary_offsets[8] = vec2[8](\n                vec2(-.57454619, -.84881772),\n                vec2(-.87321589,  .11842082),\n                vec2( .41202455, -.45452042),\n                vec2( .11335485,  .51271813),\n                vec2(-.46119134, -.33609960),\n                vec2(-.75986104,  .63113895),\n                vec2( .52537940,  .05819771),\n                vec2(-.04916678, -.79062002)\n            );\n            vec2 offset = boundary_offsets[i % 8] * (i < 8 ? 1.0 : -1.0);"
+    }
+  ]
+}
