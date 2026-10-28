@@ -18,7 +18,7 @@
     },
     "scene_upload": {
       "asset": "simulator/passes/scene.py",
-      "sha256": "f240dd7e3cab596e2ef02e0dac9187e551c8503f907cddea7d1f5d227034639e"
+      "sha256": "e70943d1fcfefed920cad13362dfbf67ff9852bf52065b92dae22bedf795f655"
     },
     "road_shader": {
       "asset": "simulator/shaders/scene.frag",

@@ -161,9 +161,25 @@ def read_display_sdr(context: Any) -> np.ndarray:
     if screen is None:
         raise AttributeError("OpenGL context has no screen framebuffer")
     width, height = screen.size
-    raw = np.frombuffer(
-        screen.read(components=3, alignment=1), dtype=np.uint8
-    )
+    if getattr(screen, "glo", None) == 0:
+        # On the tested desktop context, reading the default framebuffer through
+        # ModernGL leaves GL_INVALID_OPERATION despite returning valid RGB.
+        # A colour blit to an ordinary RGBA8 target is byte-identical and avoids
+        # carrying that error into later validation passes.
+        previous = context.fbo
+        target = context.simple_framebuffer((width, height), components=4, dtype="f1")
+        try:
+            target.use()
+            target.scissor = None
+            context.copy_framebuffer(target, screen)
+            data = target.read(components=3, alignment=1)
+        finally:
+            if previous is not None:
+                previous.use()
+            target.release()
+    else:
+        data = screen.read(components=3, alignment=1)
+    raw = np.frombuffer(data, dtype=np.uint8)
     expected = width * height * 3
     if raw.size != expected:
         raise ValueError(

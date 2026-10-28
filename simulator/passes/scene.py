@@ -579,6 +579,9 @@ class ScenePass:
         ] = []
         self.reflection_vaos: list[tuple[moderngl.VertexArray, int]] = []
         self.buffers: list[moderngl.Buffer] = []
+        # Keep the input binding for optional validation replays. The renderer
+        # continues to draw the same VAOs; this allocates no additional GPU data.
+        self.vertex_inputs: dict[int, moderngl.Buffer] = {}
         self.camera_position_xz = np.zeros(2, dtype=np.float32)
         self.data = SceneData.empty()
         self.road_tessellation_stats: AdaptiveTessellationStats | None = None
@@ -693,6 +696,7 @@ class ScenePass:
                 self.program, [(buffer, *VERTEX_LAYOUT)]
             )
             self.vaos.append((vao, len(vertices)))
+            self.vertex_inputs[vao.glo] = buffer
             if index < 2:
                 # Buildings and bridges dominate the reflected image.
                 self.reflection_vaos.append((vao, len(vertices)))
@@ -730,6 +734,7 @@ class ScenePass:
                 self.program, [(buffer, *VERTEX_LAYOUT)]
             )
             self.grass_vaos.append((vao, len(vertices), centre, radius))
+            self.vertex_inputs[vao.glo] = buffer
 
     # -- per-frame state ---------------------------------------------------
 

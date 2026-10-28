@@ -170,6 +170,7 @@ def render_pan(
     ambient_occlusion_strength: float | None = None,
     render_overrides: dict[str, Any] | None = None,
     supersample: int = 1,
+    semantic_capture: bool = False,
 ) -> dict[str, Any]:
     """Render one view along the pan and return both luminance sequences.
 
@@ -188,6 +189,8 @@ def render_pan(
 
     if supersample < 1:
         raise ValueError("supersample must be at least 1")
+    if semantic_capture and supersample != 1:
+        raise ValueError("semantic capture requires the presented grid (supersample=1)")
     base = SimulationConfig()
     overrides = dict(render_overrides or {})
     if ambient_occlusion_strength is not None:
@@ -203,6 +206,7 @@ def render_pan(
     app = SimulatorApp(
         replace(base, render=render), scenario_path=DEFAULT_SCENARIO_PATH
     )
+    semantic = None
     try:
         app.world.shells.clear()
         app.world.stars.count = 0
@@ -210,6 +214,11 @@ def render_pan(
         view.apply(app.camera)
         for _ in range(WARMUP_FRAMES):
             app.renderer.render(app.world, app.camera, app.celestial, 1.0 / 60.0, None)
+        if semantic_capture:
+            if not app.renderer.post.distortion.is_identity:
+                raise ValueError("semantic capture requires identity lens distortion")
+            from tools.shimmer_regions import SemanticReplay
+            semantic = SemanticReplay(app.renderer)
         width, height = app.renderer.hdr_texture.size
         if supersample > 1 and tuple(app.ctx.screen.size) != (width, height):
             raise RuntimeError(
@@ -230,7 +239,7 @@ def render_pan(
             if pixels_per_frame > 0.0
             else 0.0
         )
-        hdr, display, matrices = [], [], []
+        hdr, display, matrices, fractions = [], [], [], []
         for frame in range(frames):
             app.camera.yaw_deg = yaw0 + step_deg * frame
             app.renderer.reflection_ready = False
@@ -255,6 +264,8 @@ def render_pan(
                     app.camera.yaw_deg, app.camera.pitch_deg,
                 )
             )
+            if semantic is not None:
+                fractions.append(semantic.capture())
         info = dict(app.ctx.info)
         return {
             "linear_hdr": np.stack(hdr),
@@ -268,12 +279,16 @@ def render_pan(
             "matrices": matrices,
             "yaw_step_deg": step_deg,
             "supersample": supersample,
+            **({"semantic_fractions": np.stack(fractions), "semantic_sources": semantic.sources}
+               if semantic is not None else {}),
             "gl": {
                 key: info.get(key)
                 for key in ("GL_VENDOR", "GL_RENDERER", "GL_VERSION")
             },
         }
     finally:
+        if semantic is not None:
+            semantic.release()
         app.audio_executor.shutdown(wait=True, cancel_futures=True)
         pygame.quit()
 

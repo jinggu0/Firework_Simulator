@@ -9,3 +9,4 @@
 *.frag text eol=lf
 *.vert text eol=lf
 *.glsl text eol=lf
+simulator/passes/scene.py text eol=lf

@@ -1,0 +1,192 @@
+{
+  "schema_version": 1,
+  "probe": "spatial_shimmer_v2_3k",
+  "view_id": "bridge_structure",
+  "frames": 24,
+  "semantic_support": {
+    "fully_covered_pane_pixel_frames": 2221604,
+    "fully_covered_pane_pixels_per_frame_min": 91974,
+    "fully_covered_pane_pixels_per_frame_max": 93313
+  },
+  "pixels_per_frame_at_centre": 0.6180339887498949,
+  "gl": {
+    "GL_VENDOR": "Intel",
+    "GL_RENDERER": "Intel(R) Arc(TM) 140V GPU (16GB)",
+    "GL_VERSION": "4.3.0 - Build 32.0.101.8626"
+  },
+  "render_config": {
+    "msaa_samples": 8,
+    "ambient_occlusion_strength": 0.62,
+    "bloom_strength": 0.72,
+    "simulate_fixed_gaze_peripheral_acuity": false
+  },
+  "control": {
+    "display_excess": 1.1708828221821361,
+    "hdr_excess": 0.05766271653667851,
+    "display_unstable": 0.18509340449866565,
+    "hdr_unstable": 0.3841616021170191,
+    "mean_display_code": 28.540944065033592
+  },
+  "with_semantic_replay": {
+    "display_excess": 1.1708791912636864,
+    "hdr_excess": 0.05766263500479078,
+    "display_unstable": 0.18509340449866565,
+    "hdr_unstable": 0.3841616021170191,
+    "mean_display_code": 28.54094326541815
+  },
+  "control_absolute_difference": {
+    "display_excess": 3.630918449681886e-06,
+    "hdr_excess": 8.153188772730413e-08,
+    "display_unstable": 0.0,
+    "hdr_unstable": 0.0,
+    "mean_display_code": 7.996154423040025e-07
+  },
+  "control_within_one_percent": true,
+  "shipped_shader_sha256": {
+    "adaptation.frag": "583f5d1e4895081b1377e14263667b11702aea0cf70470d0f9fa56e761729198",
+    "ambient_occlusion.frag": "fa587e852e9713cc9d1ae30943b5f93e3f33b3b6de04f8759169711e8c0e4736",
+    "ambient_occlusion_apply.frag": "79d7b3fec5302f76a72b1e3818bdb11cc4f218895b8fe741a8dc9806b6747c3a",
+    "background.frag": "acb1f84f620704eb510c523d28ece803a018601f6b4435e70677869d18a8f251",
+    "bloom_blur.frag": "f9ce703a9760bc812d16aec7e945cb27bfe8c59c637313d81d2edbb936164989",
+    "bloom_prefilter.frag": "0582bec9e72ce52ea460dbbab2ebce206e7cf42c34f2c01b49f06ff83756e519",
+    "depth_resolve.frag": "cffef20d57611bc330b3a662a5cbbbe5c05e35a52c8f66a69f4d85f23305978d",
+    "haze.frag": "0629145213abcff69be84ff4a40cc9e7a75049be515111d948da7879bcf02ad8",
+    "human_vision.frag": "b16164fa341c63af5c43d284d1091790e87ba591247b8f399b5ce502bd22cf6d",
+    "land.frag": "a885b686b4eec25099388e9f4f80f65c5a5bb9323e5b82b7702b11b49368f660",
+    "land.vert": "80d7aa00e0975b630e11b079ce56fb8cb76d518fed03e93f7b05119173992eb0",
+    "particle.frag": "04422c30355b54c62b893f6827204343cc0e238566a3b611664677108dc5a992",
+    "particle.geom": "529d8751204edace8c90a106d2729b129207276f9494e5c57c7a5e0738807789",
+    "particle.vert": "b1431b51c174da980dc968e5585eb73e2e33ed93ef10f337b8aae7ce48c89f93",
+    "quad.vert": "c5dc3dbe9364790c3528b85239578575d0a0cd2164f54f9aa21533527617d2b7",
+    "scene.frag": "9bd986f7d5c85433bbb883831dfb7320fb80d9aeb77f10efd74d8d6654bf53d2",
+    "scene.vert": "3ccc02c4f51cb057062caac854dd2897be2bf3534b8ab43b2ad010932b32f207",
+    "smoke.frag": "6cb0399c9769b822dd75198fa9fa85991aedd62901675e226c0ca402f9337633",
+    "smoke.vert": "59706b9eae0231248286438b70ccec35cdaad32f1598ee3165a94e93ce2ddb6c",
+    "tonemap.frag": "0605ae60c1ae81fdc949aecdeb539cb5bea66068cc3a0414896482a758d1ec8f",
+    "water.frag": "e09c196d91f29b5f3d91ece2afcb07ea872eb9694fd4419f9518acce19d60003",
+    "water.vert": "f3cceb1120f5e7e4870b73be0de7254f162b0a731386a734391bf9e03e55d685"
+  },
+  "semantic_fragment_sha256": {
+    "scene": "caa77296c9f2bbc64f7de19380da24fc4fb33464596a3af6fe2a5fc979037173",
+    "land": "9ebd3cd4bd745524294fe1483ca43c94dee54ed295f2c0fbf13aa787eb8ccf03",
+    "water": "d3b9ea84de4a2877bbff8fbc6f9dfad92779b32191c49ace3b58feedc34c2e4f"
+  },
+  "partitions": [
+    {
+      "edge_radius_px": 2,
+      "scored_pixels": 891820,
+      "regions": {
+        "facade_boundary_band": {
+          "pixels": 132485,
+          "pixel_fraction": 0.14855576237357315,
+          "display_excess_mean": 2.5664561463634925,
+          "display_excess_share": 0.32562014276629986,
+          "hdr_excess_mean": 0.14039964567584184,
+          "hdr_excess_share": 0.361710428228286
+        },
+        "pane_interior": {
+          "pixels": 0,
+          "pixel_fraction": 0.0,
+          "display_excess_mean": 0,
+          "display_excess_share": 0.0,
+          "hdr_excess_mean": 0,
+          "hdr_excess_share": 0.0
+        },
+        "wall_interior": {
+          "pixels": 7216,
+          "pixel_fraction": 0.008091318876006368,
+          "display_excess_mean": 1.0113653419253497,
+          "display_excess_share": 0.006989004111369771,
+          "hdr_excess_mean": 0.07889533459452067,
+          "hdr_excess_share": 0.011070727343286443
+        },
+        "pane_transition": {
+          "pixels": 178186,
+          "pixel_fraction": 0.19980040815411182,
+          "display_excess_mean": 2.78309153428093,
+          "display_excess_share": 0.4749105019788123,
+          "hdr_excess_mean": 0.11049790216071653,
+          "hdr_excess_share": 0.3828740387956605
+        },
+        "water_interior": {
+          "pixels": 8189,
+          "pixel_fraction": 0.00918234621336144,
+          "display_excess_mean": 7.505962669168544,
+          "display_excess_share": 0.058863756745464735,
+          "hdr_excess_mean": 0.2044921702766392,
+          "hdr_excess_share": 0.03256385881855303
+        },
+        "other_or_moving_support": {
+          "pixels": 565744,
+          "pixel_fraction": 0.6343701643829472,
+          "display_excess_mean": 0.24662081978647085,
+          "display_excess_share": 0.13361659439805335,
+          "hdr_excess_mean": 0.019250349595169747,
+          "hdr_excess_share": 0.21178094681421403
+        }
+      }
+    },
+    {
+      "edge_radius_px": 4,
+      "scored_pixels": 891820,
+      "regions": {
+        "facade_boundary_band": {
+          "pixels": 156141,
+          "pixel_fraction": 0.17508129443161177,
+          "display_excess_mean": 2.537494109746744,
+          "display_excess_share": 0.3794309068449398,
+          "hdr_excess_mean": 0.1331707648667836,
+          "hdr_excess_share": 0.40434693786343856
+        },
+        "pane_interior": {
+          "pixels": 0,
+          "pixel_fraction": 0.0,
+          "display_excess_mean": 0,
+          "display_excess_share": 0.0,
+          "hdr_excess_mean": 0,
+          "hdr_excess_share": 0.0
+        },
+        "wall_interior": {
+          "pixels": 6604,
+          "pixel_fraction": 0.0074050817429526135,
+          "display_excess_mean": 0.983054114292612,
+          "display_excess_share": 0.006217205095451458,
+          "hdr_excess_mean": 0.07729700615614193,
+          "hdr_excess_share": 0.00992654340239891
+        },
+        "pane_transition": {
+          "pixels": 163142,
+          "pixel_fraction": 0.18293153326904532,
+          "display_excess_mean": 2.7870299263206286,
+          "display_excess_share": 0.43542977063099086,
+          "hdr_excess_mean": 0.1108068338062145,
+          "hdr_excess_share": 0.3515285765760619
+        },
+        "water_interior": {
+          "pixels": 8108,
+          "pixel_fraction": 0.009091520710457266,
+          "display_excess_mean": 7.4898407217959075,
+          "display_excess_share": 0.058156334614455255,
+          "hdr_excess_mean": 0.20420284750634657,
+          "hdr_excess_share": 0.032196142564141446
+        },
+        "other_or_moving_support": {
+          "pixels": 557825,
+          "pixel_fraction": 0.625490569845933,
+          "display_excess_mean": 0.22606598553292664,
+          "display_excess_share": 0.12076578281416263,
+          "hdr_excess_mean": 0.018622112949147132,
+          "hdr_excess_share": 0.20200179959395925
+        }
+      }
+    }
+  ],
+  "limitations": [
+    "Spatial receiver-pixel support, not causal attribution; original HDR/display colours are read before replay.",
+    "Pane is the single-fragment analytic mask, not the 16-sample emitted-light average or occupancy.",
+    "Boundary is the whole-path union of window-bearing facade coverage contours, not every depth edge between buildings.",
+    "Display bloom, haze and AO can move light across these receiver categories.",
+    "All-pose interior membership is conservative; transition/moving-support buckets are retained.",
+    "Two and four pixel boundary bands were fixed before measurement; control tolerance is one percent."
+  ]
+}
