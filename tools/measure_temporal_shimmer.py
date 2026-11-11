@@ -173,6 +173,7 @@ def render_pan(
     semantic_capture: bool = False,
     subject_capture: bool = False,
     subject_fragment_builder: Callable[[str, str], str] | None = None,
+    capture_first_reflection: bool = False,
 ) -> dict[str, Any]:
     """Render one view along the pan and return both luminance sequences.
 
@@ -217,6 +218,7 @@ def render_pan(
     )
     semantic = None
     semantic_uniforms = None
+    first_reflection = None
     try:
         app.world.shells.clear()
         app.world.stars.count = 0
@@ -262,6 +264,10 @@ def render_pan(
             app.renderer.reflection_ready = False
             app.renderer.render(app.world, app.camera, app.celestial, 0.0, None)
             app.ctx.finish()
+            if frame == 0 and capture_first_reflection:
+                texture = app.renderer.targets.reflection_texture
+                rw, rh = texture.size
+                first_reflection = np.frombuffer(texture.read(alignment=1), dtype=np.float16).reshape(rh, rw, 4)[..., :3].copy()
             hdr.append(
                 box_downsample(
                     read_linear_hdr(app.renderer)[:, :, :3].astype(np.float64)
@@ -296,6 +302,7 @@ def render_pan(
             "matrices": matrices,
             "yaw_step_deg": step_deg,
             "supersample": supersample,
+            **({"first_reflection_rgb": first_reflection} if first_reflection is not None else {}),
             **({"semantic_fractions": np.stack(fractions), "semantic_sources": semantic.sources}
                if semantic is not None else {}),
             "gl": {
