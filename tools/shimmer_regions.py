@@ -32,10 +32,13 @@ def semantic_fragment(source: str, kind: str) -> str:
     return source
 
 
-def copy_uniforms(original, replay):
+def copy_uniforms(original, replay, overrides=None):
     for name in replay:
         target = replay[name]
         if not isinstance(target, moderngl.Uniform):
+            continue
+        if overrides is not None and name in overrides:
+            target.value = overrides[name]
             continue
         if name not in original or target.gl_type != original[name].gl_type:
             raise ValueError(f"semantic uniform contract changed: {name}")
@@ -62,13 +65,13 @@ class SemanticReplay:
     Blue: direct water coverage, including where reflected light is received.
     Special facade/roof paths and all other geometry are zero but still occlude.
     """
-    def __init__(self, renderer):
+    def __init__(self, renderer, *, fragment_builder=semantic_fragment):
         self.renderer, self.ctx = renderer, renderer.ctx
         self.programs, self.vaos, self.resources = {}, {}, []
         self.sources = {}
         try:
             for kind in ("scene", "land", "water"):
-                source = semantic_fragment(shaders.source(f"{kind}.frag"), kind)
+                source = fragment_builder(shaders.source(f"{kind}.frag"), kind)
                 self.sources[kind] = source
                 self.programs[kind] = self.ctx.program(vertex_shader=shaders.source(f"{kind}.vert"), fragment_shader=source)
             scene = renderer.scene
@@ -109,11 +112,11 @@ class SemanticReplay:
         if error != "GL_NO_ERROR":
             raise RuntimeError(f"semantic replay {stage}: {error}")
 
-    def capture(self):
+    def capture(self, *, uniform_overrides=None):
         renderer, ctx = self.renderer, self.ctx
         self.check("before capture")
         for kind, program in self.programs.items():
-            copy_uniforms(getattr(renderer, kind).program, program)
+            copy_uniforms(getattr(renderer, kind).program, program, uniform_overrides)
             self.check(f"{kind} uniforms")
         with ctx.scope(framebuffer=self.target, enable_only=moderngl.DEPTH_TEST):
             self.target.viewport = (0, 0, *renderer.hdr_texture.size)
