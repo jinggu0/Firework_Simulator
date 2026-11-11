@@ -1,0 +1,836 @@
+{
+  "schema_version": 1,
+  "probe": "background_shimmer_v0_19",
+  "suite_id": "yeouido-subject-visibility-candidates-v1",
+  "display_mode": "human_vision",
+  "scene_asset_sha256": "c8b9d2720f935de3532a9401c74d37a55470d23645c06d32c24ff923c3291518",
+  "canonical_views_sha256": "54aa2c58b4074ff7738a9a06e70d2ad7c257a07420a3248cca89fbbd0fa75072",
+  "candidate_views_sha256": "a51145c3aa89fc0013c0c2c74a70703bce0081c29974020aec1a195607791aa4",
+  "visibility_report_sha256": "5f5d61fb27f0cb0a22f270ef1413061fb5fa87f9e1c020f39591ffbf97cc3cbe",
+  "shipped_shader_sha256": {
+    "adaptation.frag": "583f5d1e4895081b1377e14263667b11702aea0cf70470d0f9fa56e761729198",
+    "ambient_occlusion.frag": "fa587e852e9713cc9d1ae30943b5f93e3f33b3b6de04f8759169711e8c0e4736",
+    "ambient_occlusion_apply.frag": "79d7b3fec5302f76a72b1e3818bdb11cc4f218895b8fe741a8dc9806b6747c3a",
+    "background.frag": "acb1f84f620704eb510c523d28ece803a018601f6b4435e70677869d18a8f251",
+    "bloom_blur.frag": "f9ce703a9760bc812d16aec7e945cb27bfe8c59c637313d81d2edbb936164989",
+    "bloom_prefilter.frag": "0582bec9e72ce52ea460dbbab2ebce206e7cf42c34f2c01b49f06ff83756e519",
+    "depth_resolve.frag": "cffef20d57611bc330b3a662a5cbbbe5c05e35a52c8f66a69f4d85f23305978d",
+    "haze.frag": "0629145213abcff69be84ff4a40cc9e7a75049be515111d948da7879bcf02ad8",
+    "human_vision.frag": "b16164fa341c63af5c43d284d1091790e87ba591247b8f399b5ce502bd22cf6d",
+    "land.frag": "a885b686b4eec25099388e9f4f80f65c5a5bb9323e5b82b7702b11b49368f660",
+    "land.vert": "80d7aa00e0975b630e11b079ce56fb8cb76d518fed03e93f7b05119173992eb0",
+    "particle.frag": "04422c30355b54c62b893f6827204343cc0e238566a3b611664677108dc5a992",
+    "particle.geom": "529d8751204edace8c90a106d2729b129207276f9494e5c57c7a5e0738807789",
+    "particle.vert": "b1431b51c174da980dc968e5585eb73e2e33ed93ef10f337b8aae7ce48c89f93",
+    "quad.vert": "c5dc3dbe9364790c3528b85239578575d0a0cd2164f54f9aa21533527617d2b7",
+    "scene.frag": "9bd986f7d5c85433bbb883831dfb7320fb80d9aeb77f10efd74d8d6654bf53d2",
+    "scene.vert": "3ccc02c4f51cb057062caac854dd2897be2bf3534b8ab43b2ad010932b32f207",
+    "smoke.frag": "6cb0399c9769b822dd75198fa9fa85991aedd62901675e226c0ca402f9337633",
+    "smoke.vert": "59706b9eae0231248286438b70ccec35cdaad32f1598ee3165a94e93ce2ddb6c",
+    "tonemap.frag": "0605ae60c1ae81fdc949aecdeb539cb5bea66068cc3a0414896482a758d1ec8f",
+    "water.frag": "e09c196d91f29b5f3d91ece2afcb07ea872eb9694fd4419f9518acce19d60003",
+    "water.vert": "f3cceb1120f5e7e4870b73be0de7254f162b0a731386a734391bf9e03e55d685"
+  },
+  "subject_bounds_xz": {
+    "bridge_structure": [
+      -1145.0,
+      -1250.0,
+      -600.0,
+      -470.0
+    ],
+    "road_ground": [
+      -1281.4,
+      -493.9,
+      -1021.4,
+      -233.9
+    ]
+  },
+  "frames": 24,
+  "warmup_frames": 8,
+  "pixels_per_frame_at_centre": 0.6180339887498949,
+  "display_excess_threshold": 2.0,
+  "relative_hdr_excess_threshold": 0.05,
+  "source_support_radii": [
+    1,
+    7
+  ],
+  "v0_18_report_sha256": "31d71f67eb3c40a3179c6b4fd52d0dee1c0de6016e9eb321a1ddd0316ab5d66e",
+  "distant_facade_min_distance_m": 250.0,
+  "views": [
+    {
+      "view": {
+        "view_id": "bridge_subject_20",
+        "subject": "bridge_structure",
+        "position_eus_m": [
+          -1025.0,
+          35.27070331573486,
+          -470.0
+        ],
+        "target_eus_m": [
+          -981.1985,
+          6.35,
+          -709.3779999999999
+        ],
+        "expected_surface": "land",
+        "minimum_ground_clearance_m": 29.5,
+        "notes": "Non-historical subject-visibility engineering candidate."
+      },
+      "gl": {
+        "GL_VENDOR": "Intel",
+        "GL_RENDERER": "Intel(R) Arc(TM) 140V GPU (16GB)",
+        "GL_VERSION": "4.3.0 - Build 32.0.101.8626"
+      },
+      "render_config": {
+        "msaa_samples": 8,
+        "ambient_occlusion_strength": 0.62,
+        "bloom_strength": 0.72,
+        "simulate_fixed_gaze_peripheral_acuity": false
+      },
+      "yaw_step_deg": 0.040187745402425167,
+      "display_pixels_wh": [
+        1280,
+        720
+      ],
+      "excluded_residual_ids": [],
+      "masked_moving": {
+        "display_excess": 0.6706248859379532,
+        "hdr_excess": 0.025754810935752034,
+        "display_unstable": 0.10295991386078647,
+        "hdr_unstable": 0.11823952982345948,
+        "mean_display_code": 34.03664772325047,
+        "scored_pixels": 891580
+      },
+      "baseline_control": {
+        "passed": true,
+        "absolute_difference": {
+          "display_excess": 0.0,
+          "hdr_excess": 0.0,
+          "mean_display_code": 0.0
+        },
+        "tolerance": {
+          "display_excess": 0.0067062488593795325,
+          "hdr_excess": 0.00025754810935752035,
+          "mean_display_code": 0.3403664772325047
+        }
+      },
+      "partitions": [
+        {
+          "source_support_radius": 1,
+          "source_support_width_px": 4,
+          "scored_pixel_pairs": 20506340,
+          "conservation": {
+            "display": {
+              "pair_energy_sum": 248658155.29567158,
+              "existing_score_squared_sum_times_pairs": 248658155.29567158
+            },
+            "hdr": {
+              "pair_energy_sum": 915932.8696071274,
+              "existing_score_squared_sum_times_pairs": 915932.8696071275
+            }
+          },
+          "regions": {
+            "subject_interior": {
+              "samples": 1616290,
+              "min_samples_per_pair": 69472,
+              "max_samples_per_pair": 71058,
+              "display_energy": 7783919.762306893,
+              "hdr_energy": 10631.112156139796,
+              "sample_fraction": 0.07881903840470801,
+              "display_energy_share": 0.03130369785399268,
+              "display_conditional_rms": 2.194519944875888,
+              "hdr_energy_share": 0.01160686826393709,
+              "hdr_conditional_rms": 0.0811016531779168
+            },
+            "subject_transition": {
+              "samples": 201584,
+              "min_samples_per_pair": 8696,
+              "max_samples_per_pair": 8840,
+              "display_energy": 26717402.889131665,
+              "hdr_energy": 39110.74517746776,
+              "sample_fraction": 0.009830325645629596,
+              "display_energy_share": 0.10744631664046105,
+              "display_conditional_rms": 11.512485347661803,
+              "hdr_energy_share": 0.04270044942730748,
+              "hdr_conditional_rms": 0.4404737340332374
+            },
+            "facade_interior": {
+              "samples": 498310,
+              "min_samples_per_pair": 21588,
+              "max_samples_per_pair": 21742,
+              "display_energy": 75344030.72521245,
+              "hdr_energy": 73734.1294934403,
+              "sample_fraction": 0.02430028956898208,
+              "display_energy_share": 0.30300245184246316,
+              "display_conditional_rms": 12.29630491071568,
+              "hdr_energy_share": 0.08050167423849218,
+              "hdr_conditional_rms": 0.38466659869600783
+            },
+            "facade_mixed": {
+              "samples": 314068,
+              "min_samples_per_pair": 13483,
+              "max_samples_per_pair": 13823,
+              "display_energy": 46742478.478116795,
+              "hdr_energy": 70288.80071152766,
+              "sample_fraction": 0.015315653597862905,
+              "display_energy_share": 0.1879788677050901,
+              "display_conditional_rms": 12.199555971719551,
+              "hdr_energy_share": 0.07674012260492054,
+              "hdr_conditional_rms": 0.4730763334695777
+            },
+            "water_interior": {
+              "samples": 10135660,
+              "min_samples_per_pair": 439446,
+              "max_samples_per_pair": 441860,
+              "display_energy": 39611551.33127364,
+              "hdr_energy": 28093.020940281218,
+              "sample_fraction": 0.49426957711615044,
+              "display_energy_share": 0.1593012354015608,
+              "display_conditional_rms": 1.9769009438883167,
+              "hdr_energy_share": 0.030671484638750003,
+              "hdr_conditional_rms": 0.05264694858781938
+            },
+            "water_mixed": {
+              "samples": 283449,
+              "min_samples_per_pair": 12214,
+              "max_samples_per_pair": 12471,
+              "display_energy": 27083282.7225589,
+              "hdr_energy": 655555.7902743263,
+              "sample_fraction": 0.013822505625089606,
+              "display_energy_share": 0.10891773362653247,
+              "display_conditional_rms": 9.774919445870374,
+              "hdr_energy_share": 0.7157247130518583,
+              "hdr_conditional_rms": 1.5207834031545167
+            },
+            "facade_water_mixed": {
+              "samples": 0,
+              "min_samples_per_pair": 0,
+              "max_samples_per_pair": 0,
+              "display_energy": 0.0,
+              "hdr_energy": 0.0,
+              "sample_fraction": 0.0,
+              "display_energy_share": 0.0,
+              "display_conditional_rms": null,
+              "hdr_energy_share": 0.0,
+              "hdr_conditional_rms": null
+            },
+            "other": {
+              "samples": 7456979,
+              "min_samples_per_pair": 323529,
+              "max_samples_per_pair": 324783,
+              "display_energy": 25375489.387071237,
+              "hdr_energy": 38519.270853944254,
+              "sample_fraction": 0.3636426100415774,
+              "display_energy_share": 0.10204969692989978,
+              "display_conditional_rms": 1.84470002367063,
+              "hdr_energy_share": 0.042054687774734395,
+              "hdr_conditional_rms": 0.07187164229623992
+            }
+          },
+          "collapsed_baseline_check": {
+            "subject_interior": {
+              "samples": 1616290,
+              "display_energy": {
+                "collapsed": 7783919.762306893,
+                "baseline": 7783919.762306893,
+                "difference": 0.0,
+                "tolerance": 77839.19762306893
+              },
+              "hdr_energy": {
+                "collapsed": 10631.112156139796,
+                "baseline": 10631.112156139796,
+                "difference": 0.0,
+                "tolerance": 106.31112156139795
+              }
+            },
+            "subject_transition": {
+              "samples": 201584,
+              "display_energy": {
+                "collapsed": 26717402.889131665,
+                "baseline": 26717402.889131665,
+                "difference": 0.0,
+                "tolerance": 267174.0288913167
+              },
+              "hdr_energy": {
+                "collapsed": 39110.74517746776,
+                "baseline": 39110.74517746776,
+                "difference": 0.0,
+                "tolerance": 391.1074517746776
+              }
+            },
+            "non_subject": {
+              "samples": 18688466,
+              "display_energy": {
+                "collapsed": 214156832.64423302,
+                "baseline": 214156832.64423302,
+                "difference": 0.0,
+                "tolerance": 2141568.32644233
+              },
+              "hdr_energy": {
+                "collapsed": 866191.0122735198,
+                "baseline": 866191.0122735198,
+                "difference": 0.0,
+                "tolerance": 8661.910122735198
+              }
+            }
+          }
+        },
+        {
+          "source_support_radius": 7,
+          "source_support_width_px": 16,
+          "scored_pixel_pairs": 20506340,
+          "conservation": {
+            "display": {
+              "pair_energy_sum": 248658155.29567158,
+              "existing_score_squared_sum_times_pairs": 248658155.29567158
+            },
+            "hdr": {
+              "pair_energy_sum": 915932.8696071275,
+              "existing_score_squared_sum_times_pairs": 915932.8696071275
+            }
+          },
+          "regions": {
+            "subject_interior": {
+              "samples": 1308118,
+              "min_samples_per_pair": 56179,
+              "max_samples_per_pair": 57561,
+              "display_energy": 1755791.9955398003,
+              "hdr_energy": 2133.1249426129393,
+              "sample_fraction": 0.0637909056418649,
+              "display_energy_share": 0.007061067405780612,
+              "display_conditional_rms": 1.1585454383140699,
+              "hdr_energy_share": 0.002328909697855809,
+              "hdr_conditional_rms": 0.04038170818999191
+            },
+            "subject_transition": {
+              "samples": 830557,
+              "min_samples_per_pair": 35846,
+              "max_samples_per_pair": 36381,
+              "display_energy": 35813318.15658186,
+              "hdr_energy": 59370.54976611741,
+              "sample_fraction": 0.040502449486353974,
+              "display_energy_share": 0.14402631642624938,
+              "display_conditional_rms": 6.566554589568485,
+              "hdr_energy_share": 0.0648197610722097,
+              "hdr_conditional_rms": 0.26736269720235484
+            },
+            "facade_interior": {
+              "samples": 232030,
+              "min_samples_per_pair": 9920,
+              "max_samples_per_pair": 10203,
+              "display_energy": 34841838.73771065,
+              "hdr_energy": 31048.17323546763,
+              "sample_fraction": 0.011315037203128398,
+              "display_energy_share": 0.1401194290059834,
+              "display_conditional_rms": 12.25401656707208,
+              "hdr_energy_share": 0.03389786988295897,
+              "hdr_conditional_rms": 0.365801899613846
+            },
+            "facade_mixed": {
+              "samples": 918291,
+              "min_samples_per_pair": 39445,
+              "max_samples_per_pair": 40340,
+              "display_energy": 95225406.12610519,
+              "hdr_energy": 127599.04131797497,
+              "sample_fraction": 0.044780833634866096,
+              "display_energy_share": 0.38295710033268626,
+              "display_conditional_rms": 10.183246411299091,
+              "hdr_energy_share": 0.13931047301829688,
+              "hdr_conditional_rms": 0.37276363815108343
+            },
+            "water_interior": {
+              "samples": 9600589,
+              "min_samples_per_pair": 416017,
+              "max_samples_per_pair": 418771,
+              "display_energy": 31073679.184989676,
+              "hdr_energy": 21661.769575095455,
+              "sample_fraction": 0.46817662244944735,
+              "display_energy_share": 0.12496545366887703,
+              "display_conditional_rms": 1.799067258396884,
+              "hdr_energy_share": 0.023649953281387175,
+              "hdr_conditional_rms": 0.04750048313001206
+            },
+            "water_mixed": {
+              "samples": 762472,
+              "min_samples_per_pair": 32847,
+              "max_samples_per_pair": 33390,
+              "display_energy": 38644454.14305957,
+              "hdr_energy": 661941.6507569818,
+              "sample_fraction": 0.03718225680448096,
+              "display_energy_share": 0.15541197149600286,
+              "display_conditional_rms": 7.119207293338228,
+              "hdr_energy_share": 0.7226966874121565,
+              "hdr_conditional_rms": 0.9317467882407304
+            },
+            "facade_water_mixed": {
+              "samples": 97781,
+              "min_samples_per_pair": 4201,
+              "max_samples_per_pair": 4296,
+              "display_energy": 9056307.35141905,
+              "hdr_energy": 9790.087186971923,
+              "sample_fraction": 0.004768330184713606,
+              "display_energy_share": 0.03642071317005662,
+              "display_conditional_rms": 9.623838786673451,
+              "hdr_energy_share": 0.010688651441421903,
+              "hdr_conditional_rms": 0.3164215419190431
+            },
+            "other": {
+              "samples": 6756502,
+              "min_samples_per_pair": 293117,
+              "max_samples_per_pair": 294435,
+              "display_energy": 2247359.6002657763,
+              "hdr_energy": 2388.472825905446,
+              "sample_fraction": 0.3294835645951447,
+              "display_energy_share": 0.009037948494363724,
+              "display_conditional_rms": 0.5767337011223201,
+              "hdr_energy_share": 0.002607694193713058,
+              "hdr_conditional_rms": 0.0188017899912084
+            }
+          },
+          "collapsed_baseline_check": {
+            "subject_interior": {
+              "samples": 1308118,
+              "display_energy": {
+                "collapsed": 1755791.9955398003,
+                "baseline": 1755791.9955398003,
+                "difference": 0.0,
+                "tolerance": 17557.919955398003
+              },
+              "hdr_energy": {
+                "collapsed": 2133.1249426129393,
+                "baseline": 2133.1249426129393,
+                "difference": 0.0,
+                "tolerance": 21.331249426129393
+              }
+            },
+            "subject_transition": {
+              "samples": 830557,
+              "display_energy": {
+                "collapsed": 35813318.15658186,
+                "baseline": 35813318.15658186,
+                "difference": 0.0,
+                "tolerance": 358133.18156581855
+              },
+              "hdr_energy": {
+                "collapsed": 59370.54976611741,
+                "baseline": 59370.54976611741,
+                "difference": 0.0,
+                "tolerance": 593.7054976611741
+              }
+            },
+            "non_subject": {
+              "samples": 18367665,
+              "display_energy": {
+                "collapsed": 211089045.14354992,
+                "baseline": 211089045.14354995,
+                "difference": 2.9802322387695312e-08,
+                "tolerance": 2110890.4514354994
+              },
+              "hdr_energy": {
+                "collapsed": 854429.1948983972,
+                "baseline": 854429.1948983971,
+                "difference": 1.1641532182693481e-10,
+                "tolerance": 8544.291948983971
+              }
+            }
+          }
+        }
+      ],
+      "semantic_fragment_sha256": {
+        "scene": "a45d918fa4fce8492e45ebccab99481da7534a86672a84b1a778dade0ab368f4",
+        "land": "1090d78e5b93c9467a3e7d753ba9a389ff769af628418a2ed61055140fb065b1",
+        "water": "1aebe64e63de0c87f77477e1d60138892ed25e1d5466b95e6d27905dce71029b"
+      }
+    },
+    {
+      "view": {
+        "view_id": "road_subject_12",
+        "subject": "road_ground",
+        "position_eus_m": [
+          -1161.3569200755005,
+          14.18565845489502,
+          -337.5587824387312
+        ],
+        "target_eus_m": [
+          -1151.4,
+          8.746733283996582,
+          -363.9
+        ],
+        "expected_surface": "land",
+        "minimum_ground_clearance_m": 1.7,
+        "notes": "Non-historical subject-visibility engineering candidate."
+      },
+      "gl": {
+        "GL_VENDOR": "Intel",
+        "GL_RENDERER": "Intel(R) Arc(TM) 140V GPU (16GB)",
+        "GL_VERSION": "4.3.0 - Build 32.0.101.8626"
+      },
+      "render_config": {
+        "msaa_samples": 8,
+        "ambient_occlusion_strength": 0.62,
+        "bloom_strength": 0.72,
+        "simulate_fixed_gaze_peripheral_acuity": false
+      },
+      "yaw_step_deg": 0.0457247960309147,
+      "display_pixels_wh": [
+        1280,
+        720
+      ],
+      "excluded_residual_ids": [],
+      "masked_moving": {
+        "display_excess": 0.24108688481382612,
+        "hdr_excess": 0.009215472967266025,
+        "display_unstable": 0.04249583104840021,
+        "hdr_unstable": 0.06914572097910646,
+        "mean_display_code": 25.332090489495204,
+        "scored_pixels": 891711
+      },
+      "baseline_control": {
+        "passed": true,
+        "absolute_difference": {
+          "display_excess": 1.981865708156061e-06,
+          "hdr_excess": 6.406599946853081e-07,
+          "mean_display_code": 1.2811998502115785e-05
+        },
+        "tolerance": {
+          "display_excess": 0.002410888666795343,
+          "hdr_excess": 9.21611362726071e-05,
+          "mean_display_code": 0.253320776774967
+        }
+      },
+      "partitions": [
+        {
+          "source_support_radius": 1,
+          "source_support_width_px": 4,
+          "scored_pixel_pairs": 20509353,
+          "conservation": {
+            "display": {
+              "pair_energy_sum": 79830735.77804881,
+              "existing_score_squared_sum_times_pairs": 79830735.77804881
+            },
+            "hdr": {
+              "pair_energy_sum": 100150.04396145804,
+              "existing_score_squared_sum_times_pairs": 100150.04396145801
+            }
+          },
+          "regions": {
+            "subject_interior": {
+              "samples": 11731872,
+              "min_samples_per_pair": 509968,
+              "max_samples_per_pair": 510181,
+              "display_energy": 1126850.0841763248,
+              "hdr_energy": 3378.2755030559456,
+              "sample_fraction": 0.5720254558980968,
+              "display_energy_share": 0.014115491648596035,
+              "display_conditional_rms": 0.3099198639614252,
+              "hdr_energy_share": 0.033732141988435355,
+              "hdr_conditional_rms": 0.016969297905074315
+            },
+            "subject_transition": {
+              "samples": 320040,
+              "min_samples_per_pair": 13862,
+              "max_samples_per_pair": 13960,
+              "display_energy": 647111.6995255855,
+              "hdr_energy": 1125.8276705238711,
+              "sample_fraction": 0.015604587819030664,
+              "display_energy_share": 0.008106047040888265,
+              "display_conditional_rms": 1.421960377297177,
+              "hdr_energy_share": 0.011241409648877808,
+              "hdr_conditional_rms": 0.05931080634183355
+            },
+            "facade_interior": {
+              "samples": 229581,
+              "min_samples_per_pair": 9592,
+              "max_samples_per_pair": 10234,
+              "display_energy": 22111759.246739298,
+              "hdr_energy": 21578.71144990993,
+              "sample_fraction": 0.011193965992003745,
+              "display_energy_share": 0.2769830320519156,
+              "display_conditional_rms": 9.813946292364587,
+              "hdr_energy_share": 0.2154638240419977,
+              "hdr_conditional_rms": 0.30658067934270833
+            },
+            "facade_mixed": {
+              "samples": 215690,
+              "min_samples_per_pair": 9129,
+              "max_samples_per_pair": 9627,
+              "display_energy": 20918149.993099242,
+              "hdr_energy": 28163.552358469668,
+              "sample_fraction": 0.010516665250239731,
+              "display_energy_share": 0.2620312814259585,
+              "display_conditional_rms": 9.847968055196354,
+              "hdr_energy_share": 0.2812135795897223,
+              "hdr_conditional_rms": 0.3613505426214738
+            },
+            "water_interior": {
+              "samples": 333005,
+              "min_samples_per_pair": 14013,
+              "max_samples_per_pair": 14857,
+              "display_energy": 15070866.031179583,
+              "hdr_energy": 13751.434918497067,
+              "sample_fraction": 0.016236738428559886,
+              "display_energy_share": 0.18878525776188126,
+              "display_conditional_rms": 6.727345420914914,
+              "hdr_energy_share": 0.13730832633272932,
+              "hdr_conditional_rms": 0.20321166381656744
+            },
+            "water_mixed": {
+              "samples": 269133,
+              "min_samples_per_pair": 11506,
+              "max_samples_per_pair": 11893,
+              "display_energy": 11312840.371888459,
+              "hdr_energy": 18449.231989964574,
+              "sample_fraction": 0.013122451985686725,
+              "display_energy_share": 0.14171033577018802,
+              "display_conditional_rms": 6.483393082968396,
+              "hdr_energy_share": 0.18421591504307894,
+              "hdr_conditional_rms": 0.26182171889502437
+            },
+            "facade_water_mixed": {
+              "samples": 0,
+              "min_samples_per_pair": 0,
+              "max_samples_per_pair": 0,
+              "display_energy": 0.0,
+              "hdr_energy": 0.0,
+              "sample_fraction": 0.0,
+              "display_energy_share": 0.0,
+              "display_conditional_rms": null,
+              "hdr_energy_share": 0.0,
+              "hdr_conditional_rms": null
+            },
+            "other": {
+              "samples": 7410032,
+              "min_samples_per_pair": 321389,
+              "max_samples_per_pair": 323094,
+              "display_energy": 8643158.351440314,
+              "hdr_energy": 13703.010071036977,
+              "sample_fraction": 0.3613001346263824,
+              "display_energy_share": 0.10826855430057225,
+              "display_conditional_rms": 1.0800060620001128,
+              "hdr_energy_share": 0.1368248033551585,
+              "hdr_conditional_rms": 0.04300292005118458
+            }
+          },
+          "collapsed_baseline_check": {
+            "subject_interior": {
+              "samples": 11731872,
+              "display_energy": {
+                "collapsed": 1126850.0841763248,
+                "baseline": 1126850.0841763248,
+                "difference": 0.0,
+                "tolerance": 11268.500841763247
+              },
+              "hdr_energy": {
+                "collapsed": 3378.2755030559456,
+                "baseline": 3378.2755030559456,
+                "difference": 0.0,
+                "tolerance": 33.78275503055946
+              }
+            },
+            "subject_transition": {
+              "samples": 320040,
+              "display_energy": {
+                "collapsed": 647111.6995255855,
+                "baseline": 647111.6995255881,
+                "difference": 2.561137080192566e-09,
+                "tolerance": 6471.116995255881
+              },
+              "hdr_energy": {
+                "collapsed": 1125.8276705238711,
+                "baseline": 1125.827670523871,
+                "difference": 2.2737367544323206e-13,
+                "tolerance": 11.258276705238709
+              }
+            },
+            "non_subject": {
+              "samples": 8457441,
+              "display_energy": {
+                "collapsed": 78056773.9943469,
+                "baseline": 78054818.5287553,
+                "difference": 1955.4655915945768,
+                "tolerance": 780548.1852875531
+              },
+              "hdr_energy": {
+                "collapsed": 95645.94078787821,
+                "baseline": 95638.32380798087,
+                "difference": 7.6169798973423894,
+                "tolerance": 956.3832380798086
+              }
+            }
+          }
+        },
+        {
+          "source_support_radius": 7,
+          "source_support_width_px": 16,
+          "scored_pixel_pairs": 20509353,
+          "conservation": {
+            "display": {
+              "pair_energy_sum": 79830735.7780488,
+              "existing_score_squared_sum_times_pairs": 79830735.77804881
+            },
+            "hdr": {
+              "pair_energy_sum": 100150.04396145804,
+              "existing_score_squared_sum_times_pairs": 100150.04396145801
+            }
+          },
+          "regions": {
+            "subject_interior": {
+              "samples": 11374547,
+              "min_samples_per_pair": 494410,
+              "max_samples_per_pair": 494646,
+              "display_energy": 1028316.2102799877,
+              "hdr_energy": 3226.026013317743,
+              "sample_fraction": 0.5546029170203468,
+              "display_energy_share": 0.012881206721418514,
+              "display_conditional_rms": 0.3006742845425689,
+              "hdr_energy_share": 0.03221192808022385,
+              "hdr_conditional_rms": 0.0168409612950588
+            },
+            "subject_transition": {
+              "samples": 1067603,
+              "min_samples_per_pair": 46213,
+              "max_samples_per_pair": 46645,
+              "display_energy": 2208363.448067057,
+              "hdr_energy": 3662.783981909031,
+              "sample_fraction": 0.05205444559855204,
+              "display_energy_share": 0.027663072706819454,
+              "display_conditional_rms": 1.4382367522422606,
+              "hdr_energy_share": 0.03657296429464,
+              "hdr_conditional_rms": 0.05857344399538038
+            },
+            "facade_interior": {
+              "samples": 71543,
+              "min_samples_per_pair": 2956,
+              "max_samples_per_pair": 3231,
+              "display_energy": 5549627.85280018,
+              "hdr_energy": 4842.217444828325,
+              "sample_fraction": 0.0034883109184380414,
+              "display_energy_share": 0.06951743333832797,
+              "display_conditional_rms": 8.807412898406533,
+              "hdr_energy_share": 0.04834962874995656,
+              "hdr_conditional_rms": 0.2601588297092415
+            },
+            "facade_mixed": {
+              "samples": 570149,
+              "min_samples_per_pair": 24221,
+              "max_samples_per_pair": 25271,
+              "display_energy": 38306390.23415159,
+              "hdr_energy": 44926.75416965154,
+              "sample_fraction": 0.02779946300597586,
+              "display_energy_share": 0.47984513559606656,
+              "display_conditional_rms": 8.196745120611855,
+              "hdr_energy_share": 0.4485944528086403,
+              "hdr_conditional_rms": 0.28071029339934467
+            },
+            "water_interior": {
+              "samples": 107442,
+              "min_samples_per_pair": 4392,
+              "max_samples_per_pair": 4897,
+              "display_energy": 6408239.641775965,
+              "hdr_energy": 6428.530941049534,
+              "sample_fraction": 0.0052386830535317225,
+              "display_energy_share": 0.0802728370134608,
+              "display_conditional_rms": 7.722934119510986,
+              "hdr_energy_share": 0.06418899769553275,
+              "hdr_conditional_rms": 0.24460696961082046
+            },
+            "water_mixed": {
+              "samples": 638659,
+              "min_samples_per_pair": 27484,
+              "max_samples_per_pair": 28144,
+              "display_energy": 18778756.463118225,
+              "hdr_energy": 23396.902664798068,
+              "sample_fraction": 0.031139890175960208,
+              "display_energy_share": 0.2352321606471007,
+              "display_conditional_rms": 5.422491707635792,
+              "hdr_energy_share": 0.23361849620158112,
+              "hdr_conditional_rms": 0.1914012042123663
+            },
+            "facade_water_mixed": {
+              "samples": 97547,
+              "min_samples_per_pair": 3925,
+              "max_samples_per_pair": 4631,
+              "display_energy": 4153732.6584011503,
+              "hdr_energy": 8887.249426105014,
+              "sample_fraction": 0.004756220247415899,
+              "display_energy_share": 0.05203174714498009,
+              "display_conditional_rms": 6.525477729637846,
+              "hdr_energy_share": 0.08873934623059379,
+              "hdr_conditional_rms": 0.30183995386060736
+            },
+            "other": {
+              "samples": 6581863,
+              "min_samples_per_pair": 285092,
+              "max_samples_per_pair": 287218,
+              "display_energy": 3397309.269454657,
+              "hdr_energy": 4779.579319798779,
+              "sample_fraction": 0.32092006997977945,
+              "display_energy_share": 0.042556406831826064,
+              "display_conditional_rms": 0.7184443320342597,
+              "hdr_energy_share": 0.04772418593883156,
+              "hdr_conditional_rms": 0.026947620184670423
+            }
+          },
+          "collapsed_baseline_check": {
+            "subject_interior": {
+              "samples": 11374547,
+              "display_energy": {
+                "collapsed": 1028316.2102799877,
+                "baseline": 1028316.2102799877,
+                "difference": 0.0,
+                "tolerance": 10283.162102799877
+              },
+              "hdr_energy": {
+                "collapsed": 3226.026013317743,
+                "baseline": 3226.026013317743,
+                "difference": 0.0,
+                "tolerance": 32.26026013317743
+              }
+            },
+            "subject_transition": {
+              "samples": 1067603,
+              "display_energy": {
+                "collapsed": 2208363.448067057,
+                "baseline": 2208363.448047215,
+                "difference": 1.984182745218277e-05,
+                "tolerance": 22083.634480472152
+              },
+              "hdr_energy": {
+                "collapsed": 3662.783981909031,
+                "baseline": 3662.7839819090937,
+                "difference": 6.275513442233205e-11,
+                "tolerance": 36.62783981909094
+              }
+            },
+            "non_subject": {
+              "samples": 8067203,
+              "display_energy": {
+                "collapsed": 76594056.11970176,
+                "baseline": 76592100.65413003,
+                "difference": 1955.465571731329,
+                "tolerance": 765921.0065413003
+              },
+              "hdr_energy": {
+                "collapsed": 93261.23396623126,
+                "baseline": 93253.61698633384,
+                "difference": 7.616979897415149,
+                "tolerance": 932.5361698633385
+              }
+            }
+          }
+        }
+      ],
+      "semantic_fragment_sha256": {
+        "scene": "a45d918fa4fce8492e45ebccab99481da7534a86672a84b1a778dade0ab368f4",
+        "land": "1090d78e5b93c9467a3e7d753ba9a389ff769af628418a2ed61055140fb065b1",
+        "water": "1aebe64e63de0c87f77477e1d60138892ed25e1d5466b95e6d27905dce71029b"
+      }
+    }
+  ],
+  "limitations": [
+    "Receiver labels are not causal attribution. Water may reflect a distant facade, a bridge lamp or another light source.",
+    "Facade means wall material at 250 m or farther; roofs and nearer walls remain other.",
+    "Mixed means at least one matching label and a heterogeneous raw support; it does not isolate a specific edge.",
+    "Support windows cannot bound the full cubic prefilter or post-processing influence.",
+    "Frozen-time yaw only; this comparison reproduces a baseline, not an appearance or performance improvement."
+  ]
+}
