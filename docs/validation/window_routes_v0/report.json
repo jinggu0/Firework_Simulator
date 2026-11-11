@@ -1,0 +1,711 @@
+{
+  "schema_version": 1,
+  "probe": "window_routes_v0_20",
+  "suite_id": "yeouido-subject-visibility-candidates-v1",
+  "display_mode": "human_vision",
+  "scene_asset_sha256": "c8b9d2720f935de3532a9401c74d37a55470d23645c06d32c24ff923c3291518",
+  "canonical_views_sha256": "54aa2c58b4074ff7738a9a06e70d2ad7c257a07420a3248cca89fbbd0fa75072",
+  "candidate_views_sha256": "a51145c3aa89fc0013c0c2c74a70703bce0081c29974020aec1a195607791aa4",
+  "visibility_report_sha256": "5f5d61fb27f0cb0a22f270ef1413061fb5fa87f9e1c020f39591ffbf97cc3cbe",
+  "shipped_shader_sha256": {
+    "adaptation.frag": "583f5d1e4895081b1377e14263667b11702aea0cf70470d0f9fa56e761729198",
+    "ambient_occlusion.frag": "fa587e852e9713cc9d1ae30943b5f93e3f33b3b6de04f8759169711e8c0e4736",
+    "ambient_occlusion_apply.frag": "79d7b3fec5302f76a72b1e3818bdb11cc4f218895b8fe741a8dc9806b6747c3a",
+    "background.frag": "acb1f84f620704eb510c523d28ece803a018601f6b4435e70677869d18a8f251",
+    "bloom_blur.frag": "f9ce703a9760bc812d16aec7e945cb27bfe8c59c637313d81d2edbb936164989",
+    "bloom_prefilter.frag": "0582bec9e72ce52ea460dbbab2ebce206e7cf42c34f2c01b49f06ff83756e519",
+    "depth_resolve.frag": "cffef20d57611bc330b3a662a5cbbbe5c05e35a52c8f66a69f4d85f23305978d",
+    "haze.frag": "0629145213abcff69be84ff4a40cc9e7a75049be515111d948da7879bcf02ad8",
+    "human_vision.frag": "b16164fa341c63af5c43d284d1091790e87ba591247b8f399b5ce502bd22cf6d",
+    "land.frag": "a885b686b4eec25099388e9f4f80f65c5a5bb9323e5b82b7702b11b49368f660",
+    "land.vert": "80d7aa00e0975b630e11b079ce56fb8cb76d518fed03e93f7b05119173992eb0",
+    "particle.frag": "04422c30355b54c62b893f6827204343cc0e238566a3b611664677108dc5a992",
+    "particle.geom": "529d8751204edace8c90a106d2729b129207276f9494e5c57c7a5e0738807789",
+    "particle.vert": "b1431b51c174da980dc968e5585eb73e2e33ed93ef10f337b8aae7ce48c89f93",
+    "quad.vert": "c5dc3dbe9364790c3528b85239578575d0a0cd2164f54f9aa21533527617d2b7",
+    "scene.frag": "9bd986f7d5c85433bbb883831dfb7320fb80d9aeb77f10efd74d8d6654bf53d2",
+    "scene.vert": "3ccc02c4f51cb057062caac854dd2897be2bf3534b8ab43b2ad010932b32f207",
+    "smoke.frag": "6cb0399c9769b822dd75198fa9fa85991aedd62901675e226c0ca402f9337633",
+    "smoke.vert": "59706b9eae0231248286438b70ccec35cdaad32f1598ee3165a94e93ce2ddb6c",
+    "tonemap.frag": "0605ae60c1ae81fdc949aecdeb539cb5bea66068cc3a0414896482a758d1ec8f",
+    "water.frag": "e09c196d91f29b5f3d91ece2afcb07ea872eb9694fd4419f9518acce19d60003",
+    "water.vert": "f3cceb1120f5e7e4870b73be0de7254f162b0a731386a734391bf9e03e55d685"
+  },
+  "subject_bounds_xz": {
+    "bridge_structure": [
+      -1145.0,
+      -1250.0,
+      -600.0,
+      -470.0
+    ],
+    "road_ground": [
+      -1281.4,
+      -493.9,
+      -1021.4,
+      -233.9
+    ]
+  },
+  "frames": 24,
+  "warmup_frames": 8,
+  "pixels_per_frame_at_centre": 0.6180339887498949,
+  "display_excess_threshold": 2.0,
+  "relative_hdr_excess_threshold": 0.05,
+  "source_support_radii": [
+    1,
+    7
+  ],
+  "v0_19_report_sha256": "10deccc4130183834d6636dfb9e7fa183435d90ce8b1d3d0c46e23fe7f60107c",
+  "distant_window_min_distance_m": 250.0,
+  "regional_source_support_radius": 1,
+  "views": [
+    {
+      "view": {
+        "view_id": "bridge_subject_20",
+        "subject": "bridge_structure",
+        "position_eus_m": [
+          -1025.0,
+          35.27070331573486,
+          -470.0
+        ],
+        "target_eus_m": [
+          -981.1985,
+          6.35,
+          -709.3779999999999
+        ],
+        "expected_surface": "land",
+        "minimum_ground_clearance_m": 29.5,
+        "notes": "Non-historical subject-visibility engineering candidate."
+      },
+      "gl": {
+        "GL_VENDOR": "Intel",
+        "GL_RENDERER": "Intel(R) Arc(TM) 140V GPU (16GB)",
+        "GL_VERSION": "4.3.0 - Build 32.0.101.8626"
+      },
+      "render_config": {
+        "msaa_samples": 8,
+        "ambient_occlusion_strength": 0.62,
+        "bloom_strength": 0.72,
+        "simulate_fixed_gaze_peripheral_acuity": false
+      },
+      "yaw_step_deg": 0.040187745402425167,
+      "display_pixels_wh": [
+        1280,
+        720
+      ],
+      "excluded_residual_ids": [],
+      "baseline_control": {
+        "passed": true,
+        "absolute_difference": {
+          "display_excess": 0.0,
+          "hdr_excess": 0.0,
+          "mean_display_code": 0.0
+        },
+        "tolerance": {
+          "display_excess": 0.0067062488593795325,
+          "hdr_excess": 0.00025754810935752035,
+          "mean_display_code": 0.3403664772325047
+        }
+      },
+      "cases": {
+        "control": {
+          "whole_view": {
+            "display_excess": 0.6706248859379532,
+            "hdr_excess": 0.025754810935752034,
+            "display_unstable": 0.10295991386078647,
+            "hdr_unstable": 0.11823952982345948,
+            "mean_display_code": 34.03664772325047,
+            "scored_pixels": 891580
+          },
+          "regions": {
+            "subject_interior": {
+              "samples": 1616290,
+              "display_energy": 7783919.762306895,
+              "hdr_energy": 10631.112156139789,
+              "mean_display_code": 47.80784429464058,
+              "mean_linear_hdr": 0.0022006303052955136
+            },
+            "subject_transition": {
+              "samples": 201584,
+              "display_energy": 26717402.889131688,
+              "hdr_energy": 39110.74517746773,
+              "mean_display_code": 68.22226977637142,
+              "mean_linear_hdr": 0.004962022594399076
+            },
+            "facade_interior": {
+              "samples": 498310,
+              "display_energy": 75344030.72521247,
+              "hdr_energy": 73734.12949344033,
+              "mean_display_code": 50.6495782103528,
+              "mean_linear_hdr": 0.0025602666029050022
+            },
+            "facade_mixed": {
+              "samples": 314068,
+              "display_energy": 46742478.47811678,
+              "hdr_energy": 70288.8007115277,
+              "mean_display_code": 45.78390642727133,
+              "mean_linear_hdr": 0.0022136073482907346
+            },
+            "water_interior": {
+              "samples": 10135660,
+              "display_energy": 39611551.33126799,
+              "hdr_energy": 28093.02094028113,
+              "mean_display_code": 31.034092086582287,
+              "mean_linear_hdr": 0.0010945642898366875
+            },
+            "water_mixed": {
+              "samples": 283449,
+              "display_energy": 27083282.722558916,
+              "hdr_energy": 655555.7902743275,
+              "mean_display_code": 33.924778025675394,
+              "mean_linear_hdr": 0.0013498221156073688
+            },
+            "facade_water_mixed": {
+              "samples": 0,
+              "display_energy": 0.0,
+              "hdr_energy": 0.0,
+              "mean_display_code": null,
+              "mean_linear_hdr": null
+            },
+            "other": {
+              "samples": 7456979,
+              "display_energy": 25375489.387071256,
+              "hdr_energy": 38519.270853944196,
+              "mean_display_code": 32.60808573310853,
+              "mean_linear_hdr": 0.001040552779761017
+            }
+          },
+          "draw_routing": {
+            "direct": {
+              "draws": 32,
+              "suppressed": 0
+            },
+            "reflection": {
+              "draws": 25,
+              "suppressed": 0
+            }
+          },
+          "reflection_first_frame_delta": {
+            "size_wh": [
+              640,
+              360
+            ],
+            "changed_pixels": 0,
+            "mean_absolute_rgb_delta": 0.0,
+            "max_absolute_rgb_delta": 0.0
+          },
+          "diagnostic_shader_sha256": {
+            "scene.frag": "36f5b18da4fb2c48bcd5dac423b7e27b9e24352e1458efa0d2a70bf1367d1719"
+          }
+        },
+        "direct_off": {
+          "whole_view": {
+            "display_excess": 0.4321400964155014,
+            "hdr_excess": 0.02027412885829629,
+            "display_unstable": 0.09930684851611746,
+            "hdr_unstable": 0.11688463177729425,
+            "mean_display_code": 33.257455594074806,
+            "scored_pixels": 891580
+          },
+          "regions": {
+            "subject_interior": {
+              "samples": 1616290,
+              "display_energy": 7783919.752998713,
+              "hdr_energy": 10631.112156139785,
+              "mean_display_code": 47.80784429464058,
+              "mean_linear_hdr": 0.0022006303052955136
+            },
+            "subject_transition": {
+              "samples": 201584,
+              "display_energy": 26717373.557093002,
+              "hdr_energy": 39110.74519076856,
+              "mean_display_code": 68.22240013592379,
+              "mean_linear_hdr": 0.004962022594399076
+            },
+            "facade_interior": {
+              "samples": 498310,
+              "display_energy": 9436429.64607978,
+              "hdr_energy": 10739.440728740863,
+              "mean_display_code": 27.233574753867384,
+              "mean_linear_hdr": 0.0007869684663326735
+            },
+            "facade_mixed": {
+              "samples": 314068,
+              "display_energy": 12528870.935594868,
+              "hdr_energy": 14982.813665258864,
+              "mean_display_code": 32.01922976871444,
+              "mean_linear_hdr": 0.0011338338735316067
+            },
+            "water_interior": {
+              "samples": 10135660,
+              "display_energy": 39611554.19908908,
+              "hdr_energy": 28093.020940184688,
+              "mean_display_code": 31.034091818696428,
+              "mean_linear_hdr": 0.0010945642898366875
+            },
+            "water_mixed": {
+              "samples": 283449,
+              "display_energy": 27083279.747813296,
+              "hdr_energy": 655555.7910338581,
+              "mean_display_code": 33.92484556657341,
+              "mean_linear_hdr": 0.0013498221156073688
+            },
+            "facade_water_mixed": {
+              "samples": 0,
+              "display_energy": 0.0,
+              "hdr_energy": 0.0,
+              "mean_display_code": null,
+              "mean_linear_hdr": null
+            },
+            "other": {
+              "samples": 7456979,
+              "display_energy": 25373017.955091674,
+              "hdr_energy": 38385.063087054616,
+              "mean_display_code": 32.60983600187007,
+              "mean_linear_hdr": 0.001040552779761017
+            }
+          },
+          "draw_routing": {
+            "direct": {
+              "draws": 32,
+              "suppressed": 32
+            },
+            "reflection": {
+              "draws": 25,
+              "suppressed": 0
+            }
+          },
+          "reflection_first_frame_delta": {
+            "size_wh": [
+              640,
+              360
+            ],
+            "changed_pixels": 0,
+            "mean_absolute_rgb_delta": 0.0,
+            "max_absolute_rgb_delta": 0.0
+          },
+          "diagnostic_shader_sha256": {
+            "scene.frag": "36f5b18da4fb2c48bcd5dac423b7e27b9e24352e1458efa0d2a70bf1367d1719"
+          }
+        },
+        "reflection_off": {
+          "whole_view": {
+            "display_excess": 0.5658292197036969,
+            "hdr_excess": 0.02302016782396311,
+            "display_unstable": 0.08209470827071043,
+            "hdr_unstable": 0.10185176877004867,
+            "mean_display_code": 33.61524360060352,
+            "scored_pixels": 891580
+          },
+          "regions": {
+            "subject_interior": {
+              "samples": 1616290,
+              "display_energy": 7783813.757130974,
+              "hdr_energy": 10631.111901588312,
+              "mean_display_code": 47.80788805436191,
+              "mean_linear_hdr": 0.0022006303052955136
+            },
+            "subject_transition": {
+              "samples": 201584,
+              "display_energy": 26818755.836065236,
+              "hdr_energy": 39078.16275490737,
+              "mean_display_code": 67.8966609889676,
+              "mean_linear_hdr": 0.004942578747478331
+            },
+            "facade_interior": {
+              "samples": 498310,
+              "display_energy": 75344333.08092703,
+              "hdr_energy": 73734.12949343926,
+              "mean_display_code": 50.649535206600135,
+              "mean_linear_hdr": 0.0025602666029050022
+            },
+            "facade_mixed": {
+              "samples": 314068,
+              "display_energy": 46742364.49339962,
+              "hdr_energy": 70288.8007132902,
+              "mean_display_code": 45.78397677445731,
+              "mean_linear_hdr": 0.0022136073482907346
+            },
+            "water_interior": {
+              "samples": 10135660,
+              "display_energy": 17770500.038909286,
+              "hdr_energy": 12929.037081116627,
+              "mean_display_code": 30.224781380868237,
+              "mean_linear_hdr": 0.0010520465919618039
+            },
+            "water_mixed": {
+              "samples": 283449,
+              "display_energy": 26260614.38322998,
+              "hdr_energy": 652560.0450527421,
+              "mean_display_code": 32.606653372563294,
+              "mean_linear_hdr": 0.0012815526988764392
+            },
+            "facade_water_mixed": {
+              "samples": 0,
+              "display_energy": 0.0,
+              "hdr_energy": 0.0,
+              "mean_display_code": null,
+              "mean_linear_hdr": null
+            },
+            "other": {
+              "samples": 7456979,
+              "display_energy": 25376247.845145594,
+              "hdr_energy": 38516.00271995393,
+              "mean_display_code": 32.608170107035285,
+              "mean_linear_hdr": 0.001040552779761017
+            }
+          },
+          "draw_routing": {
+            "direct": {
+              "draws": 32,
+              "suppressed": 0
+            },
+            "reflection": {
+              "draws": 25,
+              "suppressed": 25
+            }
+          },
+          "reflection_first_frame_delta": {
+            "size_wh": [
+              640,
+              360
+            ],
+            "changed_pixels": 2392,
+            "mean_absolute_rgb_delta": 4.287783884339862e-05,
+            "max_absolute_rgb_delta": 0.03105640411376953
+          },
+          "diagnostic_shader_sha256": {
+            "scene.frag": "36f5b18da4fb2c48bcd5dac423b7e27b9e24352e1458efa0d2a70bf1367d1719"
+          }
+        }
+      }
+    },
+    {
+      "view": {
+        "view_id": "road_subject_12",
+        "subject": "road_ground",
+        "position_eus_m": [
+          -1161.3569200755005,
+          14.18565845489502,
+          -337.5587824387312
+        ],
+        "target_eus_m": [
+          -1151.4,
+          8.746733283996582,
+          -363.9
+        ],
+        "expected_surface": "land",
+        "minimum_ground_clearance_m": 1.7,
+        "notes": "Non-historical subject-visibility engineering candidate."
+      },
+      "gl": {
+        "GL_VENDOR": "Intel",
+        "GL_RENDERER": "Intel(R) Arc(TM) 140V GPU (16GB)",
+        "GL_VERSION": "4.3.0 - Build 32.0.101.8626"
+      },
+      "render_config": {
+        "msaa_samples": 8,
+        "ambient_occlusion_strength": 0.62,
+        "bloom_strength": 0.72,
+        "simulate_fixed_gaze_peripheral_acuity": false
+      },
+      "yaw_step_deg": 0.0457247960309147,
+      "display_pixels_wh": [
+        1280,
+        720
+      ],
+      "excluded_residual_ids": [],
+      "baseline_control": {
+        "passed": true,
+        "absolute_difference": {
+          "display_excess": 2.51193813895767e-05,
+          "hdr_excess": 1.3851593406860596e-06,
+          "mean_display_code": 7.2515208060508485e-06
+        },
+        "tolerance": {
+          "display_excess": 0.002410868848138261,
+          "hdr_excess": 9.215472967266025e-05,
+          "mean_display_code": 0.25332090489495207
+        }
+      },
+      "cases": {
+        "control": {
+          "whole_view": {
+            "display_excess": 0.2411120041952157,
+            "hdr_excess": 0.009216858126606711,
+            "display_unstable": 0.04248910241098293,
+            "hdr_unstable": 0.06913787090211963,
+            "mean_display_code": 25.3320832379744,
+            "scored_pixels": 891711
+          },
+          "regions": {
+            "subject_interior": {
+              "samples": 11731872,
+              "display_energy": 1126850.0841763264,
+              "hdr_energy": 3378.2755030559583,
+              "mean_display_code": 17.54373910467973,
+              "mean_linear_hdr": 0.0004106167954441474
+            },
+            "subject_transition": {
+              "samples": 320040,
+              "display_energy": 647111.6995255862,
+              "hdr_energy": 1125.8276705238711,
+              "mean_display_code": 36.492628704536315,
+              "mean_linear_hdr": 0.00121515295885782
+            },
+            "facade_interior": {
+              "samples": 229581,
+              "display_energy": 22114099.784325533,
+              "hdr_energy": 21590.356565656195,
+              "mean_display_code": 53.23953948628081,
+              "mean_linear_hdr": 0.0025280919347423865
+            },
+            "facade_mixed": {
+              "samples": 215690,
+              "display_energy": 20920856.94250729,
+              "hdr_energy": 28174.362137788943,
+              "mean_display_code": 51.43308901571827,
+              "mean_linear_hdr": 0.0028726055102589573
+            },
+            "water_interior": {
+              "samples": 333005,
+              "display_energy": 15070817.822531722,
+              "hdr_energy": 13750.161831175588,
+              "mean_display_code": 50.239220441128204,
+              "mean_linear_hdr": 0.0019187097113584144
+            },
+            "water_mixed": {
+              "samples": 269133,
+              "display_energy": 11312531.723281488,
+              "hdr_energy": 18448.635481508805,
+              "mean_display_code": 36.66877118748049,
+              "mean_linear_hdr": 0.0013722098667189756
+            },
+            "facade_water_mixed": {
+              "samples": 0,
+              "display_energy": 0.0,
+              "hdr_energy": 0.0,
+              "mean_display_code": null,
+              "mean_linear_hdr": null
+            },
+            "other": {
+              "samples": 7410032,
+              "display_energy": 8643158.364357043,
+              "hdr_energy": 13703.01394446403,
+              "mean_display_code": 34.025434330305764,
+              "mean_linear_hdr": 0.0013818670234783724
+            }
+          },
+          "draw_routing": {
+            "direct": {
+              "draws": 32,
+              "suppressed": 0
+            },
+            "reflection": {
+              "draws": 25,
+              "suppressed": 0
+            }
+          },
+          "reflection_first_frame_delta": {
+            "size_wh": [
+              640,
+              360
+            ],
+            "changed_pixels": 0,
+            "mean_absolute_rgb_delta": 0.0,
+            "max_absolute_rgb_delta": 0.0
+          },
+          "diagnostic_shader_sha256": {
+            "scene.frag": "36f5b18da4fb2c48bcd5dac423b7e27b9e24352e1458efa0d2a70bf1367d1719"
+          }
+        },
+        "direct_off": {
+          "whole_view": {
+            "display_excess": 0.13641142039374685,
+            "hdr_excess": 0.006541615516738463,
+            "display_unstable": 0.037724105679979275,
+            "hdr_unstable": 0.06697797829117282,
+            "mean_display_code": 24.92760571459275,
+            "scored_pixels": 891711
+          },
+          "regions": {
+            "subject_interior": {
+              "samples": 11731872,
+              "display_energy": 1126850.0821123226,
+              "hdr_energy": 3378.2755030559583,
+              "mean_display_code": 17.54373910467973,
+              "mean_linear_hdr": 0.0004106167954441474
+            },
+            "subject_transition": {
+              "samples": 320040,
+              "display_energy": 647111.924429267,
+              "hdr_energy": 1125.8276705238716,
+              "mean_display_code": 36.49262603487002,
+              "mean_linear_hdr": 0.00121515295885782
+            },
+            "facade_interior": {
+              "samples": 229581,
+              "display_energy": 2882085.2636370165,
+              "hdr_energy": 2153.806859764663,
+              "mean_display_code": 28.581381954083575,
+              "mean_linear_hdr": 0.0008322859985842604
+            },
+            "facade_mixed": {
+              "samples": 215690,
+              "display_energy": 6131482.280771415,
+              "hdr_energy": 7708.8933074701745,
+              "mean_display_code": 39.19860533821857,
+              "mean_linear_hdr": 0.0019959717897650633
+            },
+            "water_interior": {
+              "samples": 333005,
+              "display_energy": 15072944.43666955,
+              "hdr_energy": 13754.386327163558,
+              "mean_display_code": 50.239458642957004,
+              "mean_linear_hdr": 0.0019187257420106674
+            },
+            "water_mixed": {
+              "samples": 269133,
+              "display_energy": 11312710.18875001,
+              "hdr_energy": 18448.68772224985,
+              "mean_display_code": 36.669470173483695,
+              "mean_linear_hdr": 0.0013722101754082845
+            },
+            "facade_water_mixed": {
+              "samples": 0,
+              "display_energy": 0.0,
+              "hdr_energy": 0.0,
+              "mean_display_code": null,
+              "mean_linear_hdr": null
+            },
+            "other": {
+              "samples": 7410032,
+              "display_energy": 8644311.188856583,
+              "hdr_energy": 13694.962001697464,
+              "mean_display_code": 34.02598241876215,
+              "mean_linear_hdr": 0.0013818670234783724
+            }
+          },
+          "draw_routing": {
+            "direct": {
+              "draws": 32,
+              "suppressed": 32
+            },
+            "reflection": {
+              "draws": 25,
+              "suppressed": 0
+            }
+          },
+          "reflection_first_frame_delta": {
+            "size_wh": [
+              640,
+              360
+            ],
+            "changed_pixels": 0,
+            "mean_absolute_rgb_delta": 0.0,
+            "max_absolute_rgb_delta": 0.0
+          },
+          "diagnostic_shader_sha256": {
+            "scene.frag": "36f5b18da4fb2c48bcd5dac423b7e27b9e24352e1458efa0d2a70bf1367d1719"
+          }
+        },
+        "reflection_off": {
+          "whole_view": {
+            "display_excess": 0.20187515105553575,
+            "hdr_excess": 0.008270110915997992,
+            "display_unstable": 0.033656644361233626,
+            "hdr_unstable": 0.06240138340785299,
+            "mean_display_code": 25.16809783335437,
+            "scored_pixels": 891711
+          },
+          "regions": {
+            "subject_interior": {
+              "samples": 11731872,
+              "display_energy": 1126859.5022945465,
+              "hdr_energy": 3378.2755788381714,
+              "mean_display_code": 17.54374113709195,
+              "mean_linear_hdr": 0.0004106167954441474
+            },
+            "subject_transition": {
+              "samples": 320040,
+              "display_energy": 457746.3475168269,
+              "hdr_energy": 975.8123176943224,
+              "mean_display_code": 36.26682168541369,
+              "mean_linear_hdr": 0.0012033511294655193
+            },
+            "facade_interior": {
+              "samples": 229581,
+              "display_energy": 22114124.74605729,
+              "hdr_energy": 21590.356565629743,
+              "mean_display_code": 53.23954291600714,
+              "mean_linear_hdr": 0.0025280919347423865
+            },
+            "facade_mixed": {
+              "samples": 215690,
+              "display_energy": 20920915.722364925,
+              "hdr_energy": 28174.362126937056,
+              "mean_display_code": 51.43313703370704,
+              "mean_linear_hdr": 0.0028726055102589573
+            },
+            "water_interior": {
+              "samples": 333005,
+              "display_energy": 9368062.395380922,
+              "hdr_energy": 9650.894351340256,
+              "mean_display_code": 42.805288883345206,
+              "mean_linear_hdr": 0.0015202766609876165
+            },
+            "water_mixed": {
+              "samples": 269133,
+              "display_energy": 9275971.312535292,
+              "hdr_energy": 16452.95653278083,
+              "mean_display_code": 33.636254044655416,
+              "mean_linear_hdr": 0.0012111570736957893
+            },
+            "facade_water_mixed": {
+              "samples": 0,
+              "display_energy": 0.0,
+              "hdr_energy": 0.0,
+              "mean_display_code": null,
+              "mean_linear_hdr": null
+            },
+            "other": {
+              "samples": 7410032,
+              "display_energy": 8643378.580365352,
+              "hdr_energy": 13702.508715314909,
+              "mean_display_code": 34.02552671241694,
+              "mean_linear_hdr": 0.0013818670234783724
+            }
+          },
+          "draw_routing": {
+            "direct": {
+              "draws": 32,
+              "suppressed": 0
+            },
+            "reflection": {
+              "draws": 25,
+              "suppressed": 25
+            }
+          },
+          "reflection_first_frame_delta": {
+            "size_wh": [
+              640,
+              360
+            ],
+            "changed_pixels": 2728,
+            "mean_absolute_rgb_delta": 3.944198773415e-05,
+            "max_absolute_rgb_delta": 0.029606342315673828
+          },
+          "diagnostic_shader_sha256": {
+            "scene.frag": "36f5b18da4fb2c48bcd5dac423b7e27b9e24352e1458efa0d2a70bf1367d1719"
+          }
+        }
+      }
+    }
+  ],
+  "limitations": [
+    "Only final facade emission for wall fragments 250 m or more from the real eye is suppressed.",
+    "Direct and reflected draws use the same diagnostic shader; the control leaves emission enabled in both.",
+    "Reflection readback verifies routing only at the first pose; direct post-processing can still redistribute light.",
+    "Receiver membership and regional HDR normalization are frozen to the unmodified control.",
+    "Ablation may dim the scene; score reductions are not causal fractions, additive shares or a candidate adoption verdict."
+  ]
+}
