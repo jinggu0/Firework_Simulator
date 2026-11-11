@@ -89,15 +89,17 @@ def verified_views():
     return suite, views
 
 
-def save_preview(path, pan, run):
+def save_preview(path, pan, run, *, partition=subject_pair_masks,
+                 colours=(("subject_interior", (35, 223, 210)), ("subject_transition", (255, 175, 55))),
+                 label_title="Middle pair: subject interior (cyan), transition (amber), 4x4 support"):
     pair = (len(pan["display_luma"]) - 1) // 2
     display = pan["display_luma"][pair + 1]
     height, width = display.shape
     coordinates = pan_source_coordinates(pan["matrices"][pair], pan["matrices"][pair + 1], width, height)
-    masks = subject_pair_masks(*pan["semantic_fractions"][pair:pair + 2], coordinates, RADII[0])
+    masks = partition(*pan["semantic_fractions"][pair:pair + 2], coordinates, RADII[0])
     gray = np.repeat(np.clip(display, 0, 255)[..., None], 3, axis=2)
     labels = gray.copy()
-    for name, colour in (("subject_interior", (35, 223, 210)), ("subject_transition", (255, 175, 55))):
+    for name, colour in colours:
         chosen = masks[name] & run["scored"]
         labels[chosen] = .35 * gray[chosen] + .65 * np.array(colour)
     weight = np.where(run["scored"], np.clip((run["display_score"] - DISPLAY_THRESHOLD_CODE_VALUES) / 8, 0, 1), 0)
@@ -106,7 +108,7 @@ def save_preview(path, pan, run):
     canvas.paste(Image.fromarray(labels.astype(np.uint8)), (0, 34))
     canvas.paste(Image.fromarray(heat.astype(np.uint8)), (width, 34))
     draw = ImageDraw.Draw(canvas)
-    draw.text((10, 10), "Middle pair: subject interior (cyan), transition (amber), 4x4 support", fill="white")
+    draw.text((10, 10), label_title, fill="white")
     draw.text((width + 10, 10), "Whole-path display excess: orange intensity from 0 to 8 code values", fill="white")
     canvas.save(path)
 

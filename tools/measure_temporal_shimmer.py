@@ -28,7 +28,7 @@ from dataclasses import replace
 import json
 import math
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import numpy as np
 import pygame
@@ -172,6 +172,7 @@ def render_pan(
     supersample: int = 1,
     semantic_capture: bool = False,
     subject_capture: bool = False,
+    subject_fragment_builder: Callable[[str, str], str] | None = None,
 ) -> dict[str, Any]:
     """Render one view along the pan and return both luminance sequences.
 
@@ -186,12 +187,17 @@ def render_pan(
     linear HDR frames stay comparable with a 1x pan; the display frames do not,
     because bloom and the glare tail are measured in rendered pixels and a
     finer grid makes them narrower on the scene.
+
+    A subject replay can override its fragment builder for a richer receiver
+    mask. The shipped HDR and display are still read before the replay.
     """
 
     if supersample < 1:
         raise ValueError("supersample must be at least 1")
     if semantic_capture and subject_capture:
         raise ValueError("facade and subject captures are mutually exclusive")
+    if subject_fragment_builder is not None and not subject_capture:
+        raise ValueError("a subject fragment builder requires subject capture")
     if (semantic_capture or subject_capture) and supersample != 1:
         raise ValueError("semantic capture requires the presented grid (supersample=1)")
     base = SimulationConfig()
@@ -225,7 +231,9 @@ def render_pan(
             if subject_capture:
                 from tools.audit_subject_visibility import subject_uniforms, visibility_fragment
                 semantic_uniforms = subject_uniforms(view.subject, app.camera.position_m)
-                semantic = SemanticReplay(app.renderer, fragment_builder=visibility_fragment)
+                semantic = SemanticReplay(
+                    app.renderer, fragment_builder=subject_fragment_builder or visibility_fragment
+                )
             else:
                 semantic = SemanticReplay(app.renderer)
         width, height = app.renderer.hdr_texture.size
