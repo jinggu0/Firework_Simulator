@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "suite_id": "yeouido-subject-visibility-candidates-v1",
+  "scenario_id": "yeouido-2024-10-05",
+  "coordinate_system": "local East-Up-South metres",
+  "scene_asset": "assets/yeouido_scene.npz",
+  "scene_asset_sha256": "c8b9d2720f935de3532a9401c74d37a55470d23645c06d32c24ff923c3291518",
+  "display_mode": "human_vision",
+  "source": {
+    "confidence_grade": "C",
+    "source_id": "subject-visibility-candidates-v0-17",
+    "source_url": "",
+    "notes": "Separate non-historical candidate suite; the canonical temporal-regression suite is unchanged. See the accompanying report.json."
+  },
+  "views": [
+    {
+      "view_id": "terrain_shoreline",
+      "subject": "terrain_shoreline",
+      "position_eus_m": [-120.0, 13.89, 330.0],
+      "target_eus_m": [250.0, 5.0, -80.0],
+      "expected_surface": "land",
+      "minimum_ground_clearance_m": 1.6,
+      "notes": "Ground-height diagonal view across the shoreline, river mask and opposite skyline."
+    },
+    {
+      "view_id": "grass_close",
+      "subject": "grass_close",
+      "position_eus_m": [180.0, 13.0213, 800.0],
+      "target_eus_m": [180.0, 11.3413, 793.0],
+      "expected_surface": "land",
+      "minimum_ground_clearance_m": 1.6,
+      "notes": "Downward near-field view inside the authored grass-blade coverage."
+    },
+    {
+      "view_id": "road_subject_12",
+      "subject": "road_ground",
+      "position_eus_m": [-1161.3569200755005, 14.18565845489502, -337.5587824387312],
+      "target_eus_m": [-1151.4, 8.746733283996582, -363.9],
+      "expected_surface": "land",
+      "minimum_ground_clearance_m": 1.7,
+      "notes": "Non-historical subject-visibility engineering candidate."
+    },
+    {
+      "view_id": "facade_landmark",
+      "subject": "facade_landmark",
+      "position_eus_m": [-635.8189, 28.632, 866.9108],
+      "target_eus_m": [-200.0, 80.0, -150.0],
+      "expected_surface": "land",
+      "minimum_ground_clearance_m": 17.5,
+      "notes": "Elevated facade view that exposes window, mullion, roof and temporal aliasing. V2-3c: the camera defined on 2026-08-03 at (-650.0, 28.8274, 900.0) stood inside a 49 m building, so it rendered the inside of that shell; it was advanced 36 m along the same bearing, holding the same 18 m terrain clearance and target, to the first whole metre clear of every building face by the camera collision radius."
+    },
+    {
+      "view_id": "bridge_subject_20",
+      "subject": "bridge_structure",
+      "position_eus_m": [-1025.0, 35.27070331573486, -470.0],
+      "target_eus_m": [-981.1985, 6.35, -709.3779999999999],
+      "expected_surface": "land",
+      "minimum_ground_clearance_m": 29.5,
+      "notes": "Non-historical subject-visibility engineering candidate."
+    },
+    {
+      "view_id": "water_reflection",
+      "subject": "water_reflection",
+      "position_eus_m": [-100.0, 12.3056, 260.0],
+      "target_eus_m": [280.0, 3.0, -120.0],
+      "expected_surface": "land",
+      "minimum_ground_clearance_m": 2.1,
+      "notes": "Low shoreline view that gives the river and reflected skyline most of the frame."
+    }
+  ]
+}

@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+from dataclasses import asdict
+import json
+from pathlib import Path
+
 import moderngl
 import numpy as np
 import pytest
 
 from simulator import shaders
 from simulator.validation.subject_visibility import measure_visibility, visibility_gates
+from simulator.validation.views import load_visual_regression_suite
 from tools.audit_subject_visibility import visibility_fragment
 
 
@@ -33,6 +38,23 @@ def test_empty_target_and_close_blocker_cannot_pass():
     result = measure_visibility(full, alone)
     assert result["visible_projected_fraction"] is None
     assert not any(visibility_gates("road_ground", result).values())
+
+
+def test_separate_suite_exports_the_freshly_verified_winners():
+    directory = Path(__file__).resolve().parents[1] / "docs/validation/subject_visibility_v0"
+    suite = load_visual_regression_suite(directory / "candidate_views.json")
+    canonical = load_visual_regression_suite()
+    report = json.loads((directory / "report.json").read_text(encoding="utf-8"))
+    assert suite.suite_id != canonical.suite_id
+    assert suite.scene_asset_sha256 == report["scene_asset_sha256"]
+    for view in suite.views:
+        if view.subject in report["subjects"]:
+            outcome = report["subjects"][view.subject]
+            assert view.view_id != view.subject
+            assert json.loads(json.dumps(asdict(view))) == outcome["selected_view"]
+            fresh = outcome["fresh_captures"][view.view_id]
+            assert fresh["gates"] == visibility_gates(view.subject, fresh["metrics"])
+            assert all(fresh["gates"].values())
 
 
 @pytest.mark.parametrize("error", ["visible_without_support", "isolated_blocker", "overlap", "nan", "shape"])

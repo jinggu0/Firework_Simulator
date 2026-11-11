@@ -17,7 +17,7 @@ from simulator.bridge_semantics import DEFAULT_BRIDGE_SEMANTICS_PATH, load_bridg
 from simulator.config import SimulationConfig
 from simulator.passes.post import DisplayMode
 from simulator.scenario import DEFAULT_SCENARIO_PATH
-from simulator.scene import SURFACE_BRIDGE, SURFACE_ROAD, SURFACE_ROOF, SURFACE_WALL
+from simulator.scene import SURFACE_BRIDGE, SURFACE_ROAD, SURFACE_ROOF, SURFACE_WALL, load_scene
 from simulator.validation.capture import read_display_sdr
 from simulator.validation.subject_visibility import GATES, NEAR_OCCLUDER_M, measure_visibility, visibility_gates
 from simulator.validation.view_placement import validate_view_placement
@@ -127,15 +127,15 @@ def capture(app, replay, view, frames, *, check_display=False):
     return metrics, visible, rgb
 
 
-def placement(app, view):
+def placement(app, view, building_vertices):
     return {
         **_validate_camera_surface(app, view),
-        **validate_view_placement(view, app.renderer.scene.data.building_vertices,
+        **validate_view_placement(view, building_vertices,
                                   BASE_CONFIG.camera.camera_collision_radius_m),
     }
 
 
-def measure_candidates(suite):
+def measure_candidates(suite, building_vertices):
     app = new_app(suite.display_mode)
     replay = None
     try:
@@ -150,7 +150,7 @@ def measure_candidates(suite):
                 print(f"screening {view.view_id}", flush=True)
                 row = {"view": asdict(view), "canonical": view is reference}
                 try:
-                    row["placement"] = placement(app, view)
+                    row["placement"] = placement(app, view, building_vertices)
                 except VisualViewError as error:
                     row.update(passed=False, placement_failure=str(error))
                 else:
@@ -193,8 +193,8 @@ def main():
     parser.add_argument("--output-dir", type=Path, default=Path("docs/validation/subject_visibility_v0"))
     args = parser.parse_args()
     suite = load_visual_regression_suite()
-    suite.verify_scene_asset()
-    results, gl, msaa = measure_candidates(suite)
+    scene = load_scene(suite.verify_scene_asset())
+    results, gl, msaa = measure_candidates(suite, scene.building_vertices)
     args.output_dir.mkdir(parents=True, exist_ok=True)
     subjects = {}
     for subject, (rows, reference, winner) in results.items():

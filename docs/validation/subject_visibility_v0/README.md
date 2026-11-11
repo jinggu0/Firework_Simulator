@@ -36,3 +36,37 @@
 ```powershell
 python -m tools.audit_subject_visibility
 ```
+
+## 결과 (2026-11-11)
+
+판정 규칙은 `7246f06`에서 고정했다. 실제 마스크를 얻기 전에 건물 메시 로딩을
+기존 배치 검증과 동일하게 체크섬 확인된 장면 자산에서 읽도록 바로잡았다.
+교량 9개 중 5개, 도로 9개 중 9개가 통과했다. 아래는 독립 8프레임 재캡처 결과다.
+
+| 시점 | 전체 대상 점유 | 중앙부 대상 점유 | 투영 대상 중 노출 | 2m 이내 비대상 |
+|---|---:|---:|---:|---:|
+| 기존 교량 시점: 새 서강대교 목표로 평가 | 0% | 0% | 화면 내 투영 없음 | 0% |
+| `bridge_subject_20` | 8.31% | 28.52% | 99.91% | 0% |
+| 기존 도로 시점 | 4.74% | 8.62% | 58.60% | 30.44% |
+| `road_subject_12` | 57.74% | 87.53% | 97.64% | 0% |
+
+새 두 후보는 네 기준과 기존 배치 검사를 통과했다. 1280×720, Intel Arc 140V /
+`32.0.101.8626`, MSAA 8, 기본 인간 시각 모드다. 네 재캡처 모두 마스크 재생 전후
+SDR 바이트가 동일했다. 교량 상판의 연속 구간과 도로 전경 포장면이 드러나는 것도
+육안으로 확인했다. 사진 등록, 조명·재질 정확도, 시간 안정성 또는 프레임 비용을
+이 실험에서 판정하지 않았다. 서강대교 교각 정밀도와 도로 원본 way별 가시성도
+아직 별도 검증 대상이다.
+
+- 교량: [기존 화면](bridge_structure.png) · [새 화면](bridge_subject_20.png) · [대상 마스크](bridge_subject_20_mask.png)
+- 도로: [기존 화면](road_ground.png) · [새 화면](road_subject_12.png) · [대상 마스크](road_subject_12_mask.png)
+- 마스크 색: 청록은 검증 대상, 주황은 렌즈에서 2m 이내의 비대상 표면이다.
+- [전체 후보·측정·체크섬](report.json) · [별도 캡처용 후보 시점 세트](candidate_views.json)
+
+기존 6시점 파일은 그대로다. 별도 후보 세트는 기존 캡처 명령으로 실행할 수 있다.
+서로 다른 시점을 픽셀 단위 동일 장면 회귀 비교에 사용하지 않는다.
+아래 명령으로 두 시점의 HDR·SDR·커버리지를 다시 생성했고, 두 SDR PNG의
+체크섬은 이 보고서의 새 화면과 각각 동일했다. 관련 회귀 테스트 58개가 통과했다.
+
+```powershell
+python -m tools.capture_visual_baselines --views docs/validation/subject_visibility_v0/candidate_views.json --view bridge_subject_20 --view road_subject_12 --output-dir local_reference/subject_visibility_candidates
+```

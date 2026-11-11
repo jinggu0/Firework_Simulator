@@ -1,0 +1,1028 @@
+{
+  "schema_version": 1,
+  "canonical_views_sha256": "54aa2c58b4074ff7738a9a06e70d2ad7c257a07420a3248cca89fbbd0fa75072",
+  "scene_asset_sha256": "c8b9d2720f935de3532a9401c74d37a55470d23645c06d32c24ff923c3291518",
+  "bridge_plan_sha256": "d4ff468e2711365c2c785760d18ecd9c5ef011cf078b98c218b607751965d0d6",
+  "shader_sha256": {
+    "scene.vert": "3ccc02c4f51cb057062caac854dd2897be2bf3534b8ab43b2ad010932b32f207",
+    "scene.frag": "9bd986f7d5c85433bbb883831dfb7320fb80d9aeb77f10efd74d8d6654bf53d2",
+    "land.vert": "80d7aa00e0975b630e11b079ce56fb8cb76d518fed03e93f7b05119173992eb0",
+    "land.frag": "a885b686b4eec25099388e9f4f80f65c5a5bb9323e5b82b7702b11b49368f660",
+    "water.vert": "f3cceb1120f5e7e4870b73be0de7254f162b0a731386a734391bf9e03e55d685",
+    "water.frag": "e09c196d91f29b5f3d91ece2afcb07ea872eb9694fd4419f9518acce19d60003"
+  },
+  "subject_bounds_xz": {
+    "bridge_structure": [
+      -1145.0,
+      -1250.0,
+      -600.0,
+      -470.0
+    ],
+    "road_ground": [
+      -1281.4,
+      -493.9,
+      -1021.4,
+      -233.9
+    ]
+  },
+  "gate_order": [
+    "min_screen",
+    "min_centre",
+    "min_visible_projected",
+    "max_near_non_subject"
+  ],
+  "gates": {
+    "bridge_structure": [
+      0.02,
+      0.1,
+      0.75,
+      0.05
+    ],
+    "road_ground": [
+      0.15,
+      0.35,
+      0.65,
+      0.05
+    ]
+  },
+  "near_occluder_m": 2.0,
+  "preview_frames": 8,
+  "msaa_samples": 8,
+  "gl": {
+    "GL_VENDOR": "Intel",
+    "GL_RENDERER": "Intel(R) Arc(TM) 140V GPU (16GB)",
+    "GL_VERSION": "4.3.0 - Build 32.0.101.8626"
+  },
+  "subjects": {
+    "bridge_structure": {
+      "screening": [
+        {
+          "view": {
+            "view_id": "bridge_structure",
+            "subject": "bridge_structure",
+            "position_eus_m": [
+              -900.0,
+              40.4973,
+              250.0
+            ],
+            "target_eus_m": [
+              500.0,
+              7.0,
+              -100.0
+            ],
+            "expected_surface": "land",
+            "minimum_ground_clearance_m": 29.5,
+            "notes": "Elevated long-lens-like diagonal across bridge deck, piers and approaches."
+          },
+          "canonical": true,
+          "placement": {
+            "surface": "land",
+            "surface_height_m": 10.497299194335938,
+            "camera_clearance_m": 30.000000805664065,
+            "building_faces_overhead_m": [],
+            "nearest_building_face_m": 109.6004297104595,
+            "lens_clearance_m": 0.12
+          },
+          "metrics": {
+            "visible_screen_fraction": 0.0,
+            "isolated_screen_fraction": 0.0,
+            "visible_projected_fraction": null,
+            "central_subject_fraction": 0.0,
+            "near_non_subject_fraction": 0.0,
+            "other_building_fraction": 0.33315809461805557
+          },
+          "gates": {
+            "screen_coverage": false,
+            "central_coverage": false,
+            "projected_visibility": false,
+            "near_occluders": true
+          },
+          "passed": false
+        },
+        {
+          "view": {
+            "view_id": "bridge_subject_00",
+            "subject": "bridge_structure",
+            "position_eus_m": [
+              -1325.0,
+              36.969327449798584,
+              -470.0
+            ],
+            "target_eus_m": [
+              -981.1985,
+              6.35,
+              -709.3779999999999
+            ],
+            "expected_surface": "land",
+            "minimum_ground_clearance_m": 29.5,
+            "notes": "Non-historical subject-visibility engineering candidate."
+          },
+          "canonical": false,
+          "placement": {
+            "surface": "land",
+            "surface_height_m": 6.969327449798584,
+            "camera_clearance_m": 30.0,
+            "building_faces_overhead_m": [],
+            "nearest_building_face_m": 28.71333759925435,
+            "lens_clearance_m": 0.12
+          },
+          "metrics": {
+            "visible_screen_fraction": 0.014693060980902778,
+            "isolated_screen_fraction": 0.014753553602430556,
+            "visible_projected_fraction": 0.9958997931509997,
+            "central_subject_fraction": 0.07242621527777778,
+            "near_non_subject_fraction": 0.0,
+            "other_building_fraction": 0.0754507107204861
+          },
+          "gates": {
+            "screen_coverage": false,
+            "central_coverage": false,
+            "projected_visibility": true,
+            "near_occluders": true
+          },
+          "passed": false
+        },
+        {
+          "view": {
+            "view_id": "bridge_subject_01",
+            "subject": "bridge_structure",
+            "position_eus_m": [
+              -1325.0,
+              37.192657470703125,
+              -420.0
+            ],
+            "target_eus_m": [
+              -981.1985,
+              6.35,
+              -709.3779999999999
+            ],
+            "expected_surface": "land",
+            "minimum_ground_clearance_m": 29.5,
+            "notes": "Non-historical subject-visibility engineering candidate."
+          },
+          "canonical": false,
+          "placement": {
+            "surface": "land",
+            "surface_height_m": 7.192657470703125,
+            "camera_clearance_m": 30.0,
+            "building_faces_overhead_m": [],
+            "nearest_building_face_m": 68.42074377937887,
+            "lens_clearance_m": 0.12
+          },
+          "metrics": {
+            "visible_screen_fraction": 0.01004977756076389,
+            "isolated_screen_fraction": 0.010335693359375,
+            "visible_projected_fraction": 0.9723370470978834,
+            "central_subject_fraction": 0.07537760416666667,
+            "near_non_subject_fraction": 0.0,
+            "other_building_fraction": 0.06819281684027778
+          },
+          "gates": {
+            "screen_coverage": false,
+            "central_coverage": false,
+            "projected_visibility": true,
+            "near_occluders": true
+          },
+          "passed": false
+        },
+        {
+          "view": {
+            "view_id": "bridge_subject_02",
+            "subject": "bridge_structure",
+            "position_eus_m": [
+              -1325.0,
+              42.21000099182129,
+              -370.0
+            ],
+            "target_eus_m": [
+              -981.1985,
+              6.35,
+              -709.3779999999999
+            ],
+            "expected_surface": "land",
+            "minimum_ground_clearance_m": 29.5,
+            "notes": "Non-historical subject-visibility engineering candidate."
+          },
+          "canonical": false,
+          "placement": {
+            "surface": "land",
+            "surface_height_m": 12.210000991821289,
+            "camera_clearance_m": 30.0,
+            "building_faces_overhead_m": [],
+            "nearest_building_face_m": 53.12575744515563,
+            "lens_clearance_m": 0.12
+          },
+          "metrics": {
+            "visible_screen_fraction": 0.007849527994791666,
+            "isolated_screen_fraction": 0.008218451605902777,
+            "visible_projected_fraction": 0.9551103262753122,
+            "central_subject_fraction": 0.08385633680555556,
+            "near_non_subject_fraction": 0.0,
+            "other_building_fraction": 0.047589925130208335
+          },
+          "gates": {
+            "screen_coverage": false,
+            "central_coverage": false,
+            "projected_visibility": true,
+            "near_occluders": true
+          },
+          "passed": false
+        },
+        {
+          "view": {
+            "view_id": "bridge_subject_10",
+            "subject": "bridge_structure",
+            "position_eus_m": [
+              -1175.0,
+              36.720696449279785,
+              -470.0
+            ],
+            "target_eus_m": [
+              -981.1985,
+              6.35,
+              -709.3779999999999
+            ],
+            "expected_surface": "land",
+            "minimum_ground_clearance_m": 29.5,
+            "notes": "Non-historical subject-visibility engineering candidate."
+          },
+          "canonical": false,
+          "placement": {
+            "surface": "land",
+            "surface_height_m": 6.720696449279785,
+            "camera_clearance_m": 30.0,
+            "building_faces_overhead_m": [],
+            "nearest_building_face_m": 42.482442171687296,
+            "lens_clearance_m": 0.12
+          },
+          "metrics": {
+            "visible_screen_fraction": 0.08165866427951389,
+            "isolated_screen_fraction": 0.08178046332465277,
+            "visible_projected_fraction": 0.9985106584117118,
+            "central_subject_fraction": 0.24377821180555556,
+            "near_non_subject_fraction": 0.0,
+            "other_building_fraction": 0.037226969401041664
+          },
+          "gates": {
+            "screen_coverage": true,
+            "central_coverage": true,
+            "projected_visibility": true,
+            "near_occluders": true
+          },
+          "passed": true
+        },
+        {
+          "view": {
+            "view_id": "bridge_subject_11",
+            "subject": "bridge_structure",
+            "position_eus_m": [
+              -1175.0,
+              37.153573513031006,
+              -420.0
+            ],
+            "target_eus_m": [
+              -981.1985,
+              6.35,
+              -709.3779999999999
+            ],
+            "expected_surface": "land",
+            "minimum_ground_clearance_m": 29.5,
+            "notes": "Non-historical subject-visibility engineering candidate."
+          },
+          "canonical": false,
+          "placement": {
+            "surface": "land",
+            "surface_height_m": 7.153573513031006,
+            "camera_clearance_m": 30.0,
+            "building_faces_overhead_m": [],
+            "nearest_building_face_m": 63.80017593688313,
+            "lens_clearance_m": 0.12
+          },
+          "metrics": {
+            "visible_screen_fraction": 0.03833563910590278,
+            "isolated_screen_fraction": 0.041937255859375,
+            "visible_projected_fraction": 0.9141189217160691,
+            "central_subject_fraction": 0.24318793402777777,
+            "near_non_subject_fraction": 0.0,
+            "other_building_fraction": 0.042529432508680555
+          },
+          "gates": {
+            "screen_coverage": true,
+            "central_coverage": true,
+            "projected_visibility": true,
+            "near_occluders": true
+          },
+          "passed": true
+        },
+        {
+          "view": {
+            "view_id": "bridge_subject_12",
+            "subject": "bridge_structure",
+            "position_eus_m": [
+              -1175.0,
+              38.39970874786377,
+              -370.0
+            ],
+            "target_eus_m": [
+              -981.1985,
+              6.35,
+              -709.3779999999999
+            ],
+            "expected_surface": "land",
+            "minimum_ground_clearance_m": 29.5,
+            "notes": "Non-historical subject-visibility engineering candidate."
+          },
+          "canonical": false,
+          "placement": {
+            "surface": "land",
+            "surface_height_m": 8.39970874786377,
+            "camera_clearance_m": 30.0,
+            "building_faces_overhead_m": [],
+            "nearest_building_face_m": 95.96579937936754,
+            "lens_clearance_m": 0.12
+          },
+          "metrics": {
+            "visible_screen_fraction": 0.014571533203125,
+            "isolated_screen_fraction": 0.016686876085069444,
+            "visible_projected_fraction": 0.8732331401539475,
+            "central_subject_fraction": 0.22659722222222223,
+            "near_non_subject_fraction": 0.0,
+            "other_building_fraction": 0.03805623372395833
+          },
+          "gates": {
+            "screen_coverage": false,
+            "central_coverage": true,
+            "projected_visibility": true,
+            "near_occluders": true
+          },
+          "passed": false
+        },
+        {
+          "view": {
+            "view_id": "bridge_subject_20",
+            "subject": "bridge_structure",
+            "position_eus_m": [
+              -1025.0,
+              35.27070331573486,
+              -470.0
+            ],
+            "target_eus_m": [
+              -981.1985,
+              6.35,
+              -709.3779999999999
+            ],
+            "expected_surface": "land",
+            "minimum_ground_clearance_m": 29.5,
+            "notes": "Non-historical subject-visibility engineering candidate."
+          },
+          "canonical": false,
+          "placement": {
+            "surface": "land",
+            "surface_height_m": 5.270703315734863,
+            "camera_clearance_m": 30.0,
+            "building_faces_overhead_m": [],
+            "nearest_building_face_m": 39.43822159361851,
+            "lens_clearance_m": 0.12
+          },
+          "metrics": {
+            "visible_screen_fraction": 0.08311211480034722,
+            "isolated_screen_fraction": 0.08318576388888889,
+            "visible_projected_fraction": 0.9991146431180215,
+            "central_subject_fraction": 0.28523003472222225,
+            "near_non_subject_fraction": 0.0,
+            "other_building_fraction": 0.03217949761284722
+          },
+          "gates": {
+            "screen_coverage": true,
+            "central_coverage": true,
+            "projected_visibility": true,
+            "near_occluders": true
+          },
+          "passed": true
+        },
+        {
+          "view": {
+            "view_id": "bridge_subject_21",
+            "subject": "bridge_structure",
+            "position_eus_m": [
+              -1025.0,
+              36.574687480926514,
+              -420.0
+            ],
+            "target_eus_m": [
+              -981.1985,
+              6.35,
+              -709.3779999999999
+            ],
+            "expected_surface": "land",
+            "minimum_ground_clearance_m": 29.5,
+            "notes": "Non-historical subject-visibility engineering candidate."
+          },
+          "canonical": false,
+          "placement": {
+            "surface": "land",
+            "surface_height_m": 6.574687480926514,
+            "camera_clearance_m": 30.0,
+            "building_faces_overhead_m": [],
+            "nearest_building_face_m": 55.35853625788604,
+            "lens_clearance_m": 0.12
+          },
+          "metrics": {
+            "visible_screen_fraction": 0.04665866427951389,
+            "isolated_screen_fraction": 0.04672960069444444,
+            "visible_projected_fraction": 0.9984819811452189,
+            "central_subject_fraction": 0.1950434027777778,
+            "near_non_subject_fraction": 0.0,
+            "other_building_fraction": 0.030547281901041667
+          },
+          "gates": {
+            "screen_coverage": true,
+            "central_coverage": true,
+            "projected_visibility": true,
+            "near_occluders": true
+          },
+          "passed": true
+        },
+        {
+          "view": {
+            "view_id": "bridge_subject_22",
+            "subject": "bridge_structure",
+            "position_eus_m": [
+              -1025.0,
+              36.863492012023926,
+              -370.0
+            ],
+            "target_eus_m": [
+              -981.1985,
+              6.35,
+              -709.3779999999999
+            ],
+            "expected_surface": "land",
+            "minimum_ground_clearance_m": 29.5,
+            "notes": "Non-historical subject-visibility engineering candidate."
+          },
+          "canonical": false,
+          "placement": {
+            "surface": "land",
+            "surface_height_m": 6.863492012023926,
+            "camera_clearance_m": 30.0,
+            "building_faces_overhead_m": [],
+            "nearest_building_face_m": 96.73088284172235,
+            "lens_clearance_m": 0.12
+          },
+          "metrics": {
+            "visible_screen_fraction": 0.023517116970486113,
+            "isolated_screen_fraction": 0.025877549913194443,
+            "visible_projected_fraction": 0.9087845274909587,
+            "central_subject_fraction": 0.13797743055555556,
+            "near_non_subject_fraction": 0.0,
+            "other_building_fraction": 0.041246337890625
+          },
+          "gates": {
+            "screen_coverage": true,
+            "central_coverage": true,
+            "projected_visibility": true,
+            "near_occluders": true
+          },
+          "passed": true
+        }
+      ],
+      "selected_view": {
+        "view_id": "bridge_subject_20",
+        "subject": "bridge_structure",
+        "position_eus_m": [
+          -1025.0,
+          35.27070331573486,
+          -470.0
+        ],
+        "target_eus_m": [
+          -981.1985,
+          6.35,
+          -709.3779999999999
+        ],
+        "expected_surface": "land",
+        "minimum_ground_clearance_m": 29.5,
+        "notes": "Non-historical subject-visibility engineering candidate."
+      },
+      "fresh_captures": {
+        "bridge_structure": {
+          "metrics": {
+            "visible_screen_fraction": 0.0,
+            "isolated_screen_fraction": 0.0,
+            "visible_projected_fraction": null,
+            "central_subject_fraction": 0.0,
+            "near_non_subject_fraction": 0.0,
+            "other_building_fraction": 0.33315809461805557
+          },
+          "gates": {
+            "screen_coverage": false,
+            "central_coverage": false,
+            "projected_visibility": false,
+            "near_occluders": true
+          }
+        },
+        "bridge_subject_20": {
+          "metrics": {
+            "visible_screen_fraction": 0.08311211480034722,
+            "isolated_screen_fraction": 0.08318576388888889,
+            "visible_projected_fraction": 0.9991146431180215,
+            "central_subject_fraction": 0.28523003472222225,
+            "near_non_subject_fraction": 0.0,
+            "other_building_fraction": 0.03217949761284722
+          },
+          "gates": {
+            "screen_coverage": true,
+            "central_coverage": true,
+            "projected_visibility": true,
+            "near_occluders": true
+          }
+        }
+      }
+    },
+    "road_ground": {
+      "screening": [
+        {
+          "view": {
+            "view_id": "road_ground",
+            "subject": "road_ground",
+            "position_eus_m": [
+              -1100.0,
+              9.0,
+              -330.0
+            ],
+            "target_eus_m": [
+              -1160.0,
+              8.0,
+              -362.0
+            ],
+            "expected_surface": "land",
+            "minimum_ground_clearance_m": 1.7,
+            "notes": "Walking-height view toward the Seogang Bridge/Gukhoe-daero multi-level junction, exposing surface roads, the dated tunnel corridor and approach contact."
+          },
+          "canonical": true,
+          "placement": {
+            "surface": "land",
+            "surface_height_m": 7.214896202087402,
+            "camera_clearance_m": 1.7851037979125977,
+            "building_faces_overhead_m": [],
+            "nearest_building_face_m": 82.46988596537132,
+            "lens_clearance_m": 0.12
+          },
+          "metrics": {
+            "visible_screen_fraction": 0.04736083984375,
+            "isolated_screen_fraction": 0.08082587348090278,
+            "visible_projected_fraction": 0.585961373556207,
+            "central_subject_fraction": 0.08615017361111112,
+            "near_non_subject_fraction": 0.30435655381944443,
+            "other_building_fraction": 9.480794270833333e-05
+          },
+          "gates": {
+            "screen_coverage": false,
+            "central_coverage": false,
+            "projected_visibility": false,
+            "near_occluders": false
+          },
+          "passed": false
+        },
+        {
+          "view": {
+            "view_id": "road_subject_00",
+            "subject": "road_ground",
+            "position_eus_m": [
+              -1160.8455374734356,
+              14.040664672851562,
+              -351.8674681867063
+            ],
+            "target_eus_m": [
+              -1151.4,
+              8.746733283996582,
+              -363.9
+            ],
+            "expected_surface": "land",
+            "minimum_ground_clearance_m": 1.7,
+            "notes": "Non-historical subject-visibility engineering candidate."
+          },
+          "canonical": false,
+          "placement": {
+            "surface": "land",
+            "surface_height_m": 12.290664672851562,
+            "camera_clearance_m": 1.75,
+            "building_faces_overhead_m": [],
+            "nearest_building_face_m": 115.25741895778243,
+            "lens_clearance_m": 0.12
+          },
+          "metrics": {
+            "visible_screen_fraction": 0.4772365993923611,
+            "isolated_screen_fraction": 0.6510218641493055,
+            "visible_projected_fraction": 0.733057713838796,
+            "central_subject_fraction": 0.5080859375,
+            "near_non_subject_fraction": 0.0,
+            "other_building_fraction": 0.022162272135416668
+          },
+          "gates": {
+            "screen_coverage": true,
+            "central_coverage": true,
+            "projected_visibility": true,
+            "near_occluders": true
+          },
+          "passed": true
+        },
+        {
+          "view": {
+            "view_id": "road_subject_01",
+            "subject": "road_ground",
+            "position_eus_m": [
+              -1158.1682991449777,
+              14.046516418457031,
+              -350.51380835771073
+            ],
+            "target_eus_m": [
+              -1151.4,
+              8.746733283996582,
+              -363.9
+            ],
+            "expected_surface": "land",
+            "minimum_ground_clearance_m": 1.7,
+            "notes": "Non-historical subject-visibility engineering candidate."
+          },
+          "canonical": false,
+          "placement": {
+            "surface": "land",
+            "surface_height_m": 12.296516418457031,
+            "camera_clearance_m": 1.75,
+            "building_faces_overhead_m": [],
+            "nearest_building_face_m": 117.92210032060471,
+            "lens_clearance_m": 0.12
+          },
+          "metrics": {
+            "visible_screen_fraction": 0.49799235026041666,
+            "isolated_screen_fraction": 0.6541286892361111,
+            "visible_projected_fraction": 0.7613063888727616,
+            "central_subject_fraction": 0.5125933159722222,
+            "near_non_subject_fraction": 0.0,
+            "other_building_fraction": 0.02095703125
+          },
+          "gates": {
+            "screen_coverage": true,
+            "central_coverage": true,
+            "projected_visibility": true,
+            "near_occluders": true
+          },
+          "passed": true
+        },
+        {
+          "view": {
+            "view_id": "road_subject_02",
+            "subject": "road_ground",
+            "position_eus_m": [
+              -1155.4910608165198,
+              14.052366256713867,
+              -349.1601485287152
+            ],
+            "target_eus_m": [
+              -1151.4,
+              8.746733283996582,
+              -363.9
+            ],
+            "expected_surface": "land",
+            "minimum_ground_clearance_m": 1.7,
+            "notes": "Non-historical subject-visibility engineering candidate."
+          },
+          "canonical": false,
+          "placement": {
+            "surface": "land",
+            "surface_height_m": 12.302366256713867,
+            "camera_clearance_m": 1.75,
+            "building_faces_overhead_m": [],
+            "nearest_building_face_m": 120.60253282536162,
+            "lens_clearance_m": 0.12
+          },
+          "metrics": {
+            "visible_screen_fraction": 0.49992228190104165,
+            "isolated_screen_fraction": 0.6417835828993056,
+            "visible_projected_fraction": 0.7789577284644851,
+            "central_subject_fraction": 0.5336631944444444,
+            "near_non_subject_fraction": 0.0,
+            "other_building_fraction": 0.024427083333333332
+          },
+          "gates": {
+            "screen_coverage": true,
+            "central_coverage": true,
+            "projected_visibility": true,
+            "near_occluders": true
+          },
+          "passed": true
+        },
+        {
+          "view": {
+            "view_id": "road_subject_10",
+            "subject": "road_ground",
+            "position_eus_m": [
+              -1166.7113967324162,
+              14.233884811401367,
+              -340.2661020967223
+            ],
+            "target_eus_m": [
+              -1151.4,
+              8.746733283996582,
+              -363.9
+            ],
+            "expected_surface": "land",
+            "minimum_ground_clearance_m": 1.7,
+            "notes": "Non-historical subject-visibility engineering candidate."
+          },
+          "canonical": false,
+          "placement": {
+            "surface": "land",
+            "surface_height_m": 12.483884811401367,
+            "camera_clearance_m": 1.75,
+            "building_faces_overhead_m": [],
+            "nearest_building_face_m": 121.84325339612577,
+            "lens_clearance_m": 0.12
+          },
+          "metrics": {
+            "visible_screen_fraction": 0.5618177625868056,
+            "isolated_screen_fraction": 0.5882354058159722,
+            "visible_projected_fraction": 0.9550900150382459,
+            "central_subject_fraction": 0.8277105034722222,
+            "near_non_subject_fraction": 0.0,
+            "other_building_fraction": 0.024735514322916666
+          },
+          "gates": {
+            "screen_coverage": true,
+            "central_coverage": true,
+            "projected_visibility": true,
+            "near_occluders": true
+          },
+          "passed": true
+        },
+        {
+          "view": {
+            "view_id": "road_subject_11",
+            "subject": "road_ground",
+            "position_eus_m": [
+              -1164.0341584039584,
+              14.224735260009766,
+              -338.91244226772676
+            ],
+            "target_eus_m": [
+              -1151.4,
+              8.746733283996582,
+              -363.9
+            ],
+            "expected_surface": "land",
+            "minimum_ground_clearance_m": 1.7,
+            "notes": "Non-historical subject-visibility engineering candidate."
+          },
+          "canonical": false,
+          "placement": {
+            "surface": "land",
+            "surface_height_m": 12.474735260009766,
+            "camera_clearance_m": 1.75,
+            "building_faces_overhead_m": [],
+            "nearest_building_face_m": 124.36664667766844,
+            "lens_clearance_m": 0.12
+          },
+          "metrics": {
+            "visible_screen_fraction": 0.5737200249565972,
+            "isolated_screen_fraction": 0.59014404296875,
+            "visible_projected_fraction": 0.972169475896883,
+            "central_subject_fraction": 0.85599609375,
+            "near_non_subject_fraction": 0.0,
+            "other_building_fraction": 0.02262722439236111
+          },
+          "gates": {
+            "screen_coverage": true,
+            "central_coverage": true,
+            "projected_visibility": true,
+            "near_occluders": true
+          },
+          "passed": true
+        },
+        {
+          "view": {
+            "view_id": "road_subject_12",
+            "subject": "road_ground",
+            "position_eus_m": [
+              -1161.3569200755005,
+              14.18565845489502,
+              -337.5587824387312
+            ],
+            "target_eus_m": [
+              -1151.4,
+              8.746733283996582,
+              -363.9
+            ],
+            "expected_surface": "land",
+            "minimum_ground_clearance_m": 1.7,
+            "notes": "Non-historical subject-visibility engineering candidate."
+          },
+          "canonical": false,
+          "placement": {
+            "surface": "land",
+            "surface_height_m": 12.43565845489502,
+            "camera_clearance_m": 1.75,
+            "building_faces_overhead_m": [],
+            "nearest_building_face_m": 124.83767921228451,
+            "lens_clearance_m": 0.12
+          },
+          "metrics": {
+            "visible_screen_fraction": 0.5774342176649305,
+            "isolated_screen_fraction": 0.5914009602864584,
+            "visible_projected_fraction": 0.9763836321558174,
+            "central_subject_fraction": 0.8752886284722222,
+            "near_non_subject_fraction": 0.0,
+            "other_building_fraction": 0.024651285807291666
+          },
+          "gates": {
+            "screen_coverage": true,
+            "central_coverage": true,
+            "projected_visibility": true,
+            "near_occluders": true
+          },
+          "passed": true
+        },
+        {
+          "view": {
+            "view_id": "road_subject_20",
+            "subject": "road_ground",
+            "position_eus_m": [
+              -1173.0284759343956,
+              14.292417526245117,
+              -327.7723232305857
+            ],
+            "target_eus_m": [
+              -1151.4,
+              8.746733283996582,
+              -363.9
+            ],
+            "expected_surface": "land",
+            "minimum_ground_clearance_m": 1.7,
+            "notes": "Non-historical subject-visibility engineering candidate."
+          },
+          "canonical": false,
+          "placement": {
+            "surface": "land",
+            "surface_height_m": 12.542417526245117,
+            "camera_clearance_m": 1.75,
+            "building_faces_overhead_m": [],
+            "nearest_building_face_m": 123.08585313289697,
+            "lens_clearance_m": 0.12
+          },
+          "metrics": {
+            "visible_screen_fraction": 0.4755050998263889,
+            "isolated_screen_fraction": 0.5726268174913195,
+            "visible_projected_fraction": 0.8303926489324736,
+            "central_subject_fraction": 0.5911089409722222,
+            "near_non_subject_fraction": 0.0,
+            "other_building_fraction": 0.025842149522569444
+          },
+          "gates": {
+            "screen_coverage": true,
+            "central_coverage": true,
+            "projected_visibility": true,
+            "near_occluders": true
+          },
+          "passed": true
+        },
+        {
+          "view": {
+            "view_id": "road_subject_21",
+            "subject": "road_ground",
+            "position_eus_m": [
+              -1170.3512376059377,
+              14.241943359375,
+              -326.41866340159015
+            ],
+            "target_eus_m": [
+              -1151.4,
+              8.746733283996582,
+              -363.9
+            ],
+            "expected_surface": "land",
+            "minimum_ground_clearance_m": 1.7,
+            "notes": "Non-historical subject-visibility engineering candidate."
+          },
+          "canonical": false,
+          "placement": {
+            "surface": "land",
+            "surface_height_m": 12.491943359375,
+            "camera_clearance_m": 1.75,
+            "building_faces_overhead_m": [],
+            "nearest_building_face_m": 122.07426048165819,
+            "lens_clearance_m": 0.12
+          },
+          "metrics": {
+            "visible_screen_fraction": 0.488167724609375,
+            "isolated_screen_fraction": 0.5714027235243055,
+            "visible_projected_fraction": 0.8543321627843273,
+            "central_subject_fraction": 0.6208116319444444,
+            "near_non_subject_fraction": 0.0,
+            "other_building_fraction": 0.024010281032986112
+          },
+          "gates": {
+            "screen_coverage": true,
+            "central_coverage": true,
+            "projected_visibility": true,
+            "near_occluders": true
+          },
+          "passed": true
+        },
+        {
+          "view": {
+            "view_id": "road_subject_22",
+            "subject": "road_ground",
+            "position_eus_m": [
+              -1167.6739992774799,
+              14.191471099853516,
+              -325.0650035725946
+            ],
+            "target_eus_m": [
+              -1151.4,
+              8.746733283996582,
+              -363.9
+            ],
+            "expected_surface": "land",
+            "minimum_ground_clearance_m": 1.7,
+            "notes": "Non-historical subject-visibility engineering candidate."
+          },
+          "canonical": false,
+          "placement": {
+            "surface": "land",
+            "surface_height_m": 12.441471099853516,
+            "camera_clearance_m": 1.75,
+            "building_faces_overhead_m": [],
+            "nearest_building_face_m": 120.36297492153322,
+            "lens_clearance_m": 0.12
+          },
+          "metrics": {
+            "visible_screen_fraction": 0.49716349283854167,
+            "isolated_screen_fraction": 0.5635956488715278,
+            "visible_projected_fraction": 0.8821279827727531,
+            "central_subject_fraction": 0.66240234375,
+            "near_non_subject_fraction": 0.0,
+            "other_building_fraction": 0.028329264322916665
+          },
+          "gates": {
+            "screen_coverage": true,
+            "central_coverage": true,
+            "projected_visibility": true,
+            "near_occluders": true
+          },
+          "passed": true
+        }
+      ],
+      "selected_view": {
+        "view_id": "road_subject_12",
+        "subject": "road_ground",
+        "position_eus_m": [
+          -1161.3569200755005,
+          14.18565845489502,
+          -337.5587824387312
+        ],
+        "target_eus_m": [
+          -1151.4,
+          8.746733283996582,
+          -363.9
+        ],
+        "expected_surface": "land",
+        "minimum_ground_clearance_m": 1.7,
+        "notes": "Non-historical subject-visibility engineering candidate."
+      },
+      "fresh_captures": {
+        "road_ground": {
+          "metrics": {
+            "visible_screen_fraction": 0.04736083984375,
+            "isolated_screen_fraction": 0.08082587348090278,
+            "visible_projected_fraction": 0.585961373556207,
+            "central_subject_fraction": 0.08615017361111112,
+            "near_non_subject_fraction": 0.30435655381944443,
+            "other_building_fraction": 9.480794270833333e-05
+          },
+          "gates": {
+            "screen_coverage": false,
+            "central_coverage": false,
+            "projected_visibility": false,
+            "near_occluders": false
+          }
+        },
+        "road_subject_12": {
+          "metrics": {
+            "visible_screen_fraction": 0.5774342176649305,
+            "isolated_screen_fraction": 0.5914009602864584,
+            "visible_projected_fraction": 0.9763836321558174,
+            "central_subject_fraction": 0.8752886284722222,
+            "near_non_subject_fraction": 0.0,
+            "other_building_fraction": 0.024651285807291666
+          },
+          "gates": {
+            "screen_coverage": true,
+            "central_coverage": true,
+            "projected_visibility": true,
+            "near_occluders": true
+          }
+        }
+      }
+    }
+  }
+}
