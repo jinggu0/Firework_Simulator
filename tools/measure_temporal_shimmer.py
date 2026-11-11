@@ -171,6 +171,7 @@ def render_pan(
     render_overrides: dict[str, Any] | None = None,
     supersample: int = 1,
     semantic_capture: bool = False,
+    subject_capture: bool = False,
 ) -> dict[str, Any]:
     """Render one view along the pan and return both luminance sequences.
 
@@ -189,7 +190,9 @@ def render_pan(
 
     if supersample < 1:
         raise ValueError("supersample must be at least 1")
-    if semantic_capture and supersample != 1:
+    if semantic_capture and subject_capture:
+        raise ValueError("facade and subject captures are mutually exclusive")
+    if (semantic_capture or subject_capture) and supersample != 1:
         raise ValueError("semantic capture requires the presented grid (supersample=1)")
     base = SimulationConfig()
     overrides = dict(render_overrides or {})
@@ -207,6 +210,7 @@ def render_pan(
         replace(base, render=render), scenario_path=DEFAULT_SCENARIO_PATH
     )
     semantic = None
+    semantic_uniforms = None
     try:
         app.world.shells.clear()
         app.world.stars.count = 0
@@ -214,11 +218,16 @@ def render_pan(
         view.apply(app.camera)
         for _ in range(WARMUP_FRAMES):
             app.renderer.render(app.world, app.camera, app.celestial, 1.0 / 60.0, None)
-        if semantic_capture:
+        if semantic_capture or subject_capture:
             if not app.renderer.post.distortion.is_identity:
                 raise ValueError("semantic capture requires identity lens distortion")
             from tools.shimmer_regions import SemanticReplay
-            semantic = SemanticReplay(app.renderer)
+            if subject_capture:
+                from tools.audit_subject_visibility import subject_uniforms, visibility_fragment
+                semantic_uniforms = subject_uniforms(view.subject, app.camera.position_m)
+                semantic = SemanticReplay(app.renderer, fragment_builder=visibility_fragment)
+            else:
+                semantic = SemanticReplay(app.renderer)
         width, height = app.renderer.hdr_texture.size
         if supersample > 1 and tuple(app.ctx.screen.size) != (width, height):
             raise RuntimeError(
@@ -265,7 +274,7 @@ def render_pan(
                 )
             )
             if semantic is not None:
-                fractions.append(semantic.capture())
+                fractions.append(semantic.capture(uniform_overrides=semantic_uniforms))
         info = dict(app.ctx.info)
         return {
             "linear_hdr": np.stack(hdr),

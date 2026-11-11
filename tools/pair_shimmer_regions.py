@@ -78,7 +78,8 @@ def pair_masks(previous, current, coordinates, radius):
     return masks
 
 
-def pair_statistics(pan, run, radii=SUPPORT_RADII, progress=None):
+def pair_statistics(pan, run, radii=SUPPORT_RADII, progress=None, *,
+                    partition=pair_masks, region_names=REGIONS):
     """Stream pairs; retain the existing scored/excluded domain and HDR scale.
 
     Sum(region energy)/pairs equals sum(existing RMS score squared). No per-pair
@@ -95,7 +96,7 @@ def pair_statistics(pan, run, radii=SUPPORT_RADII, progress=None):
     magnitude = np.maximum(np.abs(hdr[1:]).mean(axis=0), 1e-6)
     accum = {radius: {name: {"samples": 0, "min_samples_per_pair": height * width,
                             "max_samples_per_pair": 0, "display_energy": 0., "hdr_energy": 0.}
-                      for name in REGIONS} for radius in radii}
+                      for name in region_names} for radius in radii}
     for pair in range(pairs):
         coordinates = pan_source_coordinates(matrices[pair], matrices[pair + 1], width, height)
         energy = {}
@@ -106,7 +107,7 @@ def pair_statistics(pan, run, radii=SUPPORT_RADII, progress=None):
                 residual = residual / magnitude
             energy[key] = residual ** 2
         for radius in radii:
-            masks = pair_masks(fractions[pair], fractions[pair + 1], coordinates, radius)
+            masks = partition(fractions[pair], fractions[pair + 1], coordinates, radius)
             for name, mask in masks.items():
                 selected = mask & scored
                 count = int(selected.sum())
@@ -121,6 +122,8 @@ def pair_statistics(pan, run, radii=SUPPORT_RADII, progress=None):
     total_samples = pairs * int(scored.sum())
     results = []
     for radius, regions in accum.items():
+        if sum(item["samples"] for item in regions.values()) != total_samples:
+            raise ValueError("region partition did not account for every scored sample")
         totals = {key: sum(item[f"{key}_energy"] for item in regions.values()) for key in ("display", "hdr")}
         conservation = {}
         for key in totals:

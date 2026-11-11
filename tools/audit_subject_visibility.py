@@ -107,19 +107,27 @@ def close_app(app):
     pygame.quit()
 
 
+def subject_uniforms(subject, eye, *, isolated=False):
+    material, bounds = {
+        "bridge_structure": (SURFACE_BRIDGE, BRIDGE_REGION),
+        "road_ground": (SURFACE_ROAD, ROAD_REGION),
+    }[subject]
+    return {
+        "audit_eye": tuple(float(value) for value in eye),
+        "audit_material": material,
+        "audit_bounds": bounds,
+        "audit_isolated": isolated,
+    }
+
+
 def capture(app, replay, view, frames, *, check_display=False):
     view.apply(app.camera)
     app.renderer.reflection_ready = False
     for _ in range(frames):
         app.renderer.render(app.world, app.camera, app.celestial, 1. / 60., None)
     rgb = read_display_sdr(app.ctx) if check_display else None
-    bridge = view.subject == "bridge_structure"
-    uniforms = {
-        "audit_eye": tuple(app.camera.position_m.tolist()),
-        "audit_material": SURFACE_BRIDGE if bridge else SURFACE_ROAD,
-        "audit_bounds": BRIDGE_REGION if bridge else ROAD_REGION,
-    }
-    visible = replay.capture(uniform_overrides={**uniforms, "audit_isolated": False})
+    uniforms = subject_uniforms(view.subject, app.camera.position_m)
+    visible = replay.capture(uniform_overrides=uniforms)
     isolated = replay.capture(uniform_overrides={**uniforms, "audit_isolated": True})
     if check_display and not np.array_equal(rgb, read_display_sdr(app.ctx)):
         raise RuntimeError("private visibility replay changed the display framebuffer")
